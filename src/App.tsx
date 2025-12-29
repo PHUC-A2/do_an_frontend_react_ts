@@ -1,6 +1,7 @@
 import { ToastContainer, Slide } from "react-toastify"; // thêm Slide
 import AppRouter from "./routes/AppRouter";
 import { useEffect, useState } from "react";
+import MessageButton from "./pages/chat/MessageButton";
 const App = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
@@ -9,9 +10,10 @@ const App = () => {
   useEffect(() => {
     document.body.className = theme;
   }, [theme]);
-  
+
   return (
     <>
+      <MessageButton />
       <AppRouter theme={theme} toggleTheme={toggleTheme} />
       <ToastContainer
         position="top-right"
