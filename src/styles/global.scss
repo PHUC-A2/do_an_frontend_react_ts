@@ -1,0 +1,357 @@
+/* ====================== global.scss ====================== */
+/* ------------------ */
+/* Variables & Theme  */
+/* ------------------ */
+:root {
+    /* Luxury Colors */
+    --luxury-gold    : #faad14;
+    // --luxury-dark : #1a2733;
+    --luxury-dark    : #2b3a4b;
+    --luxury-light   : #ffffff;
+    --text-light     : #fff;
+    --text-dark      : #000;
+
+    /* Buttons */
+    --btn-bg  : var(--luxury-gold);
+    --btn-text: var(--luxury-light);
+
+    /* Card */
+    --card-bg-light: #fff;
+    --card-bg-dark : #283446;
+
+    /* Page text */
+    --text-page-light: #333;
+    --text-page-dark : wheat;
+
+    /* Layout */
+    --header-bg-light : #f0f2f5;
+    --header-bg-dark  : #1a2733;
+    --footer-bg-light : #f0f2f5;
+    --footer-bg-dark  : #1a2733;
+    --menu-bg-light   : #f0f2f5;
+    --menu-bg-dark    : #1a2733;
+    --menu-text-light : #000;
+    --menu-text-dark  : wheat;
+    --primary-bg-light: #fff;
+    --primary-bg-dark : var(--luxury-dark);
+
+    /* Footer border */
+    --footer-border-light: rgba(0, 0, 0, 0.1);
+    --footer-border-dark : rgba(255, 255, 255, 0.1);
+}
+
+/* ------------------ */
+/* Light / Dark mode */
+/* ------------------ */
+body.light {
+    --bg-color     : var(--primary-bg-light);
+    --text-color   : var(--text-dark);
+    --header-bg    : var(--header-bg-light);
+    --footer-bg    : var(--footer-bg-light);
+    --menu-bg      : var(--menu-bg-light);
+    --menu-text    : var(--menu-text-light);
+    --card-bg      : var(--card-bg-light);
+    --text-page    : var(--text-page-light);
+    --footer-border: var(--footer-border-light);
+}
+
+body.dark {
+    --bg-color     : var(--primary-bg-dark);
+    --text-color   : var(--text-light);
+    --header-bg    : var(--header-bg-dark);
+    --footer-bg    : var(--footer-bg-dark);
+    --menu-bg      : var(--menu-bg-dark);
+    --menu-text    : var(--menu-text-dark);
+    --card-bg      : var(--card-bg-dark);
+    --text-page    : var(--text-page-dark);
+    --footer-border: var(--footer-border-dark);
+
+    .ant-drawer-close {
+        color: wheat !important;
+    }
+}
+
+/* ------------------ */
+/* Global Reset       */
+/* ------------------ */
+html,
+body {
+    margin          : 0;
+    padding         : 0;
+    font-family     : 'Times New Roman', Times, serif;
+    width           : 100%;
+    height          : 100%;
+    background-color: var(--bg-color);
+    color           : var(--text-color);
+    overflow-y      : auto;
+}
+
+/* ------------------ */
+/* Layout Helpers     */
+/* ------------------ */
+.client-layout-container {
+    display       : flex;
+    flex-direction: column;
+    width         : 100%;
+    min-height    : 100vh;
+
+    .client-main-container {
+        flex            : 1;
+        width           : 100%;
+        margin          : 0;
+        padding         : 0;
+        background-color: var(--bg-color);
+    }
+}
+
+/* ------------------ */
+/* Header/Footer/Menu  */
+/* ------------------ */
+.ant-layout-header {
+    position        : fixed;
+    width           : 100%;
+    z-index         : 1000;
+    background-color: var(--header-bg);
+    color           : var(--menu-text);
+    font-size       : 18px; // tăng từ 14-16px mặc định
+    font-weight     : 600;
+}
+
+
+/* Header dropdown menu cho dark mode */
+.ant-dropdown-menu {
+    background-color: var(--menu-bg) !important;
+    color           : var(--menu-text) !important;
+
+
+    .ant-dropdown-menu-item {
+        color    : var(--menu-text) !important;
+        font-size: 16px !important;
+    }
+
+    .ant-dropdown-menu-item:hover {
+        background-color: var(--luxury-gold) !important;
+        color           : var(--menu-text) !important;
+    }
+}
+
+.ant-layout-footer {
+    background-color: var(--footer-bg);
+    color           : var(--text-color);
+    padding         : 50px 60px;
+    box-shadow      : 0 -1px 6px rgba(0, 0, 0, 0.05);
+}
+
+.ant-menu {
+    background-color: var(--menu-bg);
+    color           : var(--menu-text);
+}
+
+
+
+.ant-menu-item-selected {
+    background-color: transparent !important;
+    color           : var(--menu-text) !important;
+}
+
+/* ------------------ */
+/* Buttons / Cards    */
+/* ------------------ */
+.btn-primary {
+    background-color: var(--btn-bg);
+    color           : var(--btn-text);
+    border          : none;
+
+    &:hover {
+        opacity: 0.85;
+    }
+}
+
+.card {
+    background-color: var(--card-bg);
+    color           : var(--text-page);
+    border-radius   : 8px;
+    padding         : 16px;
+}
+
+/* ------------------ */
+/* Typography helpers */
+/* ------------------ */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--luxury-gold);
+}
+
+p,
+span,
+li,
+a {
+    color: var(--text-page);
+}
+
+/* Links hover */
+a {
+    text-decoration: none;
+    color          : var(--text-page);
+
+    &:hover {
+        color: var(--luxury-gold);
+    }
+}
+
+//  icon
+/* Icon menu đồng bộ theo mode */
+.ant-menu-item-icon {
+    color: var(--menu-text) !important; // theo theme
+}
+
+/* Link trong menu */
+.ant-menu-item a {
+    color: var(--menu-text) !important; // theo theme
+}
+
+/* Khi hover menu item */
+.ant-menu-item:hover,
+.ant-menu-item-active,
+.ant-menu-item-selected {
+    color: var(--luxury-gold) !important; // màu nổi khi hover/select
+}
+
+/* ------------------ */
+/* Utility classes    */
+/* ------------------ */
+.text-center {
+    text-align: center;
+}
+
+.mt-1 {
+    margin-top: 8px;
+}
+
+.mt-2 {
+    margin-top: 16px;
+}
+
+.mb-1 {
+    margin-bottom: 8px;
+}
+
+.mb-2 {
+    margin-bottom: 16px;
+}
+
+.custom-menu {
+    width: 550px;
+}
+
+/* Hover trên item bình thường trong Drawer */
+.ant-drawer .ant-menu-item:hover {
+    background-color: var(--luxury-gold) !important;
+    /* trực tiếp var() */
+    color           : var(--menu-text) !important;
+}
+
+/* Item đang được chọn */
+.ant-drawer .ant-menu-item-selected {
+    background-color: var(--luxury-gold) !important;
+    color           : var(--menu-text) !important;
+}
+
+/* Hover trên item đã chọn */
+.ant-drawer .ant-menu-item-selected:hover {
+    /* dùng filter nếu muốn làm tối đi 1 chút */
+    background-color: var(--luxury-gold) !important;
+    filter          : brightness(90%);
+    color           : var(--menu-text) !important;
+}
+
+/*
+Màu chủ đạo:
+- Nền chính:        #1A2733
+- Tiêu đề / heading: #faad14
+- Chữ / text:        wheat
+*/
+
+/*
+Các biến tham khảo cho page:
+const PRIMARY_BACKGROUND = "#a6b4c2ff"; // Nền chính page
+const TITLE_COLOR         = "#faad14";   // Màu tiêu đề
+const TEXT_COLOR          = "#faad14";   // Màu chữ
+*/
+
+/*
+Ví dụ Home Page:
+.page-home {
+    .section-header {
+        background-color: var(--header-bg); // Nền header
+        color           : var(--text-page); // Màu chữ
+    }
+
+    .card-feature {
+        background-color: var(--card-bg);   // Nền card
+        color           : var(--text-page); // Màu chữ
+    }
+
+    .btn-book {
+        @extend .btn-primary;               // Nút đặt sân dùng style chung
+    }
+}
+*/
+
+/* =================== Page Template =================== */
+/*
+Tên page: [TÊN PAGE]
+
+Màu chủ đạo:
+- Nền chính:        #1A2733
+- Tiêu đề / heading: #faad14
+- Chữ / text:        wheat
+
+Biến tham khảo:
+- --primary-bg  : Nền chính page
+- --title-color : Màu tiêu đề / heading
+- --text-page   : Màu chữ nội dung
+- --card-bg     : Nền card
+- .btn-primary  : Nút chuẩn (dùng cho nút đặt sân, các nút chính)
+
+Ví dụ sử dụng:
+.[page-class] {
+    .section-header {
+        background-color: var(--header-bg); // Nền header
+        color           : var(--text-page); // Màu chữ
+    }
+
+    .card-feature {
+        background-color: var(--card-bg);   // Nền card
+        color           : var(--text-page); // Màu chữ
+    }
+
+    .btn-book {
+        @extend .btn-primary;               // Nút đặt sân dùng style chung
+    }
+}
+*/
+
+// =======Cách áp dụng vào mẫu=======
+// ví dụ
+/*
+.page-booking {
+    .section-header {
+        background-color: var(--header-bg);
+        color           : var(--text-page);
+    }
+
+    .card-feature {
+        background-color: var(--card-bg);
+        color           : var(--text-page);
+    }
+
+    .btn-book {
+        @extend .btn-primary;
+    }
+}
+*/

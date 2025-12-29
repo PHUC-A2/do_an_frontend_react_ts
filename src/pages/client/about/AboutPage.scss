@@ -1,0 +1,58 @@
+.page-about {
+    width           : 100%;
+    min-height      : 100vh;
+    background-color: var(--primary-background);
+    color           : var(--text-color-page);
+
+    .page-about-content {
+        max-width: 1200px;
+        margin   : 0 auto;
+        padding  : 24px 16px;
+    }
+
+    .page-title {
+        text-align   : center;
+        margin-bottom: 48px;
+
+        h1 {
+            color         : var(--title-color);
+            font-size     : 48px;
+            letter-spacing: 1.5px;
+        }
+
+        p {
+            font-size: 18px;
+            color    : var(--text-color-page);
+            opacity  : 0.85;
+        }
+    }
+
+    .section-features {
+        margin-top   : 40px;
+        margin-bottom: 60px;
+
+        .card-feature {
+            background-color: var(--card-bg);
+            color           : var(--text-color-page);
+            border-radius   : 12px;
+            text-align      : center;
+            padding         : 20px;
+
+            .feature-icon {
+                font-size    : 32px;
+                color        : var(--title-color);
+                margin-bottom: 12px;
+            }
+
+            h4 {
+                color        : var(--title-color);
+                margin-bottom: 8px;
+            }
+
+            p {
+                color    : var(--text-color-page);
+                font-size: 16px;
+            }
+        }
+    }
+}
