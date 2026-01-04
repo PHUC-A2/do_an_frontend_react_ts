@@ -1,7 +1,8 @@
 import { ToastContainer, Slide } from "react-toastify"; // thêm Slide
 import AppRouter from "./routes/AppRouter";
 import { useEffect, useState } from "react";
-import MessageButton from "./pages/chat/MessageButton";
+import MessageButton from "./components/client/chat/MessageButton";
+import BackToTop from "./components/client/backtotop/BackToTop";
 const App = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
@@ -13,6 +14,7 @@ const App = () => {
 
   return (
     <>
+      <BackToTop />
       <MessageButton />
       <AppRouter theme={theme} toggleTheme={toggleTheme} />
       <ToastContainer

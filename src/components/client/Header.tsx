@@ -1,5 +1,5 @@
-import { Menu, Layout, Drawer, Button, Dropdown, Switch, Space } from 'antd';
-import { MailOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons';
+import { Menu, Layout, Drawer, Button, Dropdown, Switch, Space, Tooltip } from 'antd';
+import { CloseOutlined, MailOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons';
 import { IoMdFootball } from "react-icons/io";
 import type { MenuProps } from 'antd';
 import { useState, useEffect } from 'react';
@@ -66,11 +66,13 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
         >
             {/* Menu chính */}
             {isMobile ? (
-                <Button
-                    type="text"
-                    icon={<MenuOutlined style={{ color: 'var(--menu-text)' }} />}
-                    onClick={() => setDrawerVisible(true)}
-                />
+                <Tooltip title="Mở thanh bên" placement="right">
+                    <Button
+                        type="text"
+                        icon={<MenuOutlined style={{ color: 'var(--menu-text)' }} />}
+                        onClick={() => setDrawerVisible(true)}
+                    />
+                </Tooltip>
             ) : (
                 <Menu
                     onClick={handleClick}
@@ -85,12 +87,14 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
 
             {/* Right controls */}
             <Space size="middle">
-                <Switch
-                    checked={isDark}
-                    onChange={toggleTheme}
-                    checkedChildren="🌙"
-                    unCheckedChildren="☀️"
-                />
+                <Tooltip title={isDark ? "Giao diện sáng" : "Giao diện tối"}>
+                    <Switch
+                        checked={isDark}
+                        onChange={toggleTheme}
+                        checkedChildren="🌙"
+                        unCheckedChildren="☀️"
+                    />
+                </Tooltip>
                 <Dropdown menu={{ items: settingsMenu }} placement="bottomRight">
                     <Button type="text" icon={<UserOutlined />} style={{ fontSize: "16px", fontWeight: 600, color: 'var(--menu-text)' }}>
                         Cài đặt
@@ -104,6 +108,11 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                     title="Menu"
                     placement="left"
                     onClose={() => setDrawerVisible(false)}
+                    closeIcon={
+                        <Tooltip title="Đóng menu">
+                            <CloseOutlined />
+                        </Tooltip>
+                    }
                     open={drawerVisible}
                     size={300}
                     style={{
@@ -112,7 +121,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                     }}
                     styles={{
                         header: { backgroundColor: 'var(--header-bg)', color: 'var(--menu-text)' },
-                        body: { backgroundColor: 'var(--menu-bg)', overflowX:"hidden" }
+                        body: { backgroundColor: 'var(--menu-bg)', overflowX: "hidden" }
                     }}
                     mask={false} // tắt overlay để vẫn tương tác với body
                     getContainer={false} // Drawer sẽ render trực tiếp trong bod

@@ -38,7 +38,7 @@ const Footer = () => {
                     <Space orientation="vertical" size="small">
                         <Text style={{ color: styles.color }}>📍 Đường Đặng Thai Mai, Phường Tô Hiệu, Tỉnh Sơn La.</Text>
                         <Text style={{ color: styles.color }}>📞 0123 456 789</Text>
-                        <Text style={{ color: styles.color }}>✉️ nhom03@email.com</Text>
+                        <Text style={{ color: styles.color }}>✉️ admin@email.com</Text>
                     </Space>
                 </Col>
 
