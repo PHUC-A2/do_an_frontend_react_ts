@@ -1,29 +1,41 @@
 /* ================= ADMIN LAYOUT ================= */
 
 .admin-layout-container {
-    width        : 100%;
-    min-height   : 100vh;
+    width     : 100%;
+    min-height: 100vh;
+    display   : flex; // bố cục ngang: sider + main
+    overflow  : hidden; // chỉ content được cuộn
 }
 
 .admin-layout-main {
-    min-height: 100vh;
+    flex          : 1; // chiếm toàn bộ phần còn lại
+    display       : flex;
+    flex-direction: column;
+    height        : 100vh; // để header + footer + content nằm đúng
+    overflow      : hidden; // chỉ content cuộn
 }
 
 .admin-header {
-    background: #001529;
-    color     : #fff;
-    padding   : 0 24px;
+    height     : 64px;
+    line-height: 64px;
+    flex-shrink: 0; // không bị co lại
+    background : #001529;
+    color      : #fff;
+    padding    : 0 24px;
 }
 
 .admin-content {
+    flex      : 1; // chiếm phần còn lại của main
     margin    : 16px;
-    padding   : 50px 24px 24px 24px;
+    padding   : 24px;
     background: #fff;
+    overflow-y: auto; // ✅ content cuộn được
 }
 
 /* ================= ADMIN SIDER ================= */
 
 .admin-sider {
+    height    : 100vh; // sider cố định toàn chiều cao
     background: #001529 !important;
 
     /* Menu nền */
