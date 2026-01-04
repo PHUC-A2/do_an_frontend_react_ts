@@ -3,9 +3,6 @@
     flex-direction: column;
     width         : 100%;
     min-height    : 100vh;
-    // .client-header-container {
-    //     /* Header luôn dùng biến từ global.scss */
-    // }
 
     .client-main-container {
         flex            : 1;
@@ -15,10 +12,6 @@
         background-color: var(--bg-color);
         padding-top     : 60px !important;
     }
-
-    // .client-footer-container {
-    //     /* Footer dùng biến global */
-    // }
 }
 
 /* Responsive helper */
