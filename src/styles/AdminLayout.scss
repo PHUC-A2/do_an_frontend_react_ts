@@ -1,57 +1,162 @@
-/* AdminLayout.scss */
+/* ================= ADMIN LAYOUT ================= */
+
 .admin-layout-container {
-    display         : flex;
-    min-height      : 100vh;
-    background-color: var(--bg-color);
+    width        : 100%;
+    min-height   : 100vh;
+}
 
-    .admin-sider {
-        min-width: 200px;
-        max-width: 250px;
+.admin-layout-main {
+    min-height: 100vh;
+}
 
-        .ant-menu {
-            background-color: var(--menu-bg);
-            color           : var(--menu-text);
+.admin-header {
+    background: #001529;
+    color     : #fff;
+    padding   : 0 24px;
+}
 
-            .ant-menu-item,
-            .ant-menu-submenu-title {
-                color: var(--menu-text) !important;
+.admin-content {
+    margin    : 16px;
+    padding   : 50px 24px 24px 24px;
+    background: #fff;
+}
 
-                &:hover {
-                    background-color: var(--luxury-gold) !important;
-                    color           : var(--menu-text) !important;
-                }
-            }
+/* ================= ADMIN SIDER ================= */
 
-            .ant-menu-item-selected {
-                background-color: var(--luxury-gold) !important;
-            }
+.admin-sider {
+    background: #001529 !important;
+
+    /* Menu nền */
+    .ant-menu {
+        background: #001529 !important;
+    }
+
+    /* ===== TEXT (TẤT CẢ: span, label, link) ===== */
+    .ant-menu-title-content,
+    .ant-menu-item,
+    .ant-menu-submenu-title {
+        color      : #ffffff !important;
+        font-weight: 500;
+    }
+
+    /* Link trong menu */
+    .ant-menu-title-content a {
+        color          : inherit !important;
+        text-decoration: none !important;
+        display        : block;
+        width          : 100%;
+    }
+
+    /* ===== ICON ===== */
+    .ant-menu-item-icon,
+    .ant-menu-submenu-title .anticon,
+    svg {
+        color    : #ffffff !important;
+        fill     : #ffffff !important;
+        font-size: 16px;
+    }
+
+    /* ===== HOVER ===== */
+    .ant-menu-item:hover,
+    .ant-menu-submenu-title:hover {
+        background-color: rgba(250, 173, 20, 0.25) !important;
+
+        .ant-menu-title-content,
+        a {
+            color: #faad14 !important;
+        }
+
+        .ant-menu-item-icon,
+        svg {
+            color: #faad14 !important;
+            fill : #faad14 !important;
         }
     }
 
-    .admin-layout-main {
-        flex          : 1;
-        display       : flex;
-        flex-direction: column;
+    /* ===== ACTIVE ===== */
+    .ant-menu-item-selected {
+        background-color: #faad14 !important;
 
-        .admin-header {
-            background-color: var(--header-bg);
-            padding         : 0 24px;
-            height          : 64px;
-            line-height     : 64px;
+        .ant-menu-title-content,
+        a {
+            color      : #001529 !important;
+            font-weight: 700;
         }
 
-        .admin-content {
-            flex            : 1;
-            margin          : 16px;
-            padding         : 24px;
-            background-color: var(--card-bg);
-            border-radius   : 8px;
-        }
-
-        .admin-footer {
-            background-color: var(--footer-bg);
-            padding         : 20px 24px;
-            text-align      : center;
+        .ant-menu-item-icon,
+        svg {
+            color: #001529 !important;
+            fill : #001529 !important;
         }
     }
+
+    /* ===== SUBMENU ===== */
+    .ant-menu-sub {
+        background: #000c17 !important;
+    }
+
+    .ant-menu-submenu-arrow {
+        color: #ffffff !important;
+    }
+}
+
+/* ================= COLLAPSED SUBMENU POPUP ================= */
+
+.ant-menu-submenu-popup {
+    background: #001529 !important;
+
+    .ant-menu {
+        background: #001529 !important;
+    }
+
+    /* Text + link */
+    .ant-menu-title-content,
+    .ant-menu-item {
+        color      : #ffffff !important;
+        font-weight: 500;
+    }
+
+    .ant-menu-title-content a {
+        color          : inherit !important;
+        text-decoration: none !important;
+    }
+
+    /* Icon */
+    .ant-menu-item-icon,
+    svg {
+        color: #ffffff !important;
+        fill : #ffffff !important;
+    }
+
+    /* Hover */
+    .ant-menu-item:hover {
+        background-color: rgba(250, 173, 20, 0.25) !important;
+
+        .ant-menu-title-content,
+        a {
+            color: #faad14 !important;
+        }
+    }
+
+    /* Active */
+    .ant-menu-item-selected {
+        background-color: #faad14 !important;
+
+        .ant-menu-title-content,
+        a {
+            color      : #001529 !important;
+            font-weight: 700;
+        }
+
+        .ant-menu-item-icon,
+        svg {
+            color: #001529 !important;
+            fill : #001529 !important;
+        }
+    }
+}
+
+.text-dashboard {
+    text-decoration: none !important;
+    color          : inherit !important;
 }

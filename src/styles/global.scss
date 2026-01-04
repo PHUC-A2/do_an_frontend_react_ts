@@ -94,25 +94,7 @@ body {
 }
 
 /* ------------------ */
-/* Layout Helpers     */
-/* ------------------ */
-.client-layout-container {
-    display       : flex;
-    flex-direction: column;
-    width         : 100%;
-    min-height    : 100vh;
-
-    .client-main-container {
-        flex            : 1;
-        width           : 100%;
-        margin          : 0;
-        padding         : 0;
-        background-color: var(--bg-color);
-    }
-}
-
-/* ------------------ */
-/* Header/Footer/Menu  */
+/* Header/Footer/Menu */
 /* ------------------ */
 .ant-layout-header {
     position        : fixed;
@@ -120,16 +102,14 @@ body {
     z-index         : 1000;
     background-color: var(--header-bg);
     color           : var(--menu-text);
-    font-size       : 18px; // tăng từ 14-16px mặc định
+    font-size       : 18px;
     font-weight     : 600;
 }
 
-
-/* Header dropdown menu cho dark mode */
+/* Header dropdown menu */
 .ant-dropdown-menu {
     background-color: var(--menu-bg) !important;
     color           : var(--menu-text) !important;
-
 
     .ant-dropdown-menu-item {
         color    : var(--menu-text) !important;
@@ -153,8 +133,6 @@ body {
     background-color: var(--menu-bg);
     color           : var(--menu-text);
 }
-
-
 
 .ant-menu-item-selected {
     background-color: transparent !important;
@@ -200,32 +178,27 @@ a {
     color: var(--text-page);
 }
 
-/* Links hover */
 a {
     text-decoration: none;
-    color          : var(--text-page);
 
     &:hover {
         color: var(--luxury-gold);
     }
 }
 
-//  icon
-/* Icon menu đồng bộ theo mode */
+/* Icon & Menu */
 .ant-menu-item-icon {
-    color: var(--menu-text) !important; // theo theme
+    color: var(--menu-text) !important;
 }
 
-/* Link trong menu */
 .ant-menu-item a {
-    color: var(--menu-text) !important; // theo theme
+    color: var(--menu-text) !important;
 }
 
-/* Khi hover menu item */
 .ant-menu-item:hover,
 .ant-menu-item-active,
 .ant-menu-item-selected {
-    color: var(--luxury-gold) !important; // màu nổi khi hover/select
+    color: var(--luxury-gold) !important;
 }
 
 /* ------------------ */
@@ -255,110 +228,19 @@ a {
     width: 550px;
 }
 
-/* Hover trên item bình thường trong Drawer */
+/* Drawer menu */
 .ant-drawer .ant-menu-item:hover {
     background-color: var(--luxury-gold) !important;
-    /* trực tiếp var() */
     color           : var(--menu-text) !important;
 }
 
-/* Item đang được chọn */
 .ant-drawer .ant-menu-item-selected {
     background-color: var(--luxury-gold) !important;
     color           : var(--menu-text) !important;
 }
 
-/* Hover trên item đã chọn */
 .ant-drawer .ant-menu-item-selected:hover {
-    /* dùng filter nếu muốn làm tối đi 1 chút */
     background-color: var(--luxury-gold) !important;
     filter          : brightness(90%);
     color           : var(--menu-text) !important;
 }
-
-/*
-Màu chủ đạo:
-- Nền chính:        #1A2733
-- Tiêu đề / heading: #faad14
-- Chữ / text:        wheat
-*/
-
-/*
-Các biến tham khảo cho page:
-const PRIMARY_BACKGROUND = "#a6b4c2ff"; // Nền chính page
-const TITLE_COLOR         = "#faad14";   // Màu tiêu đề
-const TEXT_COLOR          = "#faad14";   // Màu chữ
-*/
-
-/*
-Ví dụ Home Page:
-.page-home {
-    .section-header {
-        background-color: var(--header-bg); // Nền header
-        color           : var(--text-page); // Màu chữ
-    }
-
-    .card-feature {
-        background-color: var(--card-bg);   // Nền card
-        color           : var(--text-page); // Màu chữ
-    }
-
-    .btn-book {
-        @extend .btn-primary;               // Nút đặt sân dùng style chung
-    }
-}
-*/
-
-/* =================== Page Template =================== */
-/*
-Tên page: [TÊN PAGE]
-
-Màu chủ đạo:
-- Nền chính:        #1A2733
-- Tiêu đề / heading: #faad14
-- Chữ / text:        wheat
-
-Biến tham khảo:
-- --primary-bg  : Nền chính page
-- --title-color : Màu tiêu đề / heading
-- --text-page   : Màu chữ nội dung
-- --card-bg     : Nền card
-- .btn-primary  : Nút chuẩn (dùng cho nút đặt sân, các nút chính)
-
-Ví dụ sử dụng:
-.[page-class] {
-    .section-header {
-        background-color: var(--header-bg); // Nền header
-        color           : var(--text-page); // Màu chữ
-    }
-
-    .card-feature {
-        background-color: var(--card-bg);   // Nền card
-        color           : var(--text-page); // Màu chữ
-    }
-
-    .btn-book {
-        @extend .btn-primary;               // Nút đặt sân dùng style chung
-    }
-}
-*/
-
-// =======Cách áp dụng vào mẫu=======
-// ví dụ
-/*
-.page-booking {
-    .section-header {
-        background-color: var(--header-bg);
-        color           : var(--text-page);
-    }
-
-    .card-feature {
-        background-color: var(--card-bg);
-        color           : var(--text-page);
-    }
-
-    .btn-book {
-        @extend .btn-primary;
-    }
-}
-*/

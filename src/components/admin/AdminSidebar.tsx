@@ -1,6 +1,6 @@
 import { Layout, Menu } from 'antd';
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, Outlet } from 'react-router';
 import {
     DashboardOutlined,
     UserOutlined,
@@ -10,14 +10,15 @@ import {
 } from '@ant-design/icons';
 import { MdFeaturedPlayList, MdOutlineSecurity } from 'react-icons/md';
 import { AiOutlineProduct } from 'react-icons/ai';
-import { FaUserCog,  } from 'react-icons/fa';
+import { FaUserCog } from 'react-icons/fa';
+
+const { Header, Content, Sider } = Layout;
 
 const AdminSidebar = () => {
-    const { Sider } = Layout;
     const [collapsed, setCollapsed] = useState(false);
 
     const items = [
-        { key: '1', label: <Link to="/admin">Dashboard</Link>, icon: <DashboardOutlined /> },
+        { key: '1', label: <Link to="/admin" className='text-dashboard'>Dashboard</Link>, icon: <DashboardOutlined /> },
         {
             key: 'sub1',
             label: 'Feature',
@@ -42,9 +43,33 @@ const AdminSidebar = () => {
     ];
 
     return (
-        <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed} className="admin-sider">
-            <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline" items={items} />
-        </Sider>
+        <>
+            <Sider
+                collapsible
+                collapsed={collapsed}
+                onCollapse={setCollapsed}
+                className="admin-sider"
+            >
+                <Menu
+                    theme="dark"
+                    mode="inline"
+                    items={items}
+                    defaultSelectedKeys={['1']}
+                />
+
+            </Sider>
+
+            <Layout className="admin-layout-main">
+                <Header className="admin-header">
+                    <h3>Chào mừng bạn đến với trang quản trị !</h3>
+                </Header>
+
+                <Content className="admin-content">
+                    <Outlet />
+                </Content>
+
+            </Layout>
+        </>
     );
 };
 
