@@ -3,6 +3,7 @@ import { AiFillTikTok, AiFillYoutube } from "react-icons/ai";
 import { BiLogoFacebookCircle } from "react-icons/bi";
 import { SiZalo } from "react-icons/si";
 import { Link } from "react-router";
+import './Footer.scss';
 
 const { Footer: AntFooter } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -48,11 +49,11 @@ const Footer = () => {
                         Liên kết nhanh
                     </Title>
                     <Space orientation="vertical" size="small">
-                        <Link to="/" style={{ color: styles.color }}>Trang chủ</Link>
-                        <Link to="/booking" style={{ color: styles.color }}>Đặt sân</Link>
-                        <Link to="/about" style={{ color: styles.color }}>Về chúng tôi</Link>
-                        <Link to="/contact" style={{ color: styles.color }}>Liên hệ</Link>
-                        <Link to="/admin" style={{ color: styles.color }}>Trang quản trị</Link>
+                        <Link to="/" className="footer-link">Trang chủ</Link>
+                        <Link to="/booking" className="footer-link">Đặt sân</Link>
+                        <Link to="/about" className="footer-link">Về chúng tôi</Link>
+                        <Link to="/contact" className="footer-link">Liên hệ</Link>
+                        <Link to="/admin" className="footer-link">Trang quản trị</Link>
                     </Space>
                 </Col>
 
