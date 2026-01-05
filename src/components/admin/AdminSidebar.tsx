@@ -1,6 +1,6 @@
-import { Layout, Menu } from 'antd';
+import { Breadcrumb, Layout, Menu } from 'antd';
 import { useState } from 'react';
-import { Link, Outlet } from 'react-router';
+import { Link, Outlet, useLocation } from 'react-router';
 import {
     DashboardOutlined,
     UserOutlined,
@@ -42,6 +42,19 @@ const AdminSidebar = () => {
         }
     ];
 
+    const location = useLocation();
+
+    // Tách path theo dấu "/"
+    const pathSnippets = location.pathname.split("/").filter(i => i);
+
+    // Tạo mảng breadcrumb (chỉ text)
+    const breadcrumbItems = pathSnippets.map((snippet) => ({
+        title: snippet, // chỉ text, không bọc Link
+    }));
+
+    // Chuỗi hiển thị
+    const breadcrumbText = `path: ${breadcrumbItems.map(i => i.title).join(" / ")}`;
+
     return (
         <>
             <Sider
@@ -62,6 +75,9 @@ const AdminSidebar = () => {
             <Layout className="admin-layout-main">
                 <Header className="admin-header">
                     <h3>Chào mừng bạn đến với trang quản trị !</h3>
+                    <Breadcrumb 
+                    // style={{ margin: '16px 10' }}
+                     items={[{ title: breadcrumbText }]} />
                 </Header>
 
                 <Content className="admin-content">

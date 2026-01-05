@@ -16,20 +16,24 @@
 }
 
 .admin-header {
-    height     : 64px;
-    line-height: 64px;
-    flex-shrink: 0; // không bị co lại
-    background : #001529;
-    color      : #fff;
-    padding    : 0 24px;
+    height        : 64px;
+    line-height   : 64px;
+    flex-shrink   : 0; // không bị co lại
+    background    : #001529;
+    color         : #fff;
+    // padding    : 0 24px;
+    padding-top   : 0px;
+    padding-bottom: 0px;
+    padding-left  : 24px;
+    padding-right : 24px;
 }
 
 .admin-content {
     flex      : 1; // chiếm phần còn lại của main
     margin    : 16px;
-    padding   : 24px;
+    padding   : 70px 24px 24px 24px;
     background: #fff;
-    overflow-y: auto; // ✅ content cuộn được
+    overflow-y: auto; //content cuộn được
 }
 
 /* ================= ADMIN SIDER ================= */
