@@ -2,7 +2,7 @@
     width           : 100%;
     min-height      : 100vh;
     background-color: var(--primary-background);
-    color           : var(--text-color-page);
+    color           : var(--text-page);
 
     .page-about-content {
         max-width: 1200px;
@@ -14,15 +14,15 @@
         text-align   : center;
         margin-bottom: 48px;
 
-        h1 {
-            color         : var(--title-color);
+        h1.ant-typography.css-var-root {
+            color         : var(--text-page);
             font-size     : 48px;
             letter-spacing: 1.5px;
         }
 
-        p {
+        .ant-typography.css-var-root {
             font-size: 18px;
-            color    : var(--text-color-page);
+            color    : var(--text-page);
             opacity  : 0.85;
         }
     }
@@ -33,24 +33,29 @@
 
         .card-feature {
             background-color: var(--card-bg);
-            color           : var(--text-color-page);
+            color           : var(--text-page);
             border-radius   : 12px;
             text-align      : center;
             padding         : 20px;
 
             .feature-icon {
                 font-size    : 32px;
-                color        : var(--title-color);
+                color        : var(--text-page);
                 margin-bottom: 12px;
             }
 
-            h4 {
-                color        : var(--title-color);
-                margin-bottom: 8px;
-            }
+            // h4 {
+            //     color        : var(--title-color);
+            //     margin-bottom: 8px;
+            // }
 
-            p {
-                color    : var(--text-color-page);
+            // p {
+            //     color    : var(--text-page);
+            //     font-size: 16px;
+            // }
+
+            .ant-typography.css-var-root {
+                color    : var(--text-page);
                 font-size: 16px;
             }
         }
