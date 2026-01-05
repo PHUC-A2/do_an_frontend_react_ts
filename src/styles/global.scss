@@ -5,6 +5,7 @@
 :root {
     /* Luxury Colors */
     --luxury-gold    : #faad14;
+    // --luxury-gold    : #ffaf1c;
     // --luxury-dark : #1a2733;
     --luxury-dark    : #2b3a4b;
     --luxury-light   : #ffffff;
@@ -243,4 +244,26 @@ a {
     background-color: var(--luxury-gold) !important;
     filter          : brightness(90%);
     color           : var(--menu-text) !important;
+}
+
+.ant-menu-light.ant-menu-horizontal>.ant-menu-item-selected::after,
+.ant-menu-light>.ant-menu.ant-menu-horizontal>.ant-menu-item-selected::after,
+.ant-menu-light.ant-menu-horizontal>.ant-menu-submenu-selected::after,
+.ant-menu-light>.ant-menu.ant-menu-horizontal>.ant-menu-submenu-selected::after {
+    border-bottom-width: var(--ant-menu-active-bar-height);
+    border-bottom-color: var(--luxury-gold);
+}
+
+/* Hover menu item */
+.ant-menu-light.ant-menu-horizontal .ant-menu-item:hover::after {
+    border-bottom-width: var(--ant-menu-active-bar-height);
+    /* chiều cao underline */
+    border-bottom-color: var(--luxury-gold);
+    /* màu đỏ khi hover */
+}
+
+/* Optional: đồng bộ submenu hover */
+.ant-menu-light.ant-menu-horizontal .ant-menu-submenu:hover::after {
+    border-bottom-width: var(--ant-menu-active-bar-height);
+    border-bottom-color: var(--luxury-gold);
 }

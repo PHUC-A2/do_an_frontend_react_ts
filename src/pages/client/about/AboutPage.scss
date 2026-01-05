@@ -22,7 +22,7 @@
 
         .ant-typography.css-var-root {
             font-size: 18px;
-            color    : var(--text-page);
+            color    : var(--text-color);
             opacity  : 0.85;
         }
     }
@@ -40,7 +40,7 @@
 
             .feature-icon {
                 font-size    : 32px;
-                color        : var(--text-page);
+                color        : var(--text-color);
                 margin-bottom: 12px;
             }
 
@@ -55,7 +55,7 @@
             // }
 
             .ant-typography.css-var-root {
-                color    : var(--text-page);
+                color    : var(--text-color);
                 font-size: 16px;
             }
         }
