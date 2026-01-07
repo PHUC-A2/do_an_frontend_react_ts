@@ -7,6 +7,7 @@ import { Link } from 'react-router';
 import { AiFillDashboard, AiFillHome, AiOutlineLogin, AiOutlineLogout, AiOutlineUserAdd } from 'react-icons/ai';
 import { MdAccountCircle } from 'react-icons/md';
 import { FaInfoCircle } from 'react-icons/fa';
+import ModalAccount from '../../pages/auth/modal/ModalAccount';
 
 const { Header: AntHeader } = Layout;
 type MenuItem = Required<MenuProps>['items'][number];
@@ -20,7 +21,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const [current, setCurrent] = useState('home');
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-
+    const [openModalAccount, setOpenModalAccount] = useState<boolean>(false);
     const isDark = theme === 'dark';
 
     useEffect(() => {
@@ -48,7 +49,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
         { label: <Link className='text-decoration-none' to="/login">Đăng nhập</Link>, key: 'login', icon: <AiOutlineLogin /> },
         { label: <Link className='text-decoration-none' to="/register">Đăng ký</Link>, key: 'register', icon: <AiOutlineUserAdd /> },
 
-        { label: <Link className='text-decoration-none' to="#">Tài khoản</Link>, key: 'account', icon: <MdAccountCircle /> },
+        { label: <Link className='text-decoration-none' to="#" onClick={() => setOpenModalAccount(true)}>Tài khoản</Link>, key: 'account', icon: <MdAccountCircle /> },
         { label: <Link className='text-decoration-none' to="#">Đăng xuất</Link>, key: 'logout', icon: <AiOutlineLogout /> },
 
         { label: <Link className='text-decoration-none' to="/admin">Trang quản trị</Link>, key: 'admin', icon: <AiFillDashboard /> },
@@ -137,6 +138,10 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                     />
                 </Drawer>
             )}
+            <ModalAccount
+                openModalAccount={openModalAccount}
+                setOpenModalAccount={setOpenModalAccount}
+            />
         </AntHeader>
     );
 };

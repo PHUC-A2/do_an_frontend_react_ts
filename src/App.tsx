@@ -3,6 +3,8 @@ import AppRouter from "./routes/AppRouter";
 import { useEffect, useState } from "react";
 import BackToTop from "./components/client/backtotop/BackToTop";
 import { useAuthInit } from "./hooks/init/useAuthInit";
+import { useAccountInit } from "./hooks/init/useAccountInit";
+import { useAppSelector } from "./redux/hooks";
 const App = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
@@ -15,7 +17,10 @@ const App = () => {
 
   // auth init
   useAuthInit();
+  useAccountInit();
 
+  const account = useAppSelector(state => state.account);
+  console.log(account);
 
   return (
     <>

@@ -15,6 +15,7 @@ import { logout } from '../../config/Api';
 import { useAppDispatch } from '../../redux/hooks';
 import { toast } from 'react-toastify';
 import { setLogout } from '../../redux/features/authSlice';
+import ModalAccount from '../../pages/auth/modal/ModalAccount';
 
 const { Header, Content, Sider } = Layout;
 
@@ -22,6 +23,7 @@ const AdminSidebar = () => {
     const [collapsed, setCollapsed] = useState(false);
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const [openModalAccount, setOpenModalAccount] = useState<boolean>(false);
 
     const handleLogout = async () => {
         try {
@@ -61,7 +63,7 @@ const AdminSidebar = () => {
             icon: <SettingOutlined />,
             children: [
                 { key: '8', label: <Link to="/">Client</Link>, icon: <UserOutlined /> },
-                { key: '9', label: <span>Tài khoản</span>, icon: <AccountBookFilled /> },
+                { key: '9', label: <span onClick={() => setOpenModalAccount(true)}>Tài khoản</span>, icon: <AccountBookFilled /> },
                 { key: '10', label: <span onClick={handleLogout}>Đăng xuất</span>, icon: <LogoutOutlined /> }
             ]
         }
@@ -110,6 +112,10 @@ const AdminSidebar = () => {
                 </Content>
 
             </Layout>
+            <ModalAccount
+                openModalAccount={openModalAccount}
+                setOpenModalAccount={setOpenModalAccount}
+            />
         </>
     );
 };
