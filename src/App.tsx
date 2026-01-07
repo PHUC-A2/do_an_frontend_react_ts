@@ -2,6 +2,7 @@ import { ToastContainer, Slide } from "react-toastify"; // thêm Slide
 import AppRouter from "./routes/AppRouter";
 import { useEffect, useState } from "react";
 import BackToTop from "./components/client/backtotop/BackToTop";
+import { useAuthInit } from "./hooks/init/useAuthInit";
 const App = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
@@ -10,6 +11,11 @@ const App = () => {
   useEffect(() => {
     document.body.className = theme;
   }, [theme]);
+
+
+  // auth init
+  useAuthInit();
+
 
   return (
     <>

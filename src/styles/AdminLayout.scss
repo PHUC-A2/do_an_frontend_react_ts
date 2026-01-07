@@ -117,6 +117,17 @@
 }
 
 /* ================= COLLAPSED SUBMENU POPUP ================= */
+.ant-menu-item {
+    .ant-menu-title-content>span {
+        color      : inherit !important;
+        font-weight: 500;
+        cursor     : pointer; // con trỏ chuột
+    }
+
+    &:hover .ant-menu-title-content>span {
+        color: #faad14 !important;
+    }
+}
 
 .ant-menu-submenu-popup {
     background: #001529 !important;

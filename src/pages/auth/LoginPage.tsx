@@ -1,11 +1,58 @@
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Button, Flex, Form, Input } from 'antd';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { motion } from 'framer-motion';
 import './Login.scss';
+import { useAppDispatch } from '../../redux/hooks';
+import { useState } from 'react';
+import type { ILogin } from '../../types/auth';
+import { login } from '../../config/Api';
+import { toast } from 'react-toastify';
+import { setToken } from '../../redux/features/authSlice';
 
 const LoginPage = () => {
     const [form] = Form.useForm();
+    const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+    const [loading, setLoading] = useState<boolean>(false);
+
+    const handleLogin = async (values: ILogin) => {
+        try {
+            setLoading(true);
+
+            const minDelay = new Promise(resolve => setTimeout(resolve, 2000));
+
+            const res = await login(values.username.trim(), values.password.trim()); // trim lần cuối
+
+            console.log(res);
+            await minDelay; // chạy spin 2s
+
+            if (res?.data?.statusCode === 200) {
+                const { access_token } = res.data.data;
+
+                localStorage.setItem('access_token', access_token);
+                dispatch(setToken(access_token));
+                form.resetFields();
+
+                const emailLogin = res?.data?.data?.user?.email;
+                navigate(emailLogin === "admin@gmail.com" ? "/admin" : "/");
+                toast.success('Đăng nhập thành công');
+            }
+        } catch (error: any) {
+            console.log(error);
+            const m = error?.response?.data?.message ?? "Không xác định";
+            console.log(m);
+            toast.error(
+                <div>
+                    <div><strong>Có lỗi xảy ra!</strong></div>
+                    <div>{m}</div>
+                </div>
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="login-container">
             <div className="overlay"></div>
@@ -19,13 +66,13 @@ const LoginPage = () => {
                 <Form
                     form={form}
                     className="login-form"
-                    // onFinish={handleLogin}
+                    onFinish={handleLogin}
                     layout="vertical"
                 >
                     <h1 className="login-title">Đăng nhập</h1>
 
                     <Form.Item
-                        name="email"
+                        name="username"
                         normalize={(value) => value?.trim()} // auto trim
                         rules={[
                             { type: "email", message: 'Email không hợp lệ!' },
@@ -58,7 +105,7 @@ const LoginPage = () => {
                             size="large"
                             htmlType="submit"
                             className="btn-login"
-                        // loading={loading}
+                            loading={loading}
                         >
                             <span>Đăng nhập</span>
                         </Button>
