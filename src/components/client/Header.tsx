@@ -1,13 +1,19 @@
 import { Layout, Menu, Drawer, Button, Dropdown, Space, Switch, Tooltip, Grid } from 'antd';
 import { MenuOutlined, UserOutlined } from '@ant-design/icons';
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { AiFillHome, AiOutlineLogin, AiOutlineLogout, AiOutlineUserAdd, AiFillDashboard } from 'react-icons/ai';
 import { IoMdFootball } from 'react-icons/io';
 import { MdAccountCircle } from 'react-icons/md';
 import { FaInfoCircle } from 'react-icons/fa';
 import ModalAccount from '../../pages/auth/modal/ModalAccount';
 import type { MenuProps } from 'antd';
+import { LuMoon } from 'react-icons/lu';
+import { IoSunny } from 'react-icons/io5';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { logout } from '../../config/Api';
+import { setLogout } from '../../redux/features/authSlice';
+import { toast } from 'react-toastify';
 
 const { Header: AntHeader } = Layout;
 const { useBreakpoint } = Grid;
@@ -23,9 +29,26 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const [current, setCurrent] = useState('home');
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [openModalAccount, setOpenModalAccount] = useState(false);
+    const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
+    const dispatch = useAppDispatch();
+    const navigate = useNavigate();
 
     const isDark = theme === 'dark';
     const screens = useBreakpoint();
+
+    // logout
+    const handleLogout = async () => {
+        try {
+            const res = await logout();
+            if (res?.data?.statusCode === 200) {
+                dispatch(setLogout());
+                toast.success('Đăng xuất thành công');
+                navigate('/');
+            }
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || 'Có lỗi xảy ra!');
+        }
+    };
 
     const handleClick: MenuProps['onClick'] = (e) => {
         setCurrent(e.key);
@@ -42,11 +65,17 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     ];
 
     const settingsMenu: MenuProps['items'] = [
-        { label: <Link to="/login" style={linkStyle}>Đăng nhập</Link>, key: 'login', icon: <AiOutlineLogin /> },
-        { label: <Link to="/register" style={linkStyle}>Đăng ký</Link>, key: 'register', icon: <AiOutlineUserAdd /> },
-        { label: <Link to="#" onClick={() => setOpenModalAccount(true)} style={linkStyle}>Tài khoản</Link>, key: 'account', icon: <MdAccountCircle /> },
-        { label: <Link to="#" style={linkStyle}>Đăng xuất</Link>, key: 'logout', icon: <AiOutlineLogout /> },
-        { label: <Link to="/admin" style={linkStyle}>Trang quản trị</Link>, key: 'admin', icon: <AiFillDashboard /> },
+        ...(isAuthenticated ?
+            [
+                { label: <Link to="#" onClick={() => setOpenModalAccount(true)} style={linkStyle}>Tài khoản</Link>, key: 'account', icon: <MdAccountCircle /> },
+                { label: <Link to="#" style={linkStyle} onClick={handleLogout}>Đăng xuất</Link>, key: 'logout', icon: <AiOutlineLogout /> },
+                { label: <Link to="/admin" style={linkStyle}>Trang quản trị</Link>, key: 'admin', icon: <AiFillDashboard /> },
+            ]
+            :
+            [
+                { label: <Link to="/login" style={linkStyle}>Đăng nhập</Link>, key: 'login', icon: <AiOutlineLogin /> },
+                { label: <Link to="/register" style={linkStyle}>Đăng ký</Link>, key: 'register', icon: <AiOutlineUserAdd /> },
+            ]),
     ];
 
     const headerStyle = {
@@ -99,7 +128,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
             {/* Right controls */}
             <Space size="middle">
                 <Tooltip title={isDark ? 'Giao diện sáng' : 'Giao diện tối'}>
-                    <Switch checked={isDark} onChange={toggleTheme} checkedChildren="🌙" unCheckedChildren="☀️" />
+                    <Switch checked={isDark} onChange={toggleTheme} checkedChildren={<LuMoon />} unCheckedChildren={<IoSunny />} />
                 </Tooltip>
 
                 <Dropdown menu={{ items: settingsMenu }} placement="bottomRight">

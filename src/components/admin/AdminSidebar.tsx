@@ -1,4 +1,4 @@
-import { Layout, Menu, Breadcrumb, Button, Grid, Drawer } from 'antd';
+import { Layout, Menu, Breadcrumb, Button, Grid, Drawer, Switch, Tooltip } from 'antd';
 import { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import {
@@ -16,6 +16,9 @@ import { useAppDispatch } from '../../redux/hooks';
 import { logout } from '../../config/Api';
 import { toast } from 'react-toastify';
 import { setLogout } from '../../redux/features/authSlice';
+import { IoMdClose } from 'react-icons/io';
+import { IoMenu, IoSunny } from 'react-icons/io5';
+import { LuMoon } from 'react-icons/lu';
 
 const { Sider, Header, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -110,9 +113,11 @@ const AdminSidebar = ({ theme, toggleTheme }: AdminSidebarProps) => {
                             padding: 0
                         }
                     }}
+                    closeIcon={false}
                     style={{
                         background: isDark ? '#001529' : '#fff', // set màu nền
                     }}
+                    size={200}
                     mask={false} // tắt overlay để vẫn tương tác với body
                 >
                     <Menu
@@ -151,11 +156,18 @@ const AdminSidebar = ({ theme, toggleTheme }: AdminSidebarProps) => {
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         {!screens.md && (
-                            <Button type="text" onClick={() => setDrawerVisible(true)}>
-                                ☰
+                            <Button
+                                type="text"
+                                onClick={() => setDrawerVisible(!drawerVisible)}
+                                style={{ color: isDark ? '#fff' : '#000', fontSize: 24 }}
+                            >
+                                <Tooltip title={drawerVisible ? "Đóng menu" : "Mở menu"}>{drawerVisible ? <IoMdClose /> : <IoMenu />}</Tooltip>
                             </Button>
+
                         )}
-                        <Button onClick={toggleTheme}>{isDark ? '🌞 Light' : '🌙 Dark'}</Button>
+                        <Tooltip title={isDark ? 'Giao diện sáng' : 'Giao diện tối'}>
+                            <Switch checked={isDark} onChange={toggleTheme} checkedChildren={<LuMoon />} unCheckedChildren={<IoSunny />} />
+                        </Tooltip>
                     </div>
                 </Header>
 
