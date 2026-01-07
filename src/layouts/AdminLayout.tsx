@@ -1,12 +1,23 @@
-import { Layout } from 'antd';
-import '../styles/AdminLayout.scss';
+import { Layout, ConfigProvider, theme as antdTheme } from 'antd';
+import { useState } from 'react';
 import AdminSidebar from '../components/admin/AdminSidebar';
 
 const AdminLayout = () => {
+    const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+    const toggleTheme = () => setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+    const isDark = theme === 'dark';
+
     return (
-        <Layout className="admin-layout-container">
-            <AdminSidebar />
-        </Layout>
+        <ConfigProvider
+            theme={{
+                algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+                token: { colorPrimary: '#faad14', borderRadius: 8 },
+            }}
+        >
+            <Layout style={{ minHeight: '100vh' }}>
+                <AdminSidebar theme={theme} toggleTheme={toggleTheme} />
+            </Layout>
+        </ConfigProvider>
     );
 };
 

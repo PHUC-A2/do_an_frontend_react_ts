@@ -33,7 +33,7 @@ const ModalAccount = ({ openModalAccount, setOpenModalAccount, onUpdateAccount, 
             onClose={() => setOpenModalAccount(false)}
             open={openModalAccount}
             size={420}
-            bodyStyle={{ padding: 0, backgroundColor: drawerBg }}
+            styles={{ body: { padding: 0, backgroundColor: drawerBg } }}
         >
             <motion.div
                 initial={{ opacity: 0, x: 50 }}

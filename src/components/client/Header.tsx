@@ -115,6 +115,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                 open={drawerVisible}
                 size="default"
                 styles={{ body: { padding: 0, background: isDark ? '#001529' : '#fff' } }}
+                mask={false}
             >
                 <Menu
                     onClick={handleClick}
