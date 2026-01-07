@@ -9,13 +9,21 @@ interface IProps {
     openModalAccount: boolean;
     setOpenModalAccount: (v: boolean) => void;
     onUpdateAccount?: () => void; // callback cho nút cập nhật
+    theme: 'light' | 'dark'; // thêm prop theme
 }
 
 const PRIMARY_COLOR = '#faad14';
-const DRAWER_BACKGROUND_COLOR = '#f0f2f5';
 
-const ModalAccount = ({ openModalAccount, setOpenModalAccount, onUpdateAccount }: IProps) => {
+const ModalAccount = ({ openModalAccount, setOpenModalAccount, onUpdateAccount, theme }: IProps) => {
     const account = useAppSelector(state => state.account.account);
+    const isDark = theme === 'dark';
+
+    // Màu theo theme
+    const drawerBg = isDark ? '#141414' : '#f0f2f5';
+    const cardBg = isDark ? '#1f1f1f' : '#fff';
+    const textColor = isDark ? '#fff' : '#000';
+    const dividerColor = PRIMARY_COLOR;
+    const avatarBg = isDark ? '#2C3E50' : '#2C3E50';
 
     return (
         <Drawer
@@ -25,7 +33,7 @@ const ModalAccount = ({ openModalAccount, setOpenModalAccount, onUpdateAccount }
             onClose={() => setOpenModalAccount(false)}
             open={openModalAccount}
             size={420}
-            styles={{ body: { padding: 0, backgroundColor: DRAWER_BACKGROUND_COLOR } }}
+            bodyStyle={{ padding: 0, backgroundColor: drawerBg }}
         >
             <motion.div
                 initial={{ opacity: 0, x: 50 }}
@@ -34,9 +42,9 @@ const ModalAccount = ({ openModalAccount, setOpenModalAccount, onUpdateAccount }
                 transition={{ duration: 0.4 }}
                 style={{
                     padding: 24,
-                    background: '#fff',
+                    background: cardBg,
                     borderRadius: 12,
-                    boxShadow: '0 6px 18px rgba(0,0,0,0.08)',
+                    boxShadow: isDark ? '0 6px 18px rgba(0,0,0,0.5)' : '0 6px 18px rgba(0,0,0,0.08)',
                     margin: 16
                 }}
             >
@@ -45,14 +53,14 @@ const ModalAccount = ({ openModalAccount, setOpenModalAccount, onUpdateAccount }
                     <Avatar
                         size={100}
                         icon={<UserOutlined style={{ color: PRIMARY_COLOR }} />}
-                        style={{ backgroundColor: '#2C3E50' }}
+                        style={{ backgroundColor: avatarBg }}
                     />
-                    <Title level={4} style={{ marginTop: 12, color: PRIMARY_COLOR }}>
+                    <Title level={4} style={{ marginTop: 12, color: PRIMARY_COLOR, textAlign: 'center' }}>
                         {account?.name || account?.fullName || 'Chưa có tên'}
                     </Title>
                 </div>
 
-                <Divider style={{ borderColor: PRIMARY_COLOR, margin: '16px 0' }} />
+                <Divider style={{ borderColor: dividerColor, margin: '16px 0' }} />
 
                 {/* Account Details */}
                 <Descriptions column={1} size="middle" bordered>
@@ -67,12 +75,12 @@ const ModalAccount = ({ openModalAccount, setOpenModalAccount, onUpdateAccount }
                             key={idx}
                             label={<Text style={{ color: PRIMARY_COLOR }}>{item.label}</Text>}
                         >
-                            <Text style={{ color: PRIMARY_COLOR }}>{item.value || 'N/A'}</Text>
+                            <Text style={{ color: textColor }}>{item.value || 'N/A'}</Text>
                         </Descriptions.Item>
                     ))}
                 </Descriptions>
 
-                <Divider style={{ borderColor: PRIMARY_COLOR, margin: '16px 0' }} />
+                <Divider style={{ borderColor: dividerColor, margin: '16px 0' }} />
 
                 {/* Nút cập nhật */}
                 {onUpdateAccount && (
