@@ -66,7 +66,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
         >
             {/* Menu chính */}
             {isMobile ? (
-                <Tooltip title="Mở thanh bên" placement="right">
+                <Tooltip title="Mở thanh bên">
                     <Button
                         type="text"
                         icon={<MenuOutlined style={{ color: 'var(--menu-text)' }} />}
@@ -109,7 +109,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                     placement="left"
                     onClose={() => setDrawerVisible(false)}
                     closeIcon={
-                        <Tooltip title="Đóng menu">
+                        <Tooltip title="Đóng thanh bên">
                             <CloseOutlined />
                         </Tooltip>
                     }

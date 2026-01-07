@@ -8,6 +8,7 @@ import NotFoundPage from "../pages/error/NotFoundPage";
 import AdminLayout from '../layouts/AdminLayout';
 import AdminPage from '../pages/admin/AdminPage';
 import AdminUserPage from '../pages/admin/user/AdminUserPage';
+import BookingPage from '../pages/client/booking/BookingPage';
 
 interface AppRouterProps {
     theme: 'light' | 'dark';
@@ -22,7 +23,7 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
             element: <ClientLayout theme={theme} toggleTheme={toggleTheme} />,
             children: [
                 { index: true, element: <HomePage /> },
-                { path: "/booking", element: "" },
+                { path: "/booking", element: <BookingPage /> },
                 { path: "/about", element: <AboutPage /> },
                 { path: "/contact", element: "" },
             ]

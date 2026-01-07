@@ -4,13 +4,13 @@
 /* ------------------ */
 :root {
     /* Luxury Colors */
-    --luxury-gold    : #faad14;
+    --luxury-gold       : #faad14;
     // --luxury-gold    : #ffaf1c;
     // --luxury-dark : #1a2733;
-    --luxury-dark    : #2b3a4b;
-    --luxury-light   : #ffffff;
-    --text-light     : #fff;
-    --text-dark      : #000;
+    --luxury-dark       : #2b3a4b;
+    --luxury-light      : #ffffff;
+    --text-light        : #fff;
+    --text-dark         : #000;
 
     /* BackToTop */
     --backtotop-bg-light: var(--luxury-light);
@@ -19,7 +19,7 @@
 
     /* Buttons */
     --btn-bg  : var(--luxury-gold);
-    --btn-text: var(--luxury-light);
+    --btn-text: var(--text-light);
 
     /* Card */
     --card-bg-light: #fff;
@@ -50,29 +50,31 @@
 /* Light / Dark mode */
 /* ------------------ */
 body.light {
-    --bg-color     : var(--primary-bg-light);
-    --text-color   : var(--text-dark);
-    --header-bg    : var(--header-bg-light);
-    --footer-bg    : var(--footer-bg-light);
-    --menu-bg      : var(--menu-bg-light);
-    --menu-text    : var(--menu-text-light);
-    --backtotop-bg : var(--backtotop-bg-light);
-    --card-bg      : var(--card-bg-light);
-    --text-page    : var(--text-page-light);
-    --footer-border: var(--footer-border-light);
+    --bg-color        : var(--primary-bg-light);
+    --text-color      : var(--text-dark);
+    --header-bg       : var(--header-bg-light);
+    --footer-bg       : var(--footer-bg-light);
+    --menu-bg         : var(--menu-bg-light);
+    --menu-text       : var(--menu-text-light);
+    --backtotop-bg    : var(--backtotop-bg-light);
+    --card-bg         : var(--card-bg-light);
+    --text-page       : var(--text-page-light);
+    --footer-border   : var(--footer-border-light);
+    // --btn-bg       : var(--btn-bg);
+    // --btn-text     : var(--btn-text);
 }
 
 body.dark {
-    --bg-color     : var(--primary-bg-dark);
-    --text-color   : var(--text-light);
-    --header-bg    : var(--header-bg-dark);
-    --footer-bg    : var(--footer-bg-dark);
-    --menu-bg      : var(--menu-bg-dark);
-    --menu-text    : var(--menu-text-dark);
-    --backtotop-bg : var(--backtotop-bg-dark);
-    --card-bg      : var(--card-bg-dark);
-    --text-page    : var(--text-page-dark);
-    --footer-border: var(--footer-border-dark);
+    --bg-color        : var(--primary-bg-dark);
+    --text-color      : var(--text-light);
+    --header-bg       : var(--header-bg-dark);
+    --footer-bg       : var(--footer-bg-dark);
+    --menu-bg         : var(--menu-bg-dark);
+    --menu-text       : var(--menu-text-dark);
+    --backtotop-bg    : var(--backtotop-bg-dark);
+    --card-bg         : var(--card-bg-dark);
+    --text-page       : var(--text-page-dark);
+    --footer-border   : var(--footer-border-dark);
 
     .ant-drawer-close {
         color: wheat !important;
