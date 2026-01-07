@@ -24,7 +24,6 @@ const LoginPage = () => {
 
             const res = await login(values.username.trim(), values.password.trim()); // trim lần cuối
 
-            console.log(res);
             await minDelay; // chạy spin 2s
 
             if (res?.data?.statusCode === 200) {
@@ -39,9 +38,7 @@ const LoginPage = () => {
                 toast.success('Đăng nhập thành công');
             }
         } catch (error: any) {
-            console.log(error);
             const m = error?.response?.data?.message ?? "Không xác định";
-            console.log(m);
             toast.error(
                 <div>
                     <div><strong>Có lỗi xảy ra!</strong></div>
