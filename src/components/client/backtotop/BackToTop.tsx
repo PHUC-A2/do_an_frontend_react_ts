@@ -3,8 +3,13 @@ import { motion } from "framer-motion";
 import { Tooltip } from "antd";
 import { UpOutlined } from "@ant-design/icons";
 
-const BackToTop: React.FC = () => {
+interface BackToTopProps {
+    theme: "light" | "dark";
+}
+
+const BackToTop: React.FC<BackToTopProps> = ({ theme }) => {
     const [visible, setVisible] = useState<boolean>(false);
+    const isDark = theme === "dark";
 
     useEffect(() => {
         const onScroll = (): void => {
@@ -12,10 +17,7 @@ const BackToTop: React.FC = () => {
         };
 
         window.addEventListener("scroll", onScroll);
-
-        return () => {
-            window.removeEventListener("scroll", onScroll);
-        };
+        return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
     const scrollToTop = (): void => {
@@ -41,11 +43,11 @@ const BackToTop: React.FC = () => {
                     position: "fixed",
                     bottom: 90,
                     right: 24,
-                    width: 35,
-                    height: 35,
+                    width: 40,
+                    height: 40,
                     borderRadius: "50%",
-                    background: "var(--backtotop-bg)",
-                    color: "var(--backtotop-text)",
+                    background: isDark ? "#faad14" : "#001529", // vàng nổi bật khi dark, tối khi light
+                    color: isDark ? "#001529" : "#fff", // chữ tương phản
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",

@@ -2,13 +2,13 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 import ClientLayout from "../layouts/ClientLayout";
 import HomePage from "../pages/client/home/HomePage";
 import AboutPage from "../pages/client/about/AboutPage";
+import BookingPage from "../pages/client/booking/BookingPage";
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
 import NotFoundPage from "../pages/error/NotFoundPage";
 import AdminLayout from '../layouts/AdminLayout';
 import AdminPage from '../pages/admin/AdminPage';
 import AdminUserPage from '../pages/admin/user/AdminUserPage';
-import BookingPage from '../pages/client/booking/BookingPage';
 
 interface AppRouterProps {
     theme: 'light' | 'dark';
@@ -17,15 +17,14 @@ interface AppRouterProps {
 
 const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
     const router = createBrowserRouter([
-        // client
         {
             path: "/",
             element: <ClientLayout theme={theme} toggleTheme={toggleTheme} />,
             children: [
                 { index: true, element: <HomePage /> },
-                { path: "/booking", element: <BookingPage /> },
-                { path: "/about", element: <AboutPage /> },
-                { path: "/contact", element: "" },
+                { path: "/booking", element: <BookingPage theme={theme} /> },
+                { path: "/about", element: <AboutPage theme={theme} /> },
+                { path: "/contact", element: <div>Liên hệ</div> },
             ]
         },
         {
@@ -35,9 +34,7 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
                 { index: true, element: <AdminPage /> },
                 { path: "/admin/user", element: <AdminUserPage /> },
             ]
-
         },
-
         { path: "/login", element: <LoginPage /> },
         { path: "/register", element: <RegisterPage /> },
         { path: "*", element: <NotFoundPage /> },

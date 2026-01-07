@@ -1,28 +1,24 @@
-/* ================= ClientLayout.scss ================= */
+// .client-layout-container {
+//     display       : flex;
+//     flex-direction: column;
+//     width         : 100%;
+//     min-height    : 100vh;
 
-.client-layout-container {
-    display       : flex;
-    flex-direction: column;
-    width         : 100%;
-    min-height    : 100vh;
+//     .client-main-container {
+//         flex            : 1;
+//         width           : 100%;
+//         margin          : 0;
+//         padding         : 24px;
+//         padding-top     : 64px; // header fixed
+//         background-color: transparent; // theme AntD handle
+//     }
+// }
 
-    .client-main-container {
-        flex            : 1;
-        width           : 100%;
-        margin          : 0;
-        background-color: var(--bg-color);
-        padding-top     : 70px !important;
-        padding-left    : 24px !important;
-        padding-right   : 24px !important;
-        padding-bottom  : 24px !important;
-    }
-}
-
-/* Responsive helper */
-@media (max-width: 768px) {
-    .client-layout-container {
-        .client-main-container {
-            padding: 0 16px;
-        }
-    }
-}
+// /* Responsive helper */
+// @media (max-width: 768px) {
+//     .client-layout-container {
+//         .client-main-container {
+//             padding: 16px;
+//         }
+//     }
+// }

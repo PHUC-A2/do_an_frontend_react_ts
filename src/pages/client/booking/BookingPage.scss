@@ -1,299 +1,57 @@
-
-/* ===================================================
-   BOOKING PAGE – THEME AWARE (LIGHT / DARK)
-   Ant Design v5 – Optimized & Clean
-   =================================================== */
-
-/* ===================================================
-   BOOKING CARD (BASE + TOKEN OVERRIDE)
-   =================================================== */
+/* BookingPage.scss */
 
 .booking-card {
-    background   : var(--card-bg);
-    border-radius: 12px;
+    .time-grid-wrapper {
+        overflow-x: auto; // nếu màn hình nhỏ có thể scroll ngang
+        padding   : 8px 0;
 
-    /* ===== AntD v5 token override (LIGHT – default) ===== */
-    .ant-input.css-var-root,
-    .ant-picker.css-var-root,
-    .ant-select.css-var-root {
-        --ant-color-text            : var(--text-page);
-        --ant-color-text-placeholder: rgba(0, 0, 0, 0.45);
-        --ant-color-border          : var(--footer-border);
-        --ant-color-bg-container    : transparent;
-    }
-
-    .ant-card-head {
-        border-bottom: 1px solid var(--footer-border);
-    }
-
-    .ant-card-head-title,
-    h5.ant-typography {
-        color: var(--text-page);
-    }
-}
-
-/* ===================================================
-   BUTTON
-   =================================================== */
-
-.booking-submit-btn {
-    background: var(--btn-bg) !important;
-    color     : var(--btn-text) !important;
-    border    : none;
-
-    &:hover {
-        opacity: 0.9;
-    }
-}
-
-/* ===================================================
-   FORM CONTROLS
-   =================================================== */
-
-.booking-card {
-
-    /* ===== INPUT / PICKER / SELECT BOX ===== */
-    .ant-input,
-    .ant-picker,
-    .ant-select-selector {
-        background-color: transparent !important;
-        color           : var(--text-page) !important;
-        border-color    : var(--footer-border) !important;
-    }
-
-    /* ===== PLACEHOLDER (INPUT / PICKER / SELECT) ===== */
-    .ant-input::placeholder,
-    .ant-picker-input>input::placeholder,
-    .ant-select-selection-placeholder {
-        color  : var(--text-page) !important;
-        opacity: 0.5;
-    }
-
-    /* ===== VALUE TEXT ===== */
-    .ant-picker-input>input,
-    .ant-select-selection-item,
-    .ant-select-content-value {
-        color: var(--text-page) !important;
-    }
-
-    /* ===== ICONS ===== */
-    .ant-picker-suffix,
-    .ant-picker-clear,
-    .ant-select-arrow,
-    .ant-select-clear {
-        color: var(--text-page) !important;
-    }
-
-    /* ===== SELECT DROPDOWN ===== */
-    .ant-select-dropdown {
-        background-color: var(--card-bg);
-        color           : var(--text-page);
-
-        .ant-select-item {
-            color: var(--text-page);
+        .time-grid {
+            display  : flex;
+            flex-wrap: wrap; // hoặc nowrap nếu muốn scroll ngang
+            gap      : 8px;
         }
 
-        .ant-select-item-option-selected {
-            background-color: rgba(250, 173, 20, 0.15);
-        }
+        .time-slot {
+            display        : flex;
+            flex-direction : column;
+            align-items    : center;
+            justify-content: center;
+            min-width      : 70px;
+            padding        : 6px;
+            border-radius  : 6px;
+            border         : 1px solid #ccc;
+            transition     : all 0.2s ease;
 
-        .ant-select-item-option-active {
-            background-color: rgba(250, 173, 20, 0.1);
+            &:hover {
+                transform : translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            }
+
+            &.booked {
+                cursor: not-allowed;
+                color : red;
+            }
+
+            &.selected {
+                border          : 2px solid #faad14; // viền vàng
+                background-color: rgba(250, 173, 20, 0.1); // nền vàng nhạt
+                color           : #faad14; // chữ nổi bật
+                // màu chính dùng border background hoặc box-shadow
+            }
+
+            .ant-tag {
+                margin-top: 4px;
+                font-size : 11px;
+            }
         }
     }
 }
 
-/* ===================================================
-   TOTAL PRICE
-   =================================================== */
-
-.booking-total-card {
-    background   : var(--card-bg);
-    border-radius: 10px;
-}
-
-.ant-typography.booking-total-price.css-var-root {
-    color      : var(--luxury-gold) !important;
-    font-weight: 700;
-}
-
-/* ===================================================
-   TIMELINE
-   =================================================== */
-/* ===================================================
-   TIMELINE FIX – HORIZONTAL LINE
-   =================================================== */
-/* ================= TIME GRID ================= */
-
-.time-grid-wrapper {
-    overflow-x    : auto;
-    padding-bottom: 12px;
-}
-
-.time-grid {
-    display          : grid;
-    grid-auto-flow   : column;
-    grid-auto-columns: 120px; // 1 giờ = 120px
-    align-items      : start;
-}
-
-/* ================= SLOT ================= */
-
-.time-slot {
-    text-align : center;
-    padding-top: 16px;
-}
-
-/* ================= TIME ================= */
-
-.time {
-    font-size    : 13px;
-    margin-bottom: 6px;
-    color        : var(--text-page);
-}
-
-/* ================= DOT + LINE ================= */
-
-.dot {
-    width        : 12px;
-    height       : 12px;
-    border-radius: 50%;
-    background   : var(--card-bg);
-    border       : 2px solid #8c8c8c;
-    margin       : 0 auto 6px;
-    position     : relative;
-    z-index      : 2;
-
-    /* 🔥 LINE NỐI SANG SLOT TIẾP THEO */
-    &::after {
-        content   : "";
-        position  : absolute;
-        top       : 50%;
-        left      : 100%; // bắt đầu từ MÉP PHẢI dot
-        transform : translateY(-50%);
-        width     : calc(120px - 12px); // slot - đường kính dot
-        height    : 2px;
-        background: var(--footer-border);
-        z-index   : 1;
-    }
-}
-
-/* SLOT CUỐI KHÔNG VẼ LINE */
-.time-slot:last-child {
-    .dot::after {
-        display: none;
-    }
-}
-
-.time-slot.booked {
-    .dot {
-        border-color: #ff4d4f;
-
-        &::after {
-            background: rgba(255, 77, 79, 0.6);
-        }
-    }
-}
-
-.time-slot.selected {
-    .dot {
-        border-color: #1677ff;
-
-        &::after {
-            background: rgba(22, 119, 255, 0.6);
-        }
-    }
-}
-
-.time-slot.free {
-    .dot {
-        border-color: #8c8c8c;
-
-        &::after {
-            background: var(--footer-border);
-        }
-    }
-}
-/* ===================================================
-   DARK MODE
-   =================================================== */
-
-body.dark {
-
+/* Optional: responsive small screens */
+@media (max-width: 576px) {
     .booking-card {
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
-
-        /* ===== AntD token override (DARK) ===== */
-        .ant-input.css-var-root,
-        .ant-picker.css-var-root,
-        .ant-select.css-var-root {
-            --ant-color-text            : var(--text-page);
-            --ant-color-text-placeholder: rgba(255, 255, 255, 0.45);
-            --ant-color-border          : var(--footer-border);
-            --ant-color-bg-container    : transparent;
-        }
-    }
-
-    /* ===== TIMELINE FIX ===== */
-    .booking-timeline {
-
-        .ant-timeline-item-content,
-        .ant-timeline-item-label {
-            color: var(--text-page) !important;
-        }
-
-        .ant-timeline-item-tail {
-            border-color: var(--footer-border) !important;
-        }
-
-        .ant-timeline-item-head {
-            background-color: var(--card-bg) !important;
-        }
-
-        .ant-timeline-item-gray {
-            .ant-timeline-item-head {
-                border-color: #8c8c8c !important;
-            }
-
-            .ant-timeline-item-tail {
-                border-color: rgba(140, 140, 140, 0.4) !important;
-            }
-        }
-
-        .ant-timeline-item-blue {
-            .ant-timeline-item-head {
-                border-color: #1677ff !important;
-            }
-
-            .ant-timeline-item-tail {
-                border-color: rgba(22, 119, 255, 0.5) !important;
-            }
-        }
-
-        .ant-timeline-item-red {
-            .ant-timeline-item-head {
-                border-color: #ff4d4f !important;
-            }
-
-            .ant-timeline-item-tail {
-                border-color: rgba(255, 77, 79, 0.5) !important;
-            }
-        }
-    }
-}
-
-/* ===================================================
-   MOBILE
-   =================================================== */
-
-@media (max-width: 768px) {
-    .booking-timeline {
-        padding-bottom: 8px;
-    }
-
-    .booking-card {
-        .ant-card-body {
-            padding: 16px;
+        .time-grid {
+            flex-wrap: nowrap; // scroll ngang
         }
     }
 }

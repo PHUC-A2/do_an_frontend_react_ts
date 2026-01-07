@@ -3,79 +3,77 @@ import { AiFillTikTok, AiFillYoutube } from "react-icons/ai";
 import { BiLogoFacebookCircle } from "react-icons/bi";
 import { SiZalo } from "react-icons/si";
 import { Link } from "react-router";
-import './Footer.scss';
 
 const { Footer: AntFooter } = Layout;
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
-const Footer = () => {
-    // Dùng trực tiếp CSS variables để theme light/dark
-    const styles = {
-        backgroundColor: 'var(--footer-bg)',
-        color: 'var(--text-color)',
-        gold: 'var(--luxury-gold)',
-        padding: "50px 60px",
-        borderTop: `1px solid var(--footer-border)`
+interface FooterProps {
+    theme: 'light' | 'dark';
+}
+
+const Footer = ({ theme }: FooterProps) => {
+    const isDark = theme === 'dark';
+    const bgColor = isDark ? '#001529' : '#fff';
+    const textColor = isDark ? '#fff' : '#000';
+    const goldColor = '#faad14';
+
+    const linkStyle = {
+        textDecoration: 'none',
+        color: textColor,
     };
 
+    const linkHoverCss = `
+    a.footer-link:hover {
+      color: ${goldColor} !important;
+    }
+  `;
+
     return (
-        <AntFooter style={{ backgroundColor: styles.backgroundColor, color: styles.color, padding: styles.padding, borderTop: styles.borderTop }}>
+        <AntFooter style={{ padding: '50px 60px', background: bgColor, color: textColor }}>
+            {/* Inject hover style */}
+            <style>{linkHoverCss}</style>
+
             <Row gutter={[32, 32]}>
-                {/* Cột 1: Về chúng tôi */}
                 <Col xs={24} sm={12} md={6}>
-                    <Title level={4} style={{ color: styles.gold, marginBottom: 16, fontWeight: 700 }}>
-                        Về chúng tôi
-                    </Title>
-                    <Paragraph style={{ color: styles.color }}>
-                        Football Pro là nền tảng đặt sân bóng đá hiện đại, tốc độ và thân thiện, mang đến trải nghiệm tuyệt vời cho người hâm mộ túc cầu.
-                    </Paragraph>
+                    <Title level={4} style={{ color: goldColor }}>Về chúng tôi</Title>
+                    <Text style={{ color: textColor }}>
+                        Football Pro là nền tảng đặt sân bóng đá hiện đại, tốc độ và thân thiện.
+                    </Text>
                 </Col>
 
-                {/* Cột 2: Liên hệ */}
                 <Col xs={24} sm={12} md={6}>
-                    <Title level={4} style={{ color: styles.gold, marginBottom: 16, fontWeight: 700 }}>
-                        Liên hệ
-                    </Title>
-                    <Space orientation="vertical" size="small">
-                        <Text style={{ color: styles.color }}>📍 Đường Đặng Thai Mai, Phường Tô Hiệu, Tỉnh Sơn La.</Text>
-                        <Text style={{ color: styles.color }}>📞 0123 456 789</Text>
-                        <Text style={{ color: styles.color }}>✉️ admin@email.com</Text>
+                    <Title level={4} style={{ color: goldColor }}>Liên hệ</Title>
+                    <Space orientation="vertical">
+                        <Text style={{ color: textColor }}>📍 Đường Đặng Thai Mai, Phường Tô Hiệu, Sơn La</Text>
+                        <Text style={{ color: textColor }}>📞 0123 456 789</Text>
+                        <Text style={{ color: textColor }}>✉️ admin@email.com</Text>
                     </Space>
                 </Col>
 
-                {/* Cột 3: Liên kết nhanh */}
                 <Col xs={24} sm={12} md={6}>
-                    <Title level={4} style={{ color: styles.gold, marginBottom: 16, fontWeight: 700 }}>
-                        Liên kết nhanh
-                    </Title>
-                    <Space orientation="vertical" size="small">
-                        <Link to="/" className="footer-link">Trang chủ</Link>
-                        <Link to="/booking" className="footer-link">Đặt sân</Link>
-                        <Link to="/about" className="footer-link">Về chúng tôi</Link>
-                        <Link to="/contact" className="footer-link">Liên hệ</Link>
-                        <Link to="/admin" className="footer-link">Trang quản trị</Link>
+                    <Title level={4} style={{ color: goldColor }}>Liên kết nhanh</Title>
+                    <Space orientation="vertical">
+                        <Link to="/" className="footer-link" style={linkStyle}>Trang chủ</Link>
+                        <Link to="/booking" className="footer-link" style={linkStyle}>Đặt sân</Link>
+                        <Link to="/about" className="footer-link" style={linkStyle}>Về chúng tôi</Link>
+                        <Link to="/contact" className="footer-link" style={linkStyle}>Liên hệ</Link>
+                        <Link to="/admin" className="footer-link" style={linkStyle}>Trang quản trị</Link>
                     </Space>
                 </Col>
 
-                {/* Cột 4: Mạng xã hội */}
                 <Col xs={24} sm={12} md={6}>
-                    <Title level={4} style={{ color: styles.gold, marginBottom: 16, fontWeight: 700 }}>
-                        Theo dõi
-                    </Title>
+                    <Title level={4} style={{ color: goldColor }}>Theo dõi</Title>
                     <Space size="middle" style={{ fontSize: 28 }}>
-                        <a href="https://web.facebook.com/" target="_blank" rel="noopener noreferrer" style={{ color: styles.gold }}><BiLogoFacebookCircle /></a>
-                        <a href="https://chat.zalo.me/" target="_blank" rel="noopener noreferrer" style={{ color: styles.gold }}><SiZalo /></a>
-                        <a href="https://www.tiktok.com/" target="_blank" rel="noopener noreferrer" style={{ color: styles.gold }}><AiFillTikTok /></a>
-                        <a href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer" style={{ color: styles.gold }}><AiFillYoutube /></a>
+                        <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" style={{ color: goldColor }}><BiLogoFacebookCircle /></a>
+                        <a href="https://chat.zalo.me" target="_blank" rel="noopener noreferrer" style={{ color: goldColor }}><SiZalo /></a>
+                        <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" style={{ color: goldColor }}><AiFillTikTok /></a>
+                        <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" style={{ color: goldColor }}><AiFillYoutube /></a>
                     </Space>
                 </Col>
             </Row>
 
-            <hr style={{ borderColor: styles.gold, opacity: 0.3, margin: "30px 0" }} />
-
-            <div style={{ textAlign: "center", color: styles.color }}>
-                © {new Date().getFullYear()} Football Pro.
-                <span style={{ color: styles.gold }}> Tất cả quyền được bảo lưu.</span>
+            <div style={{ textAlign: 'center', marginTop: 30, color: textColor }}>
+                © {new Date().getFullYear()} Football Pro. <span style={{ color: goldColor }}>Tất cả quyền được bảo lưu.</span>
             </div>
         </AntFooter>
     );
