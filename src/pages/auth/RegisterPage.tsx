@@ -1,11 +1,62 @@
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Button, Flex, Form, Input } from 'antd';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { motion } from 'framer-motion';
 import './Register.scss';
+import { register } from '../../config/Api';
+import type { IRegister } from '../../types/auth';
+import { useState } from 'react';
+import { toast } from 'react-toastify';
 
 const RegisterPage = () => {
+    const navigate = useNavigate();
     const [form] = Form.useForm();
+    const [loading, setLoading] = useState<boolean>(false);
+    // const dispatch = useAppDispatch();
+
+    const handleRegister = async (data: IRegister) => {
+        // Trim toàn bộ dữ liệu trước khi gửi API
+        const cleanedData: IRegister = {
+            ...data,
+            email: data.email?.trim(),
+            password: data.password, // password giữ nguyên
+        };
+
+        setLoading(true);
+        const minDelay = new Promise(resolve => setTimeout(resolve, 2000)); // tối thiểu 2 giây
+        try {
+            const res = await register(cleanedData);
+            await minDelay;
+            setLoading(false);
+            if (res?.data?.statusCode === 201) {
+                // dispatch(fetchUsers());
+                toast.success(res.data?.data?.message);
+                form.resetFields();
+                setTimeout(() => {
+                    navigate('/login');
+                }, 2000);
+            } else {
+                toast.error(
+                    <div>
+                        <div><strong>Có lỗi xảy ra!</strong></div>
+                        <div>{res.data?.message ?? "Đăng ký tài khoản thất bại!"}</div>
+                    </div>
+                );
+            }
+        } catch (error: any) {
+            const m = error?.response?.data?.message ?? "Không xác định";
+            toast.error(
+                <div>
+                    <div><strong>Có lỗi xảy ra!</strong></div>
+                    <div>{m}</div>
+                </div>
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
     return (
         <div className="register-container">
             <div className="overlay"></div>
@@ -19,7 +70,7 @@ const RegisterPage = () => {
                 <Form
                     form={form}
                     className="register-form"
-                    // onFinish={handleRegister}
+                    onFinish={handleRegister}
                     layout="vertical"
                 >
                     <h1 className="register-title">Đăng ký</h1>
@@ -58,7 +109,7 @@ const RegisterPage = () => {
                             size="large"
                             htmlType="submit"
                             className="btn-register"
-                        // loading={loading}
+                            loading={loading}
                         >
                             <span>Đăng ký</span>
                         </Button>
