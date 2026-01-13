@@ -39,6 +39,7 @@ const BackToTop: React.FC<BackToTopProps> = ({ theme }) => {
                 exit={{ opacity: 0, y: 40 }}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
+
                 style={{
                     position: "fixed",
                     bottom: 90,
@@ -46,8 +47,8 @@ const BackToTop: React.FC<BackToTopProps> = ({ theme }) => {
                     width: 40,
                     height: 40,
                     borderRadius: "50%",
-                    background: isDark ? "#faad14" : "#001529", // vàng nổi bật khi dark, tối khi light
-                    color: isDark ? "#001529" : "#fff", // chữ tương phản
+                    backgroundColor: isDark ? "rgba(250, 173, 20, 0.3)" : "rgba(0,21,41,0.3)", // dùng rgba để giảm opacity nền
+                    color: isDark ? "#001529" : "#fff", // chữ vẫn đầy đủ màu
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",

@@ -1,57 +1,221 @@
-/* BookingPage.scss */
-
 .booking-card {
-    .time-grid-wrapper {
-        overflow-x: auto; // nếu màn hình nhỏ có thể scroll ngang
-        padding   : 8px 0;
 
-        .time-grid {
-            display  : flex;
-            flex-wrap: wrap; // hoặc nowrap nếu muốn scroll ngang
-            gap      : 8px;
+    .time-grid-wrapper {
+        margin-top: 16px;
+    }
+
+    .time-grid {
+        display              : grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap                  : 16px;
+    }
+
+    .time-slot.luxury {
+        height       : 90px;
+        position     : relative;
+        border-radius: 14px;
+        background   : #0b1424;
+        overflow     : hidden;
+        cursor       : pointer;
+        transition   : transform .3s ease;
+
+        &:hover {
+            transform: translateY(-6px);
         }
 
-        .time-slot {
+        &::before {
+            content  : "";
+            position : absolute;
+            width    : 60px;
+            height   : 160%;
+            top      : -30%;
+            left     : 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(180deg,
+                    transparent,
+                    #d4af37,
+                    #ffef9f,
+                    #d4af37,
+                    transparent);
+            animation: spin 5s linear infinite;
+            opacity  : .9;
+        }
+
+        &::after {
+            content      : "";
+            position     : absolute;
+            inset        : 2px;
+            background   : #07182e;
+            border-radius: 12px;
+            z-index      : 1;
+        }
+
+        .slot-inner {
+            position       : relative;
+            z-index        : 2;
+            height         : 100%;
             display        : flex;
             flex-direction : column;
-            align-items    : center;
             justify-content: center;
-            min-width      : 70px;
-            padding        : 6px;
-            border-radius  : 6px;
-            border         : 1px solid #ccc;
-            transition     : all 0.2s ease;
+            align-items    : center;
+            color          : #fff;
+            gap            : 6px;
+        }
 
-            &:hover {
-                transform : translateY(-2px);
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        .time {
+            font-size     : 1.05rem;
+            font-weight   : 600;
+            letter-spacing: 1px;
+        }
+
+        .label {
+            font-size     : .65rem;
+            letter-spacing: 1px;
+            opacity       : .9;
+        }
+
+        &.selected {
+            box-shadow: 0 0 18px rgba(63, 169, 245, .7);
+
+            .label {
+                color: #3fa9f5;
+            }
+        }
+
+        &.booked {
+            opacity: .45;
+            cursor : not-allowed;
+
+            &::before {
+                background: linear-gradient(180deg,
+                        transparent,
+                        #ff4d4f,
+                        #ff4d4f,
+                        transparent);
             }
 
-            &.booked {
-                cursor: not-allowed;
-                color : red;
+            .label {
+                color: #ff4d4f;
             }
+        }
 
-            &.selected {
-                border          : 2px solid #faad14; // viền vàng
-                background-color: rgba(250, 173, 20, 0.1); // nền vàng nhạt
-                color           : #faad14; // chữ nổi bật
-                // màu chính dùng border background hoặc box-shadow
-            }
-
-            .ant-tag {
-                margin-top: 4px;
-                font-size : 11px;
+        &.free {
+            .label {
+                color: #00ff99;
             }
         }
     }
 }
 
-/* Optional: responsive small screens */
-@media (max-width: 576px) {
+@keyframes spin {
+    to {
+        transform: translateX(-50%) rotate(360deg);
+    }
+}
+
+
+// .luxury-card-wrapper {
+//     position     : relative;
+//     border-radius: 20px;
+//     padding      : 2px;
+//     overflow     : hidden;
+
+//     /* Dải sáng xoay */
+//     &::before {
+//         content : "";
+//         position: absolute;
+//         inset   : -50%;
+//         background: linear-gradient(180deg,
+//                 transparent,
+//                 #ddb73b,
+//                 #ffef9f,
+//                 #d4af37,
+//                 transparent);
+//         animation: spin 10s linear infinite;
+//         opacity  : 0.09;
+
+//         /* tự động hợp theme: sáng khi light, dịu khi dark */
+//         mix-blend-mode: screen;
+//         filter        : brightness(1.2);
+//     }
+
+//     /* Lớp nền card */
+//     &::after {
+//         content      : "";
+//         position     : absolute;
+//         inset        : 2px;
+//         border-radius: 18px;
+//         z-index      : 1;
+
+//         /* background tự động theo theme AntD */
+//         background: var(--ant-bg-container);
+//     }
+
+//     .booking-card {
+//         position     : relative;
+//         z-index      : 2;
+//         border-radius: 18px;
+//         background   : transparent;
+//     }
+// }
+
+// @keyframes spin {
+//     to {
+//         transform: translateX(-50%) rotate(360deg);
+//     }
+// }
+.luxury-card-wrapper {
+    position     : relative;
+    border-radius: 20px;
+    padding      : 2px;
+    overflow     : hidden;
+
+    /* Dải sáng quay */
+    &::before {
+        content : "";
+        position: absolute;
+        inset   : -50%;
+        background: linear-gradient(0deg,
+                transparent 0%,
+                rgba(214, 211, 201, 0.15) 20%,
+                rgba(214, 211, 201, 0.15) 20%,
+                rgba(212, 175, 55, 0.15) 80%,
+                transparent 100%);
+        animation     : spin 15s linear infinite;
+        opacity       : 0.6;
+        mix-blend-mode: screen;
+        filter        : blur(6px);
+        z-index       : 1;
+        /* thấp để card hiện lên trên */
+    }
+
+    /* Lớp nền card */
+    &::after {
+        content      : "";
+        position     : absolute;
+        inset        : 2px;
+        border-radius: 18px;
+        z-index      : 2;
+        /* trên dải sáng, dưới nội dung card */
+        background   : var(--ant-bg-container);
+    }
+
     .booking-card {
-        .time-grid {
-            flex-wrap: nowrap; // scroll ngang
-        }
+        position     : relative;
+        z-index      : 3;
+        /* trên tất cả */
+        border-radius: 18px;
+        background   : transparent;
+        /* dùng background mặc định của AntD */
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: translateX(-50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translateX(-50%) rotate(360deg);
     }
 }

@@ -4,41 +4,41 @@ import {
     DatePicker,
     Row,
     Select,
-    TimePicker,
-    Divider,
-    Tag,
     Input,
     Button,
     Typography,
+    Divider,
+    Tag,
     Space,
-    // Grid
+    TimePicker,
+    message
 } from "antd";
 import dayjs, { Dayjs } from "dayjs";
 import { useEffect, useState } from "react";
-import './BookingPage.scss';
+import "./BookingPage.scss";
+import { PiSoccerBallFill } from "react-icons/pi";
+import { IoMdClock } from "react-icons/io";
 
 const { Title } = Typography;
-// const { useBreakpoint } = Grid;
+
+/* ================= TYPES ================= */
 
 interface Pitch {
     id: number;
     name: string;
-    pitchType: "THREE" | "SEVEN";
     pricePerHour: number;
-    open24h: boolean;
-    status: "ACTIVE" | "INACTIVE";
-    address: string;
 }
 
 interface BookedSlot {
     start: string; // HH:mm
-    end: string;   // HH:mm
+    end: string;
 }
 
-// Mock data
+/* ================= MOCK ================= */
+
 const MOCK_PITCHES: Pitch[] = [
-    { id: 1, name: "Sân bóng mini 3 người", pitchType: "THREE", pricePerHour: 250000, open24h: true, status: "ACTIVE", address: "ĐH Tây Bắc" },
-    { id: 2, name: "Sân bóng 7 người", pitchType: "SEVEN", pricePerHour: 350000, open24h: true, status: "ACTIVE", address: "ĐH Tây Bắc" }
+    { id: 1, name: "Sân 3 người", pricePerHour: 250000 },
+    { id: 2, name: "Sân 7 người", pricePerHour: 350000 }
 ];
 
 const MOCK_BOOKED_SLOTS: BookedSlot[] = [
@@ -49,175 +49,255 @@ const MOCK_BOOKED_SLOTS: BookedSlot[] = [
 const TIME_SLOTS = [
     "06:00", "07:00", "08:00", "09:00", "10:00", "11:00",
     "12:00", "13:00", "14:00", "15:00", "16:00", "17:00",
-    "18:00", "19:00", "20:00", "21:00", "22:00", "22:30"
+    "18:00", "19:00", "20:00", "21:00", "22:00"
 ];
 
-interface BookingPageProps {
-    theme: "light" | "dark";
-}
+/* ================= COMPONENT ================= */
 
-const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
+const BookingPage = () => {
     const [pitches, setPitches] = useState<Pitch[]>([]);
-    const [pitchId, setPitchId] = useState<number | null>(null);
+    const [pitchId, setPitchId] = useState<number>();
     const [bookingDate, setBookingDate] = useState<Dayjs | null>(null);
     const [timeRange, setTimeRange] = useState<[Dayjs | null, Dayjs | null]>([null, null]);
     const [contactPhone, setContactPhone] = useState("");
-    const [shirtOption, setShirtOption] = useState<"WITHOUT_PITCH_SHIRT" | "PITCH_SHIRT" | null>(null);
-
-    const isDark = theme === "dark";
-    // const screens = useBreakpoint();
+    const [shirtOption, setShirtOption] = useState<string>();
 
     useEffect(() => {
         setPitches(MOCK_PITCHES);
     }, []);
 
-    const isBooked = (time: string) => {
-        const t = dayjs(time, "HH:mm");
+    /* ===== BOOKED CHECK ===== */
+
+    const isOverlappingBooked = (start: Dayjs, end: Dayjs) => {
         return MOCK_BOOKED_SLOTS.some(slot => {
-            const start = dayjs(slot.start, "HH:mm");
-            const end = dayjs(slot.end, "HH:mm");
-            return (t.isSame(start) || (t.isAfter(start) && t.isBefore(end)));
+            const s = dayjs(slot.start, "HH:mm");
+            const e = dayjs(slot.end, "HH:mm");
+            return start.isBefore(e) && end.isAfter(s);
+        });
+    };
+
+    /* ===== GRID STATUS ===== */
+
+    const isSlotBooked = (time: string) => {
+        const t = dayjs(time, "HH:mm");
+        return MOCK_BOOKED_SLOTS.some(s => {
+            const start = dayjs(s.start, "HH:mm");
+            const end = dayjs(s.end, "HH:mm");
+            return t.isSame(start) || (t.isAfter(start) && t.isBefore(end));
         });
     };
 
     const isSelected = (time: string) => {
-        const [start, end] = timeRange;
-        if (!start || !end) return false;
+        if (!timeRange[0] || !timeRange[1]) return false;
         const t = dayjs(time, "HH:mm");
-        return t.isSame(start) || t.isSame(end) || (t.isAfter(start) && t.isBefore(end));
+        return t.isAfter(timeRange[0]) && t.isBefore(timeRange[1])
+            || t.isSame(timeRange[0])
+            || t.isSame(timeRange[1]);
     };
 
-    const selectTime = (time: string) => {
+    /* ===== GRID CLICK ===== */
+
+    const selectTimeFromGrid = (time: string) => {
+        if (isSlotBooked(time)) return;
+
         const t = dayjs(time, "HH:mm");
         const [start, end] = timeRange;
 
-        if (!start || (start && end)) {
+        if (!start || end) {
             setTimeRange([t, null]);
-        } else if (start && !end) {
-            if (t.isBefore(start)) {
-                setTimeRange([t, start]);
-            } else {
-                setTimeRange([start, t]);
-            }
+            return;
         }
+
+        const s = t.isBefore(start) ? t : start;
+        const e = t.isBefore(start) ? start : t;
+
+        if (isOverlappingBooked(s, e)) {
+            message.error("Khung giờ bị trùng lịch đã đặt");
+            return;
+        }
+
+        setTimeRange([s, e]);
     };
 
-    const buildBookingPayload = () => {
-        if (!pitchId || !bookingDate || !timeRange[0] || !timeRange[1]) return null;
-        return {
-            pitchId,
-            startDateTime: bookingDate.hour(timeRange[0].hour()).minute(timeRange[0].minute()).second(0).format("YYYY-MM-DDTHH:mm:ss"),
-            endDateTime: bookingDate.hour(timeRange[1].hour()).minute(timeRange[1].minute()).second(0).format("YYYY-MM-DDTHH:mm:ss"),
-            shirtOption,
-            contactPhone
-        };
+    /* ===== RANGE PICKER ===== */
+
+    const onRangeChange = (v: [Dayjs | null, Dayjs | null] | null) => {
+        if (!v || !v[0] || !v[1]) {
+            setTimeRange([null, null]);
+            return;
+        }
+
+        if (isOverlappingBooked(v[0], v[1])) {
+            message.error("Khung giờ bị trùng lịch đã đặt");
+            return;
+        }
+
+        setTimeRange(v);
     };
+
+    /* ===== PRICE ===== */
 
     const calculateTotalPrice = () => {
         if (!pitchId || !timeRange[0] || !timeRange[1]) return 0;
         const pitch = pitches.find(p => p.id === pitchId);
         if (!pitch) return 0;
-        const durationMinutes = timeRange[1].diff(timeRange[0], "minute");
-        return durationMinutes > 0 ? (durationMinutes / 60) * pitch.pricePerHour : 0;
+
+        const minutes = timeRange[1].diff(timeRange[0], "minute");
+        return (minutes / 60) * pitch.pricePerHour;
     };
 
-    const textColor = isDark ? "#fff" : "#000";
-    const bgColor = isDark ? "#0d1a26" : "#fff";
+    const buildBookingPayload = () => {
+        if (!pitchId || !bookingDate || !timeRange[0] || !timeRange[1]) return null;
+
+        return {
+            pitchId,
+            startDateTime: bookingDate
+                .hour(timeRange[0].hour())
+                .minute(timeRange[0].minute())
+                .second(0)
+                .format("YYYY-MM-DDTHH:mm:ss"),
+
+            endDateTime: bookingDate
+                .hour(timeRange[1].hour())
+                .minute(timeRange[1].minute())
+                .second(0)
+                .format("YYYY-MM-DDTHH:mm:ss"),
+
+            shirtOption,
+            contactPhone
+        };
+    };
+
 
     return (
-        <Card
-            className="booking-card"
-            title="⚽ Đặt sân bóng"
-            style={{ background: bgColor, color: textColor }}
-            extra={<Button type="primary" onClick={() => console.log("BOOKING:", buildBookingPayload())}>Đặt sân</Button>}
-        >
-            <Row gutter={[24, 24]}>
-                <Col span={24}>
-                    <Divider>📌 Chú thích</Divider>
-                    <Space>
-                        <Tag color="blue">Đang chọn</Tag>
-                        <Tag color="red">Đã đặt</Tag>
-                        <Tag color="gray">Trống</Tag>
-                    </Space>
-                </Col>
+        <div className="luxury-card-wrapper">
+            <Card className="booking-card" title={
+                <Space style={{
+                    display: "flex", alignContent: "center",
+                    justifyContent: "start"
+                }}>
+                    <PiSoccerBallFill size={25} />
+                    <span>Đặt sân bóng</span>
+                </Space>
+            } >
+                <Row gutter={[24, 24]}>
 
-                <Col span={24}>
-                    <Title level={5} style={{ color: textColor }}>🕒 Khung giờ</Title>
-                    <div className="time-grid-wrapper">
-                        <div className="time-grid">
-                            {TIME_SLOTS.map(time => {
-                                const booked = isBooked(time);
-                                const selected = isSelected(time);
-                                let status = booked ? "booked" : selected ? "selected" : "free";
-                                return (
-                                    <div
-                                        key={time}
-                                        className={`time-slot ${status}`}
-                                        onClick={() => !booked && selectTime(time)}
-                                        style={{
-                                            cursor: booked ? "not-allowed" : "pointer",
-                                            background: selected ? (isDark ? "#faad1440" : "#1890ff40") : "transparent",
-                                            color: booked ? "red" : textColor,
-                                            border: selected ? `2px solid ${isDark ? "#faad14" : "#1890ff"}` : "1px solid #ccc",
-                                            borderRadius: 6,
-                                            padding: 6,
-                                            textAlign: "center",
-                                            minWidth: 70
-                                        }}
-                                    >
-                                        <div>{time}</div>
-                                        <Tag color={booked ? "red" : selected ? "blue" : "gray"} style={{ marginTop: 4 }}>
-                                            {booked ? "Đã đặt" : selected ? "Đang chọn" : "Trống"}
-                                        </Tag>
-                                    </div>
-                                );
-                            })}
+                    {/* ===== LEFT ===== */}
+                    <Col xs={24} lg={16}>
+                        {/* <Title level={4}>🕒 Lịch trống</Title> */}
+                        <Title level={5}>
+                            <Space style={{
+                                display: "flex", alignContent: "center",
+                                justifyContent: "start"
+                            }}>
+                                <IoMdClock size={24} />
+                                <span>Lịch trống</span>
+                            </Space>
+                        </Title>
+                        <Space style={{ marginBottom: 12 }}>
+                            <Tag color="green">Trống</Tag>
+                            <Tag color="blue">Đang chọn</Tag>
+                            <Tag color="red">Đã đặt</Tag>
+                        </Space>
+
+                        <div className="time-grid-wrapper">
+                            <div className="time-grid">
+                                {TIME_SLOTS.map(time => {
+                                    const booked = isSlotBooked(time);
+                                    const selected = isSelected(time);
+
+                                    return (
+                                        <div
+                                            key={time}
+                                            className={`time-slot luxury ${booked ? "booked" : selected ? "selected" : "free"}`}
+                                            onClick={() => selectTimeFromGrid(time)}
+                                        >
+                                            <div className="slot-inner">
+                                                <div className="time">{time}</div>
+                                                <div className="label">
+                                                    {booked ? "ĐÃ ĐẶT" : selected ? "ĐANG CHỌN" : "TRỐNG"}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
-                    </div>
-                </Col>
+                    </Col>
 
-                <Col xs={24} sm={12} md={6}>
-                    <Title level={5} style={{ color: textColor }}>Sân</Title>
-                    <Select<number> placeholder="Chọn sân" value={pitchId ?? undefined} style={{ width: "100%" }} onChange={setPitchId}>
-                        {pitches.map(p => <Select.Option key={p.id} value={p.id}>{p.name} – {p.pricePerHour.toLocaleString()}đ/giờ</Select.Option>)}
-                    </Select>
-                </Col>
+                    {/* ===== RIGHT ===== */}
+                    <Col xs={24} lg={8}>
+                        <Title level={4}>📋 Thông tin</Title>
 
-                <Col xs={24} sm={12} md={6}>
-                    <Title level={5} style={{ color: textColor }}>Ngày</Title>
-                    <DatePicker placeholder="Chọn ngày" style={{ width: "100%" }} format="DD/MM/YYYY" onChange={setBookingDate} />
-                </Col>
+                        <Select
+                            style={{ width: "100%" }}
+                            placeholder="Chọn sân"
+                            value={pitchId}
+                            onChange={setPitchId}
+                        >
+                            {pitches.map(p => (
+                                <Select.Option key={p.id} value={p.id}>
+                                    {p.name} – {p.pricePerHour.toLocaleString()}đ/giờ
+                                </Select.Option>
+                            ))}
+                        </Select>
 
-                <Col xs={24} sm={12} md={6}>
-                    <Title level={5} style={{ color: textColor }}>Giờ</Title>
-                    <TimePicker.RangePicker placeholder={["Giờ bắt đầu", "Giờ kết thúc"]} style={{ width: "100%" }} format="HH:mm" minuteStep={5} onChange={v => setTimeRange(v ?? [null, null])} />
-                </Col>
+                        <DatePicker
+                            style={{ width: "100%", marginTop: 12 }}
+                            format="DD/MM/YYYY"
+                            onChange={setBookingDate}
+                            placeholder="Chọn ngày"
+                        />
 
-                <Col xs={24} sm={12} md={6}>
-                    <Title level={5} style={{ color: textColor }}>Áo pitch</Title>
-                    <Select placeholder="Lấy áo" value={shirtOption ?? undefined} style={{ width: "100%" }} onChange={setShirtOption}>
-                        <Select.Option value="WITHOUT_PITCH_SHIRT">Không lấy áo</Select.Option>
-                        <Select.Option value="PITCH_SHIRT">Có lấy áo</Select.Option>
-                    </Select>
-                </Col>
+                        <TimePicker.RangePicker
+                            style={{ width: "100%", marginTop: 12 }}
+                            format="HH:mm"
+                            minuteStep={5}
+                            value={timeRange}
+                            onChange={onRangeChange}
+                            placeholder={["Giờ bắt đầu", "Giờ kết thúc"]}
+                        />
 
-                <Col xs={24} sm={12} md={6}>
-                    <Title level={5} style={{ color: textColor }}>Điện thoại</Title>
-                    <Input placeholder="SĐT liên hệ" value={contactPhone} onChange={e => setContactPhone(e.target.value)} />
-                </Col>
+                        <Select
+                            style={{ width: "100%", marginTop: 12 }}
+                            placeholder="Áo pitch"
+                            onChange={setShirtOption}
+                        >
+                            <Select.Option value="NO">Không lấy áo</Select.Option>
+                            <Select.Option value="YES">Có lấy áo</Select.Option>
+                        </Select>
 
-                <Col span={24}>
-                    <Card style={{ marginTop: 16, background: bgColor, color: textColor }}>
-                        <Row justify="space-between" align="middle">
-                            <Title level={5} style={{ color: textColor }}>💰 Tổng tiền</Title>
-                            <Title level={4} style={{ color: textColor }}>
-                                {calculateTotalPrice().toLocaleString()} đ
-                            </Title>
-                        </Row>
-                    </Card>
-                </Col>
-            </Row>
-        </Card>
+                        <Input
+                            style={{ marginTop: 12 }}
+                            placeholder="Số điện thoại"
+                            value={contactPhone}
+                            onChange={e => setContactPhone(e.target.value)}
+                        />
+
+                        <Divider />
+
+                        <div className="summary">
+                            <span>Tổng tiền: </span>
+                            <strong>{calculateTotalPrice().toLocaleString()} đ</strong>
+                        </div>
+                        <Button
+                            style={{ marginTop: 16 }}
+                            type="primary"
+                            block
+                            size="large"
+                            disabled={!bookingDate || !timeRange[0] || !timeRange[1]}
+                            onClick={() => {
+                                const payload = buildBookingPayload();
+                                console.log("BOOKING PAYLOAD:", payload);
+                            }}
+                        >
+                            Xác nhận đặt sân
+                        </Button>
+
+                    </Col>
+                </Row>
+            </Card>
+        </div>
     );
 };
 
