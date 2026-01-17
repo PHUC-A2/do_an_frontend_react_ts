@@ -1,10 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit'
 import authReducer from './features/authSlice'
 import accountReducer from './features/accountSlice'
+import userReducer from './features/userSlice'
 export const store = configureStore({
     reducer: {
         auth: authReducer, // authReducer là tên có thể đặt tùy ý
         account: accountReducer,
+        user: userReducer,
     }
 })
 
