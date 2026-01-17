@@ -2,7 +2,8 @@
 
 import type { IRegister } from "../types/auth";
 import type { IBackendRes, IModelPaginate } from "../types/common";
-import type { IUser } from "../types/user";
+import type { IGetUploadResponse } from "../types/upload";
+import type { ICreateUserReq, IUser } from "../types/user";
 import instance from "./customAxios";
 
 export const register = (data: IRegister) => instance.post("/api/v1/auth/register", data);
@@ -13,3 +14,20 @@ export const getRefreshToken = () => instance.get("/api/v1/auth/refresh");
 
 /* api user */
 export const getAllUsers = (query: string) => instance.get<IBackendRes<IModelPaginate<IUser>>>(`/api/v1/users?${query}`);
+export const createUser = (data: ICreateUserReq) => instance.post(`/api/v1/users`, data);
+export const deleteUser = (id: number) => instance.delete<IBackendRes<IUser>>(`/api/v1/users/${id}`);
+
+// upload
+export const uploadImageAvatar = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", "avatar");
+
+    const { data } = await instance.post<IGetUploadResponse>(
+        "/api/v1/files/upload",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+    );
+
+    return data; //  trả về đúng cấu trúc JSON từ backend
+};

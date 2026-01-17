@@ -17,4 +17,23 @@ export interface IUser {
     }[];
 }
 
+export interface ICreateUserReq {
+    name: string;
+    fullName: string;
+    email: string;
+    password: string;
+    phoneNumber: string;
+    avatarUrl?: string | null;
+    // status: string;
+}
+
+export interface IUpdateUserReq {
+    id: number;
+    name: string;
+    fullName: string;
+    phoneNumber: string;
+    // status: UserEnum;
+}
+
+
 export type UserEnum = "ACTIVE" | "INACTIVE" | "PENDING_VERIFICATION" | "BANNED" | "DELETED";
