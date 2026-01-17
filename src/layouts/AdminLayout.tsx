@@ -1,10 +1,12 @@
 import { Layout, ConfigProvider, theme as antdTheme } from 'antd';
-import { useState } from 'react';
 import AdminSidebar from '../components/admin/AdminSidebar';
 
-const AdminLayout = () => {
-    const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-    const toggleTheme = () => setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+interface AdminLayoutProps {
+    theme: 'light' | 'dark';
+    toggleTheme: () => void;
+}
+
+const AdminLayout = ({ theme, toggleTheme }: AdminLayoutProps) => {
     const isDark = theme === 'dark';
 
     return (

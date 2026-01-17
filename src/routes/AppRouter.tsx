@@ -29,7 +29,7 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
         },
         {
             path: "/admin",
-            element: <AdminLayout />,
+            element: <AdminLayout theme={theme} toggleTheme={toggleTheme} />,
             children: [
                 { index: true, element: <AdminPage /> },
                 { path: "/admin/user", element: <AdminUserPage /> },

@@ -28,7 +28,7 @@ interface AdminSidebarProps {
     toggleTheme: () => void;
 }
 
-const AdminSidebar = ({ theme, toggleTheme }: AdminSidebarProps) => {
+const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const [collapsed, setCollapsed] = useState(false);
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [openModalAccount, setOpenModalAccount] = useState(false);
@@ -165,7 +165,10 @@ const AdminSidebar = ({ theme, toggleTheme }: AdminSidebarProps) => {
                             </Button>
 
                         )}
-                        <Tooltip title={isDark ? 'Giao diện sáng' : 'Giao diện tối'}>
+                        <Tooltip
+                            title={isDark ? 'Giao diện sáng' : 'Giao diện tối'}
+                            getPopupContainer={(trigger: any) => trigger.parentElement!}
+                        >
                             <Switch checked={isDark} onChange={toggleTheme} checkedChildren={<LuMoon />} unCheckedChildren={<IoSunny />} />
                         </Tooltip>
                     </div>

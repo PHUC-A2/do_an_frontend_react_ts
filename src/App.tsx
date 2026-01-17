@@ -7,7 +7,7 @@ import { useAuthInit } from "./hooks/init/useAuthInit";
 import { useAccountInit } from "./hooks/init/useAccountInit";
 
 const App = () => {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 

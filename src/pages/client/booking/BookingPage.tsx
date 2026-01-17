@@ -54,7 +54,12 @@ const TIME_SLOTS = [
 
 /* ================= COMPONENT ================= */
 
-const BookingPage = () => {
+interface BookingPageProps {
+    theme: 'light' | 'dark';
+}
+
+const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
+    const isDark = theme === 'dark';
     const [pitches, setPitches] = useState<Pitch[]>([]);
     const [pitchId, setPitchId] = useState<number>();
     const [bookingDate, setBookingDate] = useState<Dayjs | null>(null);
@@ -170,16 +175,22 @@ const BookingPage = () => {
 
 
     return (
-        <div className="luxury-card-wrapper">
-            <Card className="booking-card" title={
-                <Space style={{
-                    display: "flex", alignContent: "center",
-                    justifyContent: "start"
-                }}>
-                    <PiSoccerBallFill size={25} />
-                    <span>Đặt sân bóng</span>
-                </Space>
-            } >
+        <div className={`luxury-card-wrapper ${isDark ? 'dark' : 'light'}`}>
+            <Card
+                className="booking-card"
+                style={{
+                    background: isDark ? '#001529' : '#fff',
+                    color: isDark ? '#fff' : '#000'
+                }}
+                title={
+                    <Space style={{
+                        display: "flex", alignContent: "center",
+                        justifyContent: "start"
+                    }}>
+                        <PiSoccerBallFill size={25} />
+                        <span>Đặt sân bóng</span>
+                    </Space>
+                } >
                 <Row gutter={[24, 24]}>
 
                     {/* ===== LEFT ===== */}
