@@ -1,5 +1,6 @@
 import { Layout, ConfigProvider, theme as antdTheme } from 'antd';
 import AdminSidebar from '../components/admin/AdminSidebar';
+import '../styles/AdminLayout.scss'
 
 interface AdminLayoutProps {
     theme: 'light' | 'dark';
