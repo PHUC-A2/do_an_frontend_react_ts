@@ -10,8 +10,9 @@ import { CiEdit } from 'react-icons/ci';
 import { FaArrowsToEye } from 'react-icons/fa6';
 import { MdDelete } from 'react-icons/md';
 import ModalAddUser from './modals/ModalAddUser';
-import { deleteUser } from '../../../config/Api';
+import { deleteUser, getUserById } from '../../../config/Api';
 import { toast } from 'react-toastify';
+import ModalUserDetails from './modals/ModalUserDetails';
 
 type UserStatus = NonNullable<IUser['status']>;
 
@@ -29,8 +30,38 @@ const AdminUserPage = () => {
     const meta = useAppSelector(selectUserMeta);
     const loading = useAppSelector(selectUserLoading);
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const [openModalAddUser, setOpenModalAddUser] = useState<boolean>(false);
+    const [openModalUserDetails, setOpenModalUserDetails] = useState<boolean>(false);
+    const [user, setUser] = useState<IUser | null>(null);
+
+
+    const handleView = async (id: number) => {
+        setUser(null);
+        setIsLoading(true);
+        setOpenModalUserDetails(true);
+
+        try {
+            const res = await getUserById(id);
+
+            if (Number(res.data.statusCode) === 200) {
+                setUser(res.data.data ?? null);
+            } else {
+                setUser(null);
+            }
+        } catch (error: any) {
+            const m = error?.response?.data?.message ?? "Không xác định";
+            toast.error(
+                <div>
+                    <div>Có lỗi xảy ra khi tải chi tiết người dùng</div>
+                    <div>{m}</div>
+                </div>
+            );
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleEdit = (user: IUser) => {
         console.log(user);
@@ -130,15 +161,19 @@ const AdminUserPage = () => {
             key: 'actions',
             render: (_: any, record: IUser) => (
                 <Space>
+
+                    <RBButton variant="outline-info" size='sm'
+                        onClick={() => handleView(record.id)}
+                    >
+                        <FaArrowsToEye />
+                    </RBButton>
+
                     <RBButton
                         variant="outline-warning"
+                        size='sm'
                         onClick={() => handleEdit(record)}
                     >
                         <CiEdit />
-                    </RBButton>
-
-                    <RBButton variant="outline-info">
-                        <FaArrowsToEye />
                     </RBButton>
 
                     {holder}
@@ -155,6 +190,7 @@ const AdminUserPage = () => {
                         }}
                     >
                         <RBButton
+                            size='sm'
                             variant="outline-danger"
                             disabled={deletingId === record.id}
                         >
@@ -174,8 +210,10 @@ const AdminUserPage = () => {
     return (
         <>
             <Card
+                size='small'
                 title="Quản lý người dùng"
                 extra={<RBButton variant="outline-primary"
+                    size='sm'
                     style={{ display: "flex", alignItems: "center", gap: 3 }}
                     onClick={() => setOpenModalAddUser(true)}
                 >
@@ -190,6 +228,7 @@ const AdminUserPage = () => {
                     dataSource={listUsers}
                     rowKey="id"
                     loading={loading}
+                    size='small'
                     pagination={{
                         current: meta.page,
                         pageSize: meta.pageSize,
@@ -206,6 +245,13 @@ const AdminUserPage = () => {
             <ModalAddUser
                 openModalAddUser={openModalAddUser}
                 setOpenModalAddUser={setOpenModalAddUser}
+            />
+
+            <ModalUserDetails
+                setOpenModalUserDetails={setOpenModalUserDetails}
+                openModalUserDetails={openModalUserDetails}
+                user={user}
+                isLoading={isLoading}
             />
         </>
     );

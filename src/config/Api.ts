@@ -16,6 +16,7 @@ export const getRefreshToken = () => instance.get("/api/v1/auth/refresh");
 export const getAllUsers = (query: string) => instance.get<IBackendRes<IModelPaginate<IUser>>>(`/api/v1/users?${query}`);
 export const createUser = (data: ICreateUserReq) => instance.post(`/api/v1/users`, data);
 export const deleteUser = (id: number) => instance.delete<IBackendRes<IUser>>(`/api/v1/users/${id}`);
+export const getUserById = (id: number) => instance.get<IBackendRes<IUser>>(`/api/v1/users/${id}`);
 
 // upload
 export const uploadImageAvatar = async (file: File) => {
