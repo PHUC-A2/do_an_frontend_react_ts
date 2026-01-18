@@ -28,12 +28,11 @@ export interface ICreateUserReq {
 }
 
 export interface IUpdateUserReq {
-    id: number;
     name: string;
     fullName: string;
     phoneNumber: string;
-    // status: UserEnum;
+    avatarUrl?: string | null;
+    status?: UserEnum;
 }
-
 
 export type UserEnum = "ACTIVE" | "INACTIVE" | "PENDING_VERIFICATION" | "BANNED" | "DELETED";

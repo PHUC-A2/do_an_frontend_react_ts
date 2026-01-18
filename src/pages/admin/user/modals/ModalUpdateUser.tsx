@@ -1,16 +1,18 @@
-import { Image, Modal, Upload, type GetProp, type UploadFile, type UploadProps } from 'antd';
+import { Image, Modal, Select, Upload, type GetProp, type UploadFile, type UploadProps } from 'antd';
 import { Form, Input } from 'antd';
-import { createUser, uploadImageAvatar } from '../../../../config/Api';
-import { useState } from 'react';
+import { updateUser, uploadImageAvatar } from '../../../../config/Api';
+import { useEffect, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { toast } from 'react-toastify';
-import type { ICreateUserReq } from '../../../../types/user';
 import { useAppDispatch } from '../../../../redux/hooks';
 import { fetchUsers } from '../../../../redux/features/userSlice';
+import { type IUpdateUserReq, type IUser } from '../../../../types/user';
+import { USER_STATUS } from '../../../../utils/constants/user.constants';
 
 interface IProps {
-    openModalAddUser: boolean;
-    setOpenModalAddUser: (v: boolean) => void;
+    openModalUpdateUser: boolean;
+    setOpenModalUpdateUser: (v: boolean) => void;
+    userEdit: IUser | null;
 }
 
 type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
@@ -23,8 +25,8 @@ const getBase64 = (file: FileType): Promise<string> =>
         reader.onerror = (error) => reject(error);
     });
 
-const ModalAddUser = (props: IProps) => {
-    const { openModalAddUser, setOpenModalAddUser } = props;
+const ModalUpdateUser = (props: IProps) => {
+    const { openModalUpdateUser, setOpenModalUpdateUser, userEdit } = props;
     const [form] = Form.useForm();
     const dispatch = useAppDispatch();
 
@@ -79,43 +81,78 @@ const ModalAddUser = (props: IProps) => {
         }
     };
 
-    const handleAddUser = async (data: ICreateUserReq) => {
+    const handleEditUser = async (values: IUpdateUserReq) => {
         try {
-            const res = await createUser(data);
-            if (res.data.statusCode === 201) {
+            if (!userEdit?.id) {
+                toast.error("ID người dùng không hợp lệ");
+                return;
+            }
+
+            const res = await updateUser(userEdit.id, values);
+
+            if (res.data.statusCode === 200) {
+                toast.success("Cập nhật người dùng thành công");
+                form.resetFields();
+                setFileList([]);
                 await dispatch(fetchUsers(""));
-                setOpenModalAddUser(false);
-                toast.success('Tạo mới người dùng thành công')
-                form.resetFields(); // dùng để xóa các giá trị sau khi đã submit
+                setOpenModalUpdateUser(false);
             }
         } catch (error: any) {
             const m = error?.response?.data?.message ?? "Không xác định";
             toast.error(
                 <div>
-                    <div><strong>Có lỗi xảy ra!</strong></div>
+                    <div>Có lỗi xảy ra!</div>
                     <div>{m}</div>
                 </div>
             );
         }
-    }
+    };
+
+
+    useEffect(() => {
+        if (!userEdit) return;
+
+        form.resetFields(); // reset data
+
+        form.setFieldsValue({
+            name: userEdit.name,
+            fullName: userEdit.fullName,
+            phoneNumber: userEdit.phoneNumber,
+            avatarUrl: userEdit.avatarUrl,
+            status: userEdit.status,
+        });
+
+        if (userEdit.avatarUrl) {
+            setFileList([
+                {
+                    uid: "-1",
+                    name: "avatar",
+                    status: "done",
+                    url: userEdit.avatarUrl,
+                },
+            ]);
+        } else {
+            setFileList([]);
+        }
+    }, [userEdit]);
 
     return (
         <>
             <Modal
-                title="Thêm mới người dùng"
+                title="Cập nhật người dùng"
                 maskClosable={false}
                 closable={{ 'aria-label': 'Custom Close Button' }}
-                open={openModalAddUser}
+                open={openModalUpdateUser}
                 okText="Lưu"
-                cancelText="Hủy"
                 onOk={() => form.submit()}
-                onCancel={() => setOpenModalAddUser(false)}
+                onCancel={() => setOpenModalUpdateUser(false)}
+                cancelText="Hủy"
             >
                 <div>
                     <hr />
                     <Form
                         form={form}
-                        onFinish={handleAddUser}
+                        onFinish={handleEditUser}
                         layout='vertical'
                         autoComplete="off"
                     >
@@ -133,25 +170,6 @@ const ModalAddUser = (props: IProps) => {
                         // rules={[{ required: true, message: 'Vui lòng nhập họ và tên!' }]}
                         >
                             <Input />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="Email"
-                            name="email"
-                            rules={[
-                                { required: true, message: 'Vui lòng nhập email!' },
-                                { type: "email", message: 'Email không hợp lệ!' }
-                            ]}
-                        >
-                            <Input />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="Mật khẩu"
-                            name="password"
-                            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
-                        >
-                            <Input.Password />
                         </Form.Item>
 
                         <Form.Item
@@ -191,14 +209,29 @@ const ModalAddUser = (props: IProps) => {
 
                         {/* Hidden field để form lưu string URL */}
                         <Form.Item name="avatarUrl" hidden
-                            // rules={[{ required: true, message: 'Vui lòng tải ảnh lên!' }]}
+                        // rules={[{ required: true, message: 'Vui lòng tải ảnh lên!' }]}
                         >
                             <Input />
                         </Form.Item>
+
+                        <Form.Item
+                            label="Trạng thái"
+                            name="status"
+                        // rules={[{ required: true, message: 'Vui lòng nhập trạng thái!' }]}
+                        >
+                            <Select placeholder="Chọn trạng thái">
+                                {USER_STATUS.map(status => (
+                                    <Select.Option key={status} value={status}>
+                                        {status}
+                                    </Select.Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+
                     </Form>
                 </div>
             </Modal>
         </>
     )
 }
-export default ModalAddUser;
+export default ModalUpdateUser;

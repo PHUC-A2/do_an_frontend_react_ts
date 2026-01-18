@@ -3,7 +3,7 @@
 import type { IRegister } from "../types/auth";
 import type { IBackendRes, IModelPaginate } from "../types/common";
 import type { IGetUploadResponse } from "../types/upload";
-import type { ICreateUserReq, IUser } from "../types/user";
+import type { ICreateUserReq, IUpdateUserReq, IUser } from "../types/user";
 import instance from "./customAxios";
 
 export const register = (data: IRegister) => instance.post("/api/v1/auth/register", data);
@@ -17,6 +17,7 @@ export const getAllUsers = (query: string) => instance.get<IBackendRes<IModelPag
 export const createUser = (data: ICreateUserReq) => instance.post(`/api/v1/users`, data);
 export const deleteUser = (id: number) => instance.delete<IBackendRes<IUser>>(`/api/v1/users/${id}`);
 export const getUserById = (id: number) => instance.get<IBackendRes<IUser>>(`/api/v1/users/${id}`);
+export const updateUser = (id: number, data: IUpdateUserReq) => instance.put<IBackendRes<IUser>>(`/api/v1/users/${id}`, data);
 
 // upload
 export const uploadImageAvatar = async (file: File) => {

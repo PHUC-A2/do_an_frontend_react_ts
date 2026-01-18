@@ -61,7 +61,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
             icon: <MdFeaturedPlayList />,
             children: [
                 { key: '2', label: <Link to="/admin/user" style={{ textDecoration: 'none' }}>QL Người Dùng</Link>, icon: <UserOutlined /> },
-                { key: '3', label: <Link to="/admin/product" style={{ textDecoration: 'none' }}>QL Sản Phẩm</Link>, icon: <AiOutlineProduct /> },
+                { key: '3', label: <Link to="/admin/booking" style={{ textDecoration: 'none' }}>QL Đặt Lịch</Link>, icon: <AiOutlineProduct /> },
                 { key: '4', label: <Link to="/admin/role" style={{ textDecoration: 'none' }}>QL Vai Trò</Link>, icon: <FaUserCog /> },
                 { key: '5', label: <Link to="/admin/permission" style={{ textDecoration: 'none' }}>QL Quyền Hạn</Link>, icon: <MdOutlineSecurity /> },
             ],

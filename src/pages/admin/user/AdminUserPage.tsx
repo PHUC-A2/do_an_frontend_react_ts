@@ -13,6 +13,7 @@ import ModalAddUser from './modals/ModalAddUser';
 import { deleteUser, getUserById } from '../../../config/Api';
 import { toast } from 'react-toastify';
 import ModalUserDetails from './modals/ModalUserDetails';
+import ModalUpdateUser from './modals/ModalUpdateUser';
 
 type UserStatus = NonNullable<IUser['status']>;
 
@@ -33,8 +34,10 @@ const AdminUserPage = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const [openModalAddUser, setOpenModalAddUser] = useState<boolean>(false);
+    const [openModalUpdateUser, setOpenModalUpdateUser] = useState<boolean>(false);
     const [openModalUserDetails, setOpenModalUserDetails] = useState<boolean>(false);
     const [user, setUser] = useState<IUser | null>(null);
+    const [userEdit, setUserEdit] = useState<IUser | null>(null);
 
 
     const handleView = async (id: number) => {
@@ -63,8 +66,9 @@ const AdminUserPage = () => {
         }
     };
 
-    const handleEdit = (user: IUser) => {
-        console.log(user);
+    const handleEdit = (data: IUser) => {
+        setOpenModalUpdateUser(true);
+        setUserEdit(data);
     }
 
     const [messageApi, holder] = message.useMessage();
@@ -107,7 +111,7 @@ const AdminUserPage = () => {
             sorter: (a, b) => a.id - b.id,
         },
         {
-            title: 'Name',
+            title: 'Tên',
             dataIndex: 'name',
             key: 'name',
             sorter: (a, b) =>
@@ -121,7 +125,7 @@ const AdminUserPage = () => {
             sorter: (a, b) => a.email.localeCompare(b.email),
         },
         {
-            title: 'Phone',
+            title: 'SĐT',
             dataIndex: 'phoneNumber',
             key: 'phoneNumber',
             sorter: (a, b) =>
@@ -129,7 +133,7 @@ const AdminUserPage = () => {
             render: (text?: string | null) => text || '-',
         },
         {
-            title: 'Status',
+            title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
             sorter: (a, b) =>
@@ -141,7 +145,7 @@ const AdminUserPage = () => {
             ),
         },
         {
-            title: 'Roles',
+            title: 'Vai trò',
             dataIndex: 'roles',
             key: 'roles',
             render: (roles?: IUser['roles']) => (
@@ -157,7 +161,7 @@ const AdminUserPage = () => {
             ),
         },
         {
-            title: 'Actions',
+            title: 'Hành động',
             key: 'actions',
             render: (_: any, record: IUser) => (
                 <Space>
@@ -252,6 +256,12 @@ const AdminUserPage = () => {
                 openModalUserDetails={openModalUserDetails}
                 user={user}
                 isLoading={isLoading}
+            />
+
+            <ModalUpdateUser
+                openModalUpdateUser={openModalUpdateUser}
+                setOpenModalUpdateUser={setOpenModalUpdateUser}
+                userEdit={userEdit}
             />
         </>
     );
