@@ -1,4 +1,5 @@
-import { Descriptions, Drawer, Spin, Tag } from "antd";
+import { Avatar, Descriptions, Drawer, Spin, Tag } from "antd";
+import { UserOutlined } from '@ant-design/icons';
 import type { IUser } from "../../../../types/user";
 import dayjs from "dayjs";
 interface IProps {
@@ -19,14 +20,14 @@ const statusColors: Record<UserStatus, string> = {
 };
 
 const ModalUserDetails = (props: IProps) => {
-
+    
     const {
         openModalUserDetails,
         setOpenModalUserDetails,
         user,
         isLoading
     } = props;
-    console.log(user);
+
     return (
         <Drawer
             title="Chi tiết người dùng"
@@ -37,6 +38,18 @@ const ModalUserDetails = (props: IProps) => {
         >
             <Spin spinning={isLoading}>
                 <Descriptions bordered column={1} size="small">
+                    <Descriptions.Item label="Avatar">
+                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                            <Avatar
+                                size={80}
+                                src={user?.avatarUrl}
+                                icon={!user?.avatarUrl && <UserOutlined />}
+                                style={{
+                                    backgroundColor: '#2C3E50',
+                                }}
+                            />
+                        </div>
+                    </Descriptions.Item>
                     <Descriptions.Item label="ID">{user?.id}</Descriptions.Item>
                     <Descriptions.Item label="Tên">{user?.name ?? "N/A"}</Descriptions.Item>
                     <Descriptions.Item label="Họ và tên">{user?.fullName ?? "N/A"}</Descriptions.Item>

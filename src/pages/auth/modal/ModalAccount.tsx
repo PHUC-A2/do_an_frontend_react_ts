@@ -52,7 +52,8 @@ const ModalAccount = ({ openModalAccount, setOpenModalAccount, onUpdateAccount, 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24 }}>
                     <Avatar
                         size={100}
-                        icon={<UserOutlined style={{ color: PRIMARY_COLOR }} />}
+                        src={account?.avatarUrl}
+                        icon={!account?.avatarUrl && <UserOutlined style={{ color: PRIMARY_COLOR }} />}
                         style={{ backgroundColor: avatarBg }}
                     />
                     <Title level={4} style={{ marginTop: 12, color: PRIMARY_COLOR, textAlign: 'center' }}>
