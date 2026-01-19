@@ -1,6 +1,6 @@
-// redux/features/accountSlice.ts
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { IAccount } from "../../types/account";
+import { setLogout } from "./authSlice";
 
 interface AccountState {
     account: IAccount | null;
@@ -17,11 +17,13 @@ const accountSlice = createSlice({
         setAccount(state, action: PayloadAction<IAccount>) {
             state.account = action.payload;
         },
-        setClearAccount(state) {
+    },
+    extraReducers: (builder) => {
+        builder.addCase(setLogout, (state) => {
             state.account = null;
-        }
-    }
+        });
+    },
 });
 
-export const { setAccount, setClearAccount } = accountSlice.actions;
+export const { setAccount } = accountSlice.actions;
 export default accountSlice.reducer;

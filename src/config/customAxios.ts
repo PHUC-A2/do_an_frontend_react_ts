@@ -1,11 +1,17 @@
 import axios from "axios";
+import { setLogout } from "../redux/features/authSlice";
+import { store } from "../redux/store";
+
 
 const instance = axios.create({
     baseURL: import.meta.env.VITE_BACKEND_URL,
-    withCredentials: true, // gửi cookie (refresh_token)
+    withCredentials: true, // gửi cookie refresh_token
 });
 
-// Request interceptor: tự động gắn token
+// ======================
+// Request interceptor
+// Tự động gắn access token vào header
+// ======================
 instance.interceptors.request.use((config) => {
     const token = localStorage.getItem("access_token");
     if (token) {
@@ -14,48 +20,70 @@ instance.interceptors.request.use((config) => {
     return config;
 });
 
-// Response interceptor: xử lý khi token hết hạn
+// ======================
+// Response interceptor
+// Xử lý khi access token hết hạn (401)
+// ======================
+let isLoggingOut = false;
 instance.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
 
-        // Nếu API trả về 401 và chưa retry
+        // Chỉ xử lý khi API trả 401 và request chưa retry
         if (error.response?.status === 401 && !originalRequest._retry) {
 
-            // 1 Bỏ qua request login để toast lỗi hiển thị
+            // Không refresh khi login fail
             if (originalRequest.url?.includes("/auth/login")) {
-                // không retry, trả về reject để login page catch lỗi
                 return Promise.reject(error);
             }
 
-            // 2 Các request khác: thử refresh token
             originalRequest._retry = true;
-            try {
-                const res = await axios.get(
-                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/refresh`,
-                    { withCredentials: true }
-                );
 
+            try {
+                // Gọi API refresh token
+                const res = await instance.get("/api/v1/auth/refresh");
+
+                // Trường hợp refresh FAIL:
+                // - backend trả 204 (không có refresh token)
+                // - hoặc không trả access_token
                 const newToken = res.data?.data?.access_token;
-                if (newToken) {
-                    // Lưu token mới và retry request cũ
-                    localStorage.setItem("access_token", newToken);
-                    originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
-                    return instance(originalRequest);
+                if (!newToken) {
+                    logout();
+                    return Promise.reject(error);
                 }
-            } catch (err) {
-                // Nếu refresh fail → logout
-                console.error("Refresh token failed", err);
-                localStorage.removeItem("access_token");
-                window.location.href = "/login";
+
+                // Refresh thành công
+                localStorage.setItem("access_token", newToken);
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+                // Retry lại request ban đầu
+                return instance(originalRequest);
+
+            } catch {
+                // Trường hợp refresh trả 401 / lỗi network
+                logout();
+                return Promise.reject(error);
             }
         }
 
-        // Reject tất cả lỗi còn lại
+        // Các lỗi khác không xử lý
         return Promise.reject(error);
     }
 );
 
+// ======================
+// Logout: xóa access token và redirect login
+// ======================
+function logout() {
+    
+    // Chặn logout bị gọi NHIỀU LẦN cùng lúc
+    if (isLoggingOut) return;
+    isLoggingOut = true;
+
+    localStorage.removeItem("access_token");
+    store.dispatch(setLogout());
+    window.location.href = "/login";
+}
 
 export default instance;
