@@ -28,13 +28,22 @@ let isLoggingOut = false;
 instance.interceptors.response.use(
     (response) => response,
     async (error) => {
-        const originalRequest = error.config;
+        const originalRequest = error.config as any;
 
         // Chỉ xử lý khi API trả 401 và request chưa retry
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 401 &&
+            !originalRequest._retry &&
+            localStorage.getItem("access_token")
+        ) {
 
             // Không refresh khi login fail
             if (originalRequest.url?.includes("/auth/login")) {
+                return Promise.reject(error);
+            }
+
+            // KHÔNG refresh cho refresh (FIX LOOP)
+            if (originalRequest.url?.includes("/auth/refresh")) {
+                logout();
                 return Promise.reject(error);
             }
 
@@ -76,7 +85,7 @@ instance.interceptors.response.use(
 // Logout: xóa access token và redirect login
 // ======================
 function logout() {
-    
+
     // Chặn logout bị gọi NHIỀU LẦN cùng lúc
     if (isLoggingOut) return;
     isLoggingOut = true;
