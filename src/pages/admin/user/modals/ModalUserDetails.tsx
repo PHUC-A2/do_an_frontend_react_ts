@@ -10,18 +10,8 @@ interface IProps {
     isLoading: boolean;
 }
 
-// type UserStatus = NonNullable<IUser['status']>;
-
-// const statusColors: Record<UserStatus, string> = {
-//     ACTIVE: 'green',
-//     INACTIVE: 'volcano',
-//     PENDING_VERIFICATION: 'gold',
-//     BANNED: 'red',
-//     DELETED: 'gray',
-// };
-
 const ModalUserDetails = (props: IProps) => {
-    
+
     const {
         openModalUserDetails,
         setOpenModalUserDetails,
@@ -43,7 +33,7 @@ const ModalUserDetails = (props: IProps) => {
                         <div style={{ display: 'flex', justifyContent: 'center' }}>
                             <Avatar
                                 size={80}
-                                src={user?.avatarUrl}
+                                src={user?.avatarUrl || undefined}
                                 icon={!user?.avatarUrl && <UserOutlined />}
                                 style={{
                                     backgroundColor: '#2C3E50',

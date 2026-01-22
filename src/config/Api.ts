@@ -2,7 +2,7 @@
 
 import type { IRegister } from "../types/auth";
 import type { IBackendRes, IModelPaginate } from "../types/common";
-import type { IPermission } from "../types/permission";
+import type { ICreatePermissionReq, IPermission, IUpdatePermissionReq } from "../types/permission";
 import type { ICreatePitchReq, IPitch, IUpdatePitchReq } from "../types/pitch";
 import type { IGetUploadResponse } from "../types/upload";
 import type { ICreateUserReq, IUpdateUserReq, IUser } from "../types/user";
@@ -30,10 +30,10 @@ export const deletePitch = (id: number) => instance.delete<IBackendRes<IPitch>>(
 
 /* api permission */
 export const getAllPermissions = (query: string) => instance.get<IBackendRes<IModelPaginate<IPermission>>>(`/api/v1/permissions?${query}`);
-// export const createPitch = (data: ICreatePitchReq) => instance.post(`/api/v1/pitches`, data);
-// export const getPitchById = (id: number) => instance.get<IBackendRes<IPitch>>(`/api/v1/pitches/${id}`);
-// export const updatePitch = (id: number, data: IUpdatePitchReq) => instance.put<IBackendRes<IPitch>>(`/api/v1/pitches/${id}`, data);
-// export const deletePitch = (id: number) => instance.delete<IBackendRes<IPitch>>(`/api/v1/pitches/${id}`);
+export const createPermission = (data: ICreatePermissionReq) => instance.post<IBackendRes<IPermission>>(`/api/v1/permissions`, data);
+export const updatePermission = (id: number, data: IUpdatePermissionReq) => instance.put<IBackendRes<IPermission>>(`/api/v1/permissions/${id}`, data);
+export const getPermissionById = (id: number) => instance.get<IBackendRes<IPermission>>(`/api/v1/permissions/${id}`);
+export const deletePermission = (id: number) => instance.delete<IBackendRes<IPermission>>(`/api/v1/permissions/${id}`);
 
 // upload avatar
 export const uploadImageAvatar = async (file: File) => {

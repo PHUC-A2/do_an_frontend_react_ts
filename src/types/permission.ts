@@ -37,3 +37,13 @@ export interface IPermission {
     createdBy: string;
     updatedBy: string | null;
 }
+
+export interface ICreatePermissionReq {
+    name: PermissionKey;
+    description?: string | null;
+}
+
+export interface IUpdatePermissionReq {
+    name: PermissionKey;
+    description?: string | null;
+}
