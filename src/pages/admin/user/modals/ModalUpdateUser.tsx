@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 import { useAppDispatch } from '../../../../redux/hooks';
 import { fetchUsers } from '../../../../redux/features/userSlice';
 import { type IUpdateUserReq, type IUser } from '../../../../types/user';
-import { USER_STATUS } from '../../../../utils/constants/user.constants';
+import { USER_STATUS_OPTIONS } from '../../../../utils/constants/user.constants';
 
 interface IProps {
     openModalUpdateUser: boolean;
@@ -219,13 +219,11 @@ const ModalUpdateUser = (props: IProps) => {
                             name="status"
                         // rules={[{ required: true, message: 'Vui lòng nhập trạng thái!' }]}
                         >
-                            <Select placeholder="Chọn trạng thái">
-                                {USER_STATUS.map(status => (
-                                    <Select.Option key={status} value={status}>
-                                        {status}
-                                    </Select.Option>
-                                ))}
-                            </Select>
+                            <Select
+                                placeholder="Chọn trạng thái"
+                                options={USER_STATUS_OPTIONS}
+                                allowClear
+                            />
                         </Form.Item>
 
                     </Form>

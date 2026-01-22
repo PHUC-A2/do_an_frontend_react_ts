@@ -2,6 +2,7 @@ import { Avatar, Descriptions, Drawer, Spin, Tag } from "antd";
 import { UserOutlined } from '@ant-design/icons';
 import type { IUser } from "../../../../types/user";
 import dayjs from "dayjs";
+import { USER_STATUS_META } from "../../../../utils/constants/user.constants";
 interface IProps {
     setOpenModalUserDetails: (v: boolean) => void;
     openModalUserDetails: boolean;
@@ -9,15 +10,15 @@ interface IProps {
     isLoading: boolean;
 }
 
-type UserStatus = NonNullable<IUser['status']>;
+// type UserStatus = NonNullable<IUser['status']>;
 
-const statusColors: Record<UserStatus, string> = {
-    ACTIVE: 'green',
-    INACTIVE: 'volcano',
-    PENDING_VERIFICATION: 'gold',
-    BANNED: 'red',
-    DELETED: 'gray',
-};
+// const statusColors: Record<UserStatus, string> = {
+//     ACTIVE: 'green',
+//     INACTIVE: 'volcano',
+//     PENDING_VERIFICATION: 'gold',
+//     BANNED: 'red',
+//     DELETED: 'gray',
+// };
 
 const ModalUserDetails = (props: IProps) => {
     
@@ -57,13 +58,14 @@ const ModalUserDetails = (props: IProps) => {
                     <Descriptions.Item label="Số điện thoại">{user?.phoneNumber ?? "N/A"}</Descriptions.Item>
                     <Descriptions.Item label="Trạng thái người dùng">
                         {user?.status ? (
-                            <Tag color={statusColors[user.status]}>
-                                {user.status}
+                            <Tag color={USER_STATUS_META[user.status].color}>
+                                {USER_STATUS_META[user.status].label}
                             </Tag>
                         ) : (
                             "N/A"
                         )}
                     </Descriptions.Item>
+
                     <Descriptions.Item label="Vai trò">
                         {user?.roles?.length ? (
                             user?.roles.map((r) => (

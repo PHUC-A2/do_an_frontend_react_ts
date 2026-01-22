@@ -1,25 +1,12 @@
 // pitch.constants.ts
-
 import type { PitchStatusEnum, PitchTypeEnum } from "../../types/pitch";
 
-export const PITCH_STATUS_META: Record<
-    PitchStatusEnum,
-    { label: string; color: string }
-> = {
-    ACTIVE: {
-        label: "Đang hoạt động",
-        color: "green",
-    },
-    MAINTENANCE: {
-        label: "Đang bảo trì",
-        color: "orange",
-    },
+export const PITCH_STATUS_META: Record<PitchStatusEnum, { label: string; color: string }> = {
+    ACTIVE: { label: "Đang hoạt động", color: "green" },
+    MAINTENANCE: { label: "Đang bảo trì", color: "orange" },
 };
 
-export const PITCH_TYPE_META: Record<
-    PitchTypeEnum,
-    { label: string }
-> = {
+export const PITCH_TYPE_META: Record<PitchTypeEnum, { label: string }> = {
     THREE: { label: "Sân 3 người" },
     SEVEN: { label: "Sân 7 người" },
 };
@@ -44,4 +31,3 @@ export const getPitchStatusMeta = (status: PitchStatusEnum) =>
 
 export const getPitchTypeLabel = (type: PitchTypeEnum) =>
     PITCH_TYPE_META[type].label;
-

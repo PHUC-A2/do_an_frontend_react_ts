@@ -14,16 +14,17 @@ import { deleteUser, getUserById } from '../../../config/Api';
 import { toast } from 'react-toastify';
 import ModalUserDetails from './modals/ModalUserDetails';
 import ModalUpdateUser from './modals/ModalUpdateUser';
+import { USER_STATUS_META } from '../../../utils/constants/user.constants';
 
-type UserStatus = NonNullable<IUser['status']>;
+// type UserStatus = NonNullable<IUser['status']>;
 
-const statusColors: Record<UserStatus, string> = {
-    ACTIVE: 'green',
-    INACTIVE: 'volcano',
-    PENDING_VERIFICATION: 'gold',
-    BANNED: 'red',
-    DELETED: 'gray',
-};
+// const statusColors: Record<UserStatus, string> = {
+//     ACTIVE: 'green',
+//     INACTIVE: 'volcano',
+//     PENDING_VERIFICATION: 'gold',
+//     BANNED: 'red',
+//     DELETED: 'gray',
+// };
 
 const AdminUserPage = () => {
     const dispatch = useAppDispatch();
@@ -138,11 +139,20 @@ const AdminUserPage = () => {
             key: 'status',
             sorter: (a, b) =>
                 (a.status ?? '').localeCompare(b.status ?? ''),
-            render: (status?: IUser['status']) => (
-                <Tag color={status ? statusColors[status] : 'default'}>
-                    {status ?? 'UNKNOWN'}
-                </Tag>
-            ),
+            // render: (status?: IUser['status']) => (
+            //     <Tag color={status ? statusColors[status] : 'default'}>
+            //         {status ?? 'UNKNOWN'}
+            //     </Tag>
+            // ),
+            render: (status?: IUser['status']) =>
+                status ? (
+                    <Tag color={USER_STATUS_META[status].color}>
+                        {USER_STATUS_META[status].label}
+                    </Tag>
+                ) : (
+                    <Tag>UNKNOWN</Tag>
+                ),
+
         },
         {
             title: 'Vai trò',
