@@ -215,7 +215,7 @@ const AdminUserPage = () => {
         <>
             <Card
                 size='small'
-                title="Quản lý người dùng"
+                title="Quản lý người dùng (User)"
                 extra={<RBButton variant="outline-primary"
                     size='sm'
                     style={{ display: "flex", alignItems: "center", gap: 3 }}

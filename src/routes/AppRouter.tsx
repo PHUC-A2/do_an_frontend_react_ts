@@ -10,6 +10,7 @@ import AdminLayout from '../layouts/AdminLayout';
 import AdminPage from '../pages/admin/AdminPage';
 import AdminUserPage from '../pages/admin/user/AdminUserPage';
 import AdminPitchPage from '../pages/admin/pitch/AdminPitchPage';
+import AdminPermissionPage from '../pages/admin/permission/AdminPermissionPage';
 
 interface AppRouterProps {
     theme: 'light' | 'dark';
@@ -35,6 +36,7 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
                 { index: true, element: <AdminPage /> },
                 { path: "/admin/user", element: <AdminUserPage /> },
                 { path: "/admin/pitch", element: <AdminPitchPage /> },
+                { path: "/admin/permission", element: <AdminPermissionPage /> },
             ]
         },
         { path: "/login", element: <LoginPage /> },

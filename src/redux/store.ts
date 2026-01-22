@@ -3,12 +3,15 @@ import authReducer from './features/authSlice'
 import accountReducer from './features/accountSlice'
 import userReducer from './features/userSlice'
 import pitchReducer from './features/pitchSlice'
+import permissionReducer from './features/permissionSlice'
+
 export const store = configureStore({
     reducer: {
         auth: authReducer, // authReducer là tên có thể đặt tùy ý
         account: accountReducer,
         user: userReducer,
         pitch: pitchReducer,
+        permission: permissionReducer,
     }
 })
 

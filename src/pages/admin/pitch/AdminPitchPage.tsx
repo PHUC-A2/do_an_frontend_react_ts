@@ -203,7 +203,7 @@ const AdminPitchPage = () => {
         <>
             <Card
                 size="small"
-                title="Quản lý sân"
+                title="Quản lý sân (Pitch)"
                 extra={
                     <RBButton
                         variant="outline-primary"
