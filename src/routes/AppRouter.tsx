@@ -9,6 +9,7 @@ import NotFoundPage from "../pages/error/NotFoundPage";
 import AdminLayout from '../layouts/AdminLayout';
 import AdminPage from '../pages/admin/AdminPage';
 import AdminUserPage from '../pages/admin/user/AdminUserPage';
+import AdminPitchPage from '../pages/admin/pitch/AdminPitchPage';
 
 interface AppRouterProps {
     theme: 'light' | 'dark';
@@ -33,6 +34,7 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
             children: [
                 { index: true, element: <AdminPage /> },
                 { path: "/admin/user", element: <AdminUserPage /> },
+                { path: "/admin/pitch", element: <AdminPitchPage /> },
             ]
         },
         { path: "/login", element: <LoginPage /> },

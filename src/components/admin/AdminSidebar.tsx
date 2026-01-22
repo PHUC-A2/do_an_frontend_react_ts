@@ -19,6 +19,7 @@ import { setLogout } from '../../redux/features/authSlice';
 import { IoMdClose } from 'react-icons/io';
 import { IoMenu, IoSunny } from 'react-icons/io5';
 import { LuMoon } from 'react-icons/lu';
+import { PiSoccerBallBold } from 'react-icons/pi';
 
 const { Sider, Header, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -61,9 +62,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
             icon: <MdFeaturedPlayList />,
             children: [
                 { key: '2', label: <Link to="/admin/user" style={{ textDecoration: 'none' }}>QL Người Dùng</Link>, icon: <UserOutlined /> },
-                { key: '3', label: <Link to="/admin/booking" style={{ textDecoration: 'none' }}>QL Đặt Lịch</Link>, icon: <AiOutlineProduct /> },
-                { key: '4', label: <Link to="/admin/role" style={{ textDecoration: 'none' }}>QL Vai Trò</Link>, icon: <FaUserCog /> },
-                { key: '5', label: <Link to="/admin/permission" style={{ textDecoration: 'none' }}>QL Quyền Hạn</Link>, icon: <MdOutlineSecurity /> },
+                { key: '3', label: <Link to="/admin/role" style={{ textDecoration: 'none' }}>QL Vai Trò</Link>, icon: <FaUserCog /> },
+                { key: '4', label: <Link to="/admin/permission" style={{ textDecoration: 'none' }}>QL Quyền Hạn</Link>, icon: <MdOutlineSecurity /> },
+                { key: '5', label: <Link to="/admin/pitch" style={{ textDecoration: 'none' }}>QL Sân</Link>, icon: <PiSoccerBallBold /> },
+                { key: '6', label: <Link to="/admin/booking" style={{ textDecoration: 'none' }}>QL Đặt Lịch</Link>, icon: <AiOutlineProduct /> },
             ],
         },
         {

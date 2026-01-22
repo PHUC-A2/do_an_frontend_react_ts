@@ -2,6 +2,7 @@
 
 import type { IRegister } from "../types/auth";
 import type { IBackendRes, IModelPaginate } from "../types/common";
+import type { IPitch } from "../types/pitch";
 import type { IGetUploadResponse } from "../types/upload";
 import type { ICreateUserReq, IUpdateUserReq, IUser } from "../types/user";
 import instance from "./customAxios";
@@ -18,6 +19,9 @@ export const createUser = (data: ICreateUserReq) => instance.post(`/api/v1/users
 export const deleteUser = (id: number) => instance.delete<IBackendRes<IUser>>(`/api/v1/users/${id}`);
 export const getUserById = (id: number) => instance.get<IBackendRes<IUser>>(`/api/v1/users/${id}`);
 export const updateUser = (id: number, data: IUpdateUserReq) => instance.put<IBackendRes<IUser>>(`/api/v1/users/${id}`, data);
+
+/* api pitch */
+export const getAllPitches = (query: string) => instance.get<IBackendRes<IModelPaginate<IPitch>>>(`/api/v1/pitches?${query}`);
 
 // upload
 export const uploadImageAvatar = async (file: File) => {
