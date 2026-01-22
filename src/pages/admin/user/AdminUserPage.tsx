@@ -16,16 +16,6 @@ import ModalUserDetails from './modals/ModalUserDetails';
 import ModalUpdateUser from './modals/ModalUpdateUser';
 import { USER_STATUS_META } from '../../../utils/constants/user.constants';
 
-// type UserStatus = NonNullable<IUser['status']>;
-
-// const statusColors: Record<UserStatus, string> = {
-//     ACTIVE: 'green',
-//     INACTIVE: 'volcano',
-//     PENDING_VERIFICATION: 'gold',
-//     BANNED: 'red',
-//     DELETED: 'gray',
-// };
-
 const AdminUserPage = () => {
     const dispatch = useAppDispatch();
     const listUsers = useAppSelector(selectUsers);

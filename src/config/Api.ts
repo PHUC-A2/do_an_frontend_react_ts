@@ -2,7 +2,7 @@
 
 import type { IRegister } from "../types/auth";
 import type { IBackendRes, IModelPaginate } from "../types/common";
-import type { IPitch } from "../types/pitch";
+import type { ICreatePitchReq, IPitch, IUpdatePitchReq } from "../types/pitch";
 import type { IGetUploadResponse } from "../types/upload";
 import type { ICreateUserReq, IUpdateUserReq, IUser } from "../types/user";
 import instance from "./customAxios";
@@ -22,8 +22,12 @@ export const updateUser = (id: number, data: IUpdateUserReq) => instance.put<IBa
 
 /* api pitch */
 export const getAllPitches = (query: string) => instance.get<IBackendRes<IModelPaginate<IPitch>>>(`/api/v1/pitches?${query}`);
+export const createPitch = (data: ICreatePitchReq) => instance.post(`/api/v1/pitches`, data);
+export const getPitchById = (id: number) => instance.get<IBackendRes<IPitch>>(`/api/v1/pitches/${id}`);
+export const updatePitch = (id: number, data: IUpdatePitchReq) => instance.put<IBackendRes<IPitch>>(`/api/v1/pitches/${id}`, data);
+export const deletePitch = (id: number) => instance.delete<IBackendRes<IPitch>>(`/api/v1/pitches/${id}`);
 
-// upload
+// upload avatar
 export const uploadImageAvatar = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
@@ -36,4 +40,19 @@ export const uploadImageAvatar = async (file: File) => {
     );
 
     return data; //  trả về đúng cấu trúc JSON từ backend
+};
+
+// upload pitch image
+export const uploadImagePitch = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", "pitch"); // folder riêng cho sân
+
+    const { data } = await instance.post<IGetUploadResponse>(
+        "/api/v1/files/upload",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+    );
+
+    return data;
 };

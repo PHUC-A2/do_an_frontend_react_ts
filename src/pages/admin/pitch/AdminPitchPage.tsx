@@ -1,6 +1,6 @@
 import { Table, Tag, Space, Card, Popconfirm, message, type PopconfirmProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import RBButton from 'react-bootstrap/Button';
 import { IoIosAddCircle } from 'react-icons/io';
 import { CiEdit } from 'react-icons/ci';
@@ -20,6 +20,11 @@ import {
     PITCH_STATUS_META,
     getPitchTypeLabel,
 } from '../../../utils/constants/pitch.constants';
+import ModalAddPitch from './modals/ModalAddPitch';
+import ModalPitchDetails from './modals/ModalPitchDetails';
+import { deletePitch, getPitchById } from '../../../config/Api';
+import { toast } from 'react-toastify';
+import ModalUpdatePitch from './modals/ModalUpdatePitch';
 
 const AdminPitchPage = () => {
     const dispatch = useAppDispatch();
@@ -27,8 +32,69 @@ const AdminPitchPage = () => {
     const listPitches = useAppSelector(selectPitches);
     const meta = useAppSelector(selectPitchMeta);
     const loading = useAppSelector(selectPitchLoading);
+    const [openModalAddPitch, setOpenModalAddPitch] = useState<boolean>(false);
+    const [openModalPitchDetails, setOpenModalPitchDetails] = useState<boolean>(false);
+    const [openModalUpdatePitch, setOpenModalUpdatePitch] = useState<boolean>(false);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+
+    const [pitch, setPitch] = useState<IPitch | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [pitchEdit, setPitchEdit] = useState<IPitch | null>(null);
+
+
+
+    const handleEdit = (data: IPitch) => {
+        setPitchEdit(data);
+        setOpenModalUpdatePitch(true);
+    };
+
+
+    const handleView = async (id: number) => {
+        setPitch(null);
+        setIsLoading(true);
+        setOpenModalPitchDetails(true);
+
+        try {
+            const res = await getPitchById(id);
+            if (res.data.statusCode === 200) {
+                setPitch(res.data.data ?? null);
+            }
+        } catch (error: any) {
+            const m = error?.response?.data?.message ?? 'Không xác định';
+            toast.error(
+                <>
+                    <div>Có lỗi khi tải chi tiết sân</div>
+                    <div>{m}</div>
+                </>
+            );
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
 
     const [messageApi, holder] = message.useMessage();
+
+    const handleDelete = async (id: number) => {
+        try {
+            setDeletingId(id);
+            const res = await deletePitch(id);
+            if (res.data.statusCode === 200) {
+                await dispatch(fetchPitches(""));
+                messageApi.success('Xóa thành công');
+            }
+        } catch (error: any) {
+            const m = error?.response?.data?.message ?? "Không xác định";
+            toast.error(
+                <div>
+                    <div>Có lỗi xảy ra khi xóa user</div>
+                    <div>{m}</div>
+                </div>
+            )
+        } finally {
+            setDeletingId(null);
+        }
+    };
 
     const cancel: PopconfirmProps['onCancel'] = () => {
         messageApi.error('Đã bỏ chọn');
@@ -92,11 +158,15 @@ const AdminPitchPage = () => {
             key: 'actions',
             render: (_: any, record: IPitch) => (
                 <Space>
-                    <RBButton variant="outline-info" size="sm">
+                    <RBButton variant="outline-info" size="sm"
+                        onClick={() => handleView(record.id)}
+                    >
                         <FaArrowsToEye />
                     </RBButton>
 
-                    <RBButton variant="outline-warning" size="sm">
+                    <RBButton variant="outline-warning" size="sm"
+                        onClick={() => handleEdit(record)}
+                    >
                         <CiEdit />
                     </RBButton>
 
@@ -105,11 +175,17 @@ const AdminPitchPage = () => {
                     <Popconfirm
                         title="Xóa sân"
                         description="Bạn có chắc chắn muốn xóa sân này không?"
+                        onConfirm={() => handleDelete(record.id)}
                         onCancel={cancel}
                         okText="Có"
                         cancelText="Không"
+                        okButtonProps={{
+                            loading: deletingId === record.id
+                        }}
                     >
-                        <RBButton size="sm" variant="outline-danger">
+                        <RBButton size="sm" variant="outline-danger"
+                            disabled={deletingId === record.id}
+                        >
                             <MdDelete />
                         </RBButton>
                     </Popconfirm>
@@ -124,46 +200,68 @@ const AdminPitchPage = () => {
     }, [dispatch]);
 
     return (
-        <Card
-            size="small"
-            title="Quản lý sân"
-            extra={
-                <RBButton
-                    variant="outline-primary"
-                    size="sm"
-                    style={{ display: 'flex', alignItems: 'center', gap: 3 }}
-                >
-                    <IoIosAddCircle />
-                    Thêm mới
-                </RBButton>
-            }
-            hoverable={false}
-            style={{
-                width: '100%',
-                overflowX: 'auto',
-                borderRadius: 8,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-            }}
-        >
-            <Table<IPitch>
-                columns={columns}
-                dataSource={listPitches}
-                rowKey="id"
-                loading={loading}
+        <>
+            <Card
                 size="small"
-                pagination={{
-                    current: meta.page,
-                    pageSize: meta.pageSize,
-                    total: meta.total,
-                    showSizeChanger: true,
-                    onChange: (page, pageSize) => {
-                        dispatch(fetchPitches(`page=${page}&pageSize=${pageSize}`));
-                    },
+                title="Quản lý sân"
+                extra={
+                    <RBButton
+                        variant="outline-primary"
+                        size="sm"
+                        style={{ display: 'flex', alignItems: 'center', gap: 3 }}
+                        onClick={() => setOpenModalAddPitch(true)}
+                    >
+                        <IoIosAddCircle />
+                        Thêm mới
+                    </RBButton>
+                }
+                hoverable={false}
+                style={{
+                    width: '100%',
+                    overflowX: 'auto',
+                    borderRadius: 8,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                 }}
-                bordered
-                scroll={{ x: 'max-content' }}
+            >
+                <Table<IPitch>
+                    columns={columns}
+                    dataSource={listPitches}
+                    rowKey="id"
+                    loading={loading}
+                    size="small"
+                    pagination={{
+                        current: meta.page,
+                        pageSize: meta.pageSize,
+                        total: meta.total,
+                        showSizeChanger: true,
+                        onChange: (page, pageSize) => {
+                            dispatch(fetchPitches(`page=${page}&pageSize=${pageSize}`));
+                        },
+                    }}
+                    bordered
+                    scroll={{ x: 'max-content' }}
+                />
+            </Card>
+
+            <ModalAddPitch
+                openModalAddPitch={openModalAddPitch}
+                setOpenModalAddPitch={setOpenModalAddPitch}
             />
-        </Card>
+
+            <ModalPitchDetails
+                openModalPitchDetails={openModalPitchDetails}
+                setOpenModalPitchDetails={setOpenModalPitchDetails}
+                pitch={pitch}
+                isLoading={isLoading}
+            />
+
+            <ModalUpdatePitch
+                openModalUpdatePitch={openModalUpdatePitch}
+                setOpenModalUpdatePitch={setOpenModalUpdatePitch}
+                pitchEdit={pitchEdit}
+            />
+
+        </>
     );
 };
 
