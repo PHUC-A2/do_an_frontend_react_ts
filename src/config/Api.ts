@@ -4,6 +4,7 @@ import type { IRegister } from "../types/auth";
 import type { IBackendRes, IModelPaginate } from "../types/common";
 import type { ICreatePermissionReq, IPermission, IUpdatePermissionReq } from "../types/permission";
 import type { ICreatePitchReq, IPitch, IUpdatePitchReq } from "../types/pitch";
+import type { ICreateRoleReq, IRole, IUpdateRoleReq } from "../types/role";
 import type { IGetUploadResponse } from "../types/upload";
 import type { ICreateUserReq, IUpdateUserReq, IUser } from "../types/user";
 import instance from "./customAxios";
@@ -16,14 +17,14 @@ export const getRefreshToken = () => instance.get("/api/v1/auth/refresh");
 
 /* api user */
 export const getAllUsers = (query: string) => instance.get<IBackendRes<IModelPaginate<IUser>>>(`/api/v1/users?${query}`);
-export const createUser = (data: ICreateUserReq) => instance.post(`/api/v1/users`, data);
+export const createUser = (data: ICreateUserReq) => instance.post<IBackendRes<IUser>>(`/api/v1/users`, data);
 export const deleteUser = (id: number) => instance.delete<IBackendRes<IUser>>(`/api/v1/users/${id}`);
 export const getUserById = (id: number) => instance.get<IBackendRes<IUser>>(`/api/v1/users/${id}`);
 export const updateUser = (id: number, data: IUpdateUserReq) => instance.put<IBackendRes<IUser>>(`/api/v1/users/${id}`, data);
 
 /* api pitch */
 export const getAllPitches = (query: string) => instance.get<IBackendRes<IModelPaginate<IPitch>>>(`/api/v1/pitches?${query}`);
-export const createPitch = (data: ICreatePitchReq) => instance.post(`/api/v1/pitches`, data);
+export const createPitch = (data: ICreatePitchReq) => instance.post<IBackendRes<IPitch>>(`/api/v1/pitches`, data);
 export const getPitchById = (id: number) => instance.get<IBackendRes<IPitch>>(`/api/v1/pitches/${id}`);
 export const updatePitch = (id: number, data: IUpdatePitchReq) => instance.put<IBackendRes<IPitch>>(`/api/v1/pitches/${id}`, data);
 export const deletePitch = (id: number) => instance.delete<IBackendRes<IPitch>>(`/api/v1/pitches/${id}`);
@@ -34,6 +35,13 @@ export const createPermission = (data: ICreatePermissionReq) => instance.post<IB
 export const updatePermission = (id: number, data: IUpdatePermissionReq) => instance.put<IBackendRes<IPermission>>(`/api/v1/permissions/${id}`, data);
 export const getPermissionById = (id: number) => instance.get<IBackendRes<IPermission>>(`/api/v1/permissions/${id}`);
 export const deletePermission = (id: number) => instance.delete<IBackendRes<IPermission>>(`/api/v1/permissions/${id}`);
+
+/* api role */
+export const getAllRoles = (query: string) => instance.get<IBackendRes<IModelPaginate<IRole>>>(`/api/v1/roles?${query}`);
+export const createRole = (data: ICreateRoleReq) => instance.post<IBackendRes<IRole>>(`/api/v1/roles`, data);
+export const updateRole = (id: number, data: IUpdateRoleReq) => instance.put<IBackendRes<IRole>>(`/api/v1/roles/${id}`, data);
+export const getRoleById = (id: number) => instance.get<IBackendRes<IRole>>(`/api/v1/roles/${id}`);
+export const deleteRole = (id: number) => instance.delete<IBackendRes<IRole>>(`/api/v1/roles/${id}`);
 
 // upload avatar
 export const uploadImageAvatar = async (file: File) => {

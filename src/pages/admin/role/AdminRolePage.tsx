@@ -3,50 +3,40 @@ import type { ColumnsType } from "antd/es/table";
 import { useEffect, useState } from "react";
 import RBButton from "react-bootstrap/Button";
 import { IoIosAddCircle } from "react-icons/io";
-
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks";
-import {
-    fetchPermissions,
-    selectPermissions,
-    selectPermissionLoading,
-    selectPermissionMeta,
-} from "../../../redux/features/permissionSlice";
-
-import type { IPermission } from "../../../types/permission";
-import { splitPermission } from "../../../utils/constants/permission.utils";
-import { PERMISSION_ACTION_COLOR } from "../../../utils/constants/permission-ui.constants";
-import ModalAddPermission from "./modals/ModalAddPermission";
-import ModalUpdatePermission from "./modals/ModalUpdatePermission";
 import { FaArrowsToEye } from "react-icons/fa6";
 import { CiEdit } from "react-icons/ci";
-import ModalPermissionDetails from "./modals/ModalPermissionDetails";
-import { deletePermission, getPermissionById } from "../../../config/Api";
-import { toast } from "react-toastify";
 import { MdDelete } from "react-icons/md";
+import { fetchRoles, selectRoleLoading, selectRoleMeta, selectRoles } from "../../../redux/features/roleSlice";
+import type { IRole } from "../../../types/role";
+import ModalAddRole from "./modals/ModalAddRole";
+import ModalRoleDetails from "./modals/ModalRoleDetails";
+import { toast } from "react-toastify";
+import { deleteRole, getRoleById } from "../../../config/Api";
+import ModalUpdateRole from "./modals/ModalUpdateRole";
 
-const AdminPermissionPage = () => {
+const AdminRolePage = () => {
     const dispatch = useAppDispatch();
 
-    const permissions = useAppSelector(selectPermissions);
-    const loading = useAppSelector(selectPermissionLoading);
-    const meta = useAppSelector(selectPermissionMeta);
-    const [openModalAddPermission, setOpenModalAddPermission] = useState<boolean>(false);
-    const [openModalUpdatePermission, setOpenModalUpdatePermission] = useState<boolean>(false);
-    const [permissionEdit, setPermissionEdit] = useState<IPermission | null>(null);
-    const [openModalPermissionDetails, setOpenModalPermissionDetails] = useState(false);
-    const [permission, setPermission] = useState<IPermission | null>(null);
-    const [isLoadingPermissionDetails, setIsLoadingPermissionDetails] = useState(false);
+    const roles = useAppSelector(selectRoles);
+    const loading = useAppSelector(selectRoleLoading);
+    const meta = useAppSelector(selectRoleMeta);
+    const [openModalAddRole, setOpenModalAddRole] = useState<boolean>(false);
+    const [openModalUpdateRole, setOpenModalUpdateRole] = useState<boolean>(false);
+    const [roleEdit, setRoleEdit] = useState<IRole | null>(null);
+    const [openModalRoleDetails, setOpenModalRoleDetails] = useState(false);
+    const [role, setRole] = useState<IRole | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
     const [deletingId, setDeletingId] = useState<number | null>(null);
-
 
     const [messageApi, holder] = message.useMessage();
 
     const handleDelete = async (id: number) => {
         try {
             setDeletingId(id);
-            const res = await deletePermission(id);
+            const res = await deleteRole(id);
             if (res.data.statusCode === 200) {
-                await dispatch(fetchPermissions(""));
+                await dispatch(fetchRoles(""));
                 messageApi.success('Xóa thành công');
             }
         } catch (error: any) {
@@ -67,14 +57,14 @@ const AdminPermissionPage = () => {
     };
 
     const handleView = async (id: number) => {
-        setPermission(null);
-        setIsLoadingPermissionDetails(true);
-        setOpenModalPermissionDetails(true);
+        setRole(null);
+        setIsLoading(true);
+        setOpenModalRoleDetails(true);
 
         try {
-            const res = await getPermissionById(id);
+            const res = await getRoleById(id);
             if (res.data.statusCode === 200) {
-                setPermission(res.data.data ?? null);
+                setRole(res.data.data ?? null);
             }
         } catch (error: any) {
             const m = error?.response?.data?.message ?? "Không xác định";
@@ -85,23 +75,23 @@ const AdminPermissionPage = () => {
                 </>
             );
         } finally {
-            setIsLoadingPermissionDetails(false);
+            setIsLoading(false);
         }
     };
 
-    const handleEdit = (data: IPermission) => {
-        setPermissionEdit(data);
-        setOpenModalUpdatePermission(true);
+    const handleEdit = (data: IRole) => {
+        setRoleEdit(data);
+        setOpenModalUpdateRole(true);
     }
 
     useEffect(() => {
-        dispatch(fetchPermissions("page=1&pageSize=7"));
+        dispatch(fetchRoles("page=1&pageSize=7"));
     }, [dispatch]);
 
-    const columns: ColumnsType<IPermission> = [
+    const columns: ColumnsType<IRole> = [
         {
             title: "STT",
-            render: (_: any, __: IPermission, index: number) =>
+            render: (_: any, __: IRole, index: number) =>
                 (meta.page - 1) * meta.pageSize + index + 1,
         },
         {
@@ -110,31 +100,14 @@ const AdminPermissionPage = () => {
             sorter: (a, b) => a.id - b.id,
         },
         {
-            title: "Quyền",
+            title: "Tên vai trò",
             dataIndex: "name",
-            render: (name: string) => <Tag>{name}</Tag>,
-        },
-        {
-            title: "Resource",
-            render: (_, record) => {
-                const { resource } = splitPermission(record.name);
-                return <Tag color="geekblue">{resource}</Tag>;
-            },
-        },
-        {
-            title: "Action",
-            render: (_, record) => {
-                const { action } = splitPermission(record.name);
-
-                if (action === "ALL") {
-                    return <Tag color="volcano">ALL</Tag>;
-                }
-
-                return (
-                    <Tag color={PERMISSION_ACTION_COLOR[action]}>
-                        {action}
-                    </Tag>
-                );
+            render: (name: string) => {
+                return <Tag
+                    color={name === "ADMIN" ? "warning" : "blue"}
+                >
+                    {name}
+                </Tag>
             },
         },
         {
@@ -144,7 +117,7 @@ const AdminPermissionPage = () => {
         },
         {
             title: "Hành động",
-            render: (_: any, record: IPermission) => (
+            render: (_: any, record: IRole) => (
                 <Space>
                     <RBButton variant="outline-info" size="sm"
                         onClick={() => handleView(record.id)}
@@ -162,7 +135,7 @@ const AdminPermissionPage = () => {
 
                     <Popconfirm
                         title="Xóa quyền"
-                        description="Bạn có chắc chắn muốn xóa quyền này không?"
+                        description="Bạn có chắc chắn muốn xóa vai trò này không?"
                         onConfirm={() => handleDelete(record.id)}
                         onCancel={cancel}
                         okText="Có"
@@ -186,13 +159,13 @@ const AdminPermissionPage = () => {
         <>
             <Card
                 size="small"
-                title="Quản lý quyền (Permissions)"
+                title="Quản lý vai trò (Roles)"
                 extra={
                     <RBButton
                         variant="outline-primary"
                         size="sm"
                         style={{ display: "flex", alignItems: "center", gap: 3 }}
-                        onClick={() => setOpenModalAddPermission(true)}
+                        onClick={() => setOpenModalAddRole(true)}
                     // disabled
                     >
                         <IoIosAddCircle />
@@ -207,9 +180,9 @@ const AdminPermissionPage = () => {
                     boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                 }}
             >
-                <Table<IPermission>
+                <Table<IRole>
                     columns={columns}
-                    dataSource={permissions}
+                    dataSource={roles}
                     rowKey="id"
                     loading={loading}
                     size="small"
@@ -222,7 +195,7 @@ const AdminPermissionPage = () => {
                         showSizeChanger: true,
                         onChange: (page, pageSize) => {
                             dispatch(
-                                fetchPermissions(
+                                fetchRoles(
                                     `page=${page}&pageSize=${pageSize}`
                                 )
                             );
@@ -231,25 +204,25 @@ const AdminPermissionPage = () => {
                 />
             </Card>
 
-            <ModalAddPermission
-                openModalAddPermission={openModalAddPermission}
-                setOpenModalAddPermission={setOpenModalAddPermission}
+            <ModalAddRole
+                openModalAddRole={openModalAddRole}
+                setOpenModalAddRole={setOpenModalAddRole}
             />
 
-            <ModalUpdatePermission
-                openModalUpdatePermission={openModalUpdatePermission}
-                setOpenModalUpdatePermission={setOpenModalUpdatePermission}
-                permissionEdit={permissionEdit}
+            <ModalRoleDetails
+                openModalRoleDetails={openModalRoleDetails}
+                setOpenModalRoleDetails={setOpenModalRoleDetails}
+                role={role}
+                isLoading={isLoading}
             />
 
-            <ModalPermissionDetails
-                openModalPermissionDetails={openModalPermissionDetails}
-                setOpenModalPermissionDetails={setOpenModalPermissionDetails}
-                permission={permission}
-                isLoading={isLoadingPermissionDetails}
+            <ModalUpdateRole
+                openModalUpdateRole={openModalUpdateRole}
+                setOpenModalUpdateRole={setOpenModalUpdateRole}
+                roleEdit={roleEdit}
             />
         </>
     );
 };
 
-export default AdminPermissionPage;
+export default AdminRolePage;
