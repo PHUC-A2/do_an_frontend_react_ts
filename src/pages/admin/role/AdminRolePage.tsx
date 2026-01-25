@@ -1,4 +1,4 @@
-import { Table, Tag, Space, Card, type PopconfirmProps, message, Popconfirm } from "antd";
+import { Table, Tag, Space, Card, type PopconfirmProps, message, Popconfirm, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useEffect, useState } from "react";
 import RBButton from "react-bootstrap/Button";
@@ -6,7 +6,7 @@ import { IoIosAddCircle } from "react-icons/io";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks";
 import { FaArrowsToEye } from "react-icons/fa6";
 import { CiEdit } from "react-icons/ci";
-import { MdDelete } from "react-icons/md";
+import { MdDelete, MdSecurity } from "react-icons/md";
 import { fetchRoles, selectRoleLoading, selectRoleMeta, selectRoles } from "../../../redux/features/roleSlice";
 import type { IRole } from "../../../types/role";
 import ModalAddRole from "./modals/ModalAddRole";
@@ -14,6 +14,8 @@ import ModalRoleDetails from "./modals/ModalRoleDetails";
 import { toast } from "react-toastify";
 import { deleteRole, getRoleById } from "../../../config/Api";
 import ModalUpdateRole from "./modals/ModalUpdateRole";
+import { fetchPermissions } from "../../../redux/features/permissionSlice";
+import AdminModalAssignPermission from "./modals/AdminModalAssignPermisison";
 
 const AdminRolePage = () => {
     const dispatch = useAppDispatch();
@@ -28,8 +30,18 @@ const AdminRolePage = () => {
     const [role, setRole] = useState<IRole | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [openModalAssignPermisison, setOpenModalAssignPermisison] = useState<boolean>(false);
+    const [roleAssignPermission, setRoleAssignPermission] = useState<IRole | null>(null);
 
     const [messageApi, holder] = message.useMessage();
+
+
+    // assign permission
+    const handleAssignPermisison = async (data: IRole) => {
+        setRoleAssignPermission(data);
+        setOpenModalAssignPermisison(true);
+        await dispatch(fetchPermissions("")).unwrap();
+    }
 
     const handleDelete = async (id: number) => {
         try {
@@ -150,6 +162,14 @@ const AdminRolePage = () => {
                             <MdDelete />
                         </RBButton>
                     </Popconfirm>
+
+                    <Tooltip placement="left" title="Gắn quyền">
+                        <RBButton size="sm" variant="outline-secondary"
+                            onClick={() => handleAssignPermisison(record)}
+                        >
+                            <MdSecurity />
+                        </RBButton>
+                    </Tooltip>
                 </Space>
             ),
         },
@@ -220,6 +240,14 @@ const AdminRolePage = () => {
                 openModalUpdateRole={openModalUpdateRole}
                 setOpenModalUpdateRole={setOpenModalUpdateRole}
                 roleEdit={roleEdit}
+            />
+
+            {/* assign permission */}
+
+            <AdminModalAssignPermission
+                openModalAssignPermisison={openModalAssignPermisison}
+                setOpenModalAssignPermisison={setOpenModalAssignPermisison}
+                roleAssignPermission={roleAssignPermission}
             />
         </>
     );

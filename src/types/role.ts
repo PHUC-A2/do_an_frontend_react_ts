@@ -22,3 +22,7 @@ export interface IUpdateRoleReq {
     name: string;
     description?: string | null;
 }
+
+export interface IAssignPermissionReq {
+    permissionIds: number[];
+}

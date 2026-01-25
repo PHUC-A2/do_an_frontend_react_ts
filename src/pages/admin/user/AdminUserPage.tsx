@@ -1,4 +1,4 @@
-import { Table, Tag, Space, Card, Popconfirm, message, type PopconfirmProps } from 'antd';
+import { Table, Tag, Space, Card, Popconfirm, message, type PopconfirmProps, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useEffect, useState } from 'react';
 import RBButton from 'react-bootstrap/Button';
@@ -8,13 +8,15 @@ import { fetchUsers, selectUserLoading, selectUserMeta, selectUsers } from '../.
 import type { IUser } from '../../../types/user';
 import { CiEdit } from 'react-icons/ci';
 import { FaArrowsToEye } from 'react-icons/fa6';
-import { MdDelete } from 'react-icons/md';
+import { MdDelete, MdSecurity } from 'react-icons/md';
 import ModalAddUser from './modals/ModalAddUser';
 import { deleteUser, getUserById } from '../../../config/Api';
 import { toast } from 'react-toastify';
 import ModalUserDetails from './modals/ModalUserDetails';
 import ModalUpdateUser from './modals/ModalUpdateUser';
 import { USER_STATUS_META } from '../../../utils/constants/user.constants';
+import AdminModalAssignRole from './modals/AdminModalAssignRole';
+import { fetchRoles } from '../../../redux/features/roleSlice';
 
 const AdminUserPage = () => {
     const dispatch = useAppDispatch();
@@ -29,7 +31,15 @@ const AdminUserPage = () => {
     const [openModalUserDetails, setOpenModalUserDetails] = useState<boolean>(false);
     const [user, setUser] = useState<IUser | null>(null);
     const [userEdit, setUserEdit] = useState<IUser | null>(null);
+    const [userAssignRole, setUserAssignRole] = useState<IUser | null>(null);
+    const [openModalAssignRole, setOpenModalAssignRole] = useState<boolean>(false);
 
+    // assign role
+    const handleAssignRole = async (data: IUser) => {
+        setUserAssignRole(data);
+        setOpenModalAssignRole(true);
+        await dispatch(fetchRoles("")).unwrap();
+    }
 
     const handleView = async (id: number) => {
         setUser(null);
@@ -201,6 +211,14 @@ const AdminUserPage = () => {
                             <MdDelete />
                         </RBButton>
                     </Popconfirm>
+
+                    <Tooltip placement="left" title="Gắn quyền">
+                        <RBButton size="sm" variant="outline-secondary"
+                            onClick={() => handleAssignRole(record)}
+                        >
+                            <MdSecurity />
+                        </RBButton>
+                    </Tooltip>
                 </Space>
             ),
         },
@@ -262,6 +280,12 @@ const AdminUserPage = () => {
                 openModalUpdateUser={openModalUpdateUser}
                 setOpenModalUpdateUser={setOpenModalUpdateUser}
                 userEdit={userEdit}
+            />
+
+            <AdminModalAssignRole
+                openModalAssignRole={openModalAssignRole}
+                setOpenModalAssignRole={setOpenModalAssignRole}
+                userAssignRole={userAssignRole}
             />
         </>
     );

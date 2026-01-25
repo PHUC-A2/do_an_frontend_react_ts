@@ -4,9 +4,9 @@ import type { IRegister } from "../types/auth";
 import type { IBackendRes, IModelPaginate } from "../types/common";
 import type { ICreatePermissionReq, IPermission, IUpdatePermissionReq } from "../types/permission";
 import type { ICreatePitchReq, IPitch, IUpdatePitchReq } from "../types/pitch";
-import type { ICreateRoleReq, IRole, IUpdateRoleReq } from "../types/role";
+import type { IAssignPermissionReq, ICreateRoleReq, IRole, IUpdateRoleReq } from "../types/role";
 import type { IGetUploadResponse } from "../types/upload";
-import type { ICreateUserReq, IUpdateUserReq, IUser } from "../types/user";
+import type { IAssignRoleReq, ICreateUserReq, IUpdateUserReq, IUser } from "../types/user";
 import instance from "./customAxios";
 
 export const register = (data: IRegister) => instance.post("/api/v1/auth/register", data);
@@ -42,6 +42,13 @@ export const createRole = (data: ICreateRoleReq) => instance.post<IBackendRes<IR
 export const updateRole = (id: number, data: IUpdateRoleReq) => instance.put<IBackendRes<IRole>>(`/api/v1/roles/${id}`, data);
 export const getRoleById = (id: number) => instance.get<IBackendRes<IRole>>(`/api/v1/roles/${id}`);
 export const deleteRole = (id: number) => instance.delete<IBackendRes<IRole>>(`/api/v1/roles/${id}`);
+/* api gắn permission cho role */
+// /api/v1/roles/roleId/assign-permissions
+export const assignPermission = (id: number, data: IAssignPermissionReq) => instance.put<IBackendRes<IRole>>(`/api/v1/roles/${id}/assign-permissions`, data);
+
+/* api gắn role cho user */
+// /api/v1/users/userId/assign-roles
+export const assignRole = (id: number, data: IAssignRoleReq) => instance.put<IBackendRes<IUser>>(`/api/v1/users/${id}/assign-roles`, data);
 
 // upload avatar
 export const uploadImageAvatar = async (file: File) => {

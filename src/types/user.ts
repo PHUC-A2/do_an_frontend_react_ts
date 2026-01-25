@@ -35,4 +35,8 @@ export interface IUpdateUserReq {
     status?: UserEnum;
 }
 
+export interface IAssignRoleReq {
+    roleIds: number[];
+}
+
 export type UserEnum = "ACTIVE" | "INACTIVE" | "PENDING_VERIFICATION" | "BANNED" | "DELETED";
