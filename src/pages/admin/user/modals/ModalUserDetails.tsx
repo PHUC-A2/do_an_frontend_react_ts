@@ -1,8 +1,8 @@
 import { Avatar, Descriptions, Drawer, Spin, Tag } from "antd";
 import { UserOutlined } from '@ant-design/icons';
 import type { IUser } from "../../../../types/user";
-import dayjs from "dayjs";
 import { USER_STATUS_META } from "../../../../utils/constants/user.constants";
+import { formatInstant } from "../../../../utils/format/localdatetime";
 interface IProps {
     setOpenModalUserDetails: (v: boolean) => void;
     openModalUserDetails: boolean;
@@ -67,18 +67,20 @@ const ModalUserDetails = (props: IProps) => {
                             "N/A"
                         )}
                     </Descriptions.Item>
+
                     <Descriptions.Item label="Người tạo">
                         {user?.createdBy ? user.createdBy : "N/A"}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Ngày tạo">
+                        {formatInstant(user?.createdAt)}
                     </Descriptions.Item>
                     <Descriptions.Item label="Người cập nhật">
                         {user?.updatedBy ? user.updatedBy : "N/A"}
                     </Descriptions.Item>
-                    <Descriptions.Item label="Ngày tạo">
-                        {user?.createdAt ? dayjs(user.createdAt).format("DD/MM/YYYY HH:mm:ss") : "N/A"}
-                    </Descriptions.Item>
                     <Descriptions.Item label="Ngày cập nhật">
-                        {user?.updatedAt ? dayjs(user.updatedAt).format("DD/MM/YYYY HH:mm:ss") : "N/A"}
+                        {formatInstant(user?.updatedAt)}
                     </Descriptions.Item>
+                    
                 </Descriptions>
             </Spin>
         </Drawer>

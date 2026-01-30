@@ -1,6 +1,6 @@
 import { Collapse, Descriptions, Drawer, Spin, Tag } from "antd";
-import dayjs from "dayjs";
 import type { IRole } from "../../../../types/role";
+import { formatInstant } from "../../../../utils/format/localdatetime";
 
 interface IProps {
     openModalRoleDetails: boolean;
@@ -78,28 +78,18 @@ const ModalRoleDetails = (props: IProps) => {
                     </Descriptions.Item>
 
                     <Descriptions.Item label="Người tạo">
-                        {role?.createdBy ?? "N/A"}
+                        {role?.createdBy ? role.createdBy : "N/A"}
                     </Descriptions.Item>
-
-                    <Descriptions.Item label="Người cập nhật">
-                        {role?.updatedBy ?? "N/A"}
-                    </Descriptions.Item>
-
                     <Descriptions.Item label="Ngày tạo">
-                        {role?.createdAt
-                            ? dayjs(role.createdAt).format(
-                                "DD/MM/YYYY HH:mm:ss"
-                            )
-                            : "N/A"}
+                        {formatInstant(role?.createdAt)}
                     </Descriptions.Item>
-
+                    <Descriptions.Item label="Người cập nhật">
+                        {role?.updatedBy ? role.updatedBy : "N/A"}
+                    </Descriptions.Item>
                     <Descriptions.Item label="Ngày cập nhật">
-                        {role?.updatedAt
-                            ? dayjs(role.updatedAt).format(
-                                "DD/MM/YYYY HH:mm:ss"
-                            )
-                            : "N/A"}
+                        {formatInstant(role?.updatedAt)}
                     </Descriptions.Item>
+                    
                 </Descriptions>
             </Spin>
         </Drawer>

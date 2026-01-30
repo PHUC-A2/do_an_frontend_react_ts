@@ -1,8 +1,8 @@
 import { Descriptions, Drawer, Spin, Tag, Image } from 'antd';
-import dayjs from 'dayjs';
 
 import type { IPitch } from '../../../../types/pitch';
 import { PITCH_STATUS_META, getPitchTypeLabel } from '../../../../utils/constants/pitch.constants';
+import { formatInstant } from '../../../../utils/format/localdatetime';
 
 interface IProps {
     openModalPitchDetails: boolean;
@@ -26,7 +26,7 @@ const ModalPitchDetails = (props: IProps) => {
             closable={false}
             onClose={() => setOpenModalPitchDetails(false)}
             open={openModalPitchDetails}
-            // size=
+        // size=
         >
             <Spin spinning={isLoading}>
                 <Descriptions bordered column={1} size="small">
@@ -83,24 +83,18 @@ const ModalPitchDetails = (props: IProps) => {
                     </Descriptions.Item>
 
                     <Descriptions.Item label="Người tạo">
-                        {pitch?.createdBy ?? 'N/A'}
+                        {pitch?.createdBy ? pitch.createdBy : "N/A"}
                     </Descriptions.Item>
-
-                    <Descriptions.Item label="Người cập nhật">
-                        {pitch?.updatedBy ?? 'N/A'}
-                    </Descriptions.Item>
-
                     <Descriptions.Item label="Ngày tạo">
-                        {pitch?.createdAt
-                            ? dayjs(pitch.createdAt).format('DD/MM/YYYY HH:mm:ss')
-                            : 'N/A'}
+                        {formatInstant(pitch?.createdAt)}
                     </Descriptions.Item>
-
+                    <Descriptions.Item label="Người cập nhật">
+                        {pitch?.updatedBy ? pitch.updatedBy : "N/A"}
+                    </Descriptions.Item>
                     <Descriptions.Item label="Ngày cập nhật">
-                        {pitch?.updatedAt
-                            ? dayjs(pitch.updatedAt).format('DD/MM/YYYY HH:mm:ss')
-                            : 'N/A'}
+                        {formatInstant(pitch?.updatedAt)}
                     </Descriptions.Item>
+                    
                 </Descriptions>
             </Spin>
         </Drawer>

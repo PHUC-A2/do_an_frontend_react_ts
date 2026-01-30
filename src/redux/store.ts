@@ -3,6 +3,7 @@ import authReducer from './features/authSlice'
 import accountReducer from './features/accountSlice'
 import userReducer from './features/userSlice'
 import pitchReducer from './features/pitchSlice'
+import bookingReducer from './features/bookingSlice'
 import roleReducer from './features/roleSlice'
 import permissionReducer from './features/permissionSlice'
 
@@ -12,6 +13,7 @@ export const store = configureStore({
         account: accountReducer,
         user: userReducer,
         pitch: pitchReducer,
+        booking: bookingReducer,
         role: roleReducer,
         permission: permissionReducer,
     }

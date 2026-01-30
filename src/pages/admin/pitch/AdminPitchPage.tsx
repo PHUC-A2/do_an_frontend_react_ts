@@ -157,7 +157,7 @@ const AdminPitchPage = () => {
             title: 'Hành động',
             key: 'actions',
             render: (_: any, record: IPitch) => (
-                <Space>
+                <Space align="center" style={{ justifyContent: "center", width: "100%" }}>
                     <RBButton variant="outline-info" size="sm"
                         onClick={() => handleView(record.id)}
                     >

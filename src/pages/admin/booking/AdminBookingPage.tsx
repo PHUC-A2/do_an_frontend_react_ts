@@ -1,58 +1,48 @@
-import { Table, Tag, Space, Card, Popconfirm, message, type PopconfirmProps, Tooltip } from 'antd';
+import { Table, Tag, Space, Card, Popconfirm, message, type PopconfirmProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useEffect, useState } from 'react';
 import RBButton from 'react-bootstrap/Button';
 import { IoIosAddCircle } from 'react-icons/io';
 import { useAppDispatch, useAppSelector } from '../../../redux/hooks';
-import { fetchUsers, selectUserLoading, selectUserMeta, selectUsers } from '../../../redux/features/userSlice';
-import type { IUser } from '../../../types/user';
 import { CiEdit } from 'react-icons/ci';
 import { FaArrowsToEye } from 'react-icons/fa6';
-import { MdDelete, MdSecurity } from 'react-icons/md';
-import ModalAddUser from './modals/ModalAddUser';
-import { deleteUser, getUserById } from '../../../config/Api';
+import { MdDelete } from 'react-icons/md';
+import { fetchBookings, selectBookingLoading, selectBookingMeta, selectBookings } from '../../../redux/features/bookingSlice';
+import type { IBooking } from '../../../types/booking';
+import { SHIRT_OPTION_META } from '../../../utils/constants/booking.constants';
+import ModalAddBooking from './modals/ModalAddBooking';
+import { deleteBooking, getBookingById } from '../../../config/Api';
 import { toast } from 'react-toastify';
-import ModalUserDetails from './modals/ModalUserDetails';
-import ModalUpdateUser from './modals/ModalUpdateUser';
-import { USER_STATUS_META } from '../../../utils/constants/user.constants';
-import AdminModalAssignRole from './modals/AdminModalAssignRole';
-import { fetchRoles } from '../../../redux/features/roleSlice';
-
-const AdminUserPage = () => {
+import ModalBookingDetails from './modals/ModalBookingDetails';
+import { formatDateTimeRange, toUnix } from '../../../utils/format/localdatetime';
+import ModalUpdateBooking from './modals/ModalUpdateBooking';
+const AdminBookingPage = () => {
     const dispatch = useAppDispatch();
-    const listUsers = useAppSelector(selectUsers);
-    const meta = useAppSelector(selectUserMeta);
-    const loading = useAppSelector(selectUserLoading);
+    const listBookings = useAppSelector(selectBookings);
+    const meta = useAppSelector(selectBookingMeta);
+    const loading = useAppSelector(selectBookingLoading);
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    const [openModalAddUser, setOpenModalAddUser] = useState<boolean>(false);
-    const [openModalUpdateUser, setOpenModalUpdateUser] = useState<boolean>(false);
-    const [openModalUserDetails, setOpenModalUserDetails] = useState<boolean>(false);
-    const [user, setUser] = useState<IUser | null>(null);
-    const [userEdit, setUserEdit] = useState<IUser | null>(null);
-    const [userAssignRole, setUserAssignRole] = useState<IUser | null>(null);
-    const [openModalAssignRole, setOpenModalAssignRole] = useState<boolean>(false);
+    const [openModalAddBooking, setOpenModalAddBooking] = useState<boolean>(false);
+    const [openModalUpdateBooking, setOpenModalUpdateBooking] = useState<boolean>(false);
+    const [openModalBookingDetails, setOpenModalBookingDetails] = useState<boolean>(false);
+    const [booking, setBooking] = useState<IBooking | null>(null);
+    const [bookingEdit, setBookingEdit] = useState<IBooking | null>(null);
 
-    // assign role
-    const handleAssignRole = async (data: IUser) => {
-        setUserAssignRole(data);
-        setOpenModalAssignRole(true);
-        await dispatch(fetchRoles("")).unwrap();
-    }
 
     const handleView = async (id: number) => {
-        setUser(null);
+        setBooking(null);
         setIsLoading(true);
-        setOpenModalUserDetails(true);
+        setOpenModalBookingDetails(true);
 
         try {
-            const res = await getUserById(id);
+            const res = await getBookingById(id);
 
             if (Number(res.data.statusCode) === 200) {
-                setUser(res.data.data ?? null);
+                setBooking(res.data.data ?? null);
             } else {
-                setUser(null);
+                setBooking(null);
             }
         } catch (error: any) {
             const m = error?.response?.data?.message ?? "Không xác định";
@@ -67,18 +57,19 @@ const AdminUserPage = () => {
         }
     };
 
-    const handleEdit = (data: IUser) => {
-        setOpenModalUpdateUser(true);
-        setUserEdit(data);
+    const handleEdit = (data: IBooking) => {
+        setOpenModalUpdateBooking(true);
+        setBookingEdit(data);
     }
 
     const [messageApi, holder] = message.useMessage();
+
     const handleDelete = async (id: number) => {
         try {
             setDeletingId(id);
-            const res = await deleteUser(id);
+            const res = await deleteBooking(id);
             if (res.data.statusCode === 200) {
-                await dispatch(fetchUsers(""));
+                await dispatch(fetchBookings(""));
                 messageApi.success('Xóa thành công');
             }
         } catch (error: any) {
@@ -98,11 +89,11 @@ const AdminUserPage = () => {
     const cancel: PopconfirmProps['onCancel'] = () => {
         messageApi.error('Đã bỏ chọn');
     };
-    const columns: ColumnsType<IUser> = [
+    const columns: ColumnsType<IBooking> = [
         {
             title: 'STT',
             key: 'stt',
-            render: (_: any, __: IUser, index: number) =>
+            render: (_: any, __: IBooking, index: number) =>
                 (meta.page - 1) * meta.pageSize + index + 1,
         },
         {
@@ -112,68 +103,72 @@ const AdminUserPage = () => {
             sorter: (a, b) => a.id - b.id,
         },
         {
-            title: 'Tên',
-            dataIndex: 'name',
-            key: 'name',
+            title: 'Người dùng(ID)',
+            dataIndex: 'userId',
+            key: 'userId',
+            sorter: (a, b) => a.id - b.id,
+        },
+        {
+            title: 'Tên người đặt',
+            dataIndex: 'userName',
+            key: 'userName',
             sorter: (a, b) =>
-                (a.name ?? '').localeCompare(b.name ?? ''),
+                (a.userName ?? '').localeCompare(b.userName ?? ''),
             render: (text?: string | null) => text || '-',
         },
         {
-            title: 'Email',
-            dataIndex: 'email',
-            key: 'email',
-            sorter: (a, b) => a.email.localeCompare(b.email),
+            title: 'Sân (ID)',
+            dataIndex: 'pitchId',
+            key: 'pitchId',
+            sorter: (a, b) => a.id - b.id,
         },
         {
-            title: 'SĐT',
-            dataIndex: 'phoneNumber',
-            key: 'phoneNumber',
+            title: 'Tên sân',
+            dataIndex: 'pitchName',
+            key: 'pitchName',
             sorter: (a, b) =>
-                (a.phoneNumber ?? '').localeCompare(b.phoneNumber ?? ''),
+                (a.pitchName ?? '').localeCompare(b.pitchName ?? ''),
             render: (text?: string | null) => text || '-',
         },
         {
-            title: 'Trạng thái',
-            dataIndex: 'status',
-            key: 'status',
+            title: 'Giờ thi đấu',
+            key: 'timeRange',
             sorter: (a, b) =>
-                (a.status ?? '').localeCompare(b.status ?? ''),
-            // render: (status?: IUser['status']) => (
-            //     <Tag color={status ? statusColors[status] : 'default'}>
-            //         {status ?? 'Không xác định'}
-            //     </Tag>
-            // ),
-            render: (status?: IUser['status']) =>
-                status ? (
-                    <Tag color={USER_STATUS_META[status].color}>
-                        {USER_STATUS_META[status].label}
+                toUnix(a.startDateTime) - toUnix(b.startDateTime),
+            render: (_: any, record: IBooking) =>
+                formatDateTimeRange(
+                    record.startDateTime,
+                    record.endDateTime
+                ),
+        },
+
+        {
+            title: 'Áo pitch',
+            dataIndex: 'shirtOption',
+            key: 'shirtOption',
+            sorter: (a, b) =>
+                (a.shirtOption ?? '').localeCompare(b.shirtOption ?? ''),
+            render: (shirtOption?: IBooking['shirtOption']) =>
+                shirtOption ? (
+                    <Tag color={SHIRT_OPTION_META[shirtOption].color}>
+                        {SHIRT_OPTION_META[shirtOption].label}
                     </Tag>
                 ) : (
                     <Tag>Không xác định</Tag>
                 ),
-
         },
         {
-            title: 'Vai trò',
-            dataIndex: 'roles',
-            key: 'roles',
-            render: (roles?: IUser['roles']) => (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                    {roles?.length
-                        ? roles.map(role => (
-                            <Tag key={role.id} color="blue">
-                                {role.name}
-                            </Tag>
-                        ))
-                        : '-'}
-                </div>
-            ),
+            title: 'Số điện thoại',
+            dataIndex: 'contactPhone',
+            key: 'contactPhone',
+            sorter: (a, b) =>
+                (a.contactPhone ?? '').localeCompare(b.contactPhone ?? ''),
+            render: (text?: string | null) => text || '-',
         },
         {
             title: 'Hành động',
             key: 'actions',
-            render: (_: any, record: IUser) => (
+            render: (_: any, record: IBooking) => (
                 <Space align="center" style={{ justifyContent: "center", width: "100%" }}>
 
                     <RBButton variant="outline-info" size='sm'
@@ -211,33 +206,25 @@ const AdminUserPage = () => {
                             <MdDelete />
                         </RBButton>
                     </Popconfirm>
-
-                    <Tooltip placement="left" title="Gắn quyền">
-                        <RBButton size="sm" variant="outline-secondary"
-                            onClick={() => handleAssignRole(record)}
-                        >
-                            <MdSecurity />
-                        </RBButton>
-                    </Tooltip>
                 </Space>
             ),
         },
     ];
 
-    // fetch list users
+    // fetch list bookings
     useEffect(() => {
-        dispatch(fetchUsers("page=1&pageSize=7"));
+        dispatch(fetchBookings("page=1&pageSize=7"));
     }, [dispatch]);
 
     return (
         <>
             <Card
                 size='small'
-                title="Quản lý người dùng (User)"
+                title="Quản lý lịch đặt sân (booking)"
                 extra={<RBButton variant="outline-primary"
                     size='sm'
                     style={{ display: "flex", alignItems: "center", gap: 3 }}
-                    onClick={() => setOpenModalAddUser(true)}
+                    onClick={() => setOpenModalAddBooking(true)}
                 >
                     <IoIosAddCircle />
                     Thêm mới
@@ -245,9 +232,9 @@ const AdminUserPage = () => {
                 hoverable={false}
                 style={{ width: '100%', overflowX: 'auto', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
             >
-                <Table<IUser>
+                <Table<IBooking>
                     columns={columns}
-                    dataSource={listUsers}
+                    dataSource={listBookings}
                     rowKey="id"
                     loading={loading}
                     size='small'
@@ -257,38 +244,33 @@ const AdminUserPage = () => {
                         total: meta.total,
                         showSizeChanger: true,
                         onChange: (page, pageSize) => {
-                            dispatch(fetchUsers(`page=${page}&pageSize=${pageSize}`));
+                            dispatch(fetchBookings(`page=${page}&pageSize=${pageSize}`));
                         },
                     }}
                     bordered
                     scroll={{ x: 'max-content' }} // scroll ngang nếu table quá rộng
                 />
             </Card>
-            <ModalAddUser
-                openModalAddUser={openModalAddUser}
-                setOpenModalAddUser={setOpenModalAddUser}
+
+            <ModalAddBooking
+                openModalAddBooking={openModalAddBooking}
+                setOpenModalAddBooking={setOpenModalAddBooking}
             />
 
-            <ModalUserDetails
-                setOpenModalUserDetails={setOpenModalUserDetails}
-                openModalUserDetails={openModalUserDetails}
-                user={user}
+            <ModalBookingDetails
+                openModalBookingDetails={openModalBookingDetails}
+                setOpenModalBookingDetails={setOpenModalBookingDetails}
+                booking={booking}
                 isLoading={isLoading}
             />
 
-            <ModalUpdateUser
-                openModalUpdateUser={openModalUpdateUser}
-                setOpenModalUpdateUser={setOpenModalUpdateUser}
-                userEdit={userEdit}
-            />
-
-            <AdminModalAssignRole
-                openModalAssignRole={openModalAssignRole}
-                setOpenModalAssignRole={setOpenModalAssignRole}
-                userAssignRole={userAssignRole}
+            <ModalUpdateBooking
+                openModalUpdateBooking={openModalUpdateBooking}
+                setOpenModalUpdateBooking={setOpenModalUpdateBooking}
+                bookingEdit={bookingEdit}
             />
         </>
     );
 };
 
-export default AdminUserPage;
+export default AdminBookingPage;

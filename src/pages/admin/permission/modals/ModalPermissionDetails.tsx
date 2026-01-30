@@ -1,9 +1,9 @@
 import { Descriptions, Drawer, Spin, Tag } from "antd";
-import dayjs from "dayjs";
 
 import type { IPermission } from "../../../../types/permission";
 import { splitPermission } from "../../../../utils/constants/permission.utils";
 import { PERMISSION_ACTION_COLOR } from "../../../../utils/constants/permission-ui.constants";
+import { formatInstant } from "../../../../utils/format/localdatetime";
 
 interface IProps {
     openModalPermissionDetails: boolean;
@@ -81,28 +81,18 @@ const ModalPermissionDetails = (props: IProps) => {
                     </Descriptions.Item>
 
                     <Descriptions.Item label="Người tạo">
-                        {permission?.createdBy ?? "N/A"}
+                        {permission?.createdBy ? permission.createdBy : "N/A"}
                     </Descriptions.Item>
-
-                    <Descriptions.Item label="Người cập nhật">
-                        {permission?.updatedBy ?? "N/A"}
-                    </Descriptions.Item>
-
                     <Descriptions.Item label="Ngày tạo">
-                        {permission?.createdAt
-                            ? dayjs(permission.createdAt).format(
-                                "DD/MM/YYYY HH:mm:ss"
-                            )
-                            : "N/A"}
+                        {formatInstant(permission?.createdAt)}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Người cập nhật">
+                        {permission?.updatedBy ? permission.updatedBy : "N/A"}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Ngày cập nhật">
+                        {formatInstant(permission?.updatedAt)}
                     </Descriptions.Item>
 
-                    <Descriptions.Item label="Ngày cập nhật">
-                        {permission?.updatedAt
-                            ? dayjs(permission.updatedAt).format(
-                                "DD/MM/YYYY HH:mm:ss"
-                            )
-                            : "N/A"}
-                    </Descriptions.Item>
                 </Descriptions>
             </Spin>
         </Drawer>

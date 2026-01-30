@@ -130,7 +130,7 @@ const AdminRolePage = () => {
         {
             title: "Hành động",
             render: (_: any, record: IRole) => (
-                <Space>
+                <Space align="center" style={{ justifyContent: "center", width: "100%" }}>
                     <RBButton variant="outline-info" size="sm"
                         onClick={() => handleView(record.id)}
                     >

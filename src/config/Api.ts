@@ -1,6 +1,7 @@
 /* api auth  */
 
 import type { IRegister } from "../types/auth";
+import type { IBooking, ICreateBookingReq, IUpdateBookingReq } from "../types/booking";
 import type { IBackendRes, IModelPaginate } from "../types/common";
 import type { ICreatePermissionReq, IPermission, IUpdatePermissionReq } from "../types/permission";
 import type { ICreatePitchReq, IPitch, IUpdatePitchReq } from "../types/pitch";
@@ -49,6 +50,14 @@ export const assignPermission = (id: number, data: IAssignPermissionReq) => inst
 /* api gắn role cho user */
 // /api/v1/users/userId/assign-roles
 export const assignRole = (id: number, data: IAssignRoleReq) => instance.put<IBackendRes<IUser>>(`/api/v1/users/${id}/assign-roles`, data);
+
+
+/* api booking */
+export const getAllBookings = (query: string) => instance.get<IBackendRes<IModelPaginate<IBooking>>>(`/api/v1/bookings?${query}`);
+export const createBooking = (data: ICreateBookingReq) => instance.post<IBackendRes<IBooking>>(`/api/v1/bookings`, data);
+export const updateBooking = (id: number, data: IUpdateBookingReq) => instance.put<IBackendRes<IBooking>>(`/api/v1/bookings/${id}`, data);
+export const getBookingById = (id: number) => instance.get<IBackendRes<IBooking>>(`/api/v1/bookings/${id}`);
+export const deleteBooking = (id: number) => instance.delete<IBackendRes<IBooking>>(`/api/v1/bookings/${id}`);
 
 // upload avatar
 export const uploadImageAvatar = async (file: File) => {
