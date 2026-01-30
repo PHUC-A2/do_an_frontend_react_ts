@@ -16,7 +16,6 @@ import { useAppDispatch } from '../../redux/hooks';
 import { logout } from '../../config/Api';
 import { toast } from 'react-toastify';
 import { setLogout } from '../../redux/features/authSlice';
-import { IoMdClose } from 'react-icons/io';
 import { IoMenu, IoSunny } from 'react-icons/io5';
 import { LuMoon } from 'react-icons/lu';
 import { PiSoccerBallBold } from 'react-icons/pi';
@@ -115,7 +114,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                             padding: 0
                         }
                     }}
-                    closeIcon={false}
+                    closeIcon={true}
                     style={{
                         background: isDark ? '#001529' : '#fff', // set màu nền
                     }}
@@ -148,30 +147,41 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                         background: isDark ? '#001529' : '#fff',
                         color: isDark ? '#fff' : '#000',
                         transition: 'all 0.2s',
-                        height: "90px"
+                        height: '90px'
                     }}
                 >
-                    <div style={{ display: 'flex', flexDirection: 'column', marginLeft: screens.md ? siderWidth : 0 }}>
-                        <h5>Chào mừng bạn đến với trang quản trị!</h5>
-                        <Breadcrumb items={[{ title: breadcrumbText }]} style={{ color: isDark ? '#fff' : '#000', marginBottom: "0px" }} />
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {/* BÊN TRÁI */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: screens.md ? siderWidth : 0 }}>
                         {!screens.md && (
                             <Button
                                 type="text"
                                 onClick={() => setDrawerVisible(!drawerVisible)}
                                 style={{ color: isDark ? '#fff' : '#000', fontSize: 24 }}
                             >
-                                <Tooltip title={drawerVisible ? "Đóng menu" : "Mở menu"}>{drawerVisible ? <IoMdClose /> : <IoMenu />}</Tooltip>
+                                <Tooltip title={drawerVisible ? 'Đóng menu' : 'Mở menu'}>
+                                    {/* {drawerVisible ? <IoMdClose /> : <IoMenu />} */}
+                                    <IoMenu />
+                                </Tooltip>
                             </Button>
-
                         )}
-                        <Tooltip
-                            title={isDark ? 'Giao diện sáng' : 'Giao diện tối'}
-                            getPopupContainer={(trigger: any) => trigger.parentElement!}
-                        >
-                            <Switch checked={isDark} onChange={toggleTheme} checkedChildren={<LuMoon />} unCheckedChildren={<IoSunny />} />
+
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <h5>Chào mừng bạn đến với trang quản trị!</h5>
+                            <Breadcrumb
+                                items={[{ title: breadcrumbText }]}
+                                style={{ color: isDark ? '#fff' : '#000', marginBottom: 0 }}
+                            />
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Tooltip title={isDark ? 'Giao diện sáng' : 'Giao diện tối'}>
+                            <Switch
+                                checked={isDark}
+                                onChange={toggleTheme}
+                                checkedChildren={<LuMoon />}
+                                unCheckedChildren={<IoSunny />}
+                            />
                         </Tooltip>
                     </div>
                 </Header>
