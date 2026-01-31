@@ -25,6 +25,7 @@ import ModalPitchDetails from './modals/ModalPitchDetails';
 import { deletePitch, getPitchById } from '../../../config/Api';
 import { toast } from 'react-toastify';
 import ModalUpdatePitch from './modals/ModalUpdatePitch';
+import { FaMapMarkerAlt } from 'react-icons/fa';
 
 const AdminPitchPage = () => {
     const dispatch = useAppDispatch();
@@ -189,6 +190,20 @@ const AdminPitchPage = () => {
                             <MdDelete />
                         </RBButton>
                     </Popconfirm>
+
+                    <RBButton
+                        size='sm'
+                        variant="outline-info"
+                        onClick={() => {
+                            if (record?.latitude == null || record?.longitude == null) return;
+
+                            const url = `https://www.google.com/maps/dir/?api=1&destination=${record.latitude},${record.longitude}`;
+                            window.open(url, '_blank');
+                        }}
+                        disabled={record?.latitude == null || record?.longitude == null}
+                    >
+                        <FaMapMarkerAlt />
+                    </RBButton>
                 </Space>
             ),
         },

@@ -12,6 +12,8 @@ export interface IPitch {
     open24h?: boolean | null;
     status: PitchStatusEnum;
     address?: string | null;
+    latitude: number;
+    longitude: number;
     createdAt: string;
     updatedAt: string | null;
     createdBy: string;
@@ -27,6 +29,8 @@ export interface ICreatePitchReq {
     closeTime?: string | null;
     open24h?: boolean | null;
     address?: string | null;
+    latitude: number;
+    longitude: number;
 }
 
 export interface IUpdatePitchReq {
@@ -39,6 +43,8 @@ export interface IUpdatePitchReq {
     open24h?: boolean | null;
     status: PitchStatusEnum;
     address?: string | null;
+    latitude: number;
+    longitude: number;
 }
 
 /**

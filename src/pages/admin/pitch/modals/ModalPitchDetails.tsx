@@ -3,6 +3,8 @@ import { Descriptions, Drawer, Spin, Tag, Image } from 'antd';
 import type { IPitch } from '../../../../types/pitch';
 import { PITCH_STATUS_META, getPitchTypeLabel } from '../../../../utils/constants/pitch.constants';
 import { formatInstant } from '../../../../utils/format/localdatetime';
+import { Button } from 'react-bootstrap';
+import { FaMapMarkerAlt } from 'react-icons/fa';
 
 interface IProps {
     openModalPitchDetails: boolean;
@@ -94,6 +96,23 @@ const ModalPitchDetails = (props: IProps) => {
                     <Descriptions.Item label="Ngày cập nhật">
                         {formatInstant(pitch?.updatedAt)}
                     </Descriptions.Item>
+                    <Descriptions.Item label="Mở map chỉ đường">
+                        <Button
+                            variant="outline-info"
+                            onClick={() => {
+                                if (pitch?.latitude == null || pitch?.longitude == null) return;
+
+                                const url = `https://www.google.com/maps/dir/?api=1&destination=${pitch.latitude},${pitch.longitude}`;
+                                window.open(url, '_blank');
+                            }}
+                            disabled={pitch?.latitude == null || pitch?.longitude == null}
+                            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                        >
+                            <FaMapMarkerAlt />
+                            <span>Chỉ đường</span>
+                        </Button>
+                    </Descriptions.Item>
+
                     
                 </Descriptions>
             </Spin>

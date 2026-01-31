@@ -215,6 +215,36 @@ const ModalAddPitch = ({ openModalAddPitch, setOpenModalAddPitch }: IProps) => {
                     <Input />
                 </Form.Item>
 
+                <Form.Item
+                    label="Vĩ độ (Latitude)"
+                    name="latitude"
+                    rules={[
+                        { required: true, message: 'Vui lòng nhập vĩ độ' },
+                        { type: 'number', min: -90, max: 90, message: 'Vĩ độ phải từ -90 đến 90' },
+                    ]}
+                >
+                    <InputNumber
+                        style={{ width: '100%' }}
+                        placeholder="Ví dụ: 21.309507"
+                        step={0.000001}
+                    />
+                </Form.Item>
+
+                <Form.Item
+                    label="Kinh độ (Longitude)"
+                    name="longitude"
+                    rules={[
+                        { required: true, message: 'Vui lòng nhập kinh độ' },
+                        { type: 'number', min: -180, max: 180, message: 'Kinh độ phải từ -180 đến 180' },
+                    ]}
+                >
+                    <InputNumber
+                        style={{ width: '100%' }}
+                        placeholder="Ví dụ: 103.940030"
+                        step={0.000001}
+                    />
+                </Form.Item>
+
                 <Form.Item label="Ảnh sân">
                     <Upload
                         listType="picture-circle"
