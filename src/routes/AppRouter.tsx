@@ -30,7 +30,6 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
                 { path: "/pitch", element: <PitchPage theme={theme} /> },
                 { path: "/booking/:pitchId", element: <BookingPage theme={theme} /> },
                 { path: "/about", element: <AboutPage theme={theme} /> },
-                { path: "/contact", element: <div>Liên hệ</div> },
             ]
         },
         {

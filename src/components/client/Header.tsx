@@ -3,7 +3,6 @@ import { MenuOutlined, UserOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { AiFillHome, AiOutlineLogin, AiOutlineLogout, AiOutlineUserAdd, AiFillDashboard, AiFillCodepenCircle } from 'react-icons/ai';
-import { IoMdFootball } from 'react-icons/io';
 import { MdAccountCircle } from 'react-icons/md';
 import { FaInfoCircle } from 'react-icons/fa';
 import ModalAccount from '../../pages/auth/modal/ModalAccount';
@@ -60,9 +59,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const mainMenuItems: MenuItem[] = [
         { label: <Link to="/" style={linkStyle}>Trang chủ</Link>, key: 'home', icon: <AiFillHome /> },
         { label: <Link to="/pitch" style={linkStyle}>Sân bóng</Link>, key: 'pitch', icon: <AiFillCodepenCircle /> },
-        { label: <Link to="/booking" style={linkStyle}>Đặt sân</Link>, key: 'booking', icon: <IoMdFootball /> },
         { label: <Link to="/about" style={linkStyle}>Về chúng tôi</Link>, key: 'about', icon: <FaInfoCircle /> },
-        { label: <Link to="/contact" style={linkStyle}>Liên hệ</Link>, key: 'contact', icon: <AiOutlineLogin /> },
     ];
 
     const settingsMenu: MenuProps['items'] = [
