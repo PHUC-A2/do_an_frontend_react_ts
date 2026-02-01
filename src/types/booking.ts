@@ -34,3 +34,11 @@ export interface IUpdateBookingReq {
     shirtOption: ShirtOptionEnum;
     contactPhone?: string;
 }
+
+export interface ICreateBookingClientReq {
+    pitchId: number;
+    shirtOption: ShirtOptionEnum;
+    contactPhone?: string;
+    startDateTime: string;
+    endDateTime: string;
+}
