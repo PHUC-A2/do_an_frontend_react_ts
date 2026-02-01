@@ -6,6 +6,7 @@ import type { IBackendRes, IModelPaginate } from "../types/common";
 import type { ICreatePermissionReq, IPermission, IUpdatePermissionReq } from "../types/permission";
 import type { ICreatePitchReq, IPitch, IUpdatePitchReq } from "../types/pitch";
 import type { IAssignPermissionReq, ICreateRoleReq, IRole, IUpdateRoleReq } from "../types/role";
+import type { IPitchTimeline } from "../types/timeline";
 import type { IGetUploadResponse } from "../types/upload";
 import type { IAssignRoleReq, ICreateUserReq, IUpdateUserReq, IUser } from "../types/user";
 import instance from "./customAxios";
@@ -58,6 +59,11 @@ export const createBooking = (data: ICreateBookingReq) => instance.post<IBackend
 export const updateBooking = (id: number, data: IUpdateBookingReq) => instance.put<IBackendRes<IBooking>>(`/api/v1/bookings/${id}`, data);
 export const getBookingById = (id: number) => instance.get<IBackendRes<IBooking>>(`/api/v1/bookings/${id}`);
 export const deleteBooking = (id: number) => instance.delete<IBackendRes<IBooking>>(`/api/v1/bookings/${id}`);
+
+/* api get timeline */
+// http://localhost:8080/api/v1/client/public/pitches/5/timeline?date=2026-02-01
+export const getTimeline = (pitchId: number, params: string) => instance.get<IBackendRes<IPitchTimeline>>(`/api/v1/client/public/pitches/${pitchId}/timeline?date=${params}`);
+
 
 // upload avatar
 export const uploadImageAvatar = async (file: File) => {

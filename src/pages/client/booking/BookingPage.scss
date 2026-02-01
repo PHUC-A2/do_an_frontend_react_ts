@@ -113,57 +113,6 @@
     }
 }
 
-
-// .luxury-card-wrapper {
-//     position     : relative;
-//     border-radius: 20px;
-//     padding      : 2px;
-//     overflow     : hidden;
-
-//     /* Dải sáng xoay */
-//     &::before {
-//         content : "";
-//         position: absolute;
-//         inset   : -50%;
-//         background: linear-gradient(180deg,
-//                 transparent,
-//                 #ddb73b,
-//                 #ffef9f,
-//                 #d4af37,
-//                 transparent);
-//         animation: spin 10s linear infinite;
-//         opacity  : 0.09;
-
-//         /* tự động hợp theme: sáng khi light, dịu khi dark */
-//         mix-blend-mode: screen;
-//         filter        : brightness(1.2);
-//     }
-
-//     /* Lớp nền card */
-//     &::after {
-//         content      : "";
-//         position     : absolute;
-//         inset        : 2px;
-//         border-radius: 18px;
-//         z-index      : 1;
-
-//         /* background tự động theo theme AntD */
-//         background: var(--ant-bg-container);
-//     }
-
-//     .booking-card {
-//         position     : relative;
-//         z-index      : 2;
-//         border-radius: 18px;
-//         background   : transparent;
-//     }
-// }
-
-// @keyframes spin {
-//     to {
-//         transform: translateX(-50%) rotate(360deg);
-//     }
-// }
 .luxury-card-wrapper {
     position     : relative;
     border-radius: 20px;
@@ -219,3 +168,4 @@
         transform: translateX(-50%) rotate(360deg);
     }
 }
+

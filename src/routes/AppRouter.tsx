@@ -13,6 +13,7 @@ import AdminPitchPage from '../pages/admin/pitch/AdminPitchPage';
 import AdminPermissionPage from '../pages/admin/permission/AdminPermissionPage';
 import AdminRolePage from '../pages/admin/role/AdminRolePage';
 import AdminBookingPage from '../pages/admin/booking/AdminBookingPage';
+import PitchPage from '../pages/client/pitch/PitchPage';
 
 interface AppRouterProps {
     theme: 'light' | 'dark';
@@ -26,7 +27,8 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
             element: <ClientLayout theme={theme} toggleTheme={toggleTheme} />,
             children: [
                 { index: true, element: <HomePage theme={theme} /> },
-                { path: "/booking", element: <BookingPage theme={theme} /> },
+                { path: "/pitch", element: <PitchPage theme={theme} /> },
+                { path: "/booking/:pitchId", element: <BookingPage theme={theme} /> },
                 { path: "/about", element: <AboutPage theme={theme} /> },
                 { path: "/contact", element: <div>Liên hệ</div> },
             ]

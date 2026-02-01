@@ -1,0 +1,170 @@
+.pitch-page {
+    --gold-main: #faad14;
+    overflow-x : hidden; // Khóa chết cuộn ngang ở cấp độ page
+    width      : 100%;
+
+    &.light {
+        background-color: #ffffff;
+        --card-bg       : #ffffff;
+        --text-main     : #1a2733;
+        --border        : rgba(0, 0, 0, 0.08);
+    }
+
+    &.dark {
+        background-color: #0d141c;
+        --card-bg       : #1e2936;
+        --text-main     : #e2e8f0;
+        --border        : rgba(255, 255, 255, 0.08);
+    }
+
+    .pitch-content {
+        padding : 0;
+        width   : 100%;
+        overflow: hidden; // Chống tràn từ các phần tử con
+    }
+
+    .container-custom {
+        max-width : 1200px;
+        margin    : 0 auto;
+        padding   : 0 20px;
+        width     : 100%;
+        box-sizing: border-box; // Đảm bảo padding không làm tăng chiều rộng
+    }
+
+    // --- Hero Section ---
+    .hero-section {
+        padding: 80px 0;
+
+        @media (max-width: 768px) {
+            padding: 40px 0;
+        }
+
+        .hero-title {
+            font-size  : clamp(2.5rem, 5vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            color      : var(--text-main);
+
+            .gold-text {
+                color     : var(--gold-main);
+                background: linear-gradient(135deg, #faad14, #ffec3d);
+
+                // --- Cấu hình background-clip chuẩn và tương thích ---
+                background-clip        : text; // Standard property
+                -webkit-background-clip: text; // Vendor prefix cho Chrome/Safari
+                -webkit-text-fill-color: transparent;
+
+                display: inline-block; // Đảm bảo gradient bao phủ đúng diện tích chữ
+            }
+        }
+
+        .hero-paragraph {
+            font-size: 1.15rem;
+            margin   : 24px 0 40px;
+            color    : var(--text-main);
+            opacity  : 0.8;
+
+            @media (max-width: 768px) {
+                font-size: 1rem;
+            }
+        }
+    }
+
+    // --- Carousel ---
+    .carousel-wrapper {
+        width        : 100%;
+        border-radius: 16px;
+        overflow     : hidden;
+        box-shadow   : 0 20px 40px rgba(0, 0, 0, 0.1);
+
+        .img-frame img {
+            width     : 100%;
+            height    : 400px;
+            object-fit: cover;
+
+            @media (max-width: 768px) {
+                height: 250px;
+            }
+        }
+    }
+
+    // --- Feature Cards ---
+    .features-section {
+        padding: 60px 0;
+
+        .feature-card-vip {
+            background   : var(--card-bg);
+            border       : 1px solid var(--border);
+            padding      : 40px 24px;
+            border-radius: 16px;
+            height       : 100%;
+            text-align   : center;
+            transition   : all 0.3s ease;
+
+            .icon-wrapper {
+                font-size    : 32px;
+                color        : var(--gold-main);
+                margin-bottom: 20px;
+                background   : rgba(250, 173, 20, 0.1);
+                display      : inline-flex;
+                padding      : 15px;
+                border-radius: 12px;
+            }
+
+            h4 {
+                color        : var(--gold-main) !important;
+                margin-bottom: 12px;
+            }
+
+            p {
+                color      : var(--text-main);
+                margin     : 0;
+                line-height: 1.6;
+            }
+        }
+    }
+
+    // --- CTA Banner ---
+    .cta-banner-pro {
+        margin       : 60px 0 100px;
+        padding      : 60px 20px;
+        background   : var(--card-bg);
+        border       : 1px solid var(--border);
+        border-radius: 24px;
+        text-align   : center;
+
+        h2 {
+            color        : var(--gold-main) !important;
+            font-size    : 2rem;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 768px) {
+            padding: 40px 16px;
+        }
+    }
+
+    // --- Utilities ---
+    .btn-vip-pro {
+        background   : var(--gold-main);
+        color        : #fff;
+        border       : none;
+        height       : 50px;
+        padding      : 0 32px;
+        font-weight  : 700;
+        border-radius: 6px;
+        transition   : all 0.3s ease;
+
+        &:hover {
+            filter    : brightness(1.1);
+            transform : translateY(-2px);
+            box-shadow: 0 5px 15px rgba(250, 173, 20, 0.4);
+        }
+    }
+
+    .hidden-mobile {
+        @media (max-width: 768px) {
+            display: none;
+        }
+    }
+}
