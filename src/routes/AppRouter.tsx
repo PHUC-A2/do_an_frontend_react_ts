@@ -25,7 +25,7 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
             path: "/",
             element: <ClientLayout theme={theme} toggleTheme={toggleTheme} />,
             children: [
-                { index: true, element: <HomePage /> },
+                { index: true, element: <HomePage theme={theme} /> },
                 { path: "/booking", element: <BookingPage theme={theme} /> },
                 { path: "/about", element: <AboutPage theme={theme} /> },
                 { path: "/contact", element: <div>Liên hệ</div> },
