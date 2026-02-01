@@ -10,6 +10,8 @@ export interface IBooking {
     endDateTime: string;
     shirtOption: ShirtOptionEnum;
     contactPhone: string;
+    durationMinutes: number;
+    totalPrice: number;
     createdAt: string;
     updatedAt: string | null;
     createdBy: string;

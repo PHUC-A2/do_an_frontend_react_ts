@@ -2,6 +2,7 @@ import { Descriptions, Drawer, Spin, Tag } from "antd";
 import type { IBooking } from "../../../../types/booking";
 import { SHIRT_OPTION_META } from "../../../../utils/constants/booking.constants";
 import {formatDateTimeRange, formatInstant } from "../../../../utils/format/localdatetime";
+import { formatVND } from "../../../../utils/format/price";
 interface IProps {
     setOpenModalBookingDetails: (v: boolean) => void;
     openModalBookingDetails: boolean;
@@ -52,6 +53,19 @@ const ModalBookingDetails = (props: IProps) => {
                             )
                         }
                     </Descriptions.Item>
+
+                    <Descriptions.Item label="Thời lượng">
+                        {booking?.durationMinutes
+                            ? `${booking.durationMinutes} phút`
+                            : "N/A"}
+                    </Descriptions.Item>
+
+                    <Descriptions.Item label="Tổng tiền">
+                        <Tag color="green">
+                            {formatVND(booking?.totalPrice)}
+                        </Tag>
+                    </Descriptions.Item>
+
 
                     <Descriptions.Item label="Người tạo">
                         {booking?.createdBy ? booking.createdBy : "N/A"}

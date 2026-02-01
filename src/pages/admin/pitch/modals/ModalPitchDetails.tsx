@@ -5,6 +5,7 @@ import { PITCH_STATUS_META, getPitchTypeLabel } from '../../../../utils/constant
 import { formatInstant } from '../../../../utils/format/localdatetime';
 import { Button } from 'react-bootstrap';
 import { FaMapMarkerAlt } from 'react-icons/fa';
+import { formatVND } from '../../../../utils/format/price';
 
 interface IProps {
     openModalPitchDetails: boolean;
@@ -60,7 +61,7 @@ const ModalPitchDetails = (props: IProps) => {
 
                     <Descriptions.Item label="Giá / giờ">
                         {pitch?.pricePerHour
-                            ? pitch.pricePerHour.toLocaleString('vi-VN') + ' đ'
+                            ? formatVND(pitch.pricePerHour)
                             : 'N/A'}
                     </Descriptions.Item>
 
