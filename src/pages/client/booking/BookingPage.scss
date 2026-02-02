@@ -169,3 +169,43 @@
     }
 }
 
+/*
+1. Lấy param (pitchId, bookingId)
+2. Fetch pitch,
+timeline,
+booking detail
+3. Quyết định hiển thị form nào 4. Truyền props xuống con
+pages/Booking/ ├─ BookingPage.tsx // component CHA
+├─ BookingPage.scss ├─ components/ │ ├─ BookingTimeline.tsx │ ├─ CreateBookingForm.tsx │ └─ UpdateBookingForm.tsx
+<BookingTimeline pitchId= {
+    pitchId
+}
+
+date= {
+    bookingDate
+}
+
+/> {
+    isEditMode ? (<UpdateBookingForm booking= {
+            bookingDetail
+        }
+
+        pitch= {
+            pitch
+        }
+
+        onSubmit= {
+            handleUpdate
+        }
+
+        />) : (<CreateBookingForm pitch= {
+            pitch
+        }
+
+        onSubmit= {
+            handleCreate
+        }
+
+        />)
+}
+*/
