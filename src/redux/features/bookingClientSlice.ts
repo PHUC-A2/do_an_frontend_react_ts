@@ -26,12 +26,12 @@ const initialState: BookingState = {
     },
 };
 
-export const fetchBookings = createAsyncThunk<
+export const fetchBookingsClient = createAsyncThunk<
     { result: IBooking[]; meta: BookingState["meta"] },
     string,
     { rejectValue: string }
 >(
-    'bookingClient/fetchBookings',
+    'bookingClient/fetchBookingsClient',
     async (query, { rejectWithValue }) => {
         try {
             const res = await getAllBookingsClient(query);
@@ -58,17 +58,17 @@ export const bookingSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(fetchBookings.pending, (state) => {
+            .addCase(fetchBookingsClient.pending, (state) => {
                 state.loading = true;
                 state.error = undefined;
             })
-            .addCase(fetchBookings.fulfilled, (state, action) => {
+            .addCase(fetchBookingsClient.fulfilled, (state, action) => {
                 // console.log(action.payload);
                 state.loading = false;
                 state.result = action.payload.result;
                 state.meta = action.payload.meta;
             })
-            .addCase(fetchBookings.rejected, (state, action) => {
+            .addCase(fetchBookingsClient.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
