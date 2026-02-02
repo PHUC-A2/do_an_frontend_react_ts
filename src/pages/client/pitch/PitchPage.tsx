@@ -148,7 +148,10 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                                             style={{ marginTop: 12, width: "100%" }}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                navigate(`/booking/${pitch.id}`);
+                                                // navigate(`/booking/${pitch.id}`);
+                                                navigate(`/booking/${pitch.id}`, {
+                                                    state: { mode: "CREATE" }
+                                                });
                                             }}
                                         >
                                             Đặt sân <ArrowRightOutlined />

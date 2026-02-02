@@ -11,7 +11,7 @@ import {
 import dayjs, { Dayjs } from "dayjs";
 import { useEffect, useState } from "react";
 import "./BookingPage.scss";
-import { useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
 import type { IPitch } from "../../../types/pitch";
 import { getPitchById } from "../../../config/Api";
 import BookingTime from "./components/BookingTimeline";
@@ -30,6 +30,7 @@ import { MdDateRange, MdMergeType, MdPriceChange } from "react-icons/md";
 import { GiSloth } from "react-icons/gi";
 import { TbSoccerField } from "react-icons/tb";
 import { IoMdClock } from "react-icons/io";
+import UpdateBookingForm from "./components/UpdateBookingForm";
 const { Title, Text } = Typography;
 
 interface BookingPageProps {
@@ -44,6 +45,11 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
     const [bookingDate, setBookingDate] = useState<Dayjs | null>(dayjs());
     const [pitch, setPitch] = useState<IPitch | null>(null);
     const [pitchLoading, setPitchLoading] = useState(false);
+
+    const location = useLocation();
+
+    const mode: "CREATE" | "UPDATE" = location.state?.mode ?? "CREATE";
+    const bookingId: number | undefined = location.state?.bookingId;
 
     const {
         timeline,
@@ -71,7 +77,7 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                 title={
                     <Space>
                         <TbSoccerField style={{ marginBottom: 2 }} size={20} />
-                        <span>Đặt sân</span> |
+                        <span>{mode === "CREATE" ? "Tạo lịch đặt sân" : "Cập nhật lịch đặt sân"}</span> |
                         <Space>
                             <IoMdClock size={20} style={{ marginBottom: 2 }} />
                             <span>Timeline</span>
@@ -214,12 +220,25 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                             )
                         )}
 
-                        <CreateBookingForm
-                            pitchIdNumber={pitchIdNumber}
-                            pitch={pitch}
-                            pitchLoading={pitchLoading}
-                            onSuccess={reloadTimeline}
-                        />
+                        {mode === "CREATE" && (
+                            <CreateBookingForm
+                                pitchIdNumber={pitchIdNumber}
+                                pitch={pitch}
+                                pitchLoading={pitchLoading}
+                                onSuccess={reloadTimeline}
+                            />
+                        )}
+
+                        {mode === "UPDATE" && bookingId && (
+                            <UpdateBookingForm
+                                bookingId={bookingId}
+                                pitchIdNumber={pitchIdNumber}
+                                pitch={pitch}
+                                pitchLoading={pitchLoading}
+                                onSuccess={reloadTimeline}
+                            />
+                        )}
+
                     </Col>
                 </Row>
             </Card>

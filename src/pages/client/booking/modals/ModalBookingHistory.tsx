@@ -10,6 +10,7 @@ import { CiEdit } from "react-icons/ci";
 import { IoMdClock, IoMdCloseCircle } from "react-icons/io";
 import { toast } from "react-toastify";
 import { TbSoccerField } from "react-icons/tb";
+import { useNavigate } from "react-router";
 
 interface IProps {
     openModalBookingHistory: boolean;
@@ -21,6 +22,8 @@ const ModalBookingHistory = (props: IProps) => {
     const { openModalBookingHistory, setOpenModalBookingHistory } = props;
     const dispatch = useAppDispatch();
     const listBookingsClient = useAppSelector(selectBookingsClient);
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         dispatch(fetchBookingsClient("page=1&pageSize=7"));
@@ -102,6 +105,18 @@ const ModalBookingHistory = (props: IProps) => {
                                 variant="outline-warning"
                                 size="sm"
                                 style={{ width: "100%" }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenModalBookingHistory(false);
+                                    // navigate(`/booking/${booking.pitchId}`);
+                                    navigate(`/booking/${booking.pitchId}`, {
+                                        state: {
+                                            mode: "UPDATE",
+                                            bookingId: booking.id
+                                        }
+                                    });
+                                    setOpenModalBookingHistory(false);
+                                }}
                             >
                                 <CiEdit /> Cập nhật lịch đặt
                             </RBButton>

@@ -42,3 +42,11 @@ export interface ICreateBookingClientReq {
     startDateTime: string;
     endDateTime: string;
 }
+
+export interface IUpdateBookingClientReq {
+    pitchId: number;
+    shirtOption: ShirtOptionEnum;
+    contactPhone?: string;
+    startDateTime: string;
+    endDateTime: string;
+}

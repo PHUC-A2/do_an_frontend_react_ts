@@ -1,7 +1,7 @@
 /* api auth  */
 
 import type { IRegister } from "../types/auth";
-import type { IBooking, ICreateBookingClientReq, ICreateBookingReq, IUpdateBookingReq } from "../types/booking";
+import type { IBooking, ICreateBookingClientReq, ICreateBookingReq, IUpdateBookingClientReq, IUpdateBookingReq } from "../types/booking";
 import type { IBackendRes, IModelPaginate } from "../types/common";
 import type { ICreatePermissionReq, IPermission, IUpdatePermissionReq } from "../types/permission";
 import type { ICreatePitchReq, IPitch, IUpdatePitchReq } from "../types/pitch";
@@ -61,6 +61,7 @@ export const getBookingById = (id: number) => instance.get<IBackendRes<IBooking>
 export const deleteBooking = (id: number) => instance.delete<IBackendRes<IBooking>>(`/api/v1/bookings/${id}`);
 // client
 export const createBookingClient = (data: ICreateBookingClientReq) => instance.post<IBackendRes<IBooking>>(`/api/v1/bookings`, data);
+export const updateBookingClient = (id: number, data: IUpdateBookingClientReq) => instance.put<IBackendRes<IBooking>>(`/api/v1/client/bookings/${id}`, data);
 export const getAllBookingsClient = (query: string) => instance.get<IBackendRes<IModelPaginate<IBooking>>>(`/api/v1/client/bookings?${query}`);
 
 /* api get timeline */
