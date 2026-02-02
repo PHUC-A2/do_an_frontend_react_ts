@@ -109,6 +109,7 @@ const CreateBookingForm = ({
                     format="YYYY-MM-DD HH:mm"
                     style={{ width: "100%" }}
                     minuteStep={5}
+                    placeholder={["Thời gian bắt đầu", "Thời gian kết thúc"]}
                     disabledDate={d => d.isBefore(dayjs().startOf("day"))}
                 />
             </Form.Item>
