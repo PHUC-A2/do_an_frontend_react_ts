@@ -1,12 +1,14 @@
 import {
-    Button,
+    // Button,
     Card,
     DatePicker,
     Form,
     Input,
+    Popconfirm,
     Select,
     Spin,
     Typography,
+    type PopconfirmProps,
 } from "antd";
 import { SHIRT_OPTION_OPTIONS } from "../../../../utils/constants/booking.constants";
 import { toast } from "react-toastify";
@@ -18,6 +20,8 @@ import { createBookingClient } from "../../../../config/Api";
 import { useState } from "react";
 import type { IPitch } from "../../../../types/pitch";
 import dayjs, { Dayjs } from "dayjs";
+import { Button, Spinner } from "react-bootstrap";
+import { formatVND } from "../../../../utils/format/price";
 
 const { Text } = Typography;
 
@@ -87,10 +91,19 @@ const CreateBookingForm = ({
         if (minutes <= 0) return 0;
 
         let total = (pitch.pricePerHour / 60) * minutes;
-        if (shirtOption === "WITH_PITCH_SHIRT") total += 25000;
+        // if (shirtOption === "WITH_PITCH_SHIRT") total += 25000;
 
         return Math.round(total);
     })();
+
+    const cancel: PopconfirmProps['onCancel'] = () => {
+        toast.info('Đã bỏ chọn');
+    };
+
+    const handleConfirmBooking = () => {
+        form.submit();
+    };
+
 
     return (
         <Form
@@ -131,13 +144,13 @@ const CreateBookingForm = ({
                         <br />
                         {shirtOption === "WITH_PITCH_SHIRT" && (
                             <>
-                                <Text>👕 Áo pitch: +25.000 đ</Text>
+                                <Text>👕 Áo pitch: free</Text>
                                 <br />
                             </>
                         )}
                         <Text strong style={{ fontSize: 18, color: "#22c55e" }}>
-                            💰 Tạm tính:{" "}
-                            {previewPrice.toLocaleString("vi-VN")} đ
+                            💰Tạm tính:{" "}
+                            {formatVND(previewPrice)}
                         </Text>
                     </Card>
                 )
@@ -155,15 +168,31 @@ const CreateBookingForm = ({
                 <Input />
             </Form.Item>
 
-            <Button
-                type="primary"
-                block
-                loading={bookingLoading}
-                htmlType="submit"
-                disabled={!dateTimeRange || !shirtOption}
+
+            <Popconfirm
+                title="Xác nhận"
+                placement="topLeft"
+                description="Bạn có chắc chắn muốn đặt sân không?"
+                okText="Có"
+                cancelText="Không"
+                onCancel={cancel}
+                onConfirm={handleConfirmBooking}
             >
-                Đặt sân
-            </Button>
+                <Button
+                    variant="outline-warning"
+                    className="w-100 d-flex justify-content-center align-items-center gap-2"
+                    disabled={bookingLoading || !dateTimeRange || !shirtOption}
+                >
+                    {bookingLoading ? (
+                        <>
+                            <Spinner animation="border" size="sm" />
+                            Đang đặt sân...
+                        </>
+                    ) : (
+                        "Đặt sân"
+                    )}
+                </Button>
+            </Popconfirm>
         </Form>
     );
 };

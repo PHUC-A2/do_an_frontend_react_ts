@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Layout, Typography, Row, Col, Card, Image, Tag, Button } from "antd";
+import { Layout, Typography, Row, Col, Card, Image, Tag } from "antd";
 import { motion, type Variants } from "framer-motion";
 import {
     EnvironmentOutlined,
@@ -12,7 +12,11 @@ import { useNavigate } from "react-router";
 import { fetchPitches, selectPitches, selectPitchLoading } from "../../../redux/features/pitchSlice";
 import type { IPitch } from "../../../types/pitch";
 import { getPitchTypeLabel, PITCH_STATUS_META } from "../../../utils/constants/pitch.constants";
-
+import { formatVND } from "../../../utils/format/price";
+import RBButton from 'react-bootstrap/Button';
+import { FaMapMarkerAlt } from "react-icons/fa";
+import { MdMergeType, MdPriceChange } from "react-icons/md";
+import { GrStatusGood } from "react-icons/gr";
 const { Content } = Layout;
 const { Title, Paragraph, Text } = Typography;
 
@@ -85,47 +89,70 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                                                 style={{ objectFit: "cover" }}
                                             />
                                         }
-                                        onClick={() => navigate(`/booking/${pitch.id}`)}
+                                    // onClick={() => navigate(`/booking/${pitch.id}`)}
                                     >
                                         <Title level={5} ellipsis>
-                                            {pitch.name}
+                                            🏟 {pitch.name}
                                         </Title>
 
                                         <div style={{ marginBottom: 8 }}>
                                             <Tag color="blue">
-                                                {getPitchTypeLabel(pitch.pitchType)}
+                                                <MdMergeType /> {getPitchTypeLabel(pitch.pitchType)}
                                             </Tag>
                                             <Tag color={PITCH_STATUS_META[pitch.status].color}>
-                                                {PITCH_STATUS_META[pitch.status].label}
+                                                <GrStatusGood /> {PITCH_STATUS_META[pitch.status].label}
                                             </Tag>
                                         </div>
 
-                                        <Text strong style={{ display: "block" }}>
-                                            {pitch.pricePerHour.toLocaleString("vi-VN")} đ / giờ
+                                        <Text strong type="warning" style={{ display: "block" }}>
+                                            <MdPriceChange /> <Tag color={"success"}>{formatVND(pitch.pricePerHour)} / giờ</Tag>
                                         </Text>
 
-                                        <Text type="secondary" style={{ display: "block", marginTop: 4 }}>
-                                            <EnvironmentOutlined /> {pitch.address}
-                                        </Text>
-
-                                        <Text type="secondary" style={{ display: "block", marginTop: 4 }}>
+                                        <Text type="warning" style={{ display: "block", marginTop: 4 }}>
                                             <ClockCircleOutlined />{" "}
                                             {pitch.open24h
                                                 ? "Mở cửa 24/7"
                                                 : `${pitch.openTime} - ${pitch.closeTime}`}
                                         </Text>
 
-                                        <Button
-                                            type="primary"
-                                            block
-                                            style={{ marginTop: 12 }}
+                                        <Text type="warning" style={{
+                                            marginTop: 4,
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "center",
+                                            width: "100%",
+                                        }}>
+                                            <span>
+                                                <EnvironmentOutlined /> {pitch.address}
+                                            </span>
+                                            <RBButton
+                                                variant="outline-info"
+                                                onClick={() => {
+                                                    if (pitch?.latitude == null || pitch?.longitude == null) return;
+
+                                                    const url = `https://www.google.com/maps/dir/?api=1&destination=${pitch.latitude},${pitch.longitude}`;
+                                                    window.open(url, "_blank");
+                                                }}
+                                                disabled={pitch?.latitude == null || pitch?.longitude == null}
+                                                style={{ display: "flex", alignItems: "center", gap: 6 }}
+                                            >
+                                                <FaMapMarkerAlt />
+                                                <span>Chỉ đường</span>
+                                            </RBButton>
+                                        </Text>
+
+                                        <RBButton
+                                            // type="primary"
+                                            variant="outline-warning"
+
+                                            style={{ marginTop: 12, width: "100%" }}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 navigate(`/booking/${pitch.id}`);
                                             }}
                                         >
                                             Đặt sân <ArrowRightOutlined />
-                                        </Button>
+                                        </RBButton>
                                     </MotionCard>
                                 </Col>
                             ))}

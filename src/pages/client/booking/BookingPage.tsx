@@ -6,18 +6,30 @@ import {
     Typography,
     Space,
     Spin,
+    Tag,
 } from "antd";
 import dayjs, { Dayjs } from "dayjs";
 import { useEffect, useState } from "react";
 import "./BookingPage.scss";
-import { PiSoccerBallFill } from "react-icons/pi";
 import { useParams } from "react-router";
 import type { IPitch } from "../../../types/pitch";
 import { getPitchById } from "../../../config/Api";
 import BookingTime from "./components/BookingTimeline";
 import CreateBookingForm from "./components/CreateBookingForm";
 import { useBookingTimeline } from "./hook/useBookingTimeline";
-
+import { Button } from "react-bootstrap";
+import { FaMapMarkerAlt } from "react-icons/fa";
+import { formatVND } from "../../../utils/format/price";
+import {
+    EnvironmentOutlined,
+    ClockCircleOutlined,
+} from "@ant-design/icons";
+import { getPitchTypeLabel, PITCH_STATUS_META } from "../../../utils/constants/pitch.constants";
+import { GrStatusGood } from "react-icons/gr";
+import { MdDateRange, MdMergeType, MdPriceChange } from "react-icons/md";
+import { GiSloth } from "react-icons/gi";
+import { TbSoccerField } from "react-icons/tb";
+import { IoMdClock } from "react-icons/io";
 const { Title, Text } = Typography;
 
 interface BookingPageProps {
@@ -52,17 +64,20 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
             .finally(() => setPitchLoading(false));
     }, [pitchIdNumber]);
 
-    const formatTime = (time?: string) =>
-        time ? dayjs(`1970-01-01T${time}`).format("HH:mm") : "--:--";
-
     return (
         <div className={`luxury-card-wrapper ${isDark ? "dark" : "light"}`}>
             <Card
                 className="booking-card"
                 title={
                     <Space>
-                        <PiSoccerBallFill size={24} />
-                        <span>Đặt sân</span>
+                        <TbSoccerField style={{ marginBottom: 2 }} size={20} />
+                        <span>Đặt sân</span> |
+                        <Space>
+                            <IoMdClock size={20} style={{ marginBottom: 2 }} />
+                            <span>Timeline</span>
+                            <Tag color="green">Trống</Tag>
+                            <Tag color="red">Đã đặt</Tag>
+                        </Space>
                     </Space>
                 }
             >
@@ -74,9 +89,18 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                         />
                     </Col>
 
-                    <Col xs={24} lg={8}>
-                        <Title level={5}>
-                            📅 Chọn ngày để xem các khung giờ còn trống!
+                    <Col xs={24} lg={8}
+                        style={{ paddingTop: 12 }}
+                    >
+                        <Title level={5}
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 8,
+                                marginBottom: 8,
+                            }}
+                        >
+                            <MdDateRange size={20} /> Chọn ngày để xem các khung giờ còn trống!
                         </Title>
 
                         <DatePicker
@@ -84,19 +108,10 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                             value={bookingDate}
                             onChange={setBookingDate}
                             format="DD/MM/YYYY"
+                            placeholder="Chọn ngày"
                         />
 
-                        <div style={{ marginTop: 24 }}>
-                            <Text type="warning">
-                                ⏱ Slot: {timeline?.slotMinutes} phút
-                            </Text>
-                            <br />
-                            <Text type="warning">
-                                🕒 Giờ mở cửa:{" "}
-                                {formatTime(timeline?.openTime)} –{" "}
-                                {formatTime(timeline?.closeTime)}
-                            </Text>
-                        </div>
+
 
                         {pitchLoading ? (
                             <Spin />
@@ -117,16 +132,84 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                                             marginBottom: 12,
                                         }}
                                     />
-                                    <Title level={5}>
-                                        🏟 {pitch.name}
+
+                                    <Title
+                                        level={5}
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 8,
+                                            marginBottom: 8,
+                                        }}
+                                    >
+                                        <TbSoccerField size={20} />
+                                        {pitch.name}
                                     </Title>
-                                    <Text type="secondary">
-                                        💸{" "}
-                                        {pitch.pricePerHour.toLocaleString(
-                                            "vi-VN"
-                                        )}{" "}
-                                        đ / giờ
-                                    </Text>
+
+                                    <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                                        <Tag color="blue">
+                                            <MdMergeType /> {getPitchTypeLabel(pitch.pitchType)}
+                                        </Tag>
+
+                                        <Tag color={PITCH_STATUS_META[pitch.status].color}>
+                                            <GrStatusGood /> {PITCH_STATUS_META[pitch.status].label}
+                                        </Tag>
+                                    </div>
+
+                                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                                        <Text type="warning">
+                                            <EnvironmentOutlined /> Địa chỉ:
+                                            <Tag color="success" style={{ marginLeft: 6 }}>
+                                                {pitch.address}
+                                            </Tag>
+                                        </Text>
+
+                                        <Text type="warning">
+                                            <GiSloth /> Slot:
+                                            <Tag color="success" style={{ marginLeft: 6 }}>
+                                                {timeline?.slotMinutes} phút
+                                            </Tag>
+                                        </Text>
+
+                                        <Text type="warning">
+                                            <ClockCircleOutlined /> Giờ mở cửa:
+                                            <Tag color="success" style={{ marginLeft: 6 }}>
+                                                {pitch.open24h
+                                                    ? "Mở cửa 24/7"
+                                                    : `${pitch.openTime} - ${pitch.closeTime}`}
+                                            </Tag>
+                                        </Text>
+                                    </div>
+
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "center",
+                                            width: "100%",
+                                        }}
+                                    >
+                                        <Text type="warning" strong style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                            <MdPriceChange />{" Giá: "}
+                                            <Tag color="success">{formatVND(pitch.pricePerHour)} / giờ</Tag>
+                                        </Text>
+
+                                        <Button
+                                            variant="outline-info"
+                                            onClick={() => {
+                                                if (pitch?.latitude == null || pitch?.longitude == null) return;
+
+                                                const url = `https://www.google.com/maps/dir/?api=1&destination=${pitch.latitude},${pitch.longitude}`;
+                                                window.open(url, "_blank");
+                                            }}
+                                            disabled={pitch?.latitude == null || pitch?.longitude == null}
+                                            style={{ display: "flex", alignItems: "center", gap: 6 }}
+                                        >
+                                            <FaMapMarkerAlt />
+                                            Chỉ đường
+                                        </Button>
+                                    </div>
+
                                 </Card>
                             )
                         )}

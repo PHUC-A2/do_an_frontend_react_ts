@@ -1,4 +1,4 @@
-import { Col, Collapse, Descriptions, Drawer, Popconfirm, Row, Tag, type CollapseProps, type PopconfirmProps } from "antd";
+import { Col, Collapse, Descriptions, Drawer, Popconfirm, Row, Space, Tag, type CollapseProps, type PopconfirmProps } from "antd";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 import { fetchBookingsClient, selectBookingsClient } from "../../../../redux/features/bookingClientSlice";
 import { useEffect } from "react";
@@ -7,8 +7,9 @@ import { formatVND } from "../../../../utils/format/price";
 import { formatDateTime, formatDateTimeRange, formatInstant } from "../../../../utils/format/localdatetime";
 import RBButton from 'react-bootstrap/Button';
 import { CiEdit } from "react-icons/ci";
-import { IoMdCloseCircle } from "react-icons/io";
+import { IoMdClock, IoMdCloseCircle } from "react-icons/io";
 import { toast } from "react-toastify";
+import { TbSoccerField } from "react-icons/tb";
 
 interface IProps {
     openModalBookingHistory: boolean;
@@ -34,7 +35,7 @@ const ModalBookingHistory = (props: IProps) => {
         label: (
             <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span>
-                    🏟️ {booking.pitchName}
+                    <TbSoccerField size={20} style={{ marginBottom: 2 }} /> {booking.pitchName}
                 </span>
                 <span>
                     {formatDateTime(booking.startDateTime)}
@@ -133,7 +134,11 @@ const ModalBookingHistory = (props: IProps) => {
 
     return (
         <Drawer
-            title="Lịch sử đặt sân"
+            title={
+                <Space>
+                    <IoMdClock size={20} style={{ marginBottom: 2 }} />
+                    <span>Lịch sử đặt sân</span>
+                </Space>}
             placement="right"
             closable={false}
             onClose={() => setOpenModalBookingHistory(false)}

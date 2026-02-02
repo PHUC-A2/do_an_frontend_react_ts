@@ -1,9 +1,7 @@
-import { Space, Spin, Tag, Typography } from "antd";
-import { IoMdClock } from "react-icons/io";
+import { Spin } from "antd";
 import { formatDateTime } from "../../../../utils/format/localdatetime";
 import type { IPitchTimeline } from "../../../../types/timeline";
 
-const { Title } = Typography;
 
 interface IProps {
     timelineLoading: boolean;
@@ -16,18 +14,6 @@ const BookingTime = (props: IProps) => {
 
     return (
         <>
-            <Title level={5}>
-                <Space>
-                    <IoMdClock size={22} />
-                    <span>Timeline</span>
-                </Space>
-            </Title>
-
-            <Space style={{ marginBottom: 12 }}>
-                <Tag color="green">Trống</Tag>
-                <Tag color="red">Đã đặt</Tag>
-            </Space>
-
             {timelineLoading ? (
                 <Spin />
             ) : (
