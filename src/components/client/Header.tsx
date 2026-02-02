@@ -3,7 +3,7 @@ import { MenuOutlined, UserOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { AiFillHome, AiOutlineLogin, AiOutlineLogout, AiOutlineUserAdd, AiFillDashboard, AiFillCodepenCircle } from 'react-icons/ai';
-import { MdAccountCircle } from 'react-icons/md';
+import { MdAccountCircle, MdWorkHistory } from 'react-icons/md';
 import { FaInfoCircle } from 'react-icons/fa';
 import ModalAccount from '../../pages/auth/modal/ModalAccount';
 import type { MenuProps } from 'antd';
@@ -13,6 +13,7 @@ import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { logout } from '../../config/Api';
 import { setLogout } from '../../redux/features/authSlice';
 import { toast } from 'react-toastify';
+import ModalBookingHistory from '../../pages/client/booking/modals/ModalBookingHistory';
 
 const { Header: AntHeader } = Layout;
 const { useBreakpoint } = Grid;
@@ -31,6 +32,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const [openModalBookingHistory, setOpenModalBookingHistory] = useState<boolean>(false);
 
     const isDark = theme === 'dark';
     const screens = useBreakpoint();
@@ -105,57 +107,70 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
   `;
 
     return (
-        <AntHeader style={headerStyle}>
-            {/* Inject style cho dark mode */}
-            {isDark && <style>{menuItemDarkCss}</style>}
+        <>
+            <AntHeader style={headerStyle}>
+                {/* Inject style cho dark mode */}
+                {isDark && <style>{menuItemDarkCss}</style>}
 
-            {/* Menu chính */}
-            {screens.md ? (
-                <Menu
-                    onClick={handleClick}
-                    selectedKeys={[current]}
-                    mode="horizontal"
-                    theme={isDark ? 'dark' : 'light'}
-                    items={mainMenuItems}
-                    style={{ ...menuStyle, flex: 1 }}
-                />
-            ) : (
-                <Button type="text" icon={<MenuOutlined />} onClick={() => setDrawerVisible(true)} />
-            )}
+                {/* Menu chính */}
+                {screens.md ? (
+                    <Menu
+                        onClick={handleClick}
+                        selectedKeys={[current]}
+                        mode="horizontal"
+                        theme={isDark ? 'dark' : 'light'}
+                        items={mainMenuItems}
+                        style={{ ...menuStyle, flex: 1 }}
+                    />
+                ) : (
+                    <Button type="text" icon={<MenuOutlined />} onClick={() => setDrawerVisible(true)} />
+                )}
 
-            {/* Right controls */}
-            <Space size="middle">
-                <Tooltip title={isDark ? 'Giao diện sáng' : 'Giao diện tối'}>
-                    <Switch checked={isDark} onChange={toggleTheme} checkedChildren={<LuMoon />} unCheckedChildren={<IoSunny />} />
-                </Tooltip>
+                {/* Right controls */}
+                <Space size="middle">
 
-                <Dropdown menu={{ items: settingsMenu }} placement="bottomRight">
-                    <Button type="text" icon={<UserOutlined />}>Cài đặt</Button>
-                </Dropdown>
-            </Space>
+                    <Tooltip title="Lịch sử đặt sân">
+                        <MdWorkHistory size={25}
+                            onClick={() => setOpenModalBookingHistory(true)}
+                        />
+                    </Tooltip>
 
-            {/* Drawer mobile */}
-            <Drawer
-                title="Menu"
-                placement="left"
-                onClose={() => setDrawerVisible(false)}
-                open={drawerVisible}
-                size="default"
-                styles={{ body: { padding: 0, background: isDark ? '#001529' : '#fff' } }}
-                mask={false}
-            >
-                <Menu
-                    onClick={handleClick}
-                    selectedKeys={[current]}
-                    mode="inline"
-                    theme={isDark ? 'dark' : 'light'}
-                    items={mainMenuItems}
-                    style={{ background: 'transparent' }}
-                />
-            </Drawer>
+                    <Tooltip title={isDark ? 'Giao diện sáng' : 'Giao diện tối'}>
+                        <Switch checked={isDark} onChange={toggleTheme} checkedChildren={<LuMoon />} unCheckedChildren={<IoSunny />} />
+                    </Tooltip>
 
-            <ModalAccount openModalAccount={openModalAccount} setOpenModalAccount={setOpenModalAccount} theme={theme} />
-        </AntHeader>
+                    <Dropdown menu={{ items: settingsMenu }} placement="bottomRight">
+                        <Button type="text" icon={<UserOutlined />}>Cài đặt</Button>
+                    </Dropdown>
+                </Space>
+
+                {/* Drawer mobile */}
+                <Drawer
+                    title="Menu"
+                    placement="left"
+                    onClose={() => setDrawerVisible(false)}
+                    open={drawerVisible}
+                    size="default"
+                    styles={{ body: { padding: 0, background: isDark ? '#001529' : '#fff' } }}
+                    mask={false}
+                >
+                    <Menu
+                        onClick={handleClick}
+                        selectedKeys={[current]}
+                        mode="inline"
+                        theme={isDark ? 'dark' : 'light'}
+                        items={mainMenuItems}
+                        style={{ background: 'transparent' }}
+                    />
+                </Drawer>
+
+                <ModalAccount openModalAccount={openModalAccount} setOpenModalAccount={setOpenModalAccount} theme={theme} />
+            </AntHeader>
+            <ModalBookingHistory
+                openModalBookingHistory={openModalBookingHistory}
+                setOpenModalBookingHistory={setOpenModalBookingHistory}
+            />
+        </>
     );
 };
 

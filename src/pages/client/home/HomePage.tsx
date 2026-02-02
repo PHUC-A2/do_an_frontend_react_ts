@@ -8,6 +8,7 @@ import {
     ArrowRightOutlined
 } from "@ant-design/icons";
 import "./HomePage.scss";
+import { useNavigate } from "react-router";
 
 const { Content } = Layout;
 const { Title, Paragraph } = Typography;
@@ -23,6 +24,7 @@ const fadeInUp: Variants = {
 
 const HomePage: React.FC<HomePageProps> = ({ theme }) => {
     const isDark = theme === 'dark';
+    const naviagte = useNavigate();
 
     const features = [
         { title: "Booking Real-time", desc: "Hệ thống đặt sân tức thì, xử lý nhanh chóng.", icon: <FieldTimeOutlined /> },
@@ -49,7 +51,11 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                                         Đưa trải nghiệm thể thao của bạn lên tầm cao mới.
                                     </Paragraph>
                                     <Space size={16} wrap className="mt-mobile">
-                                        <Button className="btn-vip-pro" size="large">
+                                        <Button className="btn-vip-pro" size="large"
+                                            onClick={() => {
+                                                naviagte("/pitch");
+                                            }}
+                                        >
                                             Bắt đầu ngay <ArrowRightOutlined />
                                         </Button>
                                         <Button type="link" className="btn-link-gold">
