@@ -39,6 +39,7 @@ interface IProps {
     pitch: IPitch | null;
     pitchLoading: boolean;
     onSuccess?: () => void;
+    onPitchChange?: (pitchId: number) => void;
 }
 
 type BookingFormValues = {
@@ -54,6 +55,7 @@ const UpdateBookingForm = ({
     pitch,
     pitchLoading,
     onSuccess,
+    onPitchChange
 }: IProps) => {
     const [form] = Form.useForm<BookingFormValues>();
 
@@ -69,6 +71,16 @@ const UpdateBookingForm = ({
     const pitches = useSelector(selectPitches);
     const pitchLoadingRedux = useSelector(selectPitchLoading);
     const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        if (changePitch && selectedPitchId) {
+            onPitchChange?.(selectedPitchId);
+        }
+
+        if (!changePitch) {
+            onPitchChange?.(pitchIdNumber);
+        }
+    }, [changePitch, selectedPitchId]);
 
     useEffect(() => {
         if (pitches.length === 0) {
@@ -282,6 +294,7 @@ const UpdateBookingForm = ({
 
             {/* ===== SUBMIT ===== */}
             <Popconfirm
+                placement="topLeft"
                 title="Xác nhận"
                 description="Bạn có chắc chắn muốn cập nhật lịch đặt không?"
                 okText="Có"

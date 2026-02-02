@@ -50,25 +50,46 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
 
     const mode: "CREATE" | "UPDATE" = location.state?.mode ?? "CREATE";
     const bookingId: number | undefined = location.state?.bookingId;
+    const [activePitchId, setActivePitchId] = useState(pitchIdNumber);
 
     const {
         timeline,
         timelineLoading,
         reloadTimeline,
-    } = useBookingTimeline(pitchIdNumber, bookingDate);
-
+    } = useBookingTimeline(activePitchId, bookingDate);
+    
     useEffect(() => {
         if (!pitchIdNumber) return;
+        setActivePitchId(pitchIdNumber);
+    }, [pitchIdNumber]);
+
+    // } = useBookingTimeline(pitchIdNumber, bookingDate);
+
+    // useEffect(() => {
+    //     if (!pitchIdNumber) return;
+
+    //     setPitchLoading(true);
+    // getPitchById(pitchIdNumber)
+    // getPitchById(activePitchId)
+    //         .then(res => {
+    //             if (res.data.statusCode === 200) {
+    //                 setPitch(res.data.data ?? null);
+    //             }
+    //         })
+    //         .finally(() => setPitchLoading(false));
+    // }, [pitchIdNumber]);
+    useEffect(() => {
+        if (!activePitchId) return;
 
         setPitchLoading(true);
-        getPitchById(pitchIdNumber)
+        getPitchById(activePitchId)
             .then(res => {
                 if (res.data.statusCode === 200) {
                     setPitch(res.data.data ?? null);
                 }
             })
             .finally(() => setPitchLoading(false));
-    }, [pitchIdNumber]);
+    }, [activePitchId]);
 
     return (
         <div className={`luxury-card-wrapper ${isDark ? "dark" : "light"}`}>
@@ -236,6 +257,7 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                                 pitch={pitch}
                                 pitchLoading={pitchLoading}
                                 onSuccess={reloadTimeline}
+                                onPitchChange={setActivePitchId}
                             />
                         )}
 
