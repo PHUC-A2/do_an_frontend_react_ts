@@ -12,6 +12,7 @@ import { toast } from "react-toastify";
 import { TbSoccerField } from "react-icons/tb";
 import { useNavigate } from "react-router";
 import { cancelBookingClient, deleteBookingClient } from "../../../../config/Api";
+import dayjs from "dayjs";
 
 interface IProps {
     openModalBookingHistory: boolean;
@@ -71,9 +72,25 @@ const ModalBookingHistory = (props: IProps) => {
     };
 
     const items: CollapseProps["items"] = listBookingsClient.map((booking) => {
+
+        const now = dayjs();
+
+        const isEnded = dayjs(booking.endDateTime).isBefore(now);
+
         const canUpdateBooking =
-            booking.status !== "CANCELLED" &&
-            !booking.deletedByUser;
+            booking.status === "ACTIVE" &&
+            !booking.deletedByUser &&
+            !isEnded;
+
+        const canCancelBooking =
+            booking.status === "ACTIVE" &&
+            !isEnded;
+
+        const canDeleteBooking =
+            !booking.deletedByUser &&
+            (booking.status === "CANCELLED" || isEnded);
+
+
         return {
             key: booking.id,
             label: (
@@ -165,7 +182,7 @@ const ModalBookingHistory = (props: IProps) => {
                             )}
 
                             {/* ===== HỦY SÂN (chỉ ACTIVE) ===== */}
-                            {booking.status === "ACTIVE" && (
+                            {canCancelBooking && (
                                 <Col span={24}>
                                     <Popconfirm
                                         placement="topLeft"
@@ -189,7 +206,7 @@ const ModalBookingHistory = (props: IProps) => {
                             )}
 
                             {/* ===== XÓA KHỎI LỊCH SỬ ===== */}
-                            {booking.status === "CANCELLED" && (
+                            {canDeleteBooking && (
                                 <Col span={24}>
                                     <Popconfirm
                                         placement="topLeft"
