@@ -66,6 +66,7 @@ const UpdateBookingForm = ({
     const [loading, setLoading] = useState(false);
     const [initLoading, setInitLoading] = useState(true);
     const [changePitch, setChangePitch] = useState(false);
+    const [blocked, setBlocked] = useState(false);
 
     /* ===== Redux ===== */
     const pitches = useSelector(selectPitches);
@@ -88,6 +89,24 @@ const UpdateBookingForm = ({
         }
     }, [dispatch, pitches.length]);
     /* ===== Load booking ===== */
+    // useEffect(() => {
+    //     setInitLoading(true);
+    //     getBookingById(bookingId)
+    //         .then(res => {
+    //             const b = res.data.data;
+    //             if (!b) return;
+
+    //             form.setFieldsValue({
+    //                 dateTimeRange: [
+    //                     dayjs(b.startDateTime),
+    //                     dayjs(b.endDateTime),
+    //                 ],
+    //                 shirtOption: b.shirtOption,
+    //                 contactPhone: b.contactPhone,
+    //             });
+    //         })
+    //         .finally(() => setInitLoading(false));
+    // }, [bookingId, form]);
     useEffect(() => {
         setInitLoading(true);
         getBookingById(bookingId)
@@ -95,6 +114,25 @@ const UpdateBookingForm = ({
                 const b = res.data.data;
                 if (!b) return;
 
+                // BLOCK UPDATE
+                // if (b.status === "CANCELLED") {
+                //     toast.error("Booking đã bị hủy, không thể cập nhật");
+                //     return;
+                // }
+
+                if (b.status === "CANCELLED") {
+                    toast.error("Booking đã bị hủy, không thể cập nhật");
+                    setBlocked(true);
+                    return;
+                }
+
+                if (b.deletedByUser) {
+                    toast.error("Booking đã bị xóa khỏi lịch sử");
+                    setBlocked(true);
+                    return;
+                }
+
+                // OK thì mới set form
                 form.setFieldsValue({
                     dateTimeRange: [
                         dayjs(b.startDateTime),
@@ -106,6 +144,7 @@ const UpdateBookingForm = ({
             })
             .finally(() => setInitLoading(false));
     }, [bookingId, form]);
+
 
     /* ===== Pitch options ===== */
     const pitchOptions = useMemo(
@@ -142,6 +181,7 @@ const UpdateBookingForm = ({
 
     /* ===== Submit ===== */
     const handleUpdate = async (values: BookingFormValues) => {
+        if (blocked) return;
         setLoading(true);
         const [start, end] = values.dateTimeRange;
 
@@ -177,6 +217,16 @@ const UpdateBookingForm = ({
     };
 
     if (initLoading) return <Spin />;
+
+    if (blocked) {
+        return (
+            <Card size="small">
+                <Text type="danger">
+                    Booking này không thể cập nhật
+                </Text>
+            </Card>
+        );
+    }
 
     return (
         <Form
@@ -306,6 +356,7 @@ const UpdateBookingForm = ({
                     variant="outline-warning"
                     className="w-100 d-flex justify-content-center align-items-center gap-2"
                     disabled={
+                        blocked ||
                         loading ||
                         !dateTimeRange ||
                         !shirtOption ||

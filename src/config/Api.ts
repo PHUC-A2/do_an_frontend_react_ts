@@ -63,6 +63,9 @@ export const deleteBooking = (id: number) => instance.delete<IBackendRes<IBookin
 export const createBookingClient = (data: ICreateBookingClientReq) => instance.post<IBackendRes<IBooking>>(`/api/v1/bookings`, data);
 export const updateBookingClient = (id: number, data: IUpdateBookingClientReq) => instance.put<IBackendRes<IBooking>>(`/api/v1/client/bookings/${id}`, data);
 export const getAllBookingsClient = (query: string) => instance.get<IBackendRes<IModelPaginate<IBooking>>>(`/api/v1/client/bookings?${query}`);
+export const deleteBookingClient = (id: number) => instance.delete<IBackendRes<IBooking>>(`/api/v1/client/bookings/${id}`);
+export const cancelBookingClient = (id: number) => instance.patch<IBackendRes<IBooking>>(`/api/v1/client/bookings/${id}/cancel`);
+// http://127.0.0.1:8080/api/v1/client/bookings/{id}/cancel
 
 /* api get timeline */
 // http://localhost:8080/api/v1/client/public/pitches/5/timeline?date=2026-02-01

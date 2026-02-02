@@ -1,5 +1,5 @@
 export type ShirtOptionEnum = "WITH_PITCH_SHIRT" | "WITHOUT_PITCH_SHIRT";
-
+export type BookingStatusEnum = "ACTIVE" | "CANCELLED";
 export interface IBooking {
     id: number;
     userId: number;
@@ -12,6 +12,8 @@ export interface IBooking {
     contactPhone: string;
     durationMinutes: number;
     totalPrice: number;
+    status: BookingStatusEnum;
+    deletedByUser: boolean;
     createdAt: string;
     updatedAt: string | null;
     createdBy: string;
