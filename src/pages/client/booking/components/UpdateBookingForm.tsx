@@ -28,7 +28,7 @@ import {
     selectPitches,
     selectPitchLoading,
 } from "../../../../redux/features/pitchSlice";
-import { useAppDispatch } from "../../../../redux/hooks";
+import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 import { fetchBookingsClient } from "../../../../redux/features/bookingClientSlice";
 
 const { Text } = Typography;
@@ -72,7 +72,7 @@ const UpdateBookingForm = ({
     const pitches = useSelector(selectPitches);
     const pitchLoadingRedux = useSelector(selectPitchLoading);
     const dispatch = useAppDispatch();
-
+    const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
     useEffect(() => {
         if (changePitch && selectedPitchId) {
             onPitchChange?.(selectedPitchId);
@@ -203,9 +203,12 @@ const UpdateBookingForm = ({
             dispatch(fetchBookingsClient(''));
             onSuccess?.();
         } catch (e: any) {
+            const m = e?.response?.data?.message ?? "Lỗi không xác định";
             toast.error(
-                e?.response?.data?.message ??
-                "Cập nhật thất bại"
+                <div>
+                    <strong>Có lỗi xảy ra!</strong>
+                    <div>{m}</div>
+                </div>
             );
         } finally {
             setLoading(false);
@@ -227,6 +230,17 @@ const UpdateBookingForm = ({
             </Card>
         );
     }
+
+    const handleConfirmBooking = async () => {
+        if (!isAuthenticated) {
+            const minDelay = new Promise(resolve => setTimeout(resolve, 2000));
+            toast.warning("Vui lòng đăng nhập để cập nhật lịch đặt");
+            await minDelay; // chạy spin 2s
+            window.location.href = `/login?redirect=${location.pathname}`;
+            return;
+        }
+        form.submit();
+    };
 
     return (
         <Form
@@ -350,7 +364,7 @@ const UpdateBookingForm = ({
                 okText="Có"
                 cancelText="Không"
                 onCancel={cancel}
-                onConfirm={() => form.submit()}
+                onConfirm={handleConfirmBooking}
             >
                 <Button
                     variant="outline-warning"

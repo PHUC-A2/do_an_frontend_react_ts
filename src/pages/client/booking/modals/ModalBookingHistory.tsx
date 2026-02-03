@@ -243,10 +243,10 @@ const ModalBookingHistory = (props: IProps) => {
                     <span>Lịch sử đặt sân</span>
                 </Space>}
             placement="right"
-            closable={false}
+            // closable={false}
             onClose={() => setOpenModalBookingHistory(false)}
             open={openModalBookingHistory}
-            size={420}
+            // size={250}
         >
             <Collapse accordion items={items} />
         </Drawer>

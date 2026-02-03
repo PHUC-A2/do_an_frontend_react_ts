@@ -1,6 +1,6 @@
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Button, Flex, Form, Input } from 'antd';
-import { Link, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { motion } from 'framer-motion';
 import './Login.scss';
 import { useAppDispatch } from '../../redux/hooks';
@@ -15,6 +15,9 @@ const LoginPage = () => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const [loading, setLoading] = useState<boolean>(false);
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const redirectPath = searchParams.get("redirect");
 
     const handleLogin = async (values: ILogin) => {
         try {
@@ -34,7 +37,14 @@ const LoginPage = () => {
                 form.resetFields();
 
                 const emailLogin = res?.data?.data?.user?.email;
-                navigate(emailLogin === "admin@gmail.com" ? "/admin" : "/");
+                // navigate(emailLogin === "admin@gmail.com" ? "/admin" : "/");
+                const target =
+                    emailLogin === "admin@gmail.com"
+                        ? "/admin"
+                        : redirectPath || "/";
+
+                navigate(target, { replace: true });
+
                 toast.success('Đăng nhập thành công');
             }
         } catch (error: any) {

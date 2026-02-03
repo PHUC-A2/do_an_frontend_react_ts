@@ -22,6 +22,8 @@ import type { IPitch } from "../../../../types/pitch";
 import dayjs, { Dayjs } from "dayjs";
 import { Button, Spinner } from "react-bootstrap";
 import { formatVND } from "../../../../utils/format/price";
+import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
+import { fetchBookingsClient } from "../../../../redux/features/bookingClientSlice";
 
 const { Text } = Typography;
 
@@ -48,6 +50,8 @@ const CreateBookingForm = ({
     const dateTimeRange = Form.useWatch("dateTimeRange", form);
     const shirtOption = Form.useWatch("shirtOption", form);
     const [bookingLoading, setBookingLoading] = useState(false);
+    const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
+    const dispatch = useAppDispatch();
 
     const handleBooking = async (values: BookingFormValues) => {
         setBookingLoading(true);
@@ -66,12 +70,12 @@ const CreateBookingForm = ({
 
             if (res.data.statusCode === 201) {
                 toast.success("Đặt sân thành công");
+                dispatch(fetchBookingsClient(''));
                 form.resetFields();
                 onSuccess?.(); //  trigger reload timeline
             }
         } catch (e: any) {
-            const m =
-                e?.response?.data?.message ?? "Khung giờ không hợp lệ";
+            const m = e?.response?.data?.message ?? "Lỗi không xác định";
             toast.error(
                 <div>
                     <strong>Có lỗi xảy ra!</strong>
@@ -100,10 +104,20 @@ const CreateBookingForm = ({
         toast.info('Đã bỏ chọn');
     };
 
-    const handleConfirmBooking = () => {
+    // const handleConfirmBooking = () => {
+    //     form.submit();
+    // };
+
+    const handleConfirmBooking = async () => {
+        if (!isAuthenticated) {
+            const minDelay = new Promise(resolve => setTimeout(resolve, 2000));
+            toast.warning("Vui lòng đăng nhập để đặt sân");
+            await minDelay; // chạy spin 2s
+            window.location.href = `/login?redirect=${location.pathname}`;
+            return;
+        }
         form.submit();
     };
-
 
     return (
         <Form
