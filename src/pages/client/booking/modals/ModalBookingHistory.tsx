@@ -1,4 +1,4 @@
-import { Col, Collapse, Descriptions, Drawer, Popconfirm, Row, Space, Tag, type CollapseProps, type PopconfirmProps } from "antd";
+import { Col, Collapse, Descriptions, Drawer, Empty, Popconfirm, Row, Space, Tag, type CollapseProps, type PopconfirmProps } from "antd";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 import { fetchBookingsClient, selectBookingsClient } from "../../../../redux/features/bookingClientSlice";
 import { useEffect, useState } from "react";
@@ -26,10 +26,16 @@ const ModalBookingHistory = (props: IProps) => {
     const listBookingsClient = useAppSelector(selectBookingsClient);
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const navigate = useNavigate();
+    const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
 
+    // useEffect(() => {
+    //     dispatch(fetchBookingsClient(""));
+    // }, [dispatch]);
     useEffect(() => {
-        dispatch(fetchBookingsClient("page=1&pageSize=7"));
-    }, [dispatch]);
+        if (isAuthenticated) {
+            dispatch(fetchBookingsClient(""));
+        }
+    }, [dispatch, isAuthenticated]);
 
     const cancel: PopconfirmProps['onCancel'] = () => {
         toast.info('Đã bỏ chọn');
@@ -246,9 +252,17 @@ const ModalBookingHistory = (props: IProps) => {
             // closable={false}
             onClose={() => setOpenModalBookingHistory(false)}
             open={openModalBookingHistory}
-            // size={250}
+        // size={250}
         >
-            <Collapse accordion items={items} />
+            {isAuthenticated ? (
+                listBookingsClient.length > 0 ? (
+                    <Collapse accordion items={items} />
+                ) : (
+                    <Empty description="Không có dữ liệu" />
+                )
+            ) : (
+                <Empty description="Chưa đăng nhập" />
+            )}
         </Drawer>
     );
 };

@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import { getAllBookingsClient } from '../../config/Api';
 import type { IBooking } from '../../types/booking';
+import { setLogout } from './authSlice';
 
 interface BookingState {
     loading: boolean;
@@ -45,6 +46,7 @@ export const fetchBookingsClient = createAsyncThunk<
 
             return rejectWithValue(res.data.message || "Lấy đặt lịch thất bại");
         } catch (error: any) {
+            console.log(error)
             return rejectWithValue(
                 error?.response?.data?.message || "Lỗi hệ thống"
             );
@@ -71,6 +73,12 @@ export const bookingSlice = createSlice({
             .addCase(fetchBookingsClient.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+            })
+            .addCase(setLogout, (state) => {
+                state.result = [];
+                state.meta = initialState.meta;
+                state.loading = false;
+                state.error = undefined;
             });
     },
 });
