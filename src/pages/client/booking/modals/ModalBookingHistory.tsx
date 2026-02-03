@@ -1,66 +1,88 @@
-import { Col, Collapse, Descriptions, Drawer, Empty, Popconfirm, Row, Space, Tag, type CollapseProps, type PopconfirmProps } from "antd";
+import {
+    Col,
+    Collapse,
+    Drawer,
+    Empty,
+    Popconfirm,
+    Row,
+    Space,
+    Tag,
+    Tabs,
+    Button,
+    Typography,
+    Divider,
+    theme,
+    type CollapseProps,
+    type PopconfirmProps
+} from "antd";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 import { fetchBookingsClient, selectBookingsClient } from "../../../../redux/features/bookingClientSlice";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { SHIRT_OPTION_META } from "../../../../utils/constants/booking.constants";
 import { formatVND } from "../../../../utils/format/price";
-import { formatDateTime, formatDateTimeRange, formatInstant } from "../../../../utils/format/localdatetime";
-import RBButton from 'react-bootstrap/Button';
-import { CiEdit } from "react-icons/ci";
-import { IoMdClock, IoMdCloseCircle } from "react-icons/io";
+import { formatDateTimeRange, formatInstant } from "../../../../utils/format/localdatetime";
+import {
+    EditOutlined,
+    CloseCircleOutlined,
+    DeleteOutlined,
+    HistoryOutlined,
+    ClockCircleOutlined,
+    EnvironmentOutlined,
+    PhoneOutlined,
+    SkinOutlined,
+    UserOutlined,
+    DollarCircleOutlined
+} from "@ant-design/icons";
 import { toast } from "react-toastify";
-import { TbSoccerField } from "react-icons/tb";
 import { useNavigate } from "react-router";
 import { cancelBookingClient, deleteBookingClient } from "../../../../config/Api";
 import dayjs from "dayjs";
+import { motion } from "framer-motion";
+import type { IBooking } from "../../../../types/booking";
+
+const { Text } = Typography;
 
 interface IProps {
     openModalBookingHistory: boolean;
     setOpenModalBookingHistory: (v: boolean) => void;
-
 }
 
 const ModalBookingHistory = (props: IProps) => {
     const { openModalBookingHistory, setOpenModalBookingHistory } = props;
+    const { token } = theme.useToken();
     const dispatch = useAppDispatch();
     const listBookingsClient = useAppSelector(selectBookingsClient);
-    const [deletingId, setDeletingId] = useState<number | null>(null);
-    const navigate = useNavigate();
     const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
+    const navigate = useNavigate();
 
-    // useEffect(() => {
-    //     dispatch(fetchBookingsClient(""));
-    // }, [dispatch]);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+
     useEffect(() => {
-        if (isAuthenticated) {
+        if (isAuthenticated && openModalBookingHistory) {
             dispatch(fetchBookingsClient(""));
         }
-    }, [dispatch, isAuthenticated]);
+    }, [dispatch, isAuthenticated, openModalBookingHistory]);
 
     const cancel: PopconfirmProps['onCancel'] = () => {
         toast.info('Đã bỏ chọn');
     };
 
+    // --- Actions ---
     const handleDelete = async (id: number) => {
         try {
             setDeletingId(id);
             const res = await deleteBookingClient(id);
             if (res.data.statusCode === 200) {
                 await dispatch(fetchBookingsClient(""));
-                toast.success('Hủy sân thành công');
+                toast.success('Đã xóa khỏi lịch sử');
             }
         } catch (error: any) {
-            const m = error?.response?.data?.message ?? "Không xác định";
-            toast.error(
-                <div>
-                    <div>Có lỗi xảy ra khi xóa user</div>
-                    <div>{m}</div>
-                </div>
-            )
+            toast.error(error?.response?.data?.message ?? "Lỗi xóa lịch sử");
         } finally {
             setDeletingId(null);
         }
     };
+
     const handleCancel = async (id: number) => {
         try {
             setDeletingId(id);
@@ -70,201 +92,225 @@ const ModalBookingHistory = (props: IProps) => {
                 toast.success("Hủy sân thành công");
             }
         } catch (error: any) {
-            console.log(error);
-            toast.error(error?.response?.data?.message ?? "Có lỗi xảy ra");
+            toast.error(error?.response?.data?.message ?? "Lỗi hủy sân");
         } finally {
             setDeletingId(null);
         }
     };
 
-    const items: CollapseProps["items"] = listBookingsClient.map((booking) => {
-
+    // --- Phân loại dữ liệu ---
+    const { upcomingBookings, historyBookings } = useMemo(() => {
         const now = dayjs();
+        const upcoming: any[] = [];
+        const history: any[] = [];
 
-        const isEnded = dayjs(booking.endDateTime).isBefore(now);
+        listBookingsClient.forEach(b => {
+            if (!b.deletedByUser) {
+                const isEnded = dayjs(b.endDateTime).isBefore(now);
+                const isCancelled = b.status === "CANCELLED";
+                (isEnded || isCancelled) ? history.push(b) : upcoming.push(b);
+            }
+        });
 
-        const canUpdateBooking =
-            booking.status === "ACTIVE" &&
-            !booking.deletedByUser &&
-            !isEnded;
+        upcoming.sort((a, b) => dayjs(a.startDateTime).valueOf() - dayjs(b.startDateTime).valueOf());
+        history.sort((a, b) => dayjs(b.startDateTime).valueOf() - dayjs(a.startDateTime).valueOf());
 
-        const canCancelBooking =
-            booking.status === "ACTIVE" &&
-            !isEnded;
+        return { upcomingBookings: upcoming, historyBookings: history };
+    }, [listBookingsClient]);
 
-        const canDeleteBooking =
-            !booking.deletedByUser &&
-            (booking.status === "CANCELLED" || isEnded);
+    // --- Render Items cho Collapse ---
+    const renderCollapseItems = (bookings: any[]): CollapseProps["items"] => {
+        return bookings.map((booking: IBooking) => {
+            const isEnded = dayjs(booking.endDateTime).isBefore(dayjs());
+            const shirtMeta = booking?.shirtOption
+                ? SHIRT_OPTION_META[booking.shirtOption as keyof typeof SHIRT_OPTION_META]
+                : null;
 
+            const canUpdate = booking.status === "ACTIVE" && !isEnded;
+            const canCancel = booking.status === "ACTIVE" && !isEnded;
+            const canDelete = booking.status === "CANCELLED" || isEnded;
 
-        return {
-            key: booking.id,
-            label: (
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span>
-                        <TbSoccerField size={20} style={{ marginBottom: 2 }} /> {booking.pitchName}
-                    </span>
-                    <span>
-                        {formatDateTime(booking.startDateTime)}
-                        {/* {dayjs(booking.startDateTime).format("DD/MM/YYYY HH:mm")} */}
-                    </span>
-                </div>
-            ),
-            children: (
-                <Descriptions
-                    size="small"
-                    column={1}
-                    bordered
-                >
+            return {
+                key: booking.id,
+                label: (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: '100%' }}>
+                        <Space>
+                            <EnvironmentOutlined style={{ color: token.colorPrimary }} />
+                            <Text strong>{booking.pitchName}</Text>
+                        </Space>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                            {dayjs(booking.startDateTime).format(" HH:mm DD/MM/YYYY")}
+                        </Text>
+                    </div>
+                ),
+                children: (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        style={{ padding: '4px 0' }}
+                    >
+                        <Row gutter={[0, 12]}>
+                            <Col span={24}>
+                                <Space orientation="vertical" style={{ width: '100%', background: token.colorFillAlter, padding: 12, borderRadius: 8 }} size={8}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Text type="secondary"><UserOutlined /> Người đặt:</Text>
+                                        <Text strong>{booking.userName}</Text>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Text type="secondary"><ClockCircleOutlined /> Thời gian:</Text>
+                                        <Text>{formatDateTimeRange(booking.startDateTime, booking.endDateTime)}</Text>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Text type="secondary"><ClockCircleOutlined /> Thời lượng:</Text>
+                                        <Text>{booking.durationMinutes} phút</Text>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Text type="secondary"><SkinOutlined /> Áo Pitch:</Text>
+                                        {shirtMeta ? <Tag color={shirtMeta.color} style={{ margin: 0 }}>{shirtMeta.label}</Tag> : <Text>Không</Text>}
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Text type="secondary"><PhoneOutlined /> Liên hệ:</Text>
+                                        <Text copyable>{booking.contactPhone}</Text>
+                                    </div>
+                                    <Divider style={{ margin: '4px 0' }} dashed />
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Text type="secondary"><DollarCircleOutlined /> Tổng tiền:</Text>
+                                        <Text strong style={{ color: token.colorSuccess, fontSize: 16 }}>{formatVND(booking.totalPrice)}</Text>
+                                    </div>
+                                </Space>
+                            </Col>
 
-                    <Descriptions.Item label="Người đặt sân">
-                        <Tag color="gold">
-                            {booking.userName}
-                        </Tag>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Giờ thi đấu">
-                        {formatDateTimeRange(
-                            booking?.startDateTime,
-                            booking?.endDateTime
-                        )}
-                    </Descriptions.Item>
-
-                    <Descriptions.Item label="Thời lượng">
-                        {booking.durationMinutes} phút
-                    </Descriptions.Item>
-
-                    <Descriptions.Item label="Áo pitch">
-                        {
-                            booking?.shirtOption ? (
-                                <Tag color={SHIRT_OPTION_META[booking?.shirtOption].color}>
-                                    {SHIRT_OPTION_META[booking?.shirtOption].label}
-                                </Tag>
-                            ) : (
-                                <Tag>N/A</Tag>
-                            )
-                        }
-                    </Descriptions.Item>
-
-                    <Descriptions.Item label="Tổng tiền">
-                        <Tag color="green">
-                            {formatVND(booking?.totalPrice)}
-                        </Tag>
-                    </Descriptions.Item>
-
-                    <Descriptions.Item label="SĐT liên hệ">
-                        {booking.contactPhone}
-                    </Descriptions.Item>
-
-                    <Descriptions.Item label="Ngày đặt sân">
-                        {formatInstant(booking?.createdAt)}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Ngày cập nhật">
-                        {formatInstant(booking?.updatedAt)}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Thao tác">
-                        <Row gutter={[0, 8]}>
-
-                            {/* ===== UPDATE ===== */}
-                            {canUpdateBooking && (
-                                <Col span={24}>
-                                    <RBButton
-                                        variant="outline-warning"
-                                        size="sm"
-                                        style={{ width: "100%" }}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setOpenModalBookingHistory(false);
-                                            navigate(`/booking/${booking.pitchId}`, {
-                                                state: {
-                                                    mode: "UPDATE",
-                                                    bookingId: booking.id
-                                                }
-                                            });
-                                        }}
-                                    >
-                                        <CiEdit /> Cập nhật lịch đặt
-                                    </RBButton>
-                                </Col>
-                            )}
-
-                            {/* ===== HỦY SÂN (chỉ ACTIVE) ===== */}
-                            {canCancelBooking && (
-                                <Col span={24}>
-                                    <Popconfirm
-                                        placement="topLeft"
-                                        title="Hủy đặt sân"
-                                        description="Bạn có chắc chắn muốn hủy đặt sân không?"
-                                        onConfirm={() => handleCancel(booking.id)}
-                                        okButtonProps={{ loading: deletingId === booking.id }}
-                                        onCancel={cancel}
-                                        okText="Có"
-                                        cancelText="Không"
-                                    >
-                                        <RBButton
-                                            variant="outline-danger"
-                                            size="sm"
-                                            style={{ width: "100%" }}
+                            <Col span={24}>
+                                <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+                                    {canUpdate && (
+                                        <Button
+                                            size="small"
+                                            icon={<EditOutlined />}
+                                            onClick={() => {
+                                                setOpenModalBookingHistory(false);
+                                                navigate(`/booking/${booking.pitchId}`, { state: { mode: "UPDATE", bookingId: booking.id } });
+                                            }}
+                                        >Sửa</Button>
+                                    )}
+                                    {canCancel && (
+                                        <Popconfirm
+                                            title="Hủy đặt sân?"
+                                            onConfirm={() => handleCancel(booking.id)}
+                                            okButtonProps={{ danger: true, loading: deletingId === booking.id }}
+                                            cancelText="Không"
+                                            okText="Có"
+                                            placement="topLeft"
+                                            onCancel={cancel}
                                         >
-                                            <IoMdCloseCircle /> Hủy sân
-                                        </RBButton>
-                                    </Popconfirm>
-                                </Col>
-                            )}
-
-                            {/* ===== XÓA KHỎI LỊCH SỬ ===== */}
-                            {canDeleteBooking && (
-                                <Col span={24}>
-                                    <Popconfirm
-                                        placement="topLeft"
-                                        title="Xóa khỏi lịch sử"
-                                        description="Lịch đặt sẽ không hiển thị lại, bạn chắc chứ?"
-                                        onConfirm={() => handleDelete(booking.id)}
-                                        okButtonProps={{ loading: deletingId === booking.id }}
-                                        onCancel={cancel}
-                                        okText="Có"
-                                        cancelText="Không"
-                                    >
-                                        <RBButton
-                                            variant="outline-secondary"
-                                            size="sm"
-                                            style={{ width: "100%" }}
+                                            <Button size="small" danger icon={<CloseCircleOutlined />}>Hủy</Button>
+                                        </Popconfirm>
+                                    )}
+                                    {canDelete && (
+                                        <Popconfirm
+                                            title="Xóa lịch sử?"
+                                            onConfirm={() => handleDelete(booking.id)}
+                                            okButtonProps={{ loading: deletingId === booking.id }}
+                                            cancelText="Không"
+                                            okText="Có"
+                                            placement="topLeft"
+                                            onCancel={cancel}
                                         >
-                                            🗑️ Xóa khỏi lịch sử
-                                        </RBButton>
-                                    </Popconfirm>
-                                </Col>
-                            )}
+                                            <Button size="small" type="text" danger icon={<DeleteOutlined />}>Xóa</Button>
+                                        </Popconfirm>
+                                    )}
+                                </Space>
+                            </Col>
+                            <Col span={24}>
+                                <Row justify="space-between">
+                                    <Text type="secondary" style={{ fontSize: 10 }}>
+                                        Tạo: {formatInstant(booking.createdAt)}
+                                    </Text>
+
+                                    <Text type="secondary" style={{ fontSize: 10 }}>
+                                        Cập nhật: {formatInstant(booking.updatedAt)}
+                                    </Text>
+                                </Row>
+                            </Col>
                         </Row>
-                    </Descriptions.Item>
-                </Descriptions>
-            ),
-        }
-    });
+                    </motion.div>
+                )
+            };
+        });
+    };
 
     return (
         <Drawer
             title={
                 <Space>
-                    <IoMdClock size={20} style={{ marginBottom: 2 }} />
-                    <span>Lịch sử đặt sân</span>
-                </Space>}
+                    <HistoryOutlined style={{ color: token.colorPrimary }} />
+                    <span style={{ fontWeight: 700 }}>Quản lý lịch đặt</span>
+                </Space>
+            }
             placement="right"
-            // closable={false}
             onClose={() => setOpenModalBookingHistory(false)}
             open={openModalBookingHistory}
-        // size={250}
+            size={420}
+            styles={{ body: { padding: '0 12px' } }}
         >
-            {isAuthenticated ? (
-                listBookingsClient.length > 0 ? (
-                    <Collapse accordion items={items} />
-                ) : (
-                    <Empty description="Không có dữ liệu" />
-                )
+            {!isAuthenticated ? (
+                <Empty description="Vui lòng đăng nhập" style={{ marginTop: 100 }} />
             ) : (
-                <Empty description="Chưa đăng nhập" />
+                <Tabs
+                    centered
+                    defaultActiveKey="1"
+                    items={[
+                        {
+                            key: '1',
+                            label: (
+                                <Space>
+                                    <ClockCircleOutlined /> Sắp đá
+                                    <BadgeCount count={upcomingBookings.length} color={token.colorPrimary} />
+                                </Space>
+                            ),
+                            children: (
+                                <div style={{ paddingTop: 12 }}>
+                                    {upcomingBookings.length > 0 ? (
+                                        <Collapse accordion ghost items={renderCollapseItems(upcomingBookings)} />
+                                    ) : <Empty description="Không có lịch sắp tới" />}
+                                </div>
+                            )
+                        },
+                        {
+                            key: '2',
+                            label: (
+                                <Space>
+                                    <HistoryOutlined /> Lịch sử
+                                </Space>
+                            ),
+                            children: (
+                                <div style={{ paddingTop: 12 }}>
+                                    {historyBookings.length > 0 ? (
+                                        <Collapse accordion ghost items={renderCollapseItems(historyBookings)} />
+                                    ) : <Empty description="Chưa có lịch sử" />}
+                                </div>
+                            )
+                        }
+                    ]}
+                />
             )}
         </Drawer>
     );
 };
+
+// Component con hỗ trợ Badge số lượng
+const BadgeCount = ({ count, color }: { count: number, color: string }) => (
+    <span style={{
+        background: color,
+        color: '#fff',
+        borderRadius: 10,
+        padding: '0 6px',
+        fontSize: 10,
+        height: 16,
+        display: 'inline-flex',
+        alignItems: 'center'
+    }}>
+        {count}
+    </span>
+);
 
 export default ModalBookingHistory;

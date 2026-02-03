@@ -129,11 +129,15 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                 {/* Right controls */}
                 <Space size="middle">
 
-                    <Tooltip title="Lịch sử đặt sân">
-                        <MdWorkHistory size={25}
-                            onClick={() => setOpenModalBookingHistory(true)}
-                        />
-                    </Tooltip>
+                    {isAuthenticated && (
+                        <Tooltip title="Quản lý lịch đặt">
+                            <MdWorkHistory
+                                size={25}
+                                onClick={() => setOpenModalBookingHistory(true)}
+                                style={{ cursor: "pointer" }}
+                            />
+                        </Tooltip>
+                    )}
 
                     <Tooltip title={isDark ? 'Giao diện sáng' : 'Giao diện tối'}>
                         <Switch checked={isDark} onChange={toggleTheme} checkedChildren={<LuMoon />} unCheckedChildren={<IoSunny />} />
