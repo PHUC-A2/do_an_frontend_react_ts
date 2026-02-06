@@ -11,7 +11,6 @@ import {
     Divider,
     Space,
     Card,
-    type DividerProps,
 } from "antd";
 import { motion, type Variants } from "framer-motion";
 import {
@@ -19,12 +18,12 @@ import {
     ArrowLeftOutlined,
     EnvironmentOutlined,
     CheckCircleOutlined,
-    ThunderboltOutlined,
-    GlobalOutlined
+    GlobalOutlined,
+    ArrowRightOutlined
 } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router";
 import { MdMergeType } from "react-icons/md";
-
+import RBButton from 'react-bootstrap/Button';
 import { getPitchById } from "../../../config/Api";
 import type { IPitch } from "../../../types/pitch";
 import {
@@ -34,6 +33,7 @@ import {
 import { formatVND } from "../../../utils/format/price";
 
 import "./PitchDetailsPage.scss";
+import { formatDateTime } from "../../../utils/format/localdatetime";
 
 const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -72,11 +72,10 @@ const PitchDetailsPage: React.FC = () => {
         window.open(`https://www.google.com/maps?q=${pitch.latitude},${pitch.longitude}`, "_blank");
     };
 
-    if (loading) return (
-        <div className="loading-container">
-            <Spin size="large" tip="Đang tải dữ liệu sân..." />
-        </div>
-    );
+    if (loading) {
+        return <Spin fullscreen tip="Đang tải dữ liệu sân..." />;
+    }
+
 
     if (!pitch) return null;
 
@@ -99,8 +98,15 @@ const PitchDetailsPage: React.FC = () => {
                         <Image
                             src={pitch.pitchUrl ?? "/placeholder-pitch.jpg"}
                             className="pitch-hero-image"
-                            preview={{ mask: <div className="mask-content"><GlobalOutlined /> Xem toàn cảnh</div> }}
+                            preview={{
+                                cover: (
+                                    <div className="mask-content">
+                                        <GlobalOutlined /> Xem toàn cảnh
+                                    </div>
+                                ),
+                            }}
                         />
+
                         <div className="status-overlay">
                             <Tag color={PITCH_STATUS_META[pitch.status].color} className="status-tag-vip">
                                 {PITCH_STATUS_META[pitch.status].label}
@@ -138,21 +144,22 @@ const PitchDetailsPage: React.FC = () => {
                                             </div>
                                         </Col>
                                         <Col>
-                                            <Button
-                                                type="primary"
-                                                size="large"
-                                                icon={<ThunderboltOutlined />}
+                                            <RBButton
+                                                variant="outline-warning"
                                                 className="btn-book-now"
                                                 onClick={() => navigate(`/booking/${pitch.id}`, { state: { mode: "CREATE" } })}
                                             >
-                                                ĐẶT SÂN NGAY
-                                            </Button>
+                                                ĐẶT SÂN NGAY <ArrowRightOutlined />
+                                            </RBButton>
                                         </Col>
                                     </Row>
                                 </Card>
                             </motion.div>
 
-                            <Divider orientation={"left" as DividerProps['orientation']}>Thông tin chi tiết</Divider>
+                            <Divider titlePlacement="left">
+                                Thông tin chi tiết
+                            </Divider>
+
 
                             {/* Features Grid */}
                             <Row gutter={[16, 16]}>
@@ -163,7 +170,7 @@ const PitchDetailsPage: React.FC = () => {
                                                 <Text strong><ClockCircleOutlined /> Thời gian hoạt động</Text>
                                                 <Paragraph>
                                                     {pitch.open24h ?
-                                                        <Tag color="green-preset">Mở cửa 24/7</Tag> :
+                                                        <Tag color="green">Mở cửa 24/7</Tag> :
                                                         <Text code>{pitch.openTime} - {pitch.closeTime}</Text>
                                                     }
                                                 </Paragraph>
@@ -201,7 +208,7 @@ const PitchDetailsPage: React.FC = () => {
 
                             <div className="meta-footer">
                                 <Divider dashed />
-                                <Text disabled>Cập nhật lần cuối: {new Date(pitch.createdAt).toLocaleDateString('vi-VN')}</Text>
+                                <Text disabled>Cập nhật lần cuối: {formatDateTime(pitch.createdAt)}</Text>
                             </div>
                         </motion.div>
                     </Content>
