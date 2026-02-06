@@ -1,165 +1,194 @@
 .pitch-details-page {
-    min-height    : 100vh;
-    display       : flex;
-    flex-direction: row; // Mặc định ngang cho Desktop
-    overflow      : hidden; // Chặn cuộn cả trang, chỉ cuộn phần nội dung
+    min-height      : 100vh;
+    background-color: var(--primary-background); // Biến từ trang About
+    color           : var(--text-page);
 
-    // --- Loading ---
-    &.loading-container {
+    .loading-container {
+        height         : 100vh;
         display        : flex;
         justify-content: center;
         align-items    : center;
-        height         : 100vh;
+        background     : var(--primary-background);
     }
 
-    // --- LEFT SIDE (IMAGE) ---
-    .left-section {
-        flex    : 1; // Chiếm khoảng 50% hoặc phần còn lại
-        position: relative;
-        overflow: hidden;
-        height  : 100vh; // Full chiều cao màn hình
+    .main-row {
+        height: 100vh;
+    }
 
-        .image-wrapper {
-            width   : 100%;
-            height  : 100%;
-            position: relative;
+    // --- MEDIA SECTION (TRÁI) ---
+    .media-section {
+        background: #000;
+        position  : relative;
 
-            .main-image {
-                width     : 100%;
-                height    : 100vh;
-                object-fit: cover;
-                display   : block;
+        .sticky-container {
+            height: 100%;
+            width : 100%;
+        }
+
+        .pitch-hero-image {
+            width     : 100%;
+            height    : 100vh !important;
+            object-fit: cover;
+            opacity   : 0.9;
+        }
+
+        .back-btn-glass {
+            position       : absolute;
+            top            : 24px;
+            left           : 24px;
+            z-index        : 10;
+            background     : rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border         : 1px solid rgba(255, 255, 255, 0.3);
+            color          : #fff;
+
+            &:hover {
+                background: var(--text-color);
+                color     : #fff;
             }
+        }
 
-            // Nút back nổi
-            .back-btn-abs {
-                position        : absolute;
-                top             : 24px;
-                left            : 24px;
-                z-index         : 10;
-                background-color: rgba(255, 255, 255, 0.9);
-                box-shadow      : 0 2px 8px rgba(0, 0, 0, 0.15);
-                border          : none;
+        .status-overlay {
+            position: absolute;
+            bottom  : 30px;
+            left    : 30px;
 
-                &:hover {
-                    background-color: #fff;
-                    transform       : scale(1.1);
-                }
-            }
-
-            .image-overlay-gradient {
-                position      : absolute;
-                inset         : 0;
-                background    : linear-gradient(to right, rgba(0, 0, 0, 0.1), transparent);
-                pointer-events: none;
+            .status-tag-vip {
+                padding       : 4px 16px;
+                border-radius : 20px;
+                font-weight   : 600;
+                font-size     : 14px;
+                text-transform: uppercase;
+                box-shadow    : 0 4px 15px rgba(0, 0, 0, 0.3);
             }
         }
     }
 
-    // --- RIGHT SIDE (CONTENT) ---
-    .right-section {
-        flex          : 0 0 550px; // Chiều rộng cố định hoặc tối đa cho phần info trên desktop lớn
-        max-width     : 50%;
-        height        : 100vh;
-        overflow-y    : auto; // Cho phép cuộn dọc
-        overflow-x    : hidden;
-        display       : flex;
-        flex-direction: column;
-        border-left   : 1px solid rgba(0, 0, 0, 0.06);
+    // --- CONTENT SECTION (PHẢI) ---
+    .content-section {
+        height    : 100vh;
+        overflow-y: auto;
+        background: var(--primary-background);
 
-        // Tùy chỉnh thanh cuộn cho đẹp
         &::-webkit-scrollbar {
-            width: 6px;
+            width: 4px;
         }
 
         &::-webkit-scrollbar-thumb {
-            background-color: rgba(0, 0, 0, 0.2);
-            border-radius   : 4px;
+            background   : var(--text-color);
+            border-radius: 10px;
         }
 
-        .info-content {
-            padding  : 40px;
-            max-width: 100%;
+        .scroll-content {
+            padding: 60px 40px;
         }
 
-        .price-action-box {
-            padding        : 20px;
-            display        : flex;
-            align-items    : center;
-            justify-content: space-between;
-            gap            : 16px;
-            flex-wrap      : wrap;
+        .pitch-title {
+            color         : var(--text-page) !important;
+            font-size     : 42px !important;
+            margin-bottom : 8px !important;
+            letter-spacing: -1px;
+        }
 
-            .price-display {
-                display       : flex;
-                flex-direction: column;
+        .booking-card-glass {
+            background   : var(--card-bg);
+            border       : 1px solid rgba(128, 128, 128, 0.1);
+            border-radius: 16px;
+            margin       : 32px 0;
+            box-shadow   : 0 10px 30px rgba(0, 0, 0, 0.05);
+
+            .price-label {
+                font-size     : 12px;
+                letter-spacing: 2px;
+                color         : var(--text-color);
+                opacity       : 0.7;
             }
 
-            .price-value {
-                font-size  : 24px;
-                font-weight: 700;
-                line-height: 1.2;
+            .price-value-big {
+                font-size  : 32px;
+                font-weight: 800;
+                color      : #faad14; // Màu vàng đặc trưng của Đại học Tây Bắc
+
+                small {
+                    font-size  : 14px;
+                    font-weight: 400;
+                    margin-left: 4px;
+                }
             }
 
-            .book-btn {
-                flex       : 1;
-                min-width  : 160px;
-                height     : 48px;
-                font-weight: 600;
-                box-shadow : 0 4px 10px rgba(0, 0, 0, 0.1);
+            .btn-book-now {
+                height       : 54px;
+                padding      : 0 32px;
+                border-radius: 12px;
+                font-weight  : 700;
+                background   : #faad14;
+                border       : none;
+
+                &:hover {
+                    transform : scale(1.05);
+                    background: #d48806;
+                }
             }
         }
 
-        .info-card {
-            transition: transform 0.2s;
+        .feature-item-card {
+            background   : var(--card-bg);
+            border-radius: 12px;
+            border       : none;
+            border-left  : 4px solid #faad14;
 
-            &:hover {
-                transform: translateY(-2px);
+            .ant-typography {
+                color: var(--text-page);
             }
+
+            .map-header {
+                display        : flex;
+                justify-content: space-between;
+                align-items    : center;
+                margin-bottom  : 8px;
+            }
+        }
+
+        .utility-tag {
+            background   : rgba(128, 128, 128, 0.05);
+            border       : 1px solid rgba(128, 128, 128, 0.1);
+            color        : var(--text-page);
+            padding      : 4px 12px;
+            border-radius: 6px;
         }
     }
+}
 
-    // --- RESPONSIVE MOBILE / TABLET ---
-    @media (max-width: 992px) {
-        flex-direction: column; // Chuyển thành dọc
-        overflow      : auto; // Cho phép cuộn trang bình thường trên mobile
-
-        .left-section {
+// Mobile Responsive
+@media (max-width: 992px) {
+    .pitch-details-page {
+        .main-row {
             height: auto;
-            flex  : none; // Không co giãn theo flex cha nữa
+        }
 
-            .image-wrapper {
-                .main-image {
-                    height: 300px; // Chiều cao ảnh trên mobile
-                }
+        .media-section {
+            .pitch-hero-image {
+                height: 40vh !important;
             }
         }
 
-        .right-section {
-            flex                   : none;
-            max-width              : 100%;
-            width                  : 100%;
-            height                 : auto; // Chiều cao tự động theo nội dung
-            overflow-y             : visible;
-            border-left            : none;
-            border-top-left-radius : 24px; // Bo tròn góc khi đè lên ảnh
-            border-top-right-radius: 24px;
-            margin-top             : -24px; // Kéo lên đè ảnh một chút
-            position               : relative;
-            z-index                : 2;
+        .content-section {
+            height       : auto;
+            margin-top   : -30px;
+            border-radius: 30px 30px 0 0;
+            position     : relative;
+            z-index      : 5;
 
-            .info-content {
-                padding: 24px 20px 40px 20px; // Padding nhỏ hơn cho mobile
+            .scroll-content {
+                padding: 40px 20px;
             }
 
-            .price-action-box {
-                flex-direction: column;
-                align-items   : stretch;
-                text-align    : center;
+            .pitch-title {
+                font-size: 32px !important;
+            }
 
-                .book-btn {
-                    width: 100%;
-                }
+            .booking-card-glass .price-value-big {
+                font-size: 24px;
             }
         }
     }
