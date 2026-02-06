@@ -85,7 +85,7 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                                                 alt={pitch.name ?? "Pitch"}
                                                 height={180}
                                                 width="100%"
-                                                preview={false}
+                                                preview={true}
                                                 style={{ objectFit: "cover" }}
                                             />
                                         }

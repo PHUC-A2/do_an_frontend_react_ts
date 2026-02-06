@@ -8,6 +8,7 @@ import {
     Spin,
     Tag,
     Tooltip,
+    Image,
 } from "antd";
 import dayjs, { Dayjs } from "dayjs";
 import { useEffect, useState } from "react";
@@ -58,7 +59,7 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
         timelineLoading,
         reloadTimeline,
     } = useBookingTimeline(activePitchId, bookingDate);
-    
+
     useEffect(() => {
         if (!pitchIdNumber) return;
         setActivePitchId(pitchIdNumber);
@@ -94,18 +95,22 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
 
     return (
         <div className={`luxury-card-wrapper ${isDark ? "dark" : "light"}`}>
+
             <Card
                 className="booking-card"
                 title={
                     <Space>
                         <TbSoccerField style={{ marginBottom: 2 }} size={20} />
-                        <span>{mode === "CREATE" ? "Tạo lịch đặt sân" : "Cập nhật lịch đặt sân"}</span> |
-                        <Space>
-                            <IoMdClock size={20} style={{ marginBottom: 2 }} />
-                            <span>Timeline</span>
-                            <Tag color="green">Trống</Tag>
-                            <Tag color="red">Đã đặt</Tag>
-                        </Space>
+                        <span>
+                            {mode === "CREATE" ? "Tạo lịch đặt sân" : "Cập nhật lịch đặt sân"}
+                        </span>
+                    </Space>
+                }
+                extra={
+                    <Space wrap size={[8, 4]}>
+                        <IoMdClock size={18} />
+                        <Tag color="green">Trống</Tag>
+                        <Tag color="red">Đã đặt</Tag>
                     </Space>
                 }
             >
@@ -146,7 +151,7 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                         ) : (
                             pitch && (
                                 <Card size="small" style={{ marginTop: 16 }}>
-                                    <img
+                                    {/* <img
                                         src={
                                             pitch.pitchUrl ||
                                             "https://images.unsplash.com/photo-1574629810360-7efbbe195018"
@@ -159,7 +164,26 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                                             borderRadius: 8,
                                             marginBottom: 12,
                                         }}
+                                    /> */}
+                                    <Image
+                                        src={
+                                            pitch.pitchUrl ||
+                                            "https://images.unsplash.com/photo-1574629810360-7efbbe195018"
+                                        }
+                                        alt={pitch.name ?? undefined}
+                                        width="100%"
+                                        height={160}
+                                        style={{
+                                            objectFit: "cover",
+                                            borderRadius: 8,
+                                            marginBottom: 12,
+                                        }}
+                                        fallback="https://images.unsplash.com/photo-1574629810360-7efbbe195018"
+                                        preview={{
+                                            mask: "Xem ảnh",
+                                        }}
                                     />
+
 
                                     <Title
                                         level={5}
@@ -222,12 +246,12 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                                             <Tag color="success">{formatVND(pitch.pricePerHour)} / giờ</Tag>
                                         </Text>
 
-                                       <Tooltip title="Chỉ đường">
+                                        <Tooltip title="Chỉ đường">
                                             <Button
                                                 variant="outline-info"
                                                 onClick={() => {
                                                     if (pitch?.latitude == null || pitch?.longitude == null) return;
-    
+
                                                     const url = `https://www.google.com/maps/dir/?api=1&destination=${pitch.latitude},${pitch.longitude}`;
                                                     window.open(url, "_blank");
                                                 }}
@@ -237,7 +261,7 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                                                 <FaMapMarkerAlt />
                                                 {/* Chỉ đường */}
                                             </Button>
-                                       </Tooltip>
+                                        </Tooltip>
                                     </div>
 
                                 </Card>
