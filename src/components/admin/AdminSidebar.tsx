@@ -175,7 +175,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Tooltip title={isDark ? 'Giao diện sáng' : 'Giao diện tối'}>
+                        <Tooltip placement="topLeft" title={isDark ? 'Giao diện sáng' : 'Giao diện tối'}>
                             <Switch
                                 checked={isDark}
                                 onChange={toggleTheme}

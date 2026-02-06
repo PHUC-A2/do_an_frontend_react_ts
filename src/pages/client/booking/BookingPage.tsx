@@ -7,6 +7,7 @@ import {
     Space,
     Spin,
     Tag,
+    Tooltip,
 } from "antd";
 import dayjs, { Dayjs } from "dayjs";
 import { useEffect, useState } from "react";
@@ -221,20 +222,22 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                                             <Tag color="success">{formatVND(pitch.pricePerHour)} / giờ</Tag>
                                         </Text>
 
-                                        <Button
-                                            variant="outline-info"
-                                            onClick={() => {
-                                                if (pitch?.latitude == null || pitch?.longitude == null) return;
-
-                                                const url = `https://www.google.com/maps/dir/?api=1&destination=${pitch.latitude},${pitch.longitude}`;
-                                                window.open(url, "_blank");
-                                            }}
-                                            disabled={pitch?.latitude == null || pitch?.longitude == null}
-                                            style={{ display: "flex", alignItems: "center", gap: 6 }}
-                                        >
-                                            <FaMapMarkerAlt />
-                                            Chỉ đường
-                                        </Button>
+                                       <Tooltip title="Chỉ đường">
+                                            <Button
+                                                variant="outline-info"
+                                                onClick={() => {
+                                                    if (pitch?.latitude == null || pitch?.longitude == null) return;
+    
+                                                    const url = `https://www.google.com/maps/dir/?api=1&destination=${pitch.latitude},${pitch.longitude}`;
+                                                    window.open(url, "_blank");
+                                                }}
+                                                disabled={pitch?.latitude == null || pitch?.longitude == null}
+                                                style={{ display: "flex", alignItems: "center", gap: 6 }}
+                                            >
+                                                <FaMapMarkerAlt />
+                                                {/* Chỉ đường */}
+                                            </Button>
+                                       </Tooltip>
                                     </div>
 
                                 </Card>
