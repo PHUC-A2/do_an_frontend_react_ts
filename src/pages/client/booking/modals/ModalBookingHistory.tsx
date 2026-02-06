@@ -181,44 +181,55 @@ const ModalBookingHistory = (props: IProps) => {
                             </Col>
 
                             <Col span={24}>
-                                <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                                    {canUpdate && (
-                                        <Button
-                                            size="small"
-                                            icon={<EditOutlined />}
-                                            onClick={() => {
-                                                setOpenModalBookingHistory(false);
-                                                navigate(`/booking/${booking.pitchId}`, { state: { mode: "UPDATE", bookingId: booking.id } });
-                                            }}
-                                        >Sửa</Button>
-                                    )}
-                                    {canCancel && (
-                                        <Popconfirm
-                                            title="Hủy đặt sân?"
-                                            onConfirm={() => handleCancel(booking.id)}
-                                            okButtonProps={{ danger: true, loading: deletingId === booking.id }}
-                                            cancelText="Không"
-                                            okText="Có"
-                                            placement="topLeft"
-                                            onCancel={cancel}
-                                        >
-                                            <Button size="small" danger icon={<CloseCircleOutlined />}>Hủy</Button>
-                                        </Popconfirm>
-                                    )}
-                                    {canDelete && (
-                                        <Popconfirm
-                                            title="Xóa lịch sử?"
-                                            onConfirm={() => handleDelete(booking.id)}
-                                            okButtonProps={{ loading: deletingId === booking.id }}
-                                            cancelText="Không"
-                                            okText="Có"
-                                            placement="topLeft"
-                                            onCancel={cancel}
-                                        >
-                                            <Button size="small" type="text" danger icon={<DeleteOutlined />}>Xóa</Button>
-                                        </Popconfirm>
-                                    )}
-                                </Space>
+                                <Row justify="space-between" align="middle">
+                                    <Button
+                                        type="link"
+                                        size="small"
+                                        onClick={() => navigate(`/pitch/${booking.pitchId}`)}
+                                    >
+                                        Xem sân
+                                    </Button>
+                                    <Space
+                                        // style={{ width: '100%', justifyContent: 'flex-end' }}
+                                    >
+                                        {canUpdate && (
+                                            <Button
+                                                size="small"
+                                                icon={<EditOutlined />}
+                                                onClick={() => {
+                                                    setOpenModalBookingHistory(false);
+                                                    navigate(`/booking/${booking.pitchId}`, { state: { mode: "UPDATE", bookingId: booking.id } });
+                                                }}
+                                            >Sửa</Button>
+                                        )}
+                                        {canCancel && (
+                                            <Popconfirm
+                                                title="Hủy đặt sân?"
+                                                onConfirm={() => handleCancel(booking.id)}
+                                                okButtonProps={{ danger: true, loading: deletingId === booking.id }}
+                                                cancelText="Không"
+                                                okText="Có"
+                                                placement="topLeft"
+                                                onCancel={cancel}
+                                            >
+                                                <Button size="small" danger icon={<CloseCircleOutlined />}>Hủy</Button>
+                                            </Popconfirm>
+                                        )}
+                                        {canDelete && (
+                                            <Popconfirm
+                                                title="Xóa lịch sử?"
+                                                onConfirm={() => handleDelete(booking.id)}
+                                                okButtonProps={{ loading: deletingId === booking.id }}
+                                                cancelText="Không"
+                                                okText="Có"
+                                                placement="topLeft"
+                                                onCancel={cancel}
+                                            >
+                                                <Button size="small" type="text" danger icon={<DeleteOutlined />}>Xóa</Button>
+                                            </Popconfirm>
+                                        )}
+                                    </Space>
+                                </Row>
                             </Col>
                             <Col span={24}>
                                 <Row justify="space-between">

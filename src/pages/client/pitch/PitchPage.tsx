@@ -4,7 +4,8 @@ import { motion, type Variants } from "framer-motion";
 import {
     EnvironmentOutlined,
     ClockCircleOutlined,
-    ArrowRightOutlined
+    ArrowRightOutlined,
+    EyeOutlined
 } from "@ant-design/icons";
 import "./PitchPage.scss";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks";
@@ -142,7 +143,39 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                                                 </RBButton>
                                             </Tooltip>
                                         </Text>
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                gap: 8,
+                                                marginTop: 12,
+                                            }}
+                                        >
+                                            <RBButton
+                                                variant="outline-secondary"
+                                                style={{ flex: 1 }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(`/pitch/${pitch.id}`);
+                                                }}
+                                            >
+                                                <EyeOutlined /> Xem sân
+                                            </RBButton>
 
+                                            <RBButton
+                                                variant="outline-warning"
+                                                style={{ flex: 1 }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(`/booking/${pitch.id}`, {
+                                                        state: { mode: "CREATE" },
+                                                    });
+                                                }}
+                                            >
+                                                Đặt sân <ArrowRightOutlined />
+                                            </RBButton>
+                                        </div>
+
+                                        {/* 
                                         <RBButton
                                             // type="primary"
                                             variant="outline-warning"
@@ -157,7 +190,7 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                                             }}
                                         >
                                             Đặt sân <ArrowRightOutlined />
-                                        </RBButton>
+                                        </RBButton> */}
                                     </MotionCard>
                                 </Col>
                             ))}

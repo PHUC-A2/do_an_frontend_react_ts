@@ -1,0 +1,166 @@
+.pitch-details-page {
+    min-height    : 100vh;
+    display       : flex;
+    flex-direction: row; // Mặc định ngang cho Desktop
+    overflow      : hidden; // Chặn cuộn cả trang, chỉ cuộn phần nội dung
+
+    // --- Loading ---
+    &.loading-container {
+        display        : flex;
+        justify-content: center;
+        align-items    : center;
+        height         : 100vh;
+    }
+
+    // --- LEFT SIDE (IMAGE) ---
+    .left-section {
+        flex    : 1; // Chiếm khoảng 50% hoặc phần còn lại
+        position: relative;
+        overflow: hidden;
+        height  : 100vh; // Full chiều cao màn hình
+
+        .image-wrapper {
+            width   : 100%;
+            height  : 100%;
+            position: relative;
+
+            .main-image {
+                width     : 100%;
+                height    : 100vh;
+                object-fit: cover;
+                display   : block;
+            }
+
+            // Nút back nổi
+            .back-btn-abs {
+                position        : absolute;
+                top             : 24px;
+                left            : 24px;
+                z-index         : 10;
+                background-color: rgba(255, 255, 255, 0.9);
+                box-shadow      : 0 2px 8px rgba(0, 0, 0, 0.15);
+                border          : none;
+
+                &:hover {
+                    background-color: #fff;
+                    transform       : scale(1.1);
+                }
+            }
+
+            .image-overlay-gradient {
+                position      : absolute;
+                inset         : 0;
+                background    : linear-gradient(to right, rgba(0, 0, 0, 0.1), transparent);
+                pointer-events: none;
+            }
+        }
+    }
+
+    // --- RIGHT SIDE (CONTENT) ---
+    .right-section {
+        flex          : 0 0 550px; // Chiều rộng cố định hoặc tối đa cho phần info trên desktop lớn
+        max-width     : 50%;
+        height        : 100vh;
+        overflow-y    : auto; // Cho phép cuộn dọc
+        overflow-x    : hidden;
+        display       : flex;
+        flex-direction: column;
+        border-left   : 1px solid rgba(0, 0, 0, 0.06);
+
+        // Tùy chỉnh thanh cuộn cho đẹp
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius   : 4px;
+        }
+
+        .info-content {
+            padding  : 40px;
+            max-width: 100%;
+        }
+
+        .price-action-box {
+            padding        : 20px;
+            display        : flex;
+            align-items    : center;
+            justify-content: space-between;
+            gap            : 16px;
+            flex-wrap      : wrap;
+
+            .price-display {
+                display       : flex;
+                flex-direction: column;
+            }
+
+            .price-value {
+                font-size  : 24px;
+                font-weight: 700;
+                line-height: 1.2;
+            }
+
+            .book-btn {
+                flex       : 1;
+                min-width  : 160px;
+                height     : 48px;
+                font-weight: 600;
+                box-shadow : 0 4px 10px rgba(0, 0, 0, 0.1);
+            }
+        }
+
+        .info-card {
+            transition: transform 0.2s;
+
+            &:hover {
+                transform: translateY(-2px);
+            }
+        }
+    }
+
+    // --- RESPONSIVE MOBILE / TABLET ---
+    @media (max-width: 992px) {
+        flex-direction: column; // Chuyển thành dọc
+        overflow      : auto; // Cho phép cuộn trang bình thường trên mobile
+
+        .left-section {
+            height: auto;
+            flex  : none; // Không co giãn theo flex cha nữa
+
+            .image-wrapper {
+                .main-image {
+                    height: 300px; // Chiều cao ảnh trên mobile
+                }
+            }
+        }
+
+        .right-section {
+            flex                   : none;
+            max-width              : 100%;
+            width                  : 100%;
+            height                 : auto; // Chiều cao tự động theo nội dung
+            overflow-y             : visible;
+            border-left            : none;
+            border-top-left-radius : 24px; // Bo tròn góc khi đè lên ảnh
+            border-top-right-radius: 24px;
+            margin-top             : -24px; // Kéo lên đè ảnh một chút
+            position               : relative;
+            z-index                : 2;
+
+            .info-content {
+                padding: 24px 20px 40px 20px; // Padding nhỏ hơn cho mobile
+            }
+
+            .price-action-box {
+                flex-direction: column;
+                align-items   : stretch;
+                text-align    : center;
+
+                .book-btn {
+                    width: 100%;
+                }
+            }
+        }
+    }
+}
