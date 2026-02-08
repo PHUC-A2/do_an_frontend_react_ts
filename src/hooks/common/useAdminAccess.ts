@@ -1,11 +1,14 @@
-// hooks/common/useAdminAccess.ts
 import { useAppSelector } from "../../redux/hooks";
 
-export const useAdminAccess = (): boolean => {
+export const useAdminAccess = () => {
     const account = useAppSelector(state => state.account.account);
+    const loading = useAppSelector(state => state.account.loading);
 
-    if (!account || !account.roles?.length) return false;
+    if (loading) return { loading: true, canAccess: false };
 
-    // VIEW luôn bị chặn
-    return !account.roles.some(r => r.name === "VIEW");
+    if (!account || !account.roles?.length)
+        return { loading: false, canAccess: false };
+
+    const canAccess = !account.roles.some(r => r.name === "VIEW");
+    return { loading: false, canAccess };
 };
