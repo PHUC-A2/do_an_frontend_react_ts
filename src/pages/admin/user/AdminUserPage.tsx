@@ -1,4 +1,4 @@
-import { Table, Tag, Space, Card, Popconfirm, message, type PopconfirmProps, Tooltip } from 'antd';
+import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Tooltip, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useEffect, useState } from 'react';
 import RBButton from 'react-bootstrap/Button';
@@ -19,6 +19,7 @@ import AdminModalAssignRole from './modals/AdminModalAssignRole';
 import { fetchRoles } from '../../../redux/features/roleSlice';
 import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
 import { usePermission } from '../../../hooks/common/usePermission';
+import AdminWrapper from '../../../components/wrapper/AdminWrapper';
 
 const AdminUserPage = () => {
     const dispatch = useAppDispatch();
@@ -36,7 +37,7 @@ const AdminUserPage = () => {
     const [userAssignRole, setUserAssignRole] = useState<IUser | null>(null);
     const [openModalAssignRole, setOpenModalAssignRole] = useState<boolean>(false);
     const canViewUsers = usePermission("USER_VIEW_LIST");
-    
+
     // assign role
     const handleAssignRole = async (data: IUser) => {
         setUserAssignRole(data);
@@ -75,14 +76,13 @@ const AdminUserPage = () => {
         setUserEdit(data);
     }
 
-    const [messageApi, holder] = message.useMessage();
     const handleDelete = async (id: number) => {
         try {
             setDeletingId(id);
             const res = await deleteUser(id);
             if (res.data.statusCode === 200) {
                 await dispatch(fetchUsers(""));
-                messageApi.success('Xóa thành công');
+                toast.success('Xóa thành công');
             }
         } catch (error: any) {
             const m = error?.response?.data?.message ?? "Không xác định";
@@ -99,7 +99,7 @@ const AdminUserPage = () => {
 
 
     const cancel: PopconfirmProps['onCancel'] = () => {
-        messageApi.error('Đã bỏ chọn');
+        toast.error('Đã bỏ chọn');
     };
     const columns: ColumnsType<IUser> = [
         {
@@ -197,8 +197,6 @@ const AdminUserPage = () => {
                         </RBButton>
                     </PermissionWrapper>
 
-                    {holder}
-
                     <PermissionWrapper required={"USER_DELETE"}>
                         <Popconfirm
                             title="Xóa người dùng"
@@ -247,66 +245,72 @@ const AdminUserPage = () => {
 
     return (
         <>
-            <Card
-                size='small'
-                title="Quản lý người dùng (User)"
-                extra={
-                    <PermissionWrapper required={"USER_CREATE"}>
-                        <RBButton variant="outline-primary"
-                            size='sm'
-                            style={{ display: "flex", alignItems: "center", gap: 3 }}
-                            onClick={() => setOpenModalAddUser(true)}
-                        >
-                            <IoIosAddCircle />
-                            Thêm mới
-                        </RBButton>
-                    </PermissionWrapper>
-                }
-                hoverable={false}
-                style={{ width: '100%', overflowX: 'auto', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
-            >
-                <Table<IUser>
-                    columns={columns}
-                    dataSource={listUsers}
-                    rowKey="id"
-                    loading={loading}
+            <AdminWrapper>
+                <Card
                     size='small'
-                    pagination={{
-                        current: meta.page,
-                        pageSize: meta.pageSize,
-                        total: meta.total,
-                        showSizeChanger: true,
-                        onChange: (page, pageSize) => {
-                            dispatch(fetchUsers(`page=${page}&pageSize=${pageSize}`));
-                        },
-                    }}
-                    bordered
-                    scroll={{ x: 'max-content' }} // scroll ngang nếu table quá rộng
+                    title="Quản lý người dùng (User)"
+                    extra={
+                        <PermissionWrapper required={"USER_CREATE"}>
+                            <RBButton variant="outline-primary"
+                                size='sm'
+                                style={{ display: "flex", alignItems: "center", gap: 3 }}
+                                onClick={() => setOpenModalAddUser(true)}
+                            >
+                                <IoIosAddCircle />
+                                Thêm mới
+                            </RBButton>
+                        </PermissionWrapper>
+                    }
+                    hoverable={false}
+                    style={{ width: '100%', overflowX: 'auto', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+                >
+                    <PermissionWrapper required={"USER_VIEW_LIST"}
+                        fallback={<Empty description="Bạn không có quyền xem danh sách người dùng" />}
+                    >
+                        <Table<IUser>
+                            columns={columns}
+                            dataSource={listUsers}
+                            rowKey="id"
+                            loading={loading}
+                            size='small'
+                            pagination={{
+                                current: meta.page,
+                                pageSize: meta.pageSize,
+                                total: meta.total,
+                                showSizeChanger: true,
+                                onChange: (page, pageSize) => {
+                                    dispatch(fetchUsers(`page=${page}&pageSize=${pageSize}`));
+                                },
+                            }}
+                            bordered
+                            scroll={{ x: 'max-content' }} // scroll ngang nếu table quá rộng
+                        />
+                    </PermissionWrapper>
+                </Card>
+                <ModalAddUser
+                    openModalAddUser={openModalAddUser}
+                    setOpenModalAddUser={setOpenModalAddUser}
                 />
-            </Card>
-            <ModalAddUser
-                openModalAddUser={openModalAddUser}
-                setOpenModalAddUser={setOpenModalAddUser}
-            />
 
-            <ModalUserDetails
-                setOpenModalUserDetails={setOpenModalUserDetails}
-                openModalUserDetails={openModalUserDetails}
-                user={user}
-                isLoading={isLoading}
-            />
+                <ModalUserDetails
+                    setOpenModalUserDetails={setOpenModalUserDetails}
+                    openModalUserDetails={openModalUserDetails}
+                    user={user}
+                    isLoading={isLoading}
+                />
 
-            <ModalUpdateUser
-                openModalUpdateUser={openModalUpdateUser}
-                setOpenModalUpdateUser={setOpenModalUpdateUser}
-                userEdit={userEdit}
-            />
+                <ModalUpdateUser
+                    openModalUpdateUser={openModalUpdateUser}
+                    setOpenModalUpdateUser={setOpenModalUpdateUser}
+                    userEdit={userEdit}
+                />
 
-            <AdminModalAssignRole
-                openModalAssignRole={openModalAssignRole}
-                setOpenModalAssignRole={setOpenModalAssignRole}
-                userAssignRole={userAssignRole}
-            />
+                <AdminModalAssignRole
+                    openModalAssignRole={openModalAssignRole}
+                    setOpenModalAssignRole={setOpenModalAssignRole}
+                    userAssignRole={userAssignRole}
+                />
+            </AdminWrapper>
         </>
     );
 };

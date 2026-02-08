@@ -18,6 +18,8 @@ import { setLogout } from '../../redux/features/authSlice';
 import { IoMenu, IoSunny } from 'react-icons/io5';
 import { LuMoon } from 'react-icons/lu';
 import { PiSoccerBallBold } from 'react-icons/pi';
+import { useRole } from '../../hooks/common/useRole';
+import { usePermission } from '../../hooks/common/usePermission';
 
 const { Sider, Header, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -38,6 +40,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
 
     const isDark = theme === 'dark';
     const siderWidth = collapsed ? 80 : 200;
+    const isViewRole = useRole("VIEW");
+    const canViewUsers = usePermission("USER_VIEW_LIST");
+    const canViewRoles = usePermission("ROLE_VIEW_LIST");
+    const canViewPermissions = usePermission("PERMISSION_VIEW_LIST");
+    const canViewPitches = usePermission("PITCH_VIEW_LIST");
+    const canViewBookings = usePermission("BOOKING_VIEW_LIST");
+
 
     const handleLogout = async () => {
         try {
@@ -59,11 +68,40 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
             label: 'Tính năng',
             icon: <MdFeaturedPlayList />,
             children: [
-                { key: '2', label: <Link to="/admin/user" style={{ textDecoration: 'none' }}>QL Người dùng</Link>, icon: <UserOutlined /> },
-                { key: '3', label: <Link to="/admin/role" style={{ textDecoration: 'none' }}>QL Vai trò</Link>, icon: <FaUserCog /> },
-                { key: '4', label: <Link to="/admin/permission" style={{ textDecoration: 'none' }}>QL Quyền hạn</Link>, icon: <MdOutlineSecurity /> },
-                { key: '5', label: <Link to="/admin/pitch" style={{ textDecoration: 'none' }}>QL Sân</Link>, icon: <PiSoccerBallBold /> },
-                { key: '6', label: <Link to="/admin/booking" style={{ textDecoration: 'none' }}>QL Lịch đặt</Link>, icon: <AiOutlineProduct /> },
+                ...(!isViewRole
+                    ? [
+                        ...(canViewUsers ? [{
+                            key: '2',
+                            label: <Link to="/admin/user" style={{ textDecoration: 'none' }}>QL Người dùng</Link>,
+                            icon: <UserOutlined />,
+                        }] : []),
+
+                        ...(canViewRoles ? [{
+                            key: '3',
+                            label: <Link to="/admin/role" style={{ textDecoration: 'none' }}>QL Vai trò</Link>,
+                            icon: <FaUserCog />,
+                        }] : []),
+
+                        ...(canViewPermissions ? [{
+                            key: '4',
+                            label: <Link to="/admin/permission" style={{ textDecoration: 'none' }}>QL Quyền hạn</Link>,
+                            icon: <MdOutlineSecurity />,
+                        }] : []),
+
+                        ...(canViewPitches ? [{
+                            key: '5',
+                            label: <Link to="/admin/pitch" style={{ textDecoration: 'none' }}>QL Sân</Link>,
+                            icon: <PiSoccerBallBold />,
+                        }] : []),
+
+                        ...(canViewBookings ? [{
+                            key: '6',
+                            label: <Link to="/admin/booking" style={{ textDecoration: 'none' }}>QL Lịch đặt</Link>,
+                            icon: <AiOutlineProduct />,
+                        }] : []),
+
+                    ]
+                    : []),
             ],
         },
         {

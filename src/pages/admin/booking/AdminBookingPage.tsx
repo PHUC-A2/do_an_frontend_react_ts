@@ -1,4 +1,4 @@
-import { Table, Tag, Space, Card, Popconfirm, message, type PopconfirmProps } from 'antd';
+import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useEffect, useState } from 'react';
 import RBButton from 'react-bootstrap/Button';
@@ -18,6 +18,7 @@ import { formatDateTimeRange, toUnix } from '../../../utils/format/localdatetime
 import ModalUpdateBooking from './modals/ModalUpdateBooking';
 import { usePermission } from '../../../hooks/common/usePermission';
 import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
+import AdminWrapper from '../../../components/wrapper/AdminWrapper';
 const AdminBookingPage = () => {
     const dispatch = useAppDispatch();
     const listBookings = useAppSelector(selectBookings);
@@ -64,15 +65,13 @@ const AdminBookingPage = () => {
         setBookingEdit(data);
     }
 
-    const [messageApi, holder] = message.useMessage();
-
     const handleDelete = async (id: number) => {
         try {
             setDeletingId(id);
             const res = await deleteBooking(id);
             if (res.data.statusCode === 200) {
                 await dispatch(fetchBookings(""));
-                messageApi.success('Xóa thành công');
+                toast.success('Xóa thành công');
             }
         } catch (error: any) {
             const m = error?.response?.data?.message ?? "Không xác định";
@@ -89,7 +88,7 @@ const AdminBookingPage = () => {
 
 
     const cancel: PopconfirmProps['onCancel'] = () => {
-        messageApi.error('Đã bỏ chọn');
+        toast.error('Đã bỏ chọn');
     };
     const columns: ColumnsType<IBooking> = [
         {
@@ -191,8 +190,6 @@ const AdminBookingPage = () => {
                         </RBButton>
                     </PermissionWrapper>
 
-                    {holder}
-
                     <PermissionWrapper required={"BOOKING_DELETE"}>
                         <Popconfirm
                             title="Xóa người dùng"
@@ -228,61 +225,67 @@ const AdminBookingPage = () => {
 
     return (
         <>
-            <Card
-                size='small'
-                title="Quản lý lịch đặt sân (booking)"
-                extra={
-                    <PermissionWrapper required={"BOOKING_CREATE"}>
-                        <RBButton variant="outline-primary"
-                            size='sm'
-                            style={{ display: "flex", alignItems: "center", gap: 3 }}
-                            onClick={() => setOpenModalAddBooking(true)}
-                        >
-                            <IoIosAddCircle />
-                            Thêm mới
-                        </RBButton>
-                    </PermissionWrapper>
-                }
-                hoverable={false}
-                style={{ width: '100%', overflowX: 'auto', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
-            >
-                <Table<IBooking>
-                    columns={columns}
-                    dataSource={listBookings}
-                    rowKey="id"
-                    loading={loading}
+           <AdminWrapper>
+                <Card
                     size='small'
-                    pagination={{
-                        current: meta.page,
-                        pageSize: meta.pageSize,
-                        total: meta.total,
-                        showSizeChanger: true,
-                        onChange: (page, pageSize) => {
-                            dispatch(fetchBookings(`page=${page}&pageSize=${pageSize}`));
-                        },
-                    }}
-                    bordered
-                    scroll={{ x: 'max-content' }} // scroll ngang nếu table quá rộng
+                    title="Quản lý lịch đặt sân (booking)"
+                    extra={
+                        <PermissionWrapper required={"BOOKING_CREATE"}>
+                            <RBButton variant="outline-primary"
+                                size='sm'
+                                style={{ display: "flex", alignItems: "center", gap: 3 }}
+                                onClick={() => setOpenModalAddBooking(true)}
+                            >
+                                <IoIosAddCircle />
+                                Thêm mới
+                            </RBButton>
+                        </PermissionWrapper>
+                    }
+                    hoverable={false}
+                    style={{ width: '100%', overflowX: 'auto', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+                >
+                    <PermissionWrapper required={"BOOKING_VIEW_LIST"}
+                        fallback={<Empty description="Bạn không có quyền xem danh sách lịch đặt" />}
+                    >
+                        <Table<IBooking>
+                            columns={columns}
+                            dataSource={listBookings}
+                            rowKey="id"
+                            loading={loading}
+                            size='small'
+                            pagination={{
+                                current: meta.page,
+                                pageSize: meta.pageSize,
+                                total: meta.total,
+                                showSizeChanger: true,
+                                onChange: (page, pageSize) => {
+                                    dispatch(fetchBookings(`page=${page}&pageSize=${pageSize}`));
+                                },
+                            }}
+                            bordered
+                            scroll={{ x: 'max-content' }} // scroll ngang nếu table quá rộng
+                        />
+                    </PermissionWrapper>
+                </Card>
+    
+                <ModalAddBooking
+                    openModalAddBooking={openModalAddBooking}
+                    setOpenModalAddBooking={setOpenModalAddBooking}
                 />
-            </Card>
-
-            <ModalAddBooking
-                openModalAddBooking={openModalAddBooking}
-                setOpenModalAddBooking={setOpenModalAddBooking}
-            />
-
-            <ModalBookingDetails
-                openModalBookingDetails={openModalBookingDetails}
-                setOpenModalBookingDetails={setOpenModalBookingDetails}
-                booking={booking}
-                isLoading={isLoading}
-            />
-
-            <ModalUpdateBooking
-                openModalUpdateBooking={openModalUpdateBooking}
-                setOpenModalUpdateBooking={setOpenModalUpdateBooking}
-                bookingEdit={bookingEdit}
-            />
+    
+                <ModalBookingDetails
+                    openModalBookingDetails={openModalBookingDetails}
+                    setOpenModalBookingDetails={setOpenModalBookingDetails}
+                    booking={booking}
+                    isLoading={isLoading}
+                />
+    
+                <ModalUpdateBooking
+                    openModalUpdateBooking={openModalUpdateBooking}
+                    setOpenModalUpdateBooking={setOpenModalUpdateBooking}
+                    bookingEdit={bookingEdit}
+                />
+           </AdminWrapper>
         </>
     );
 };

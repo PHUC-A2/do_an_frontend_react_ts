@@ -1,3 +1,10 @@
+// types/role.ts
+export type RoleKey =
+    | "ADMIN"
+    | "VIEW";
+    // | "STAFF";
+    // có thể thêm nếu có thêm role
+
 export interface IRole {
     id: number;
     name: string;

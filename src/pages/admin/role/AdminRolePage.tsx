@@ -1,4 +1,4 @@
-import { Table, Tag, Space, Card, type PopconfirmProps, message, Popconfirm, Tooltip } from "antd";
+import { Table, Tag, Space, Card, type PopconfirmProps, Popconfirm, Tooltip, Empty } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useEffect, useState } from "react";
 import RBButton from "react-bootstrap/Button";
@@ -18,6 +18,7 @@ import { fetchPermissions } from "../../../redux/features/permissionSlice";
 import AdminModalAssignPermission from "./modals/AdminModalAssignPermisison";
 import PermissionWrapper from "../../../components/wrapper/PermissionWrapper";
 import { usePermission } from "../../../hooks/common/usePermission";
+import AdminWrapper from "../../../components/wrapper/AdminWrapper";
 
 const AdminRolePage = () => {
     const dispatch = useAppDispatch();
@@ -35,7 +36,6 @@ const AdminRolePage = () => {
     const [openModalAssignPermisison, setOpenModalAssignPermisison] = useState<boolean>(false);
     const [roleAssignPermission, setRoleAssignPermission] = useState<IRole | null>(null);
 
-    const [messageApi, holder] = message.useMessage();
     const canViewRoles = usePermission("ROLE_VIEW_LIST");
 
     // assign permission
@@ -51,7 +51,7 @@ const AdminRolePage = () => {
             const res = await deleteRole(id);
             if (res.data.statusCode === 200) {
                 await dispatch(fetchRoles(""));
-                messageApi.success('Xóa thành công');
+                toast.success('Xóa thành công');
             }
         } catch (error: any) {
             const m = error?.response?.data?.message ?? "Không xác định";
@@ -67,7 +67,7 @@ const AdminRolePage = () => {
     };
 
     const cancel: PopconfirmProps['onCancel'] = () => {
-        messageApi.error('Đã bỏ chọn');
+        toast.error('Đã bỏ chọn');
     };
 
     const handleView = async (id: number) => {
@@ -151,8 +151,6 @@ const AdminRolePage = () => {
                         </RBButton>
                     </PermissionWrapper>
 
-                    {holder}
-
                     <PermissionWrapper required={"ROLE_DELETE"}>
                         <Popconfirm
                             title="Xóa quyền"
@@ -189,80 +187,86 @@ const AdminRolePage = () => {
 
     return (
         <>
-            <Card
-                size="small"
-                title="Quản lý vai trò (Roles)"
-                extra={
-                    <PermissionWrapper required={"ROLE_CREATE"}>
-                        <RBButton
-                            variant="outline-primary"
-                            size="sm"
-                            style={{ display: "flex", alignItems: "center", gap: 3 }}
-                            onClick={() => setOpenModalAddRole(true)}
-                        // disabled
-                        >
-                            <IoIosAddCircle />
-                            Thêm mới
-                        </RBButton>
-                    </PermissionWrapper>
-                }
-                hoverable={false}
-                style={{
-                    width: "100%",
-                    overflowX: "auto",
-                    borderRadius: 8,
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                }}
-            >
-                <Table<IRole>
-                    columns={columns}
-                    dataSource={roles}
-                    rowKey="id"
-                    loading={loading}
+            <AdminWrapper>
+                <Card
                     size="small"
-                    bordered
-                    scroll={{ x: "max-content" }}
-                    pagination={{
-                        current: meta.page,
-                        pageSize: meta.pageSize,
-                        total: meta.total,
-                        showSizeChanger: true,
-                        onChange: (page, pageSize) => {
-                            dispatch(
-                                fetchRoles(
-                                    `page=${page}&pageSize=${pageSize}`
-                                )
-                            );
-                        },
+                    title="Quản lý vai trò (Roles)"
+                    extra={
+                        <PermissionWrapper required={"ROLE_CREATE"}>
+                            <RBButton
+                                variant="outline-primary"
+                                size="sm"
+                                style={{ display: "flex", alignItems: "center", gap: 3 }}
+                                onClick={() => setOpenModalAddRole(true)}
+                            // disabled
+                            >
+                                <IoIosAddCircle />
+                                Thêm mới
+                            </RBButton>
+                        </PermissionWrapper>
+                    }
+                    hoverable={false}
+                    style={{
+                        width: "100%",
+                        overflowX: "auto",
+                        borderRadius: 8,
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                     }}
+                >
+                    <PermissionWrapper required={"ROLE_VIEW_LIST"}
+                        fallback={<Empty description="Bạn không có quyền xem danh sách vai trò" />}
+                    >
+                        <Table<IRole>
+                            columns={columns}
+                            dataSource={roles}
+                            rowKey="id"
+                            loading={loading}
+                            size="small"
+                            bordered
+                            scroll={{ x: "max-content" }}
+                            pagination={{
+                                current: meta.page,
+                                pageSize: meta.pageSize,
+                                total: meta.total,
+                                showSizeChanger: true,
+                                onChange: (page, pageSize) => {
+                                    dispatch(
+                                        fetchRoles(
+                                            `page=${page}&pageSize=${pageSize}`
+                                        )
+                                    );
+                                },
+                            }}
+                        />
+                    </PermissionWrapper>
+                </Card>
+
+                <ModalAddRole
+                    openModalAddRole={openModalAddRole}
+                    setOpenModalAddRole={setOpenModalAddRole}
                 />
-            </Card>
 
-            <ModalAddRole
-                openModalAddRole={openModalAddRole}
-                setOpenModalAddRole={setOpenModalAddRole}
-            />
+                <ModalRoleDetails
+                    openModalRoleDetails={openModalRoleDetails}
+                    setOpenModalRoleDetails={setOpenModalRoleDetails}
+                    role={role}
+                    isLoading={isLoading}
+                />
 
-            <ModalRoleDetails
-                openModalRoleDetails={openModalRoleDetails}
-                setOpenModalRoleDetails={setOpenModalRoleDetails}
-                role={role}
-                isLoading={isLoading}
-            />
+                <ModalUpdateRole
+                    openModalUpdateRole={openModalUpdateRole}
+                    setOpenModalUpdateRole={setOpenModalUpdateRole}
+                    roleEdit={roleEdit}
+                />
 
-            <ModalUpdateRole
-                openModalUpdateRole={openModalUpdateRole}
-                setOpenModalUpdateRole={setOpenModalUpdateRole}
-                roleEdit={roleEdit}
-            />
+                {/* assign permission */}
 
-            {/* assign permission */}
-
-            <AdminModalAssignPermission
-                openModalAssignPermisison={openModalAssignPermisison}
-                setOpenModalAssignPermisison={setOpenModalAssignPermisison}
-                roleAssignPermission={roleAssignPermission}
-            />
+                <AdminModalAssignPermission
+                    openModalAssignPermisison={openModalAssignPermisison}
+                    setOpenModalAssignPermisison={setOpenModalAssignPermisison}
+                    roleAssignPermission={roleAssignPermission}
+                />
+            </AdminWrapper>
         </>
     );
 };

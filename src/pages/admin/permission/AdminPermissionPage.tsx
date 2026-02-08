@@ -1,4 +1,4 @@
-import { Table, Tag, Space, Card, type PopconfirmProps, message, Popconfirm } from "antd";
+import { Table, Tag, Space, Card, type PopconfirmProps, Popconfirm, Empty } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useEffect, useState } from "react";
 import RBButton from "react-bootstrap/Button";
@@ -25,6 +25,7 @@ import { toast } from "react-toastify";
 import { MdDelete } from "react-icons/md";
 import PermissionWrapper from "../../../components/wrapper/PermissionWrapper";
 import { usePermission } from "../../../hooks/common/usePermission";
+import AdminWrapper from "../../../components/wrapper/AdminWrapper";
 
 const AdminPermissionPage = () => {
     const dispatch = useAppDispatch();
@@ -41,15 +42,13 @@ const AdminPermissionPage = () => {
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const canViewPermissions = usePermission("PERMISSION_VIEW_LIST");
 
-    const [messageApi, holder] = message.useMessage();
-
     const handleDelete = async (id: number) => {
         try {
             setDeletingId(id);
             const res = await deletePermission(id);
             if (res.data.statusCode === 200) {
                 await dispatch(fetchPermissions(""));
-                messageApi.success('Xóa thành công');
+                toast.success('Xóa thành công');
             }
         } catch (error: any) {
             const m = error?.response?.data?.message ?? "Không xác định";
@@ -65,7 +64,7 @@ const AdminPermissionPage = () => {
     };
 
     const cancel: PopconfirmProps['onCancel'] = () => {
-        messageApi.error('Đã bỏ chọn');
+        toast.error('Đã bỏ chọn');
     };
 
     const handleView = async (id: number) => {
@@ -167,8 +166,6 @@ const AdminPermissionPage = () => {
                         </RBButton>
                     </PermissionWrapper>
 
-                    {holder}
-
                     <PermissionWrapper required={"PERMISSION_DELETE"}>
                         <Popconfirm
                             title="Xóa quyền"
@@ -195,72 +192,78 @@ const AdminPermissionPage = () => {
 
     return (
         <>
-            <Card
-                size="small"
-                title="Quản lý quyền (Permissions)"
-                extra={
-                    <PermissionWrapper required={"PERMISSION_CREATE"}>
-                        <RBButton
-                            variant="outline-primary"
-                            size="sm"
-                            style={{ display: "flex", alignItems: "center", gap: 3 }}
-                            onClick={() => setOpenModalAddPermission(true)}
-                        // disabled
-                        >
-                            <IoIosAddCircle />
-                            Thêm mới
-                        </RBButton>
-                    </PermissionWrapper>
-                }
-                hoverable={false}
-                style={{
-                    width: "100%",
-                    overflowX: "auto",
-                    borderRadius: 8,
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                }}
-            >
-                <Table<IPermission>
-                    columns={columns}
-                    dataSource={permissions}
-                    rowKey="id"
-                    loading={loading}
+            <AdminWrapper>
+                <Card
                     size="small"
-                    bordered
-                    scroll={{ x: "max-content" }}
-                    pagination={{
-                        current: meta.page,
-                        pageSize: meta.pageSize,
-                        total: meta.total,
-                        showSizeChanger: true,
-                        onChange: (page, pageSize) => {
-                            dispatch(
-                                fetchPermissions(
-                                    `page=${page}&pageSize=${pageSize}`
-                                )
-                            );
-                        },
+                    title="Quản lý quyền (Permissions)"
+                    extra={
+                        <PermissionWrapper required={"PERMISSION_CREATE"}>
+                            <RBButton
+                                variant="outline-primary"
+                                size="sm"
+                                style={{ display: "flex", alignItems: "center", gap: 3 }}
+                                onClick={() => setOpenModalAddPermission(true)}
+                            // disabled
+                            >
+                                <IoIosAddCircle />
+                                Thêm mới
+                            </RBButton>
+                        </PermissionWrapper>
+                    }
+                    hoverable={false}
+                    style={{
+                        width: "100%",
+                        overflowX: "auto",
+                        borderRadius: 8,
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                     }}
+                >
+                    <PermissionWrapper required={"PERMISSION_VIEW_LIST"}
+                        fallback={<Empty description="Bạn không có quyền xem danh sách quyền" />}
+                    >
+                        <Table<IPermission>
+                            columns={columns}
+                            dataSource={permissions}
+                            rowKey="id"
+                            loading={loading}
+                            size="small"
+                            bordered
+                            scroll={{ x: "max-content" }}
+                            pagination={{
+                                current: meta.page,
+                                pageSize: meta.pageSize,
+                                total: meta.total,
+                                showSizeChanger: true,
+                                onChange: (page, pageSize) => {
+                                    dispatch(
+                                        fetchPermissions(
+                                            `page=${page}&pageSize=${pageSize}`
+                                        )
+                                    );
+                                },
+                            }}
+                        />
+                    </PermissionWrapper>
+                </Card>
+
+                <ModalAddPermission
+                    openModalAddPermission={openModalAddPermission}
+                    setOpenModalAddPermission={setOpenModalAddPermission}
                 />
-            </Card>
 
-            <ModalAddPermission
-                openModalAddPermission={openModalAddPermission}
-                setOpenModalAddPermission={setOpenModalAddPermission}
-            />
+                <ModalUpdatePermission
+                    openModalUpdatePermission={openModalUpdatePermission}
+                    setOpenModalUpdatePermission={setOpenModalUpdatePermission}
+                    permissionEdit={permissionEdit}
+                />
 
-            <ModalUpdatePermission
-                openModalUpdatePermission={openModalUpdatePermission}
-                setOpenModalUpdatePermission={setOpenModalUpdatePermission}
-                permissionEdit={permissionEdit}
-            />
-
-            <ModalPermissionDetails
-                openModalPermissionDetails={openModalPermissionDetails}
-                setOpenModalPermissionDetails={setOpenModalPermissionDetails}
-                permission={permission}
-                isLoading={isLoadingPermissionDetails}
-            />
+                <ModalPermissionDetails
+                    openModalPermissionDetails={openModalPermissionDetails}
+                    setOpenModalPermissionDetails={setOpenModalPermissionDetails}
+                    permission={permission}
+                    isLoading={isLoadingPermissionDetails}
+                />
+            </AdminWrapper>
         </>
     );
 };

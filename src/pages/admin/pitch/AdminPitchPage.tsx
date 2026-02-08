@@ -1,4 +1,4 @@
-import { Table, Tag, Space, Card, Popconfirm, message, type PopconfirmProps } from 'antd';
+import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useEffect, useState } from 'react';
 import RBButton from 'react-bootstrap/Button';
@@ -28,6 +28,7 @@ import ModalUpdatePitch from './modals/ModalUpdatePitch';
 import { FaMapMarkerAlt } from 'react-icons/fa';
 import { usePermission } from '../../../hooks/common/usePermission';
 import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
+import AdminWrapper from '../../../components/wrapper/AdminWrapper';
 
 const AdminPitchPage = () => {
     const dispatch = useAppDispatch();
@@ -76,15 +77,13 @@ const AdminPitchPage = () => {
     };
 
 
-    const [messageApi, holder] = message.useMessage();
-
     const handleDelete = async (id: number) => {
         try {
             setDeletingId(id);
             const res = await deletePitch(id);
             if (res.data.statusCode === 200) {
                 await dispatch(fetchPitches(""));
-                messageApi.success('Xóa thành công');
+                toast.success('Xóa thành công');
             }
         } catch (error: any) {
             const m = error?.response?.data?.message ?? "Không xác định";
@@ -100,7 +99,7 @@ const AdminPitchPage = () => {
     };
 
     const cancel: PopconfirmProps['onCancel'] = () => {
-        messageApi.error('Đã bỏ chọn');
+        toast.error('Đã bỏ chọn');
     };
 
     const columns: ColumnsType<IPitch> = [
@@ -178,7 +177,6 @@ const AdminPitchPage = () => {
                         </RBButton>
                     </PermissionWrapper>
 
-                    {holder}
 
                     <PermissionWrapper required={"PITCH_DELETE"}>
                         <Popconfirm
@@ -227,67 +225,73 @@ const AdminPitchPage = () => {
 
     return (
         <>
-            <Card
-                size="small"
-                title="Quản lý sân (Pitch)"
-                extra={
-                    <PermissionWrapper required={"PITCH_CREATE"}>
-                        <RBButton
-                            variant="outline-primary"
-                            size="sm"
-                            style={{ display: 'flex', alignItems: 'center', gap: 3 }}
-                            onClick={() => setOpenModalAddPitch(true)}
-                        >
-                            <IoIosAddCircle />
-                            Thêm mới
-                        </RBButton>
-                    </PermissionWrapper>
-                }
-                hoverable={false}
-                style={{
-                    width: '100%',
-                    overflowX: 'auto',
-                    borderRadius: 8,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                }}
-            >
-                <Table<IPitch>
-                    columns={columns}
-                    dataSource={listPitches}
-                    rowKey="id"
-                    loading={loading}
+            <AdminWrapper>
+                <Card
                     size="small"
-                    pagination={{
-                        current: meta.page,
-                        pageSize: meta.pageSize,
-                        total: meta.total,
-                        showSizeChanger: true,
-                        onChange: (page, pageSize) => {
-                            dispatch(fetchPitches(`page=${page}&pageSize=${pageSize}`));
-                        },
+                    title="Quản lý sân (Pitch)"
+                    extra={
+                        <PermissionWrapper required={"PITCH_CREATE"}>
+                            <RBButton
+                                variant="outline-primary"
+                                size="sm"
+                                style={{ display: 'flex', alignItems: 'center', gap: 3 }}
+                                onClick={() => setOpenModalAddPitch(true)}
+                            >
+                                <IoIosAddCircle />
+                                Thêm mới
+                            </RBButton>
+                        </PermissionWrapper>
+                    }
+                    hoverable={false}
+                    style={{
+                        width: '100%',
+                        overflowX: 'auto',
+                        borderRadius: 8,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                     }}
-                    bordered
-                    scroll={{ x: 'max-content' }}
+                >
+                    <PermissionWrapper required={"PITCH_VIEW_LIST"}
+                        fallback={<Empty description="Bạn không có quyền xem danh sách sân" />}
+                    >
+                        <Table<IPitch>
+                            columns={columns}
+                            dataSource={listPitches}
+                            rowKey="id"
+                            loading={loading}
+                            size="small"
+                            pagination={{
+                                current: meta.page,
+                                pageSize: meta.pageSize,
+                                total: meta.total,
+                                showSizeChanger: true,
+                                onChange: (page, pageSize) => {
+                                    dispatch(fetchPitches(`page=${page}&pageSize=${pageSize}`));
+                                },
+                            }}
+                            bordered
+                            scroll={{ x: 'max-content' }}
+                        />
+                    </PermissionWrapper>
+                </Card>
+
+                <ModalAddPitch
+                    openModalAddPitch={openModalAddPitch}
+                    setOpenModalAddPitch={setOpenModalAddPitch}
                 />
-            </Card>
 
-            <ModalAddPitch
-                openModalAddPitch={openModalAddPitch}
-                setOpenModalAddPitch={setOpenModalAddPitch}
-            />
+                <ModalPitchDetails
+                    openModalPitchDetails={openModalPitchDetails}
+                    setOpenModalPitchDetails={setOpenModalPitchDetails}
+                    pitch={pitch}
+                    isLoading={isLoading}
+                />
 
-            <ModalPitchDetails
-                openModalPitchDetails={openModalPitchDetails}
-                setOpenModalPitchDetails={setOpenModalPitchDetails}
-                pitch={pitch}
-                isLoading={isLoading}
-            />
-
-            <ModalUpdatePitch
-                openModalUpdatePitch={openModalUpdatePitch}
-                setOpenModalUpdatePitch={setOpenModalUpdatePitch}
-                pitchEdit={pitchEdit}
-            />
+                <ModalUpdatePitch
+                    openModalUpdatePitch={openModalUpdatePitch}
+                    setOpenModalUpdatePitch={setOpenModalUpdatePitch}
+                    pitchEdit={pitchEdit}
+                />
+            </AdminWrapper>
 
         </>
     );

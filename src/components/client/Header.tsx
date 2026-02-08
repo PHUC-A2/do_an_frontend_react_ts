@@ -14,6 +14,7 @@ import { logout } from '../../config/Api';
 import { setLogout } from '../../redux/features/authSlice';
 import { toast } from 'react-toastify';
 import ModalBookingHistory from '../../pages/client/booking/modals/ModalBookingHistory';
+import { useRole } from '../../hooks/common/useRole';
 
 const { Header: AntHeader } = Layout;
 const { useBreakpoint } = Grid;
@@ -36,6 +37,8 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
 
     const isDark = theme === 'dark';
     const screens = useBreakpoint();
+    const isViewRole = useRole("VIEW");
+
 
     // logout
     const handleLogout = async () => {
@@ -69,7 +72,10 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
             [
                 { label: <Link to="#" onClick={() => setOpenModalAccount(true)} style={linkStyle}>Tài khoản</Link>, key: 'account', icon: <MdAccountCircle /> },
                 { label: <Link to="#" style={linkStyle} onClick={handleLogout}>Đăng xuất</Link>, key: 'logout', icon: <AiOutlineLogout /> },
-                { label: <Link to="/admin" style={linkStyle}>Trang quản trị</Link>, key: 'admin', icon: <AiFillDashboard /> },
+                // { label: <Link to="/admin" style={linkStyle}>Trang quản trị</Link>, key: 'admin', icon: <AiFillDashboard /> },
+                ...(!isViewRole
+                    ? [{ label: <Link to="/admin" style={linkStyle}>Trang quản trị</Link>, key: "admin", icon: <AiFillDashboard /> }]
+                    : []),
             ]
             :
             [
@@ -129,7 +135,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                 {/* Right controls */}
                 <Space size="middle">
 
-                    
+
 
                     {isAuthenticated && (
                         <Tooltip title="Quản lý lịch đặt">
