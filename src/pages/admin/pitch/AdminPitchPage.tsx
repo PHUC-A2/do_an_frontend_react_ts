@@ -26,6 +26,8 @@ import { deletePitch, getPitchById } from '../../../config/Api';
 import { toast } from 'react-toastify';
 import ModalUpdatePitch from './modals/ModalUpdatePitch';
 import { FaMapMarkerAlt } from 'react-icons/fa';
+import { usePermission } from '../../../hooks/common/usePermission';
+import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
 
 const AdminPitchPage = () => {
     const dispatch = useAppDispatch();
@@ -41,7 +43,7 @@ const AdminPitchPage = () => {
     const [pitch, setPitch] = useState<IPitch | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [pitchEdit, setPitchEdit] = useState<IPitch | null>(null);
-
+    const canViewPitches = usePermission("PITCH_VIEW_LIST");
 
 
     const handleEdit = (data: IPitch) => {
@@ -159,37 +161,44 @@ const AdminPitchPage = () => {
             key: 'actions',
             render: (_: any, record: IPitch) => (
                 <Space align="center" style={{ justifyContent: "center", width: "100%" }}>
-                    <RBButton variant="outline-info" size="sm"
-                        onClick={() => handleView(record.id)}
-                    >
-                        <FaArrowsToEye />
-                    </RBButton>
 
-                    <RBButton variant="outline-warning" size="sm"
-                        onClick={() => handleEdit(record)}
-                    >
-                        <CiEdit />
-                    </RBButton>
+                    <PermissionWrapper required={"PITCH_VIEW_DETAIL"}>
+                        <RBButton variant="outline-info" size="sm"
+                            onClick={() => handleView(record.id)}
+                        >
+                            <FaArrowsToEye />
+                        </RBButton>
+                    </PermissionWrapper>
+
+                    <PermissionWrapper required={"PITCH_UPDATE"}>
+                        <RBButton variant="outline-warning" size="sm"
+                            onClick={() => handleEdit(record)}
+                        >
+                            <CiEdit />
+                        </RBButton>
+                    </PermissionWrapper>
 
                     {holder}
 
-                    <Popconfirm
-                        title="Xóa sân"
-                        description="Bạn có chắc chắn muốn xóa sân này không?"
-                        onConfirm={() => handleDelete(record.id)}
-                        onCancel={cancel}
-                        okText="Có"
-                        cancelText="Không"
-                        okButtonProps={{
-                            loading: deletingId === record.id
-                        }}
-                    >
-                        <RBButton size="sm" variant="outline-danger"
-                            disabled={deletingId === record.id}
+                    <PermissionWrapper required={"PITCH_DELETE"}>
+                        <Popconfirm
+                            title="Xóa sân"
+                            description="Bạn có chắc chắn muốn xóa sân này không?"
+                            onConfirm={() => handleDelete(record.id)}
+                            onCancel={cancel}
+                            okText="Có"
+                            cancelText="Không"
+                            okButtonProps={{
+                                loading: deletingId === record.id
+                            }}
                         >
-                            <MdDelete />
-                        </RBButton>
-                    </Popconfirm>
+                            <RBButton size="sm" variant="outline-danger"
+                                disabled={deletingId === record.id}
+                            >
+                                <MdDelete />
+                            </RBButton>
+                        </Popconfirm>
+                    </PermissionWrapper>
 
                     <RBButton
                         size='sm'
@@ -211,8 +220,10 @@ const AdminPitchPage = () => {
 
     // fetch list pitches
     useEffect(() => {
-        dispatch(fetchPitches("page=1&pageSize=7"));
-    }, [dispatch]);
+        if (!canViewPitches) return;
+
+        dispatch(fetchPitches(""));
+    }, [canViewPitches, dispatch]);
 
     return (
         <>
@@ -220,15 +231,17 @@ const AdminPitchPage = () => {
                 size="small"
                 title="Quản lý sân (Pitch)"
                 extra={
-                    <RBButton
-                        variant="outline-primary"
-                        size="sm"
-                        style={{ display: 'flex', alignItems: 'center', gap: 3 }}
-                        onClick={() => setOpenModalAddPitch(true)}
-                    >
-                        <IoIosAddCircle />
-                        Thêm mới
-                    </RBButton>
+                    <PermissionWrapper required={"PITCH_CREATE"}>
+                        <RBButton
+                            variant="outline-primary"
+                            size="sm"
+                            style={{ display: 'flex', alignItems: 'center', gap: 3 }}
+                            onClick={() => setOpenModalAddPitch(true)}
+                        >
+                            <IoIosAddCircle />
+                            Thêm mới
+                        </RBButton>
+                    </PermissionWrapper>
                 }
                 hoverable={false}
                 style={{

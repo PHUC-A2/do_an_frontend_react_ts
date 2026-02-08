@@ -17,6 +17,8 @@ import ModalUpdateUser from './modals/ModalUpdateUser';
 import { USER_STATUS_META } from '../../../utils/constants/user.constants';
 import AdminModalAssignRole from './modals/AdminModalAssignRole';
 import { fetchRoles } from '../../../redux/features/roleSlice';
+import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
+import { usePermission } from '../../../hooks/common/usePermission';
 
 const AdminUserPage = () => {
     const dispatch = useAppDispatch();
@@ -33,7 +35,8 @@ const AdminUserPage = () => {
     const [userEdit, setUserEdit] = useState<IUser | null>(null);
     const [userAssignRole, setUserAssignRole] = useState<IUser | null>(null);
     const [openModalAssignRole, setOpenModalAssignRole] = useState<boolean>(false);
-
+    const canViewUsers = usePermission("USER_VIEW_LIST");
+    
     // assign role
     const handleAssignRole = async (data: IUser) => {
         setUserAssignRole(data);
@@ -176,72 +179,89 @@ const AdminUserPage = () => {
             render: (_: any, record: IUser) => (
                 <Space align="center" style={{ justifyContent: "center", width: "100%" }}>
 
-                    <RBButton variant="outline-info" size='sm'
-                        onClick={() => handleView(record.id)}
-                    >
-                        <FaArrowsToEye />
-                    </RBButton>
+                    <PermissionWrapper required={"USER_VIEW_DETAIL"}>
+                        <RBButton variant="outline-info" size='sm'
+                            onClick={() => handleView(record.id)}
+                        >
+                            <FaArrowsToEye />
+                        </RBButton>
+                    </PermissionWrapper>
 
-                    <RBButton
-                        variant="outline-warning"
-                        size='sm'
-                        onClick={() => handleEdit(record)}
-                    >
-                        <CiEdit />
-                    </RBButton>
+                    <PermissionWrapper required={"USER_UPDATE"}>
+                        <RBButton
+                            variant="outline-warning"
+                            size='sm'
+                            onClick={() => handleEdit(record)}
+                        >
+                            <CiEdit />
+                        </RBButton>
+                    </PermissionWrapper>
 
                     {holder}
 
-                    <Popconfirm
-                        title="Xóa người dùng"
-                        description="Bạn có chắc chắn muốn xóa người dùng này không?"
-                        onConfirm={() => handleDelete(record.id)}
-                        onCancel={cancel}
-                        okText="Có"
-                        cancelText="Không"
-                        okButtonProps={{
-                            loading: deletingId === record.id
-                        }}
-                    >
-                        <RBButton
-                            size='sm'
-                            variant="outline-danger"
-                            disabled={deletingId === record.id}
+                    <PermissionWrapper required={"USER_DELETE"}>
+                        <Popconfirm
+                            title="Xóa người dùng"
+                            description="Bạn có chắc chắn muốn xóa người dùng này không?"
+                            onConfirm={() => handleDelete(record.id)}
+                            onCancel={cancel}
+                            okText="Có"
+                            cancelText="Không"
+                            okButtonProps={{
+                                loading: deletingId === record.id
+                            }}
                         >
-                            <MdDelete />
-                        </RBButton>
-                    </Popconfirm>
+                            <RBButton
+                                size='sm'
+                                variant="outline-danger"
+                                disabled={deletingId === record.id}
+                            >
+                                <MdDelete />
+                            </RBButton>
+                        </Popconfirm>
+                    </PermissionWrapper>
 
-                    <Tooltip placement="left" title="Gắn quyền">
-                        <RBButton size="sm" variant="outline-secondary"
-                            onClick={() => handleAssignRole(record)}
-                        >
-                            <MdSecurity />
-                        </RBButton>
-                    </Tooltip>
+                    <PermissionWrapper required={"USER_ASSIGN_ROLE"}>
+                        <Tooltip placement="left" title="Gắn quyền">
+                            <RBButton size="sm" variant="outline-secondary"
+                                onClick={() => handleAssignRole(record)}
+                            >
+                                <MdSecurity />
+                            </RBButton>
+                        </Tooltip>
+                    </PermissionWrapper>
                 </Space>
             ),
         },
     ];
 
     // fetch list users
+    // useEffect(() => {
+    //     dispatch(fetchUsers(""));
+    // }, [dispatch]);
     useEffect(() => {
-        dispatch(fetchUsers("page=1&pageSize=7"));
-    }, [dispatch]);
+        if (!canViewUsers) return;
+
+        dispatch(fetchUsers(""));
+    }, [canViewUsers, dispatch]);
 
     return (
         <>
             <Card
                 size='small'
                 title="Quản lý người dùng (User)"
-                extra={<RBButton variant="outline-primary"
-                    size='sm'
-                    style={{ display: "flex", alignItems: "center", gap: 3 }}
-                    onClick={() => setOpenModalAddUser(true)}
-                >
-                    <IoIosAddCircle />
-                    Thêm mới
-                </RBButton>}
+                extra={
+                    <PermissionWrapper required={"USER_CREATE"}>
+                        <RBButton variant="outline-primary"
+                            size='sm'
+                            style={{ display: "flex", alignItems: "center", gap: 3 }}
+                            onClick={() => setOpenModalAddUser(true)}
+                        >
+                            <IoIosAddCircle />
+                            Thêm mới
+                        </RBButton>
+                    </PermissionWrapper>
+                }
                 hoverable={false}
                 style={{ width: '100%', overflowX: 'auto', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
             >

@@ -16,6 +16,8 @@ import { toast } from 'react-toastify';
 import ModalBookingDetails from './modals/ModalBookingDetails';
 import { formatDateTimeRange, toUnix } from '../../../utils/format/localdatetime';
 import ModalUpdateBooking from './modals/ModalUpdateBooking';
+import { usePermission } from '../../../hooks/common/usePermission';
+import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
 const AdminBookingPage = () => {
     const dispatch = useAppDispatch();
     const listBookings = useAppSelector(selectBookings);
@@ -29,7 +31,7 @@ const AdminBookingPage = () => {
     const [openModalBookingDetails, setOpenModalBookingDetails] = useState<boolean>(false);
     const [booking, setBooking] = useState<IBooking | null>(null);
     const [bookingEdit, setBookingEdit] = useState<IBooking | null>(null);
-
+    const canViewBookings = usePermission("BOOKING_VIEW_LIST");
 
     const handleView = async (id: number) => {
         setBooking(null);
@@ -171,41 +173,47 @@ const AdminBookingPage = () => {
             render: (_: any, record: IBooking) => (
                 <Space align="center" style={{ justifyContent: "center", width: "100%" }}>
 
-                    <RBButton variant="outline-info" size='sm'
-                        onClick={() => handleView(record.id)}
-                    >
-                        <FaArrowsToEye />
-                    </RBButton>
+                    <PermissionWrapper required={"BOOKING_VIEW_DETAIL"}>
+                        <RBButton variant="outline-info" size='sm'
+                            onClick={() => handleView(record.id)}
+                        >
+                            <FaArrowsToEye />
+                        </RBButton>
+                    </PermissionWrapper>
 
-                    <RBButton
-                        variant="outline-warning"
-                        size='sm'
-                        onClick={() => handleEdit(record)}
-                    >
-                        <CiEdit />
-                    </RBButton>
+                    <PermissionWrapper required={"BOOKING_UPDATE"}>
+                        <RBButton
+                            variant="outline-warning"
+                            size='sm'
+                            onClick={() => handleEdit(record)}
+                        >
+                            <CiEdit />
+                        </RBButton>
+                    </PermissionWrapper>
 
                     {holder}
 
-                    <Popconfirm
-                        title="Xóa người dùng"
-                        description="Bạn có chắc chắn muốn xóa người dùng này không?"
-                        onConfirm={() => handleDelete(record.id)}
-                        onCancel={cancel}
-                        okText="Có"
-                        cancelText="Không"
-                        okButtonProps={{
-                            loading: deletingId === record.id
-                        }}
-                    >
-                        <RBButton
-                            size='sm'
-                            variant="outline-danger"
-                            disabled={deletingId === record.id}
+                    <PermissionWrapper required={"BOOKING_DELETE"}>
+                        <Popconfirm
+                            title="Xóa người dùng"
+                            description="Bạn có chắc chắn muốn xóa người dùng này không?"
+                            onConfirm={() => handleDelete(record.id)}
+                            onCancel={cancel}
+                            okText="Có"
+                            cancelText="Không"
+                            okButtonProps={{
+                                loading: deletingId === record.id
+                            }}
                         >
-                            <MdDelete />
-                        </RBButton>
-                    </Popconfirm>
+                            <RBButton
+                                size='sm'
+                                variant="outline-danger"
+                                disabled={deletingId === record.id}
+                            >
+                                <MdDelete />
+                            </RBButton>
+                        </Popconfirm>
+                    </PermissionWrapper>
                 </Space>
             ),
         },
@@ -213,22 +221,28 @@ const AdminBookingPage = () => {
 
     // fetch list bookings
     useEffect(() => {
-        dispatch(fetchBookings("page=1&pageSize=7"));
-    }, [dispatch]);
+        if (!canViewBookings) return;
+
+        dispatch(fetchBookings(""));
+    }, [canViewBookings, dispatch]);
 
     return (
         <>
             <Card
                 size='small'
                 title="Quản lý lịch đặt sân (booking)"
-                extra={<RBButton variant="outline-primary"
-                    size='sm'
-                    style={{ display: "flex", alignItems: "center", gap: 3 }}
-                    onClick={() => setOpenModalAddBooking(true)}
-                >
-                    <IoIosAddCircle />
-                    Thêm mới
-                </RBButton>}
+                extra={
+                    <PermissionWrapper required={"BOOKING_CREATE"}>
+                        <RBButton variant="outline-primary"
+                            size='sm'
+                            style={{ display: "flex", alignItems: "center", gap: 3 }}
+                            onClick={() => setOpenModalAddBooking(true)}
+                        >
+                            <IoIosAddCircle />
+                            Thêm mới
+                        </RBButton>
+                    </PermissionWrapper>
+                }
                 hoverable={false}
                 style={{ width: '100%', overflowX: 'auto', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
             >

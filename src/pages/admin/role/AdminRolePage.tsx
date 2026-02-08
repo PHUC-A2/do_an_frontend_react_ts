@@ -16,6 +16,8 @@ import { deleteRole, getRoleById } from "../../../config/Api";
 import ModalUpdateRole from "./modals/ModalUpdateRole";
 import { fetchPermissions } from "../../../redux/features/permissionSlice";
 import AdminModalAssignPermission from "./modals/AdminModalAssignPermisison";
+import PermissionWrapper from "../../../components/wrapper/PermissionWrapper";
+import { usePermission } from "../../../hooks/common/usePermission";
 
 const AdminRolePage = () => {
     const dispatch = useAppDispatch();
@@ -34,7 +36,7 @@ const AdminRolePage = () => {
     const [roleAssignPermission, setRoleAssignPermission] = useState<IRole | null>(null);
 
     const [messageApi, holder] = message.useMessage();
-
+    const canViewRoles = usePermission("ROLE_VIEW_LIST");
 
     // assign permission
     const handleAssignPermisison = async (data: IRole) => {
@@ -97,8 +99,10 @@ const AdminRolePage = () => {
     }
 
     useEffect(() => {
-        dispatch(fetchRoles("page=1&pageSize=7"));
-    }, [dispatch]);
+        if (!canViewRoles) return;
+
+        dispatch(fetchRoles(""));
+    }, [canViewRoles, dispatch]);
 
     const columns: ColumnsType<IRole> = [
         {
@@ -131,45 +135,53 @@ const AdminRolePage = () => {
             title: "Hành động",
             render: (_: any, record: IRole) => (
                 <Space align="center" style={{ justifyContent: "center", width: "100%" }}>
-                    <RBButton variant="outline-info" size="sm"
-                        onClick={() => handleView(record.id)}
-                    >
-                        <FaArrowsToEye />
-                    </RBButton>
+                    <PermissionWrapper required={"ROLE_VIEW_DETAIL"}>
+                        <RBButton variant="outline-info" size="sm"
+                            onClick={() => handleView(record.id)}
+                        >
+                            <FaArrowsToEye />
+                        </RBButton>
+                    </PermissionWrapper>
 
-                    <RBButton variant="outline-warning" size="sm"
-                        onClick={() => handleEdit(record)}
-                    >
-                        <CiEdit />
-                    </RBButton>
+                    <PermissionWrapper required={"ROLE_UPDATE"}>
+                        <RBButton variant="outline-warning" size="sm"
+                            onClick={() => handleEdit(record)}
+                        >
+                            <CiEdit />
+                        </RBButton>
+                    </PermissionWrapper>
 
                     {holder}
 
-                    <Popconfirm
-                        title="Xóa quyền"
-                        description="Bạn có chắc chắn muốn xóa vai trò này không?"
-                        onConfirm={() => handleDelete(record.id)}
-                        onCancel={cancel}
-                        okText="Có"
-                        cancelText="Không"
-                        okButtonProps={{
-                            loading: deletingId === record.id
-                        }}
-                    >
-                        <RBButton size="sm" variant="outline-danger"
-                            disabled={deletingId === record.id}
+                    <PermissionWrapper required={"ROLE_DELETE"}>
+                        <Popconfirm
+                            title="Xóa quyền"
+                            description="Bạn có chắc chắn muốn xóa vai trò này không?"
+                            onConfirm={() => handleDelete(record.id)}
+                            onCancel={cancel}
+                            okText="Có"
+                            cancelText="Không"
+                            okButtonProps={{
+                                loading: deletingId === record.id
+                            }}
                         >
-                            <MdDelete />
-                        </RBButton>
-                    </Popconfirm>
+                            <RBButton size="sm" variant="outline-danger"
+                                disabled={deletingId === record.id}
+                            >
+                                <MdDelete />
+                            </RBButton>
+                        </Popconfirm>
+                    </PermissionWrapper>
 
-                    <Tooltip placement="left" title="Gắn quyền">
-                        <RBButton size="sm" variant="outline-secondary"
-                            onClick={() => handleAssignPermisison(record)}
-                        >
-                            <MdSecurity />
-                        </RBButton>
-                    </Tooltip>
+                    <PermissionWrapper required={"ROLE_ASSIGN_PERMISSION"}>
+                        <Tooltip placement="left" title="Gắn quyền">
+                            <RBButton size="sm" variant="outline-secondary"
+                                onClick={() => handleAssignPermisison(record)}
+                            >
+                                <MdSecurity />
+                            </RBButton>
+                        </Tooltip>
+                    </PermissionWrapper>
                 </Space>
             ),
         },
@@ -181,16 +193,18 @@ const AdminRolePage = () => {
                 size="small"
                 title="Quản lý vai trò (Roles)"
                 extra={
-                    <RBButton
-                        variant="outline-primary"
-                        size="sm"
-                        style={{ display: "flex", alignItems: "center", gap: 3 }}
-                        onClick={() => setOpenModalAddRole(true)}
-                    // disabled
-                    >
-                        <IoIosAddCircle />
-                        Thêm mới
-                    </RBButton>
+                    <PermissionWrapper required={"ROLE_CREATE"}>
+                        <RBButton
+                            variant="outline-primary"
+                            size="sm"
+                            style={{ display: "flex", alignItems: "center", gap: 3 }}
+                            onClick={() => setOpenModalAddRole(true)}
+                        // disabled
+                        >
+                            <IoIosAddCircle />
+                            Thêm mới
+                        </RBButton>
+                    </PermissionWrapper>
                 }
                 hoverable={false}
                 style={{

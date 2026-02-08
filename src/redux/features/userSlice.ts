@@ -45,6 +45,7 @@ export const fetchUsers = createAsyncThunk<
 
             return rejectWithValue(res.data.message || "Lấy người dùng thất bại");
         } catch (error: any) {
+            console.log(error);
             return rejectWithValue(
                 error?.response?.data?.message || "Lỗi hệ thống"
             );

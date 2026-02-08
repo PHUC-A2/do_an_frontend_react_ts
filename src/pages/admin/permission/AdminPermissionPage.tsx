@@ -23,6 +23,8 @@ import ModalPermissionDetails from "./modals/ModalPermissionDetails";
 import { deletePermission, getPermissionById } from "../../../config/Api";
 import { toast } from "react-toastify";
 import { MdDelete } from "react-icons/md";
+import PermissionWrapper from "../../../components/wrapper/PermissionWrapper";
+import { usePermission } from "../../../hooks/common/usePermission";
 
 const AdminPermissionPage = () => {
     const dispatch = useAppDispatch();
@@ -37,7 +39,7 @@ const AdminPermissionPage = () => {
     const [permission, setPermission] = useState<IPermission | null>(null);
     const [isLoadingPermissionDetails, setIsLoadingPermissionDetails] = useState(false);
     const [deletingId, setDeletingId] = useState<number | null>(null);
-
+    const canViewPermissions = usePermission("PERMISSION_VIEW_LIST");
 
     const [messageApi, holder] = message.useMessage();
 
@@ -95,8 +97,10 @@ const AdminPermissionPage = () => {
     }
 
     useEffect(() => {
-        dispatch(fetchPermissions("page=1&pageSize=7"));
-    }, [dispatch]);
+        if (!canViewPermissions) return;
+
+        dispatch(fetchPermissions(""));
+    }, [canViewPermissions, dispatch]);
 
     const columns: ColumnsType<IPermission> = [
         {
@@ -146,37 +150,44 @@ const AdminPermissionPage = () => {
             title: "Hành động",
             render: (_: any, record: IPermission) => (
                 <Space align="center" style={{ justifyContent: "center", width: "100%" }}>
-                    <RBButton variant="outline-info" size="sm"
-                        onClick={() => handleView(record.id)}
-                    >
-                        <FaArrowsToEye />
-                    </RBButton>
 
-                    <RBButton variant="outline-warning" size="sm"
-                        onClick={() => handleEdit(record)}
-                    >
-                        <CiEdit />
-                    </RBButton>
+                    <PermissionWrapper required={"PERMISSION_VIEW_DETAIL"}>
+                        <RBButton variant="outline-info" size="sm"
+                            onClick={() => handleView(record.id)}
+                        >
+                            <FaArrowsToEye />
+                        </RBButton>
+                    </PermissionWrapper>
+
+                    <PermissionWrapper required={"PERMISSION_UPDATE"}>
+                        <RBButton variant="outline-warning" size="sm"
+                            onClick={() => handleEdit(record)}
+                        >
+                            <CiEdit />
+                        </RBButton>
+                    </PermissionWrapper>
 
                     {holder}
 
-                    <Popconfirm
-                        title="Xóa quyền"
-                        description="Bạn có chắc chắn muốn xóa quyền này không?"
-                        onConfirm={() => handleDelete(record.id)}
-                        onCancel={cancel}
-                        okText="Có"
-                        cancelText="Không"
-                        okButtonProps={{
-                            loading: deletingId === record.id
-                        }}
-                    >
-                        <RBButton size="sm" variant="outline-danger"
-                            disabled={deletingId === record.id}
+                    <PermissionWrapper required={"PERMISSION_DELETE"}>
+                        <Popconfirm
+                            title="Xóa quyền"
+                            description="Bạn có chắc chắn muốn xóa quyền này không?"
+                            onConfirm={() => handleDelete(record.id)}
+                            onCancel={cancel}
+                            okText="Có"
+                            cancelText="Không"
+                            okButtonProps={{
+                                loading: deletingId === record.id
+                            }}
                         >
-                            <MdDelete />
-                        </RBButton>
-                    </Popconfirm>
+                            <RBButton size="sm" variant="outline-danger"
+                                disabled={deletingId === record.id}
+                            >
+                                <MdDelete />
+                            </RBButton>
+                        </Popconfirm>
+                    </PermissionWrapper>
                 </Space>
             ),
         },
@@ -188,16 +199,18 @@ const AdminPermissionPage = () => {
                 size="small"
                 title="Quản lý quyền (Permissions)"
                 extra={
-                    <RBButton
-                        variant="outline-primary"
-                        size="sm"
-                        style={{ display: "flex", alignItems: "center", gap: 3 }}
-                        onClick={() => setOpenModalAddPermission(true)}
-                    // disabled
-                    >
-                        <IoIosAddCircle />
-                        Thêm mới
-                    </RBButton>
+                    <PermissionWrapper required={"PERMISSION_CREATE"}>
+                        <RBButton
+                            variant="outline-primary"
+                            size="sm"
+                            style={{ display: "flex", alignItems: "center", gap: 3 }}
+                            onClick={() => setOpenModalAddPermission(true)}
+                        // disabled
+                        >
+                            <IoIosAddCircle />
+                            Thêm mới
+                        </RBButton>
+                    </PermissionWrapper>
                 }
                 hoverable={false}
                 style={{
