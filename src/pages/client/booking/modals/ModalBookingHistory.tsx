@@ -39,6 +39,7 @@ import { cancelBookingClient, deleteBookingClient } from "../../../../config/Api
 import dayjs from "dayjs";
 import { motion } from "framer-motion";
 import type { IBooking } from "../../../../types/booking";
+import { notifyBookingChanged } from "../../../../redux/features/bookingUiSlice";
 
 const { Text } = Typography;
 
@@ -89,7 +90,13 @@ const ModalBookingHistory = (props: IProps) => {
             const res = await cancelBookingClient(id);
             if (res.data.statusCode === 200) {
                 await dispatch(fetchBookingsClient(""));
+                dispatch(notifyBookingChanged()); //
                 toast.success("Hủy sân thành công");
+                // Điều hướng về booking page + báo reload
+                // setOpenModalBookingHistory(false);
+                // navigate(`/booking/${pitchId}`, {
+                //     state: { reloadTimeline: true }
+                // });
             }
         } catch (error: any) {
             toast.error(error?.response?.data?.message ?? "Lỗi hủy sân");

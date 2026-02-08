@@ -9,7 +9,7 @@ import { FaArrowsToEye } from 'react-icons/fa6';
 import { MdDelete } from 'react-icons/md';
 import { fetchBookings, selectBookingLoading, selectBookingMeta, selectBookings } from '../../../redux/features/bookingSlice';
 import type { IBooking } from '../../../types/booking';
-import { SHIRT_OPTION_META } from '../../../utils/constants/booking.constants';
+import { BOOKING_STATUS_META, SHIRT_OPTION_META } from '../../../utils/constants/booking.constants';
 import ModalAddBooking from './modals/ModalAddBooking';
 import { deleteBooking, getBookingById } from '../../../config/Api';
 import { toast } from 'react-toastify';
@@ -167,6 +167,21 @@ const AdminBookingPage = () => {
             render: (text?: string | null) => text || '-',
         },
         {
+            title: 'Trạng thái',
+            dataIndex: 'status',
+            key: 'status',
+            sorter: (a, b) =>
+                (a.status ?? '').localeCompare(b.status ?? ''),
+            render: (status?: IBooking['status']) =>
+                status ? (
+                    <Tag color={BOOKING_STATUS_META[status].color}>
+                        {BOOKING_STATUS_META[status].label}
+                    </Tag>
+                ) : (
+                    <Tag>Không xác định</Tag>
+                ),
+        },
+        {
             title: 'Hành động',
             key: 'actions',
             render: (_: any, record: IBooking) => (
@@ -184,6 +199,7 @@ const AdminBookingPage = () => {
                         <RBButton
                             variant="outline-warning"
                             size='sm'
+                            disabled={record.status === "CANCELLED"}
                             onClick={() => handleEdit(record)}
                         >
                             <CiEdit />
@@ -198,6 +214,7 @@ const AdminBookingPage = () => {
                             onCancel={cancel}
                             okText="Có"
                             cancelText="Không"
+                            placement="topLeft"
                             okButtonProps={{
                                 loading: deletingId === record.id
                             }}

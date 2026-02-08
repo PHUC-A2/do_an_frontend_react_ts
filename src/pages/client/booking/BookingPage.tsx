@@ -33,6 +33,7 @@ import { GiSloth } from "react-icons/gi";
 import { TbSoccerField } from "react-icons/tb";
 import { IoMdClock } from "react-icons/io";
 import UpdateBookingForm from "./components/UpdateBookingForm";
+import { useAppSelector } from "../../../redux/hooks";
 const { Title, Text } = Typography;
 
 interface BookingPageProps {
@@ -59,6 +60,17 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
         timelineLoading,
         reloadTimeline,
     } = useBookingTimeline(activePitchId, bookingDate);
+
+    const bookingChangedAt = useAppSelector(
+        state => state.bookingUi.bookingChangedAt
+    );
+
+
+    useEffect(() => {
+        if (bookingChangedAt) {
+            reloadTimeline();
+        }
+    }, [bookingChangedAt, reloadTimeline]);
 
     useEffect(() => {
         if (!pitchIdNumber) return;

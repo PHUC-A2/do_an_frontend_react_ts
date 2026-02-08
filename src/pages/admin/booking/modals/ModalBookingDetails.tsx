@@ -1,6 +1,6 @@
 import { Descriptions, Drawer, Spin, Tag } from "antd";
 import type { IBooking } from "../../../../types/booking";
-import { SHIRT_OPTION_META } from "../../../../utils/constants/booking.constants";
+import { BOOKING_STATUS_META, SHIRT_OPTION_META } from "../../../../utils/constants/booking.constants";
 import {formatDateTimeRange, formatInstant } from "../../../../utils/format/localdatetime";
 import { formatVND } from "../../../../utils/format/price";
 interface IProps {
@@ -65,6 +65,19 @@ const ModalBookingDetails = (props: IProps) => {
                             {formatVND(booking?.totalPrice)}
                         </Tag>
                     </Descriptions.Item>
+
+                    <Descriptions.Item label="Trạng thái">
+                        {
+                            booking?.status ? (
+                                <Tag color={BOOKING_STATUS_META[booking.status].color}>
+                                    {BOOKING_STATUS_META[booking.status].label}
+                                </Tag>
+                            ) : (
+                                <Tag>N/A</Tag>
+                            )
+                        }
+                    </Descriptions.Item>
+
 
 
                     <Descriptions.Item label="Người tạo">

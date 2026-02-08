@@ -1,4 +1,4 @@
-import type { ShirtOptionEnum } from "../../types/booking";
+import type { BookingStatusEnum, ShirtOptionEnum } from "../../types/booking";
 
 export const SHIRT_OPTION_META: Record<
     ShirtOptionEnum,
@@ -38,3 +38,27 @@ const meta = getShirtOptionMeta(booking.shirtOption);
 
  * 
  */
+
+export const BOOKING_STATUS_META: Record<
+    BookingStatusEnum,
+    { label: string; color: string }
+> = {
+    ACTIVE: {
+        label: "Đang hoạt động",
+        color: "success",
+    },
+    CANCELLED: {
+        label: "Đã hủy",
+        color: "error",
+    },
+};
+
+export const BOOKING_STATUS_OPTIONS = Object.entries(BOOKING_STATUS_META).map(
+    ([value, meta]) => ({
+        value: value as BookingStatusEnum,
+        label: meta.label,
+    })
+);
+
+export const getBookingStatusMeta = (status: BookingStatusEnum) =>
+    BOOKING_STATUS_META[status];

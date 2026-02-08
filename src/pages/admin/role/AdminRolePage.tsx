@@ -159,6 +159,7 @@ const AdminRolePage = () => {
                             onCancel={cancel}
                             okText="Có"
                             cancelText="Không"
+                            placement="topLeft"
                             okButtonProps={{
                                 loading: deletingId === record.id
                             }}
