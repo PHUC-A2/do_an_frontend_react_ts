@@ -1,5 +1,5 @@
 import { Layout, Menu, Drawer, Button, Dropdown, Space, Switch, Tooltip, Grid } from 'antd';
-import { MenuOutlined, UserOutlined } from '@ant-design/icons';
+import { MenuOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { AiFillHome, AiOutlineLogin, AiOutlineLogout, AiOutlineUserAdd, AiFillDashboard, AiFillCodepenCircle } from 'react-icons/ai';
@@ -8,7 +8,7 @@ import { FaInfoCircle } from 'react-icons/fa';
 import ModalAccount from '../../pages/auth/modal/ModalAccount';
 import type { MenuProps } from 'antd';
 import { LuMoon } from 'react-icons/lu';
-import { IoSunny } from 'react-icons/io5';
+import { IoSettingsOutline, IoSunny } from 'react-icons/io5';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { logout } from '../../config/Api';
 import { setLogout } from '../../redux/features/authSlice';
@@ -129,10 +129,12 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                 {/* Right controls */}
                 <Space size="middle">
 
+                    
+
                     {isAuthenticated && (
                         <Tooltip title="Quản lý lịch đặt">
                             <MdWorkHistory
-                                size={25}
+                                size={20}
                                 onClick={() => setOpenModalBookingHistory(true)}
                                 style={{ cursor: "pointer" }}
                             />
@@ -140,11 +142,11 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                     )}
 
                     <Tooltip title={isDark ? 'Giao diện sáng' : 'Giao diện tối'}>
-                        <Switch checked={isDark} onChange={toggleTheme} checkedChildren={<LuMoon />} unCheckedChildren={<IoSunny />} />
+                        <Switch size='small' checked={isDark} onChange={toggleTheme} checkedChildren={<LuMoon />} unCheckedChildren={<IoSunny />} />
                     </Tooltip>
 
                     <Dropdown menu={{ items: settingsMenu }} placement="bottomRight">
-                        <Button type="text" icon={<UserOutlined />}>Cài đặt</Button>
+                        <Button type="text" icon={<IoSettingsOutline />}>Cài đặt</Button>
                     </Dropdown>
                 </Space>
 

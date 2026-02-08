@@ -2,7 +2,6 @@ import { Layout, Menu, Breadcrumb, Button, Grid, Drawer, Switch, Tooltip } from 
 import { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import {
-    DashboardOutlined,
     UserOutlined,
     SettingOutlined,
     LogoutOutlined,
@@ -10,7 +9,7 @@ import {
 } from '@ant-design/icons';
 import { MdFeaturedPlayList, MdOutlineSecurity } from 'react-icons/md';
 import { AiOutlineProduct } from 'react-icons/ai';
-import { FaUserCog } from 'react-icons/fa';
+import { FaReact, FaUserCog } from 'react-icons/fa';
 import ModalAccount from '../../pages/auth/modal/ModalAccount';
 import { useAppDispatch } from '../../redux/hooks';
 import { logout } from '../../config/Api';
@@ -54,25 +53,25 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     };
 
     const menuItems = [
-        { key: '1', label: <Link to="/admin" style={{ textDecoration: 'none' }}>Dashboard</Link>, icon: <DashboardOutlined /> },
+        { key: '1', label: <Link to="/admin" style={{ textDecoration: 'none' }}>Dashboard</Link>, icon: <FaReact className='icon-spin' /> },
         {
             key: 'sub1',
-            label: 'Feature',
+            label: 'Tính năng',
             icon: <MdFeaturedPlayList />,
             children: [
-                { key: '2', label: <Link to="/admin/user" style={{ textDecoration: 'none' }}>QL Người Dùng</Link>, icon: <UserOutlined /> },
-                { key: '3', label: <Link to="/admin/role" style={{ textDecoration: 'none' }}>QL Vai Trò</Link>, icon: <FaUserCog /> },
-                { key: '4', label: <Link to="/admin/permission" style={{ textDecoration: 'none' }}>QL Quyền Hạn</Link>, icon: <MdOutlineSecurity /> },
+                { key: '2', label: <Link to="/admin/user" style={{ textDecoration: 'none' }}>QL Người dùng</Link>, icon: <UserOutlined /> },
+                { key: '3', label: <Link to="/admin/role" style={{ textDecoration: 'none' }}>QL Vai trò</Link>, icon: <FaUserCog /> },
+                { key: '4', label: <Link to="/admin/permission" style={{ textDecoration: 'none' }}>QL Quyền hạn</Link>, icon: <MdOutlineSecurity /> },
                 { key: '5', label: <Link to="/admin/pitch" style={{ textDecoration: 'none' }}>QL Sân</Link>, icon: <PiSoccerBallBold /> },
-                { key: '6', label: <Link to="/admin/booking" style={{ textDecoration: 'none' }}>QL Đặt Lịch</Link>, icon: <AiOutlineProduct /> },
+                { key: '6', label: <Link to="/admin/booking" style={{ textDecoration: 'none' }}>QL Lịch đặt</Link>, icon: <AiOutlineProduct /> },
             ],
         },
         {
             key: 'sub2',
-            label: 'Settings',
+            label: 'Cài đặt',
             icon: <SettingOutlined />,
             children: [
-                { key: '8', label: <Link to="/" style={{ textDecoration: 'none' }}>Client</Link>, icon: <UserOutlined /> },
+                { key: '8', label: <Link to="/" style={{ textDecoration: 'none' }}>Trang khách</Link>, icon: <UserOutlined /> },
                 { key: '9', label: <span onClick={() => setOpenModalAccount(true)} style={{ cursor: 'pointer' }}>Tài khoản</span>, icon: <AccountBookFilled /> },
                 { key: '10', label: <span onClick={handleLogout} style={{ cursor: 'pointer' }}>Đăng xuất</span>, icon: <LogoutOutlined /> },
             ],
@@ -143,7 +142,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        padding: '40px 24px 24px 24px',
+                        padding: '20px 24px 24px 24px',
                         background: isDark ? '#001529' : '#fff',
                         color: isDark ? '#fff' : '#000',
                         transition: 'all 0.2s',
@@ -159,14 +158,16 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                                 style={{ color: isDark ? '#fff' : '#000', fontSize: 24 }}
                             >
                                 <Tooltip title={drawerVisible ? 'Đóng menu' : 'Mở menu'}>
-                                    {/* {drawerVisible ? <IoMdClose /> : <IoMenu />} */}
                                     <IoMenu />
                                 </Tooltip>
                             </Button>
                         )}
 
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <h5>Chào mừng bạn đến với trang quản trị!</h5>
+                            <h5>
+                                <FaReact className='icon-spin' /> {" "}
+                                Chào mừng bạn đến với trang quản trị!
+                            </h5>
                             <Breadcrumb
                                 items={[{ title: breadcrumbText }]}
                                 style={{ color: isDark ? '#fff' : '#000', marginBottom: 0 }}
@@ -177,6 +178,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Tooltip placement="topLeft" title={isDark ? 'Giao diện sáng' : 'Giao diện tối'}>
                             <Switch
+                                size='small'
                                 checked={isDark}
                                 onChange={toggleTheme}
                                 checkedChildren={<LuMoon />}

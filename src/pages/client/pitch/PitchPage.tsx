@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Layout, Typography, Row, Col, Card, Image, Tag, Tooltip } from "antd";
+import { Layout, Typography, Row, Col, Card, Image, Tag, Button } from "antd";
 import { motion, type Variants } from "framer-motion";
 import {
     EnvironmentOutlined,
@@ -15,7 +15,6 @@ import type { IPitch } from "../../../types/pitch";
 import { getPitchTypeLabel, PITCH_STATUS_META } from "../../../utils/constants/pitch.constants";
 import { formatVND } from "../../../utils/format/price";
 import RBButton from 'react-bootstrap/Button';
-import { FaMapMarkerAlt } from "react-icons/fa";
 import { MdMergeType, MdPriceChange } from "react-icons/md";
 import { GrStatusGood } from "react-icons/gr";
 const { Content } = Layout;
@@ -126,22 +125,20 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                                             <span>
                                                 <EnvironmentOutlined /> {pitch.address}
                                             </span>
-                                            <Tooltip title="Chỉ đường">
-                                                <RBButton
-                                                    variant="outline-info"
-                                                    onClick={() => {
-                                                        if (pitch?.latitude == null || pitch?.longitude == null) return;
+                                            <Button
+                                                type="link"
+                                                onClick={() => {
+                                                    if (pitch?.latitude == null || pitch?.longitude == null) return;
 
-                                                        const url = `https://www.google.com/maps/dir/?api=1&destination=${pitch.latitude},${pitch.longitude}`;
-                                                        window.open(url, "_blank");
-                                                    }}
-                                                    disabled={pitch?.latitude == null || pitch?.longitude == null}
-                                                    style={{ display: "flex", alignItems: "center", gap: 6 }}
-                                                >
-                                                    <FaMapMarkerAlt />
-                                                    {/* <span>Chỉ đường</span> */}
-                                                </RBButton>
-                                            </Tooltip>
+                                                    const url = `https://www.google.com/maps/dir/?api=1&destination=${pitch.latitude},${pitch.longitude}`;
+                                                    window.open(url, "_blank");
+                                                }}
+                                                disabled={pitch?.latitude == null || pitch?.longitude == null}
+                                            // style={{ display: "flex", alignItems: "center", gap: 6 }}
+                                            >
+                                                <EnvironmentOutlined />
+                                                <span>Google Maps</span>
+                                            </Button>
                                         </Text>
                                         <div
                                             style={{

@@ -184,7 +184,11 @@ const PitchDetailsPage: React.FC = () => {
                                         <Card size="small" className="feature-item-card">
                                             <div className="map-header">
                                                 <Text strong><EnvironmentOutlined /> Chỉ đường</Text>
-                                                <Button type="link" onClick={handleOpenMap}>Xem Google Maps</Button>
+                                                <Button type="link" onClick={handleOpenMap}>
+                                                    <EnvironmentOutlined />
+                                                    <span>Google Maps</span>
+                                                    {/* Xem Google Maps */}
+                                                </Button>
                                             </div>
                                             <Text type="secondary">{pitch.address}</Text>
                                         </Card>

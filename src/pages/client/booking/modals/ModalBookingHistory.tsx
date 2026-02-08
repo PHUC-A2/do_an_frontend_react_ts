@@ -185,12 +185,15 @@ const ModalBookingHistory = (props: IProps) => {
                                     <Button
                                         type="link"
                                         size="small"
-                                        onClick={() => navigate(`/pitch/${booking.pitchId}`)}
+                                        onClick={() => {
+                                            setOpenModalBookingHistory(false);
+                                            navigate(`/pitch/${booking.pitchId}`)
+                                        }}
                                     >
                                         Xem sân
                                     </Button>
                                     <Space
-                                        // style={{ width: '100%', justifyContent: 'flex-end' }}
+                                    // style={{ width: '100%', justifyContent: 'flex-end' }}
                                     >
                                         {canUpdate && (
                                             <Button
