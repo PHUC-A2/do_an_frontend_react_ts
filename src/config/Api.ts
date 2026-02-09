@@ -1,5 +1,6 @@
 /* api auth  */
 
+import type { IUpdateAccountReq, IUpdateAccountRes } from "../types/account";
 import type { IRegister } from "../types/auth";
 import type { IBooking, ICreateBookingClientReq, ICreateBookingReq, IUpdateBookingClientReq, IUpdateBookingReq } from "../types/booking";
 import type { IBackendRes, IModelPaginate } from "../types/common";
@@ -24,6 +25,7 @@ export const logout = async () => {
     }
 };
 export const getAccount = () => instance.get("/api/v1/auth/account");
+export const updateAccount = (data: IUpdateAccountReq) => instance.patch<IBackendRes<IUpdateAccountRes>>("/api/v1/auth/account/me", data);
 export const getRefreshToken = () => instance.get("/api/v1/auth/refresh");
 
 /* api user */

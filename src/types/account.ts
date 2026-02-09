@@ -16,3 +16,22 @@ export interface IAccount {
         }[];
     }[];
 }
+
+export interface IUpdateAccountReq {
+    name?: string | null;
+    fullName?: string | null;
+    phoneNumber?: string | null;
+    avatarUrl?: string | null;
+}
+
+export interface IUpdateAccountRes {
+    user: {
+        id: number;
+        name?: string | null;
+        fullName?: string | null;
+        email: string;
+        phoneNumber?: string | null;
+        avatarUrl?: string | null;
+    }
+
+}
