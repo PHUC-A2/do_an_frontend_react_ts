@@ -176,7 +176,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                     />
                 </Drawer>
 
-                <ModalAccount openModalAccount={openModalAccount} setOpenModalAccount={setOpenModalAccount} theme={theme} />
+                <ModalAccount openModalAccount={openModalAccount} setOpenModalAccount={setOpenModalAccount} />
             </AntHeader>
             <ModalBookingHistory
                 openModalBookingHistory={openModalBookingHistory}

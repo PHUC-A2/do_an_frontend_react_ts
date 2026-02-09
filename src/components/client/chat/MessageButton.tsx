@@ -1,10 +1,19 @@
 import { Tooltip } from "antd";
 import { motion } from "framer-motion";
 import { FaFacebookMessenger } from "react-icons/fa";
+import { useAppSelector } from "../../../redux/hooks";
 
 const MotionIcon = motion.create(FaFacebookMessenger);
 
 const MessageButton = () => {
+
+    // đọc state ẩn/hiện
+    const hidden = useAppSelector(
+        state => state.messengerButtonUi.hidden
+    );
+
+    if (hidden) return null; // DÒNG QUYẾT ĐỊNH
+
     const onClick = () => {
         window.open(
             `https://m.me/${import.meta.env.VITE_PAGE_ID}`,

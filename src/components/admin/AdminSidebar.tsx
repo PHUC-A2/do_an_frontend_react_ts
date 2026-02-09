@@ -244,7 +244,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
             <ModalAccount
                 openModalAccount={openModalAccount}
                 setOpenModalAccount={setOpenModalAccount}
-                theme={theme}
             />
         </Layout>
     );

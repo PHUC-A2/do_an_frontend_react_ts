@@ -8,6 +8,7 @@ import bookingUiReducer from './features/bookingUiSlice'
 import bookingClientReducer from './features/bookingClientSlice'
 import roleReducer from './features/roleSlice'
 import permissionReducer from './features/permissionSlice'
+import messengerButtonUiReducer from './features/messengerButtonUiSlice'
 
 export const store = configureStore({
     reducer: {
@@ -20,6 +21,7 @@ export const store = configureStore({
         bookingUi: bookingUiReducer,
         role: roleReducer,
         permission: permissionReducer,
+        messengerButtonUi: messengerButtonUiReducer,
     }
 })
 
