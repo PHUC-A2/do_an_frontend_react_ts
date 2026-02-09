@@ -4,15 +4,29 @@ import {
     Form,
     Input,
     Upload,
-    Image
+    Image,
+    Space,
+    Typography,
+    theme,
+    Divider
 } from "antd";
 import type { UploadFile, UploadProps, GetProp } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import {
+    UserOutlined,
+    PhoneOutlined,
+    IdcardOutlined,
+    CameraOutlined,
+    SaveOutlined
+} from "@ant-design/icons";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { updateAccount, uploadImageAvatar } from "../../../config/Api";
 import { fetchAccount } from "../../../redux/features/accountSlice";
+import { motion } from "framer-motion";
+import type { IUpdateAccountReq } from "../../../types/account";
+
+const { Text } = Typography;
 
 interface IProps {
     openModalUpdateAccount: boolean;
@@ -34,7 +48,10 @@ const ModalUpdateAccount = ({
     setOpenModalUpdateAccount,
 }: IProps) => {
     const [form] = Form.useForm();
+    const { token } = theme.useToken();
     const account = useAppSelector(state => state.account.account);
+    const [loading, setLoading] = useState(false);
+    const [avatarRemoved, setAvatarRemoved] = useState(false);
 
     const [fileList, setFileList] = useState<UploadFile[]>([]);
     const [previewOpen, setPreviewOpen] = useState(false);
@@ -42,7 +59,6 @@ const ModalUpdateAccount = ({
 
     const dispatch = useAppDispatch();
 
-    // Load data khi mở modal
     useEffect(() => {
         if (openModalUpdateAccount && account) {
             form.setFieldsValue({
@@ -64,31 +80,26 @@ const ModalUpdateAccount = ({
             } else {
                 setFileList([]);
             }
+            setAvatarRemoved(false); // reset
         }
-    }, [openModalUpdateAccount, account]);
+    }, [openModalUpdateAccount, account, form]);
 
-    // Upload avatar
     const handleUpload = async ({ file, onSuccess, onError }: any) => {
         try {
             const res = await uploadImageAvatar(file);
             const avatarUrl = res.data?.url;
-
             form.setFieldValue("avatarUrl", avatarUrl);
-
-            setFileList([
-                {
-                    uid: file.uid || Date.now(),
-                    name: file.name,
-                    status: "done",
-                    url: avatarUrl,
-                },
-            ]);
-
+            setFileList([{
+                uid: file.uid || Date.now(),
+                name: file.name,
+                status: "done",
+                url: avatarUrl,
+            }]);
             onSuccess?.("ok");
-            toast.success("Upload ảnh thành công");
+            toast.success("Tải ảnh lên thành công");
         } catch (err) {
             onError?.(err);
-            toast.error("Upload ảnh thất bại");
+            toast.error("Tải ảnh thất bại");
         }
     };
 
@@ -100,102 +111,156 @@ const ModalUpdateAccount = ({
         setPreviewOpen(true);
     };
 
-    const handleSubmit = async (values: any) => {
+    const handleSubmit = async (values: IUpdateAccountReq) => {
+        setLoading(true);
         try {
-            const res = await updateAccount(values);
+            const payload: IUpdateAccountReq = {
+                ...values,
+                phoneNumber:
+                    values.phoneNumber === null
+                        ? null
+                        : values.phoneNumber?.trim(),
+                avatarUrl: avatarRemoved ? "" : values.avatarUrl,
+            };
+
+            const res = await updateAccount(payload);
+
             if (res.data.statusCode === 200) {
-                toast.success("Cập nhật tài khoản thành công");
+                toast.success("Cập nhật thông tin thành công");
                 dispatch(fetchAccount());
                 setOpenModalUpdateAccount(false);
             }
         } catch (error: any) {
             const m = error?.response?.data?.message ?? "Có lỗi xảy ra";
-            toast.error(
-                <div>
-                    <div><strong>Có lỗi xảy ra!</strong></div>
-                    <div>{m}</div>
-                </div>
-            );
+            toast.error(m);
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <Drawer
-            title="Cập nhật tài khoản"
+            title={
+                <Space>
+                    <UserOutlined style={{ color: token.colorPrimary }} />
+                    <span style={{ fontWeight: 700 }}>Thông tin cá nhân</span>
+                </Space>
+            }
             size={420}
             open={openModalUpdateAccount}
             onClose={() => setOpenModalUpdateAccount(false)}
             destroyOnHidden
-            extra={
-                <Button type="primary" onClick={() => form.submit()}>
-                    Lưu
-                </Button>
+            styles={{
+                body: { padding: '24px 20px' },
+                footer: { textAlign: 'right', padding: '12px 20px' }
+            }}
+            footer={
+                <Space>
+                    <Button onClick={() => setOpenModalUpdateAccount(false)}>Hủy</Button>
+                    <Button
+                        type="primary"
+                        icon={<SaveOutlined />}
+                        loading={loading}
+                        onClick={() => form.submit()}
+                    >
+                        Lưu thay đổi
+                    </Button>
+                </Space>
             }
         >
-            <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleSubmit}
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
             >
-                <Form.Item name="name" label="Tên">
-                    <Input />
-                </Form.Item>
-
-                <Form.Item name="fullName" label="Họ và tên">
-                    <Input />
-                </Form.Item>
-
-                <Form.Item
-                    name="phoneNumber"
-                    label="Số điện thoại"
-                    rules={[
-                        {
-                            // pattern: /^\d{9,11}$/,
-                            message: "Số điện thoại không hợp lệ",
-                        },
-                    ]}
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleSubmit}
+                    requiredMark="optional"
                 >
-                    <Input />
-                </Form.Item>
-
-                {/* Upload avatar */}
-                <Form.Item label="Ảnh đại diện">
-                    <Upload
-                        listType="picture-circle"
-                        fileList={fileList}
-                        customRequest={handleUpload}
-                        onPreview={handlePreview}
-                        onChange={({ fileList }) => setFileList(fileList)}
-                        accept=".jpg,.jpeg,.png,.webp"
-                    >
-                        {fileList.length >= 1 ? null : (
-                            <button
-                                type="button"
-                                style={{ border: 0, background: "none" }}
+                    {/* Avatar Section */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24 }}>
+                        <Form.Item label={null}>
+                            <Upload
+                                listType="picture-circle"
+                                fileList={fileList}
+                                customRequest={handleUpload}
+                                onPreview={handlePreview}
+                                onChange={({ fileList }) => setFileList(fileList)}
+                                onRemove={() => {
+                                    setFileList([]);
+                                    setAvatarRemoved(true);        // đánh dấu đã xóa
+                                    form.setFieldValue("avatarUrl", "");
+                                    toast.success("Đã xóa ảnh đại diện");
+                                    return true;
+                                }}
+                                accept=".jpg,.jpeg,.png,.webp"
                             >
-                                <PlusOutlined />
-                                <div style={{ marginTop: 8 }}>Upload</div>
-                            </button>
-                        )}
-                    </Upload>
-                </Form.Item>
+                                {fileList.length >= 1 ? null : (
+                                    <div style={{ textAlign: 'center' }}>
+                                        <CameraOutlined style={{ fontSize: 20, color: token.colorTextTertiary }} />
+                                        <div style={{ marginTop: 4, fontSize: 12 }}>Ảnh đại diện</div>
+                                    </div>
+                                )}
+                            </Upload>
+                        </Form.Item>
+                        <Text type="secondary" style={{ fontSize: 12 }}>Nhấp vào ảnh để thay đổi</Text>
+                    </div>
 
-                {/* Hidden field */}
-                <Form.Item name="avatarUrl" hidden>
-                    <Input />
-                </Form.Item>
+                    <Divider titlePlacement="start" plain>
+                        <Typography.Text type="secondary" style={{ fontSize: 12, fontWeight: 500 }}>
+                            THÔNG TIN CƠ BẢN
+                        </Typography.Text>
+                    </Divider>
 
-                {previewImage && (
-                    <Image
-                        style={{ display: "none" }}
-                        preview={{
-                            visible: previewOpen,
-                            onVisibleChange: setPreviewOpen,
-                        }}
-                        src={previewImage}
-                    />
-                )}
-            </Form>
+
+                    <Form.Item
+                        name="name"
+                        label={<Space><IdcardOutlined /> <Text strong>Tên đăng nhập</Text></Space>}
+                    >
+                        <Input placeholder="Nhập tên đăng nhập" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="fullName"
+                        label={<Space><UserOutlined /> <Text strong>Họ và tên</Text></Space>}
+                    >
+                        <Input placeholder="Nhập họ và tên đầy đủ" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="phoneNumber"
+                        label={<Space><PhoneOutlined /> <Text strong>Số điện thoại</Text></Space>}
+                        rules={[
+                            {
+                                pattern: /^$|^\d{9,11}$/,
+                                message: "Số điện thoại phải từ 9–11 chữ số",
+                            },
+                        ]}
+                    >
+                        <Input placeholder="Ví dụ: 0912345678" />
+                    </Form.Item>
+
+
+                    {/* Hidden field cho avatarUrl */}
+                    <Form.Item name="avatarUrl" hidden>
+                        <Input />
+                    </Form.Item>
+                </Form>
+            </motion.div>
+
+            {previewImage && (
+                <Image
+                    style={{ display: "none" }}
+                    preview={{
+                        open: previewOpen,
+                        onOpenChange: setPreviewOpen,
+                    }}
+                    src={previewImage}
+                />
+
+            )}
         </Drawer>
     );
 };
