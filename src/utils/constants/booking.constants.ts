@@ -39,19 +39,21 @@ const meta = getShirtOptionMeta(booking.shirtOption);
  * 
  */
 
-export const BOOKING_STATUS_META: Record<
-    BookingStatusEnum,
-    { label: string; color: string }
-> = {
+export const BOOKING_STATUS_META = {
     ACTIVE: {
         label: "Đang hoạt động",
-        color: "success",
+        color: "processing", // đang diễn ra
+    },
+    PAID: {
+        label: "Đã thanh toán",
+        color: "green", // hoàn tất
     },
     CANCELLED: {
         label: "Đã hủy",
         color: "error",
     },
-};
+} as const;
+
 
 export const BOOKING_STATUS_OPTIONS = Object.entries(BOOKING_STATUS_META).map(
     ([value, meta]) => ({
