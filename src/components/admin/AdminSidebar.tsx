@@ -102,6 +102,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
 
                     ]
                     : []),
+
+                    // payment
+                {
+                    key: '7',
+                    label: <Link to="/admin/payment" style={{ textDecoration: 'none' }}>QL thanh toán</Link>,
+                    icon: <AiOutlineProduct />,
+                }
             ],
         },
         {

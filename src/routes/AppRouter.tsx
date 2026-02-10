@@ -15,6 +15,7 @@ import AdminRolePage from '../pages/admin/role/AdminRolePage';
 import AdminBookingPage from '../pages/admin/booking/AdminBookingPage';
 import PitchPage from '../pages/client/pitch/PitchPage';
 import PitchDetailsPage from '../pages/client/pitch/PitchDetailsPage';
+import AdminPaymentPage from '../pages/admin/payment/AdminPaymentPage';
 
 interface AppRouterProps {
     theme: 'light' | 'dark';
@@ -44,6 +45,7 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
                 { path: "/admin/permission", element: <AdminPermissionPage /> },
                 { path: "/admin/pitch", element: <AdminPitchPage /> },
                 { path: "/admin/booking", element: <AdminBookingPage /> },
+                { path: "/admin/payment", element: <AdminPaymentPage /> },
             ]
         },
         { path: "/login", element: <LoginPage /> },
