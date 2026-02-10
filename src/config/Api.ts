@@ -4,7 +4,7 @@ import type { IUpdateAccountReq, IUpdateAccountRes } from "../types/account";
 import type { IRegister } from "../types/auth";
 import type { IBooking, ICreateBookingClientReq, ICreateBookingReq, IUpdateBookingClientReq, IUpdateBookingReq } from "../types/booking";
 import type { IBackendRes, IModelPaginate } from "../types/common";
-import type { IPayment } from "../types/payment";
+import type { ICreatePaymentReq, IPayment, IPaymentRes } from "../types/payment";
 import type { ICreatePermissionReq, IPermission, IUpdatePermissionReq } from "../types/permission";
 import type { ICreatePitchReq, IPitch, IUpdatePitchReq } from "../types/pitch";
 import type { IAssignPermissionReq, ICreateRoleReq, IRole, IUpdateRoleReq } from "../types/role";
@@ -75,6 +75,8 @@ export const deleteBooking = (id: number) => instance.delete<IBackendRes<IBookin
 /* api payment */
 export const getAllPayments = (query: string) => instance.get<IBackendRes<IModelPaginate<IPayment>>>(`/api/v1/payments?${query}`);
 export const confirmPayment = (id: number) => instance.put<IBackendRes<IPayment>>(`/api/v1/payments/${id}/confirm`);
+export const createPayment = (data: ICreatePaymentReq) => instance.post<IBackendRes<IPaymentRes>>(`/api/v1/client/payments`, data);
+export const getQR = (paymentCode: string) => instance.get<IBackendRes<IPaymentRes>>(`/api/v1/client/payments/${paymentCode}/qr`);
 
 
 // client

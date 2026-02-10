@@ -40,6 +40,7 @@ import dayjs from "dayjs";
 import { motion } from "framer-motion";
 import type { IBooking } from "../../../../types/booking";
 import { notifyBookingChanged } from "../../../../redux/features/bookingUiSlice";
+import PaymentDrawer from "./PaymentDrawer";
 
 const { Text } = Typography;
 
@@ -55,6 +56,8 @@ const ModalBookingHistory = (props: IProps) => {
     const listBookingsClient = useAppSelector(selectBookingsClient);
     const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
     const navigate = useNavigate();
+    const [openPaymentDrawer, setOpenPaymentDrawer] = useState(false);
+    const [payBookingId, setPayBookingId] = useState<number | null>(null);
 
     const [deletingId, setDeletingId] = useState<number | null>(null);
 
@@ -128,14 +131,19 @@ const ModalBookingHistory = (props: IProps) => {
     // --- Render Items cho Collapse ---
     const renderCollapseItems = (bookings: any[]): CollapseProps["items"] => {
         return bookings.map((booking: IBooking) => {
-            const isEnded = dayjs(booking.endDateTime).isBefore(dayjs());
             const shirtMeta = booking?.shirtOption
                 ? SHIRT_OPTION_META[booking.shirtOption as keyof typeof SHIRT_OPTION_META]
                 : null;
 
-            const canUpdate = booking.status === "ACTIVE" && !isEnded;
-            const canCancel = booking.status === "ACTIVE" && !isEnded;
-            const canDelete = booking.status === "CANCELLED" || isEnded;
+
+            const isEnded = dayjs(booking.endDateTime).isBefore(dayjs());
+            const isPaid = booking.status === "PAID";
+            const isCancelled = booking.status === "CANCELLED";
+
+            const canPay = booking.status === "ACTIVE" && !isEnded && !isPaid;
+            const canUpdate = booking.status === "ACTIVE" && !isEnded && !isPaid;
+            const canCancel = booking.status === "ACTIVE" && !isEnded && !isPaid;
+            const canDelete = isPaid || isCancelled || isEnded;
 
             return {
                 key: booking.id,
@@ -238,6 +246,29 @@ const ModalBookingHistory = (props: IProps) => {
                                                 <Button size="small" type="text" danger icon={<DeleteOutlined />}>Xóa</Button>
                                             </Popconfirm>
                                         )}
+
+                                        {canPay && (
+                                            <Button
+                                                size="small"
+                                                type="primary"
+                                                icon={<DollarCircleOutlined />}
+                                                onClick={() => {
+                                                    setOpenModalBookingHistory(false);
+                                                    setPayBookingId(booking.id);
+                                                    setOpenPaymentDrawer(true);
+                                                }}
+
+                                            >
+                                                Thanh toán
+                                            </Button>
+                                        )}
+
+                                        {isPaid && (
+                                            <Text type="success" style={{ fontSize: 12 }}>
+                                                ✅ Đã thanh toán
+                                            </Text>
+                                        )}
+
                                     </Space>
                                 </Row>
                             </Col>
@@ -314,6 +345,16 @@ const ModalBookingHistory = (props: IProps) => {
                     ]}
                 />
             )}
+
+            <PaymentDrawer
+                open={openPaymentDrawer}
+                bookingId={payBookingId}
+                onClose={() => {
+                    setOpenPaymentDrawer(false);
+                    setPayBookingId(null);
+                }}
+            />
+
         </Drawer>
     );
 };

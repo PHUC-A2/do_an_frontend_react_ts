@@ -21,7 +21,7 @@ export interface ICreatePaymentReq {
     method: PaymentMethodEnum; // "BANK_TRANSFER" | "CASH"
 }
 
-export interface ICreatePaymentRes {
+export interface IPaymentRes {
     paymentCode: string;
     bankCode: string;
     accountNo: string;
