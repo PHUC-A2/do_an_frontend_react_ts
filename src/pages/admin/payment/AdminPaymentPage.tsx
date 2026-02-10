@@ -127,7 +127,7 @@ const AdminPaymentPage = () => {
                             cursor: 'pointer',
                         }}
                         preview={{
-                            mask: (
+                            cover: (
                                 <div
                                     style={{
                                         color: '#fff',
@@ -135,6 +135,7 @@ const AdminPaymentPage = () => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
+                                        height: '100%',
                                     }}
                                 >
                                     Xem ảnh

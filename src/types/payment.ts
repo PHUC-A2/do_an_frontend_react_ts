@@ -22,6 +22,7 @@ export interface ICreatePaymentReq {
 }
 
 export interface IPaymentRes {
+    paymentId: number;
     paymentCode: string;
     bankCode: string;
     accountNo: string;

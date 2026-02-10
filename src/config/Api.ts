@@ -77,6 +77,15 @@ export const getAllPayments = (query: string) => instance.get<IBackendRes<IModel
 export const confirmPayment = (id: number) => instance.put<IBackendRes<IPayment>>(`/api/v1/payments/${id}/confirm`);
 export const createPayment = (data: ICreatePaymentReq) => instance.post<IBackendRes<IPaymentRes>>(`/api/v1/client/payments`, data);
 export const getQR = (paymentCode: string) => instance.get<IBackendRes<IPaymentRes>>(`/api/v1/client/payments/${paymentCode}/qr`);
+// gắn ảnh minh chứng cho payment
+export const attachPaymentProof = (paymentId: number, proofUrl: string) =>
+    instance.patch<IBackendRes<void>>(
+        `/api/v1/client/payments/${paymentId}/proof`,
+        null,
+        {
+            params: { proofUrl }
+        }
+    );
 
 
 // client
@@ -112,6 +121,21 @@ export const uploadImagePitch = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("folder", "pitch"); // folder riêng cho sân
+
+    const { data } = await instance.post<IGetUploadResponse>(
+        "/api/v1/files/upload",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+    );
+
+    return data;
+};
+
+// upload payment image
+export const uploadImagePayment = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", "payment"); // folder riêng cho payment
 
     const { data } = await instance.post<IGetUploadResponse>(
         "/api/v1/files/upload",

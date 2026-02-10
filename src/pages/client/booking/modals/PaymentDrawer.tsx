@@ -5,7 +5,6 @@ import {
     Select,
     Button,
     Divider,
-    Image
 } from "antd";
 import {
     DollarCircleOutlined
@@ -13,11 +12,17 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import type { IPaymentRes, PaymentMethodEnum } from "../../../../types/payment";
-import { createPayment, getQR } from "../../../../config/Api";
+import { attachPaymentProof, createPayment, getQR } from "../../../../config/Api";
 import { PAYMENT_METHOD_OPTIONS } from "../../../../utils/constants/payment.constanst";
 import { formatVND } from "../../../../utils/format/price";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 import { fetchBookingsClient, selectBookingsClient } from "../../../../redux/features/bookingClientSlice";
+import type { UploadFile, UploadProps, GetProp } from "antd";
+import { Upload, Image } from "antd";
+import { CameraOutlined } from "@ant-design/icons";
+import { uploadImagePayment } from "../../../../config/Api";
+
+type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
 
 const { Text } = Typography;
 
@@ -35,6 +40,55 @@ const PaymentDrawer = ({ open, bookingId, onClose }: Props) => {
     const dispatch = useAppDispatch();
 
     const booking = bookings.find(b => b.id === bookingId);
+
+    const [fileList, setFileList] = useState<UploadFile[]>([]);
+    const [previewOpen, setPreviewOpen] = useState(false);
+    const [previewImage, setPreviewImage] = useState("");
+
+    const getBase64 = (file: FileType): Promise<string> =>
+        new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+        });
+
+    const handlePreview = async (file: UploadFile) => {
+        if (!file.url && !file.preview) {
+            file.preview = await getBase64(file.originFileObj as FileType);
+        }
+        setPreviewImage(file.url || (file.preview as string));
+        setPreviewOpen(true);
+    };
+
+
+    const handleUploadProof = async ({ file, onSuccess, onError }: any) => {
+        try {
+            const res = await uploadImagePayment(file);
+            const url = res.data?.url;
+
+            if (!url || !qr) {
+                throw new Error("Thiếu url hoặc payment");
+            }
+
+            await attachPaymentProof(qr.paymentId, url);
+
+            setFileList([
+                {
+                    uid: file.uid,
+                    name: file.name,
+                    status: "done",
+                    url,
+                },
+            ]);
+
+            onSuccess?.("ok");
+            toast.success("Tải ảnh minh chứng thành công");
+        } catch (err) {
+            onError?.(err);
+            toast.error("Tải ảnh thất bại");
+        }
+    };
 
     const paymentKey = (bookingId: number) =>
         `PAYMENT_CODE_BOOKING_${bookingId}`;
@@ -132,8 +186,16 @@ const PaymentDrawer = ({ open, bookingId, onClose }: Props) => {
         return () => clearInterval(interval);
     }, [open, qr, booking?.status, dispatch]);
 
+    // const handleClose = () => {
+    //     setQr(null);
+    //     onClose();
+    // };
+
     const handleClose = () => {
         setQr(null);
+        setFileList([]);
+        setPreviewImage("");
+        setPreviewOpen(false);
         onClose();
     };
 
@@ -156,6 +218,12 @@ const PaymentDrawer = ({ open, bookingId, onClose }: Props) => {
                         value={method}
                         onChange={setMethod}
                     />
+                    {method === "CASH" && (
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                            💵 Thanh toán tiền mặt tại sân, không cần quét QR
+                        </Text>
+                    )}
+
                 </div>
 
                 {/* Button */}
@@ -204,6 +272,50 @@ const PaymentDrawer = ({ open, bookingId, onClose }: Props) => {
                         </Space>
                     </>
                 )}
+
+                {/* Upload proof */}
+                {qr && booking?.status !== "PAID" && (
+                    <>
+                        <Divider />
+                        <Text strong>Ảnh minh chứng thanh toán (không bắt buộc)</Text>
+
+                        <Upload
+                            listType="picture-card"
+                            fileList={fileList}
+                            customRequest={handleUploadProof}
+                            onPreview={handlePreview}
+                            onChange={({ fileList }) => setFileList(fileList)}
+                            maxCount={1}
+                            accept=".jpg,.jpeg,.png,.webp"
+                        >
+                            {fileList.length >= 1 ? null : (
+                                <div>
+                                    <CameraOutlined />
+                                    <div style={{ marginTop: 8, fontSize: 12 }}>
+                                        Upload ảnh
+                                    </div>
+                                </div>
+                            )}
+                        </Upload>
+
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                            Có thể upload sau
+                        </Text>
+                    </>
+                )}
+
+                {previewImage && (
+                    <Image
+                        style={{ display: "none" }}
+                        preview={{
+                            open: previewOpen,
+                            onOpenChange: setPreviewOpen,
+                        }}
+                        src={previewImage}
+                    />
+                )}
+                
+
             </Space>
         </Drawer>
     );
