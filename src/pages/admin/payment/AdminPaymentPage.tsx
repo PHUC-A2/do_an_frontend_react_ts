@@ -1,5 +1,5 @@
 // AdminPaymentPage.tsx
-import { Table, Tag, Space, Card, Popconfirm, Empty, Typography, Image } from 'antd';
+import { Table, Tag, Space, Card, Popconfirm, Empty, Typography, Image, Button } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useEffect, useState } from 'react';
 import RBButton from 'react-bootstrap/Button';
@@ -11,6 +11,8 @@ import AdminWrapper from '../../../components/wrapper/AdminWrapper';
 import { FaCheck } from 'react-icons/fa6';
 import { PAYMENT_STATUS_META } from '../../../utils/constants/payment.constanst';
 import { confirmPayment } from '../../../config/Api';
+import { exportTableToExcel } from '../../../utils/export/exportExcelFromTable';
+import { FaDownload } from 'react-icons/fa';
 
 const { Text } = Typography;
 
@@ -208,6 +210,17 @@ const AdminPaymentPage = () => {
                     size='small'
                     title="Quản lý thanh toán (payment)"
                     hoverable={false}
+                    extra={
+                        <Button
+                            icon={<FaDownload />}
+                            onClick={() =>
+                                exportTableToExcel(columns, listPayments, 'payments')
+                            }
+                        >
+                            Xuất Excel
+                        </Button>
+
+                    }
                     style={{
                         width: '100%',
                         overflowX: 'auto',

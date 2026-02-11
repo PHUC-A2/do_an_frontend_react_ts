@@ -1,4 +1,4 @@
-import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Empty } from 'antd';
+import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Empty, Button } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useEffect, useState } from 'react';
 import RBButton from 'react-bootstrap/Button';
@@ -19,6 +19,8 @@ import ModalUpdateBooking from './modals/ModalUpdateBooking';
 import { usePermission } from '../../../hooks/common/usePermission';
 import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
 import AdminWrapper from '../../../components/wrapper/AdminWrapper';
+import { FaDownload } from 'react-icons/fa';
+import { exportTableToExcel } from '../../../utils/export/exportExcelFromTable';
 const AdminBookingPage = () => {
     const dispatch = useAppDispatch();
     const listBookings = useAppSelector(selectBookings);
@@ -242,21 +244,33 @@ const AdminBookingPage = () => {
 
     return (
         <>
-           <AdminWrapper>
+            <AdminWrapper>
                 <Card
                     size='small'
                     title="Quản lý lịch đặt sân (booking)"
                     extra={
-                        <PermissionWrapper required={"BOOKING_CREATE"}>
-                            <RBButton variant="outline-primary"
-                                size='sm'
-                                style={{ display: "flex", alignItems: "center", gap: 3 }}
-                                onClick={() => setOpenModalAddBooking(true)}
+                        <Space align='center' >
+
+                            <PermissionWrapper required={"BOOKING_CREATE"}>
+                                <RBButton variant="outline-primary"
+                                    size='sm'
+                                    style={{ display: "flex", alignItems: "center", gap: 3 }}
+                                    onClick={() => setOpenModalAddBooking(true)}
+                                >
+                                    <IoIosAddCircle />
+                                    Thêm mới
+                                </RBButton>
+                            </PermissionWrapper>
+                            
+                            <Button
+                                icon={<FaDownload />}
+                                onClick={() =>
+                                    exportTableToExcel(columns, listBookings, 'bookings')
+                                }
                             >
-                                <IoIosAddCircle />
-                                Thêm mới
-                            </RBButton>
-                        </PermissionWrapper>
+                                Xuất Excel
+                            </Button>
+                        </Space>
                     }
                     hoverable={false}
                     style={{ width: '100%', overflowX: 'auto', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
@@ -284,25 +298,25 @@ const AdminBookingPage = () => {
                         />
                     </PermissionWrapper>
                 </Card>
-    
+
                 <ModalAddBooking
                     openModalAddBooking={openModalAddBooking}
                     setOpenModalAddBooking={setOpenModalAddBooking}
                 />
-    
+
                 <ModalBookingDetails
                     openModalBookingDetails={openModalBookingDetails}
                     setOpenModalBookingDetails={setOpenModalBookingDetails}
                     booking={booking}
                     isLoading={isLoading}
                 />
-    
+
                 <ModalUpdateBooking
                     openModalUpdateBooking={openModalUpdateBooking}
                     setOpenModalUpdateBooking={setOpenModalUpdateBooking}
                     bookingEdit={bookingEdit}
                 />
-           </AdminWrapper>
+            </AdminWrapper>
         </>
     );
 };

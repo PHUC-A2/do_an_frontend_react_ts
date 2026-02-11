@@ -1,4 +1,4 @@
-import { Table, Tag, Space, Card, type PopconfirmProps, Popconfirm, Empty } from "antd";
+import { Table, Tag, Space, Card, type PopconfirmProps, Popconfirm, Empty, Button } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useEffect, useState } from "react";
 import RBButton from "react-bootstrap/Button";
@@ -26,6 +26,8 @@ import { MdDelete } from "react-icons/md";
 import PermissionWrapper from "../../../components/wrapper/PermissionWrapper";
 import { usePermission } from "../../../hooks/common/usePermission";
 import AdminWrapper from "../../../components/wrapper/AdminWrapper";
+import { FaDownload } from "react-icons/fa";
+import { exportTableToExcel } from "../../../utils/export/exportExcelFromTable";
 
 const AdminPermissionPage = () => {
     const dispatch = useAppDispatch();
@@ -198,18 +200,29 @@ const AdminPermissionPage = () => {
                     size="small"
                     title="Quản lý quyền (Permissions)"
                     extra={
-                        <PermissionWrapper required={"PERMISSION_CREATE"}>
-                            <RBButton
-                                variant="outline-primary"
-                                size="sm"
-                                style={{ display: "flex", alignItems: "center", gap: 3 }}
-                                onClick={() => setOpenModalAddPermission(true)}
-                            // disabled
+                      <Space align="center">
+                            <PermissionWrapper required={"PERMISSION_CREATE"}>
+                                <RBButton
+                                    variant="outline-primary"
+                                    size="sm"
+                                    style={{ display: "flex", alignItems: "center", gap: 3 }}
+                                    onClick={() => setOpenModalAddPermission(true)}
+                                // disabled
+                                >
+                                    <IoIosAddCircle />
+                                    Thêm mới
+                                </RBButton>
+                            </PermissionWrapper>
+
+                            <Button
+                                icon={<FaDownload />}
+                                onClick={() =>
+                                    exportTableToExcel(columns, permissions, 'permissions')
+                                }
                             >
-                                <IoIosAddCircle />
-                                Thêm mới
-                            </RBButton>
-                        </PermissionWrapper>
+                                Xuất Excel
+                            </Button>
+                      </Space>
                     }
                     hoverable={false}
                     style={{

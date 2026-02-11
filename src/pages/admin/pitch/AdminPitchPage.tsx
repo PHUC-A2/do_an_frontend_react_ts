@@ -1,4 +1,4 @@
-import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Empty } from 'antd';
+import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Empty, Button } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useEffect, useState } from 'react';
 import RBButton from 'react-bootstrap/Button';
@@ -25,10 +25,11 @@ import ModalPitchDetails from './modals/ModalPitchDetails';
 import { deletePitch, getPitchById } from '../../../config/Api';
 import { toast } from 'react-toastify';
 import ModalUpdatePitch from './modals/ModalUpdatePitch';
-import { FaMapMarkerAlt } from 'react-icons/fa';
+import { FaDownload, FaMapMarkerAlt } from 'react-icons/fa';
 import { usePermission } from '../../../hooks/common/usePermission';
 import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
 import AdminWrapper from '../../../components/wrapper/AdminWrapper';
+import { exportTableToExcel } from '../../../utils/export/exportExcelFromTable';
 
 const AdminPitchPage = () => {
     const dispatch = useAppDispatch();
@@ -231,17 +232,28 @@ const AdminPitchPage = () => {
                     size="small"
                     title="Quản lý sân (Pitch)"
                     extra={
-                        <PermissionWrapper required={"PITCH_CREATE"}>
-                            <RBButton
-                                variant="outline-primary"
-                                size="sm"
-                                style={{ display: 'flex', alignItems: 'center', gap: 3 }}
-                                onClick={() => setOpenModalAddPitch(true)}
+                        <Space align='center'>
+                            <PermissionWrapper required={"PITCH_CREATE"}>
+                                <RBButton
+                                    variant="outline-primary"
+                                    size="sm"
+                                    style={{ display: 'flex', alignItems: 'center', gap: 3 }}
+                                    onClick={() => setOpenModalAddPitch(true)}
+                                >
+                                    <IoIosAddCircle />
+                                    Thêm mới
+                                </RBButton>
+                            </PermissionWrapper>
+
+                            <Button
+                                icon={<FaDownload />}
+                                onClick={() =>
+                                    exportTableToExcel(columns, listPitches, 'pitches')
+                                }
                             >
-                                <IoIosAddCircle />
-                                Thêm mới
-                            </RBButton>
-                        </PermissionWrapper>
+                                Xuất Excel
+                            </Button>
+                        </Space>
                     }
                     hoverable={false}
                     style={{

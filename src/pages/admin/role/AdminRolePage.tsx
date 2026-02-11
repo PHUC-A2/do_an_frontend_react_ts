@@ -1,4 +1,4 @@
-import { Table, Tag, Space, Card, type PopconfirmProps, Popconfirm, Tooltip, Empty } from "antd";
+import { Table, Tag, Space, Card, type PopconfirmProps, Popconfirm, Tooltip, Empty, Button } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useEffect, useState } from "react";
 import RBButton from "react-bootstrap/Button";
@@ -19,6 +19,8 @@ import AdminModalAssignPermission from "./modals/AdminModalAssignPermisison";
 import PermissionWrapper from "../../../components/wrapper/PermissionWrapper";
 import { usePermission } from "../../../hooks/common/usePermission";
 import AdminWrapper from "../../../components/wrapper/AdminWrapper";
+import { FaDownload } from "react-icons/fa";
+import { exportTableToExcel } from "../../../utils/export/exportExcelFromTable";
 
 const AdminRolePage = () => {
     const dispatch = useAppDispatch();
@@ -193,18 +195,29 @@ const AdminRolePage = () => {
                     size="small"
                     title="Quản lý vai trò (Roles)"
                     extra={
-                        <PermissionWrapper required={"ROLE_CREATE"}>
-                            <RBButton
-                                variant="outline-primary"
-                                size="sm"
-                                style={{ display: "flex", alignItems: "center", gap: 3 }}
-                                onClick={() => setOpenModalAddRole(true)}
-                            // disabled
+                       <Space align="center">
+                            <PermissionWrapper required={"ROLE_CREATE"}>
+                                <RBButton
+                                    variant="outline-primary"
+                                    size="sm"
+                                    style={{ display: "flex", alignItems: "center", gap: 3 }}
+                                    onClick={() => setOpenModalAddRole(true)}
+                                // disabled
+                                >
+                                    <IoIosAddCircle />
+                                    Thêm mới
+                                </RBButton>
+                            </PermissionWrapper>
+
+                            <Button
+                                icon={<FaDownload />}
+                                onClick={() =>
+                                    exportTableToExcel(columns, roles, 'roles')
+                                }
                             >
-                                <IoIosAddCircle />
-                                Thêm mới
-                            </RBButton>
-                        </PermissionWrapper>
+                                Xuất Excel
+                            </Button>
+                       </Space>
                     }
                     hoverable={false}
                     style={{

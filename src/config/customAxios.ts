@@ -5,6 +5,7 @@ import { store } from "../redux/store";
 
 const instance = axios.create({
     baseURL: import.meta.env.VITE_BACKEND_URL,
+    // baseURL: "/",
     withCredentials: true, // gửi cookie refresh_token
 });
 

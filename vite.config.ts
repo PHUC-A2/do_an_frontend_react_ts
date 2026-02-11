@@ -7,12 +7,14 @@ export default defineConfig({
   server: {
     open: true,
     // host: true,
-    // allowedHosts: true,
+    // allowedHosts: [
+    //   "unvigorous-nondeleteriously-mandi.ngrok-free.dev"
+    // ],
     // proxy: {
     //   "/api": {
     //     target: "http://localhost:8080",
     //     changeOrigin: true,
     //   },
     // },
-  }
-})
+  },
+});

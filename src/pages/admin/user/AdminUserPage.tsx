@@ -1,4 +1,4 @@
-import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Tooltip, Empty } from 'antd';
+import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Tooltip, Empty, Button } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useEffect, useState } from 'react';
 import RBButton from 'react-bootstrap/Button';
@@ -20,6 +20,8 @@ import { fetchRoles } from '../../../redux/features/roleSlice';
 import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
 import { usePermission } from '../../../hooks/common/usePermission';
 import AdminWrapper from '../../../components/wrapper/AdminWrapper';
+import { FaDownload } from 'react-icons/fa';
+import { exportTableToExcel } from '../../../utils/export/exportExcelFromTable';
 
 const AdminUserPage = () => {
     const dispatch = useAppDispatch();
@@ -251,16 +253,27 @@ const AdminUserPage = () => {
                     size='small'
                     title="Quản lý người dùng (User)"
                     extra={
-                        <PermissionWrapper required={"USER_CREATE"}>
-                            <RBButton variant="outline-primary"
-                                size='sm'
-                                style={{ display: "flex", alignItems: "center", gap: 3 }}
-                                onClick={() => setOpenModalAddUser(true)}
+                       <Space align='center'>
+                            <PermissionWrapper required={"USER_CREATE"}>
+                                <RBButton variant="outline-primary"
+                                    size='sm'
+                                    style={{ display: "flex", alignItems: "center", gap: 3 }}
+                                    onClick={() => setOpenModalAddUser(true)}
+                                >
+                                    <IoIosAddCircle />
+                                    Thêm mới
+                                </RBButton>
+                            </PermissionWrapper>
+
+                            <Button
+                                icon={<FaDownload />}
+                                onClick={() =>
+                                    exportTableToExcel(columns, listUsers, 'users')
+                                }
                             >
-                                <IoIosAddCircle />
-                                Thêm mới
-                            </RBButton>
-                        </PermissionWrapper>
+                                Xuất Excel
+                            </Button>
+                       </Space>
                     }
                     hoverable={false}
                     style={{ width: '100%', overflowX: 'auto', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
