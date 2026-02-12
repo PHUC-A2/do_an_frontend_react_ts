@@ -7,12 +7,14 @@ import { register } from '../../config/Api';
 import type { IRegister } from '../../types/auth';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import ModalForget from './modal/ModalForget';
 
 const RegisterPage = () => {
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState<boolean>(false);
     // const dispatch = useAppDispatch();
+    const [open, setOpen] = useState(false);
 
     const handleRegister = async (data: IRegister) => {
         // Trim toàn bộ dữ liệu trước khi gửi API
@@ -115,11 +117,16 @@ const RegisterPage = () => {
                         </Button>
                         <Flex className="mt-2" justify="space-between" align="center">
                             <Link to="/login">Đăng nhập!</Link>
-                            <Link to="#">Quên mật khẩu?</Link>
+                            <Link to="#" onClick={() => setOpen(true)}>Quên mật khẩu?</Link>
                         </Flex>
                     </Form.Item>
                 </Form>
             </motion.div>
+
+            <ModalForget
+                open={open}
+                setOpen={setOpen}
+            />
         </div>
     );
 };

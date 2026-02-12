@@ -1,0 +1,99 @@
+.forget-modal {
+
+    /* Nền phía sau modal */
+    .ant-modal-mask {
+        background-image   : url('../../assets/background-01.png') !important;
+        background-repeat  : no-repeat;
+        background-size    : cover;
+        background-position: center;
+        position           : relative;
+    }
+
+    /* Overlay tối giống login */
+    .ant-modal-mask::after {
+        content   : "";
+        position  : absolute;
+        inset     : 0;
+        background: rgba(0, 0, 0, 0.55);
+    }
+
+    /* Glass form */
+    .ant-modal-content {
+        border-radius          : 16px;
+        background             : rgba(255, 255, 255, 0.15);
+        backdrop-filter        : blur(12px) saturate(180%);
+        -webkit-backdrop-filter: blur(12px) saturate(180%);
+        border                 : 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow             : 0 8px 24px rgba(0, 0, 0, 0.3);
+        animation              : fadeIn 0.5s ease-out;
+        padding                : 28px;
+        position               : relative;
+        z-index                : 2;
+    }
+
+    .ant-modal-content {
+        border-radius          : 16px;
+        background             : rgba(255, 255, 255, 0.15);
+        backdrop-filter        : blur(12px) saturate(180%);
+        -webkit-backdrop-filter: blur(12px) saturate(180%);
+        border                 : 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow             : 0 8px 24px rgba(0, 0, 0, 0.3);
+        animation              : fadeIn 0.5s ease-out;
+        padding                : 28px;
+    }
+
+    .forget-title {
+        font-size  : 22px;
+        font-weight: bold;
+        text-align : center;
+        color      : #faad14;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .ant-input,
+    .ant-input-password {
+        border-radius: 10px;
+        background   : rgba(255, 255, 255, 0.25);
+        border       : 1px solid rgba(255, 255, 255, 0.2);
+        font-weight  : 500;
+    }
+
+    .ant-input:focus,
+    .ant-input-password:focus,
+    .ant-input-affix-wrapper:focus-within {
+        border-color: #faad14 !important;
+        box-shadow  : 0 0 12px rgba(250, 173, 20, 0.5) !important;
+    }
+
+    .ant-btn-primary {
+        border-radius: 8px;
+        font-weight  : bold;
+        background   : linear-gradient(135deg, wheat, #faad14, #1A2733);
+        border       : none;
+        color        : #1A2733;
+        margin-top   : 8px;
+        transition   : all 0.3s ease;
+
+        &:hover {
+            transform : translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+        }
+    }
+
+    .ant-typography {
+        color: #fff;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity  : 0;
+            transform: translateY(-20px);
+        }
+
+        to {
+            opacity  : 1;
+            transform: translateY(0);
+        }
+    }
+}
+

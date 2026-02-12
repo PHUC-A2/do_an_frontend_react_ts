@@ -9,6 +9,7 @@ import type { ILogin } from '../../types/auth';
 import { login } from '../../config/Api';
 import { toast } from 'react-toastify';
 import { setToken } from '../../redux/features/authSlice';
+import ModalForget from './modal/ModalForget';
 
 const LoginPage = () => {
     const [form] = Form.useForm();
@@ -18,6 +19,7 @@ const LoginPage = () => {
     const location = useLocation();
     const searchParams = new URLSearchParams(location.search);
     const redirectPath = searchParams.get("redirect");
+    const [open, setOpen] = useState(false);
 
     const handleLogin = async (values: ILogin) => {
         try {
@@ -118,11 +120,16 @@ const LoginPage = () => {
                         </Button>
                         <Flex className="mt-2" justify="space-between" align="center">
                             <Link to="/register">Tạo tài khoản!</Link>
-                            <Link to="#">Quên mật khẩu?</Link>
+                            <Link to="#" onClick={() => setOpen(true)}>Quên mật khẩu?</Link>
                         </Flex>
                     </Form.Item>
                 </Form>
             </motion.div>
+
+            <ModalForget
+                open={open}
+                setOpen={setOpen}
+            />
         </div>
     );
 };

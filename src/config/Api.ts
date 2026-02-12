@@ -29,6 +29,24 @@ export const logout = async () => {
 export const getAccount = () => instance.get("/api/v1/auth/account");
 export const updateAccount = (data: IUpdateAccountReq) => instance.patch<IBackendRes<IUpdateAccountRes>>("/api/v1/auth/account/me", data);
 export const getRefreshToken = () => instance.get("/api/v1/auth/refresh");
+export const forgetPassword = (email: string) => {
+    return instance.post("/api/v1/auth/forgot-password", {
+        email,
+    });
+};
+
+export const resetPassword = (
+    email: string,
+    otp: string,
+    newPassword: string
+) => {
+    return instance.patch("/api/v1/auth/reset-password", {
+        email,
+        otp,
+        newPassword,
+    });
+};
+
 
 /* api user */
 export const getAllUsers = (query: string) => instance.get<IBackendRes<IModelPaginate<IUser>>>(`/api/v1/users?${query}`);
