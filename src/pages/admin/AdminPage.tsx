@@ -28,6 +28,8 @@ import { formatVND } from "../../utils/format/price";
 import { formatLocalDate } from "../../utils/format/localdatetime";
 import type { Dayjs } from "dayjs";
 import { toast } from "react-toastify";
+import PermissionWrapper from "../../components/wrapper/PermissionWrapper";
+import Forbidden from "../error/Forbbiden";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -40,7 +42,6 @@ const AdminPage = () => {
     const [data, setData] = useState<IRevenueRes | null>(null);
 
     const [range, setRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
-
     useEffect(() => {
         const fetchRevenue = async () => {
             try {
@@ -188,198 +189,202 @@ const AdminPage = () => {
 
     return (
         <RoleWrapper>
-            <div style={{ padding: "0 16px", overflowX: "hidden" }}>
-                <Row justify="space-between" align="middle" style={{ marginBottom: 24, gap: 10 }}>
-                    <Col>
-                        <Title level={isMobile ? 4 : 3} style={{ margin: 0 }}>
-                            Dashboard Thống Kê
-                        </Title>
-                    </Col>
-
-                    <Col>
-                        <DatePicker.RangePicker
-                            value={range}
-                            onChange={(values) => setRange(values)}
-                            format="DD/MM/YYYY"
-                            allowClear
-                            placeholder={["Ngày bắt đầu", "Ngày kết thúc"]}
-                        />
-                    </Col>
-                </Row>
-
-
-                {/* KPI */}
-                <Row gutter={[16, 16]}>
-                    {kpis.map((item, index) => (
-                        <Col xs={12} md={8} lg={4} key={index}>
-                            <motion.div
-                                initial={{ opacity: 0, y: 15 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                            >
-                                <Card size="small" variant="borderless">
-                                    <Statistic
-                                        title={item.title}
-                                        value={
-                                            item.isCurrency
-                                                ? formatVND(item.value)
-                                                : item.value
-                                        }
-                                        prefix={
-                                            <span style={{ color: item.color }}>
-                                                {item.icon}
-                                            </span>
-                                        }
-                                    />
-                                </Card>
-                            </motion.div>
+            <PermissionWrapper required={"REVENUE_VIEW_DETAIL"}
+                fallback={<Forbidden />}
+            >
+                <div style={{ padding: "0 16px", overflowX: "hidden" }}>
+                    <Row justify="space-between" align="middle" style={{ marginBottom: 24, gap: 10 }}>
+                        <Col>
+                            <Title level={isMobile ? 4 : 3} style={{ margin: 0 }}>
+                                Dashboard Thống Kê
+                            </Title>
                         </Col>
-                    ))}
-                </Row>
 
-                {/* CHARTS */}
-                <Row gutter={[16, 16]} style={{ marginTop: 32 }}>
-                    {/* LINE CHART */}
-                    <Col xs={24}>
-                        <Card title="Doanh thu theo ngày" size="small" variant="borderless">
-                            <ReactECharts
-                                option={{
-                                    color: ["#1677ff"],
-                                    tooltip: {
-                                        trigger: "axis",
-                                        formatter: (params: any) => {
-                                            const p = params[0];
-                                            return `${p.axisValue}<br/>${formatVND(p.data)}`;
-                                        },
-                                    },
-                                    xAxis: {
-                                        type: "category",
-                                        data: data.revenueByDate.map(i => formatLocalDate(i.label)),
-                                    },
-                                    yAxis: {
-                                        type: "value",
-                                        axisLabel: {
-                                            formatter: (v: number) => formatVND(v),
-                                        },
-                                    },
-                                    series: [
-                                        {
-                                            data: data.revenueByDate.map(i => i.revenue),
-                                            type: "line",
-                                            smooth: true,
-                                            showSymbol: false,
-                                            areaStyle: {
-                                                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                                    { offset: 0, color: "rgba(22,119,255,0.4)" },
-                                                    { offset: 1, color: "rgba(22,119,255,0.05)" },
-                                                ]),
-                                            },
-                                            lineStyle: { width: 3 },
-                                        },
-                                    ],
-                                }}
-                                style={{ height: chartHeight }}
+                        <Col>
+                            <DatePicker.RangePicker
+                                value={range}
+                                onChange={(values) => setRange(values)}
+                                format="DD/MM/YYYY"
+                                allowClear
+                                placeholder={["Ngày bắt đầu", "Ngày kết thúc"]}
                             />
-                        </Card>
-                    </Col>
+                        </Col>
+                    </Row>
 
-                    {/* BAR CHART */}
-                    <Col xs={24} md={12}>
-                        <Card title="Doanh thu theo sân" size="small" variant="borderless">
-                            <ReactECharts
-                                option={{
-                                    color: ["#52c41a"],
-                                    tooltip: {
-                                        trigger: "axis",
-                                        formatter: (params: any) => {
-                                            const p = params[0];
-                                            return `${p.name}<br/>${formatVND(p.value)}`;
-                                        },
-                                    },
-                                    xAxis: {
-                                        type: "value",
-                                    },
-                                    yAxis: {
-                                        type: "category",
-                                        data: groupedPitchRevenue.map((i: any) => i.pitchName),
-                                    },
-                                    series: [
-                                        {
-                                            data: groupedPitchRevenue.map((i: any) => i.revenue),
-                                            type: "bar",
-                                            label: {
-                                                show: true,
-                                                position: "right",
-                                                formatter: (p: any) => formatVND(p.value),
-                                            },
-                                            itemStyle: {
-                                                borderRadius: [0, 8, 8, 0],
-                                            },
-                                        },
-                                    ],
-                                }}
-                                style={{ height: chartHeight }}
-                            />
-                        </Card>
-                    </Col>
 
-                    {/* PIE REVENUE */}
-                    <Col xs={24} md={12}>
-                        <Card title="Tỷ trọng doanh thu" size="small" variant="borderless">
-                            <ReactECharts
-                                option={{
-                                    color: chartColors,
-                                    tooltip: {
-                                        trigger: "item",
-                                        formatter: (p: any) =>
-                                            `${p.name}<br/>${formatVND(p.value)} (${p.percent}%)`,
-                                    },
-                                    series: [
-                                        {
-                                            type: "pie",
-                                            radius: ["45%", "70%"],
-                                            label: {
-                                                formatter: "{b}\n{d}%",
-                                            },
-                                            data: groupedPitchRevenue.map((i: any) => ({
-                                                value: i.revenue,
-                                                name: i.pitchName,
-                                            })),
-                                        },
-                                    ],
-                                }}
-                                style={{ height: chartHeight }}
-                            />
-                        </Card>
-                    </Col>
+                    {/* KPI */}
+                    <Row gutter={[16, 16]}>
+                        {kpis.map((item, index) => (
+                            <Col xs={12} md={8} lg={4} key={index}>
+                                <motion.div
+                                    initial={{ opacity: 0, y: 15 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.05 }}
+                                >
+                                    <Card size="small" variant="borderless">
+                                        <Statistic
+                                            title={item.title}
+                                            value={
+                                                item.isCurrency
+                                                    ? formatVND(item.value)
+                                                    : item.value
+                                            }
+                                            prefix={
+                                                <span style={{ color: item.color }}>
+                                                    {item.icon}
+                                                </span>
+                                            }
+                                        />
+                                    </Card>
+                                </motion.div>
+                            </Col>
+                        ))}
+                    </Row>
 
-                    {/* BOOKING STATUS */}
-                    <Col xs={24} md={12}>
-                        <Card title="Tình trạng Booking" size="small" variant="borderless">
-                            <ReactECharts
-                                option={{
-                                    color: ["#52c41a", "#ff4d4f"],
-                                    tooltip: { trigger: "item" },
-                                    series: [
-                                        {
-                                            type: "pie",
-                                            radius: "65%",
-                                            label: {
-                                                formatter: "{b}\n{d}%",
+                    {/* CHARTS */}
+                    <Row gutter={[16, 16]} style={{ marginTop: 32 }}>
+                        {/* LINE CHART */}
+                        <Col xs={24}>
+                            <Card title="Doanh thu theo ngày" size="small" variant="borderless">
+                                <ReactECharts
+                                    option={{
+                                        color: ["#1677ff"],
+                                        tooltip: {
+                                            trigger: "axis",
+                                            formatter: (params: any) => {
+                                                const p = params[0];
+                                                return `${p.axisValue}<br/>${formatVND(p.data)}`;
                                             },
-                                            data: [
-                                                { value: data.paidBookings, name: "Đã thanh toán" },
-                                                { value: data.cancelledBookings, name: "Đã hủy" },
-                                            ],
                                         },
-                                    ],
-                                }}
-                                style={{ height: chartHeight }}
-                            />
-                        </Card>
-                    </Col>
-                </Row>
-            </div>
+                                        xAxis: {
+                                            type: "category",
+                                            data: data.revenueByDate.map(i => formatLocalDate(i.label)),
+                                        },
+                                        yAxis: {
+                                            type: "value",
+                                            axisLabel: {
+                                                formatter: (v: number) => formatVND(v),
+                                            },
+                                        },
+                                        series: [
+                                            {
+                                                data: data.revenueByDate.map(i => i.revenue),
+                                                type: "line",
+                                                smooth: true,
+                                                showSymbol: false,
+                                                areaStyle: {
+                                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                                        { offset: 0, color: "rgba(22,119,255,0.4)" },
+                                                        { offset: 1, color: "rgba(22,119,255,0.05)" },
+                                                    ]),
+                                                },
+                                                lineStyle: { width: 3 },
+                                            },
+                                        ],
+                                    }}
+                                    style={{ height: chartHeight }}
+                                />
+                            </Card>
+                        </Col>
+
+                        {/* BAR CHART */}
+                        <Col xs={24} md={12}>
+                            <Card title="Doanh thu theo sân" size="small" variant="borderless">
+                                <ReactECharts
+                                    option={{
+                                        color: ["#52c41a"],
+                                        tooltip: {
+                                            trigger: "axis",
+                                            formatter: (params: any) => {
+                                                const p = params[0];
+                                                return `${p.name}<br/>${formatVND(p.value)}`;
+                                            },
+                                        },
+                                        xAxis: {
+                                            type: "value",
+                                        },
+                                        yAxis: {
+                                            type: "category",
+                                            data: groupedPitchRevenue.map((i: any) => i.pitchName),
+                                        },
+                                        series: [
+                                            {
+                                                data: groupedPitchRevenue.map((i: any) => i.revenue),
+                                                type: "bar",
+                                                label: {
+                                                    show: true,
+                                                    position: "right",
+                                                    formatter: (p: any) => formatVND(p.value),
+                                                },
+                                                itemStyle: {
+                                                    borderRadius: [0, 8, 8, 0],
+                                                },
+                                            },
+                                        ],
+                                    }}
+                                    style={{ height: chartHeight }}
+                                />
+                            </Card>
+                        </Col>
+
+                        {/* PIE REVENUE */}
+                        <Col xs={24} md={12}>
+                            <Card title="Tỷ trọng doanh thu" size="small" variant="borderless">
+                                <ReactECharts
+                                    option={{
+                                        color: chartColors,
+                                        tooltip: {
+                                            trigger: "item",
+                                            formatter: (p: any) =>
+                                                `${p.name}<br/>${formatVND(p.value)} (${p.percent}%)`,
+                                        },
+                                        series: [
+                                            {
+                                                type: "pie",
+                                                radius: ["45%", "70%"],
+                                                label: {
+                                                    formatter: "{b}\n{d}%",
+                                                },
+                                                data: groupedPitchRevenue.map((i: any) => ({
+                                                    value: i.revenue,
+                                                    name: i.pitchName,
+                                                })),
+                                            },
+                                        ],
+                                    }}
+                                    style={{ height: chartHeight }}
+                                />
+                            </Card>
+                        </Col>
+
+                        {/* BOOKING STATUS */}
+                        <Col xs={24} md={12}>
+                            <Card title="Tình trạng Booking" size="small" variant="borderless">
+                                <ReactECharts
+                                    option={{
+                                        color: ["#52c41a", "#ff4d4f"],
+                                        tooltip: { trigger: "item" },
+                                        series: [
+                                            {
+                                                type: "pie",
+                                                radius: "65%",
+                                                label: {
+                                                    formatter: "{b}\n{d}%",
+                                                },
+                                                data: [
+                                                    { value: data.paidBookings, name: "Đã thanh toán" },
+                                                    { value: data.cancelledBookings, name: "Đã hủy" },
+                                                ],
+                                            },
+                                        ],
+                                    }}
+                                    style={{ height: chartHeight }}
+                                />
+                            </Card>
+                        </Col>
+                    </Row>
+                </div>
+            </PermissionWrapper>
         </RoleWrapper>
     );
 };

@@ -26,7 +26,10 @@ export type PermissionKey =
     | "BOOKING_VIEW_DETAIL"
     | "BOOKING_CREATE"
     | "BOOKING_UPDATE"
-    | "BOOKING_DELETE";
+    | "BOOKING_DELETE"
+    | "PAYMENT_VIEW_LIST"
+    | "PAYMENT_UPDATE"
+    | "REVENUE_VIEW_DETAIL";
 
 export interface IPermission {
     id: number;

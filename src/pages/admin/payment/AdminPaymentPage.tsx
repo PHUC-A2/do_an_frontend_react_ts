@@ -13,6 +13,8 @@ import { PAYMENT_STATUS_META } from '../../../utils/constants/payment.constanst'
 import { confirmPayment } from '../../../config/Api';
 import { exportTableToExcel } from '../../../utils/export/exportExcelFromTable';
 import { FaDownload } from 'react-icons/fa';
+import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
+import { usePermission } from '../../../hooks/common/usePermission';
 
 const { Text } = Typography;
 
@@ -21,8 +23,9 @@ const AdminPaymentPage = () => {
     const listPayments = useAppSelector(selectPayments);
     const meta = useAppSelector(selectPaymentMeta);
     const loading = useAppSelector(selectPaymentLoading);
-
+   
     const [confirmingId, setConfirmingId] = useState<number | null>(null);
+    const canViewPayments = usePermission("PAYMENT_VIEW_LIST");
 
     const handleConfirmPayment = async (id: number) => {
         try {
@@ -173,35 +176,38 @@ const AdminPaymentPage = () => {
             key: 'actions',
             render: (_: any, record: IPayment) => (
                 <Space align="center" style={{ justifyContent: "center", width: "100%" }}>
-                    <Popconfirm
-                        title="Xác nhận thanh toán"
-                        description="Bạn có chắc chắn muốn xác nhận thanh toán này không?"
-                        onConfirm={() => handleConfirmPayment(record.id)}
-                        okText="Xác nhận"
-                        cancelText="Hủy"
-                        placement="topLeft"
-                        okButtonProps={{
-                            loading: confirmingId === record.id
-                        }}
-                        disabled={record.status === 'PAID'}
-                    >
-                        <RBButton
-                            size='sm'
-                            variant="outline-success"
+                    <PermissionWrapper required={"PAYMENT_UPDATE"}>
+                        <Popconfirm
+                            title="Xác nhận thanh toán"
+                            description="Bạn có chắc chắn muốn xác nhận thanh toán này không?"
+                            onConfirm={() => handleConfirmPayment(record.id)}
+                            okText="Xác nhận"
+                            cancelText="Hủy"
+                            placement="topLeft"
+                            okButtonProps={{
+                                loading: confirmingId === record.id
+                            }}
                             disabled={record.status === 'PAID'}
                         >
-                            <FaCheck />
-                        </RBButton>
-                    </Popconfirm>
+                            <RBButton
+                                size='sm'
+                                variant="outline-success"
+                                disabled={record.status === 'PAID'}
+                            >
+                                <FaCheck />
+                            </RBButton>
+                        </Popconfirm>
+                    </PermissionWrapper>
                 </Space>
             ),
         },
     ];
 
-
     useEffect(() => {
+        if (!canViewPayments) return;
+
         dispatch(fetchPayments(""));
-    }, [dispatch]);
+    }, [canViewPayments, dispatch]);
 
     return (
         <>
@@ -231,24 +237,28 @@ const AdminPaymentPage = () => {
                     {listPayments.length === 0 ? (
                         <Empty description="Không có dữ liệu thanh toán" />
                     ) : (
-                        <Table<IPayment>
-                            columns={columns}
-                            dataSource={listPayments}
-                            rowKey="id"
-                            loading={loading}
-                            size='small'
-                            pagination={{
-                                current: meta.page,
-                                pageSize: meta.pageSize,
-                                total: meta.total,
-                                showSizeChanger: true,
-                                onChange: (page, pageSize) => {
-                                    dispatch(fetchPayments(`page=${page}&pageSize=${pageSize}`));
-                                },
-                            }}
-                            bordered
-                            scroll={{ x: 'max-content' }}
-                        />
+                        <PermissionWrapper required={"PAYMENT_VIEW_LIST"}
+                            fallback={<Empty description="Bạn không có quyền xem danh sách payment chờ xác nhận" />}
+                        >
+                            <Table<IPayment>
+                                columns={columns}
+                                dataSource={listPayments}
+                                rowKey="id"
+                                loading={loading}
+                                size='small'
+                                pagination={{
+                                    current: meta.page,
+                                    pageSize: meta.pageSize,
+                                    total: meta.total,
+                                    showSizeChanger: true,
+                                    onChange: (page, pageSize) => {
+                                        dispatch(fetchPayments(`page=${page}&pageSize=${pageSize}`));
+                                    },
+                                }}
+                                bordered
+                                scroll={{ x: 'max-content' }}
+                            />
+                        </PermissionWrapper>
                     )}
                 </Card>
             </AdminWrapper>

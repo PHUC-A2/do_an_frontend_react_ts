@@ -63,4 +63,17 @@ export const LIST_PERMISSION: PermissionGroup[] = [
             { name: "BOOKING_DELETE", description: "Hủy đặt sân" },
         ],
     },
+    {
+        group: "PAYMENT",
+        items: [
+            { name: "PAYMENT_VIEW_LIST", description: "Danh sách payment chờ xác nhận" },
+            { name: "PAYMENT_UPDATE", description: "Admin xác nhận payment đã thanh toán" },
+        ],
+    },
+    {
+        group: "REVENUE",
+        items: [
+            { name: "REVENUE_VIEW_DETAIL", description: "Lấy thống kê doanh thu" },
+        ],
+    },
 ];

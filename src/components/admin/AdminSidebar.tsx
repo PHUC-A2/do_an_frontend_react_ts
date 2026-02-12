@@ -47,7 +47,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const canViewPermissions = usePermission("PERMISSION_VIEW_LIST");
     const canViewPitches = usePermission("PITCH_VIEW_LIST");
     const canViewBookings = usePermission("BOOKING_VIEW_LIST");
-
+    const canViewPayments = usePermission("PAYMENT_VIEW_LIST");
 
     const handleLogout = async () => {
         try {
@@ -101,15 +101,15 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                             icon: <TbBrandBooking />,
                         }] : []),
 
+                        ...(canViewPayments ? [{
+                            key: '7',
+                            label: <Link to="/admin/payment" style={{ textDecoration: 'none' }}>QL thanh toán</Link>,
+                            icon: <MdPayments />,
+                        }] : [])
+
                     ]
                     : []),
 
-                // payment
-                {
-                    key: '7',
-                    label: <Link to="/admin/payment" style={{ textDecoration: 'none' }}>QL thanh toán</Link>,
-                    icon: <MdPayments />,
-                }
             ],
         },
         {
