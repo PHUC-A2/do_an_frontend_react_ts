@@ -7,6 +7,7 @@ import {
     Spin,
     Typography,
     Grid,
+    DatePicker,
 } from "antd";
 import {
     DollarOutlined,
@@ -25,6 +26,8 @@ import { getRevenue } from "../../config/Api";
 import type { IRevenueRes } from "../../types/revenue";
 import { formatVND } from "../../utils/format/price";
 import { formatLocalDate } from "../../utils/format/localdatetime";
+import type { Dayjs } from "dayjs";
+import { toast } from "react-toastify";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -36,20 +39,36 @@ const AdminPage = () => {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<IRevenueRes | null>(null);
 
+    const [range, setRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
+
     useEffect(() => {
         const fetchRevenue = async () => {
             try {
                 setLoading(true);
-                const res = await getRevenue();
+
+                const from = range?.[0]?.format("YYYY-MM-DD");
+                const to = range?.[1]?.format("YYYY-MM-DD");
+
+                const res = await getRevenue(from, to);
+
                 if (res.data.statusCode === 200) {
                     setData(res.data.data ?? null);
                 }
+            } catch (error: any) {
+                const m = error?.response?.data?.message ?? "Không xác định";
+                toast.error(
+                    <div>
+                        <div>Có lỗi xảy ra</div>
+                        <div>{m}</div>
+                    </div>
+                );
             } finally {
                 setLoading(false);
             }
         };
+
         fetchRevenue();
-    }, []);
+    }, [range]);
 
     /* ================= GROUP PITCH ================= */
 
@@ -166,12 +185,28 @@ const AdminPage = () => {
         "#eb2f96",
     ];
 
+
     return (
         <RoleWrapper>
             <div style={{ padding: "0 16px", overflowX: "hidden" }}>
-                <Title level={isMobile ? 4 : 3} style={{ marginBottom: 24 }}>
-                    Dashboard Thống Kê
-                </Title>
+                <Row justify="space-between" align="middle" style={{ marginBottom: 24, gap: 10 }}>
+                    <Col>
+                        <Title level={isMobile ? 4 : 3} style={{ margin: 0 }}>
+                            Dashboard Thống Kê
+                        </Title>
+                    </Col>
+
+                    <Col>
+                        <DatePicker.RangePicker
+                            value={range}
+                            onChange={(values) => setRange(values)}
+                            format="DD/MM/YYYY"
+                            allowClear
+                            placeholder={["Ngày bắt đầu", "Ngày kết thúc"]}
+                        />
+                    </Col>
+                </Row>
+
 
                 {/* KPI */}
                 <Row gutter={[16, 16]}>

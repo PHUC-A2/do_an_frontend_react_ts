@@ -5,13 +5,12 @@ import {
     UserOutlined,
     SettingOutlined,
     LogoutOutlined,
-    AccountBookFilled,
+    LoginOutlined,
 } from '@ant-design/icons';
-import { MdFeaturedPlayList, MdOutlineSecurity } from 'react-icons/md';
-import { AiOutlineProduct } from 'react-icons/ai';
-import { FaReact, FaUserCog } from 'react-icons/fa';
+import { MdFeaturedPlayList, MdOutlineSecurity, MdPayments } from 'react-icons/md';
+import { FaReact, FaUserCircle, FaUserCog } from 'react-icons/fa';
 import ModalAccount from '../../pages/auth/modal/ModalAccount';
-import { useAppDispatch } from '../../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { logout } from '../../config/Api';
 import { toast } from 'react-toastify';
 import { setLogout } from '../../redux/features/authSlice';
@@ -20,6 +19,7 @@ import { LuMoon } from 'react-icons/lu';
 import { PiSoccerBallBold } from 'react-icons/pi';
 import { useRole } from '../../hooks/common/useRole';
 import { usePermission } from '../../hooks/common/usePermission';
+import { TbBrandBooking } from 'react-icons/tb';
 
 const { Sider, Header, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -37,6 +37,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const screens = useBreakpoint();
+    const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
 
     const isDark = theme === 'dark';
     const siderWidth = collapsed ? 80 : 200;
@@ -97,17 +98,17 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                         ...(canViewBookings ? [{
                             key: '6',
                             label: <Link to="/admin/booking" style={{ textDecoration: 'none' }}>QL Lịch đặt</Link>,
-                            icon: <AiOutlineProduct />,
+                            icon: <TbBrandBooking />,
                         }] : []),
 
                     ]
                     : []),
 
-                    // payment
+                // payment
                 {
                     key: '7',
                     label: <Link to="/admin/payment" style={{ textDecoration: 'none' }}>QL thanh toán</Link>,
-                    icon: <AiOutlineProduct />,
+                    icon: <MdPayments />,
                 }
             ],
         },
@@ -117,8 +118,17 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
             icon: <SettingOutlined />,
             children: [
                 { key: '8', label: <Link to="/" style={{ textDecoration: 'none' }}>Trang khách</Link>, icon: <UserOutlined /> },
-                { key: '9', label: <span onClick={() => setOpenModalAccount(true)} style={{ cursor: 'pointer' }}>Tài khoản</span>, icon: <AccountBookFilled /> },
-                { key: '10', label: <span onClick={handleLogout} style={{ cursor: 'pointer' }}>Đăng xuất</span>, icon: <LogoutOutlined /> },
+
+                ...(isAuthenticated ?
+                    [
+                        { key: '9', label: <span onClick={() => setOpenModalAccount(true)} style={{ cursor: 'pointer' }}>Tài khoản</span>, icon: <FaUserCircle /> },
+                        { key: '10', label: <span onClick={handleLogout} style={{ cursor: 'pointer' }}>Đăng xuất</span>, icon: <LogoutOutlined /> },
+                    ]
+                    :
+                    [
+                        { key: '1q', label: <span onClick={() => navigate("/login")} style={{ cursor: 'pointer' }}>Đăng nhập</span>, icon: <LoginOutlined /> },
+                    ]),
+
             ],
         },
     ];

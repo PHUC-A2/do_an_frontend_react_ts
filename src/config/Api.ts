@@ -102,7 +102,15 @@ export const cancelBookingClient = (id: number) => instance.patch<IBackendRes<IB
 export const getTimeline = (pitchId: number, params: string) => instance.get<IBackendRes<IPitchTimeline>>(`/api/v1/client/public/pitches/${pitchId}/timeline?date=${params}`);
 
 /* api revenue */
-export const getRevenue = () => instance.get<IBackendRes<IRevenueRes>>(`/api/v1/revenues`);
+// export const getRevenue = () => instance.get<IBackendRes<IRevenueRes>>(`/api/v1/revenues`);
+export const getRevenue = (from?: string, to?: string) =>
+    instance.get<IBackendRes<IRevenueRes>>(`/api/v1/revenues`, {
+        params: {
+            from,
+            to,
+        },
+    });
+
 
 // upload avatar
 export const uploadImageAvatar = async (file: File) => {
