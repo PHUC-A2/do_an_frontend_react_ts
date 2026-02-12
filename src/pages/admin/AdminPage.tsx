@@ -8,6 +8,8 @@ import {
     Typography,
     Grid,
     DatePicker,
+    Space,
+    Button,
 } from "antd";
 import {
     DollarOutlined,
@@ -30,6 +32,9 @@ import type { Dayjs } from "dayjs";
 import { toast } from "react-toastify";
 import PermissionWrapper from "../../components/wrapper/PermissionWrapper";
 import Forbidden from "../error/Forbbiden";
+import { FaDownload } from "react-icons/fa";
+import { exportRevenueReport } from "../../utils/export/exportRevenueReport";
+import { useAppSelector } from "../../redux/hooks";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -42,8 +47,11 @@ const AdminPage = () => {
     const [data, setData] = useState<IRevenueRes | null>(null);
 
     const [range, setRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
+    const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
+
     useEffect(() => {
         const fetchRevenue = async () => {
+            if (!isAuthenticated) return; // chưa logn thì ko gọ api
             try {
                 setLoading(true);
 
@@ -69,7 +77,7 @@ const AdminPage = () => {
         };
 
         fetchRevenue();
-    }, [range]);
+    }, [isAuthenticated, range]);
 
     /* ================= GROUP PITCH ================= */
 
@@ -193,7 +201,7 @@ const AdminPage = () => {
                 fallback={<Forbidden />}
             >
                 <div style={{ padding: "0 16px", overflowX: "hidden" }}>
-                    <Row justify="space-between" align="middle" style={{ marginBottom: 24, gap: 10 }}>
+                    {/* <Row justify="space-between" align="middle" style={{ marginBottom: 24, gap: 10 }}>
                         <Col>
                             <Title level={isMobile ? 4 : 3} style={{ margin: 0 }}>
                                 Dashboard Thống Kê
@@ -209,7 +217,43 @@ const AdminPage = () => {
                                 placeholder={["Ngày bắt đầu", "Ngày kết thúc"]}
                             />
                         </Col>
+                    </Row> */}
+
+                    <Row justify="space-between" align="middle" style={{ marginBottom: 24, gap: 10 }}>
+                        <Col>
+                            <Title level={isMobile ? 4 : 3} style={{ margin: 0 }}>
+                                Dashboard Thống Kê
+                            </Title>
+                        </Col>
+
+                        <Col>
+                            <Space>
+                                <DatePicker.RangePicker
+                                    value={range}
+                                    onChange={(values) => setRange(values)}
+                                    format="DD/MM/YYYY"
+                                    allowClear
+                                    placeholder={["Ngày bắt đầu", "Ngày kết thúc"]}
+                                />
+
+                                <Button
+                                    icon={<FaDownload />}
+                                    onClick={() =>
+                                        data &&
+                                        exportRevenueReport(
+                                            data,
+                                            range?.[0]?.format("DD/MM/YYYY"),
+                                            range?.[1]?.format("DD/MM/YYYY")
+                                        )
+                                    }
+                                >
+                                    Xuất Excel
+                                </Button>
+
+                            </Space>
+                        </Col>
                     </Row>
+
 
 
                     {/* KPI */}
