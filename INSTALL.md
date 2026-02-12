@@ -10,3 +10,5 @@ npm install --save --exact sass@1.94.2
 npm install --save --exact redux@5.0.1
 npm install --save --exact dayjs@1.11.19
 npm install --save --exact file-saver@2.0.5
+npm install --save --exact xlsx@0.18.5
+npm install --save --exact @ant-design/plots@2.6.8

@@ -7,6 +7,7 @@ import type { IBackendRes, IModelPaginate } from "../types/common";
 import type { ICreatePaymentReq, IPayment, IPaymentRes } from "../types/payment";
 import type { ICreatePermissionReq, IPermission, IUpdatePermissionReq } from "../types/permission";
 import type { ICreatePitchReq, IPitch, IUpdatePitchReq } from "../types/pitch";
+import type { IRevenueRes } from "../types/revenue";
 import type { IAssignPermissionReq, ICreateRoleReq, IRole, IUpdateRoleReq } from "../types/role";
 import type { IPitchTimeline } from "../types/timeline";
 import type { IGetUploadResponse } from "../types/upload";
@@ -100,6 +101,8 @@ export const cancelBookingClient = (id: number) => instance.patch<IBackendRes<IB
 // http://localhost:8080/api/v1/client/public/pitches/5/timeline?date=2026-02-01
 export const getTimeline = (pitchId: number, params: string) => instance.get<IBackendRes<IPitchTimeline>>(`/api/v1/client/public/pitches/${pitchId}/timeline?date=${params}`);
 
+/* api revenue */
+export const getRevenue = () => instance.get<IBackendRes<IRevenueRes>>(`/api/v1/revenues`);
 
 // upload avatar
 export const uploadImageAvatar = async (file: File) => {

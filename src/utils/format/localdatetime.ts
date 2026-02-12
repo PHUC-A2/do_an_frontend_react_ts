@@ -34,3 +34,12 @@ export const formatInstant = (
     if (!value) return "N/A";
     return dayjs(value).format(format);
 };
+
+// Format LocalDate (yyyy-MM-dd) -> DD/MM/YYYY
+export const formatLocalDate = (
+    value?: string | null,
+    format = "DD/MM/YYYY"
+): string => {
+    if (!value) return "N/A";
+    return dayjs(value).format(format);
+};

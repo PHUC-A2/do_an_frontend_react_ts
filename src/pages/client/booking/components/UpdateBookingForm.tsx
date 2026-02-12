@@ -292,7 +292,7 @@ const UpdateBookingForm = ({
             >
                 <DatePicker.RangePicker
                     showTime={{ format: "HH:mm" }}
-                    format="YYYY-MM-DD HH:mm"
+                    format=" HH:mm DD/MM/YYYY"
                     style={{ width: "100%" }}
                     minuteStep={5}
                     placeholder={[
