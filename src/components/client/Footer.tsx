@@ -1,79 +1,206 @@
-import { Layout, Row, Col, Typography, Space } from "antd";
+import { Layout, Row, Col, Typography, Space, Divider } from "antd";
 import { AiFillTikTok, AiFillYoutube } from "react-icons/ai";
 import { BiLogoFacebookCircle } from "react-icons/bi";
 import { SiZalo } from "react-icons/si";
+import { MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
 import { Link } from "react-router";
 
 const { Footer: AntFooter } = Layout;
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
 interface FooterProps {
     theme: 'light' | 'dark';
 }
 
+// Reuse the same LogoMark from Header
+const LogoMark = () => (
+    <svg width="30" height="30" viewBox="0 0 34 34" fill="none">
+        <rect width="34" height="34" rx="10" fill="url(#fp-footer-grad)" />
+        <polygon points="17,7 24,11.5 24,20.5 17,25 10,20.5 10,11.5" stroke="white" strokeWidth="2" fill="none" strokeLinejoin="round" />
+        <circle cx="17" cy="16" r="2.5" fill="white" />
+        <line x1="17" y1="7" x2="17" y2="10" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="24" y1="11.5" x2="21.5" y2="13" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="24" y1="20.5" x2="21.5" y2="19" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="17" y1="25" x2="17" y2="22" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="10" y1="20.5" x2="12.5" y2="19" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="10" y1="11.5" x2="12.5" y2="13" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+        <defs>
+            <linearGradient id="fp-footer-grad" x1="0" y1="0" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#fbbf24" />
+                <stop offset="100%" stopColor="#d97706" />
+            </linearGradient>
+        </defs>
+    </svg>
+);
+
 const Footer = ({ theme }: FooterProps) => {
     const isDark = theme === 'dark';
-    const bgColor = isDark ? '#001529' : '#fff';
-    const textColor = isDark ? '#fff' : '#000';
-    const goldColor = '#faad14';
 
-    const linkStyle = {
+    const bg = isDark ? '#001529' : '#f8fafc';
+    const topBorder = isDark ? '1px solid rgba(250,173,20,0.1)' : '1px solid rgba(0,0,0,0.07)';
+    const dividerColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)';
+    const gold = '#faad14';
+    const headingColor = isDark ? '#e2e8f0' : '#1a2733';
+    const subColor = isDark ? '#64748b' : '#94a3b8';
+    const textColor = isDark ? '#94a3b8' : '#64748b';
+
+    const navLinkStyle: React.CSSProperties = {
         textDecoration: 'none',
         color: textColor,
+        fontSize: '0.88rem',
+        display: 'block',
+        lineHeight: '2.1',
+        transition: 'color 0.18s',
     };
 
-    const linkHoverCss = `
-    a.footer-link:hover {
-      color: ${goldColor} !important;
-    }
-  `;
+    const socialIconStyle: React.CSSProperties = {
+        color: subColor,
+        fontSize: 22,
+        display: 'inline-flex',
+        transition: 'color 0.18s, transform 0.18s',
+    };
+
+    const contactItems = [
+        { icon: <MdLocationOn size={15} />, text: 'Đường Đặng Thai Mai, Phường Tô Hiệu, Sơn La' },
+        { icon: <MdPhone size={15} />, text: '0123 456 789' },
+        { icon: <MdEmail size={15} />, text: 'admin@footballpro.vn' },
+        { icon: <MdEmail size={15} />, text: 'phucban297@gmail.com' },
+    ];
+
+    const quickLinks = [
+        { to: '/', label: 'Trang chủ' },
+        { to: '/pitch', label: 'Sân bóng' },
+        { to: '/about', label: 'Về chúng tôi' },
+        { to: '/terms-of-service', label: 'Điều khoản dịch vụ' },
+    ];
+
+    const socials = [
+        { href: 'https://facebook.com', icon: <BiLogoFacebookCircle />, label: 'Facebook' },
+        { href: 'https://chat.zalo.me', icon: <SiZalo />, label: 'Zalo' },
+        { href: 'https://tiktok.com', icon: <AiFillTikTok />, label: 'TikTok' },
+        { href: 'https://youtube.com', icon: <AiFillYoutube />, label: 'YouTube' },
+    ];
 
     return (
-        <AntFooter style={{ padding: '50px 60px', background: bgColor, color: textColor }}>
-            {/* Inject hover style */}
-            <style>{linkHoverCss}</style>
+        <AntFooter style={{ padding: 0, background: bg, borderTop: topBorder }}>
+            <style>{`
+                .fp-footer a.fp-nav-link:hover {
+                    color: ${gold} !important;
+                }
+                .fp-footer .fp-social-icon:hover {
+                    color: ${gold} !important;
+                    transform: translateY(-3px);
+                }
+            `}</style>
 
-            <Row gutter={[32, 32]}>
-                <Col xs={24} sm={12} md={6}>
-                    <Title level={4} style={{ color: goldColor }}>Về chúng tôi</Title>
-                    <Text style={{ color: textColor }}>
-                        Football Pro là nền tảng đặt sân bóng đá hiện đại, tốc độ và thân thiện.
+            <div className="fp-footer" style={{ padding: '52px 60px 32px' }}>
+                <Row gutter={[48, 40]}>
+
+                    {/* ── Brand column ──────────────────────────────── */}
+                    <Col xs={24} md={8}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                            <LogoMark />
+                            <span style={{
+                                fontSize: '1.1rem',
+                                fontWeight: 800,
+                                letterSpacing: '-0.4px',
+                                color: headingColor,
+                            }}>
+                                UTB<span style={{ color: gold }}>Sport</span>
+                            </span>
+                        </div>
+
+                        <Paragraph style={{
+                            color: textColor,
+                            fontSize: '0.875rem',
+                            lineHeight: 1.75,
+                            marginBottom: 20,
+                            maxWidth: 280,
+                        }}>
+                            Nền tảng đặt sân bóng đá hiện đại — kết nối người chơi, quản lý lịch thi đấu và đặt sân nhanh chóng, tiện lợi.
+                        </Paragraph>
+
+                        {/* Social icons */}
+                        <Space size={14}>
+                            {socials.map(s => (
+                                <a
+                                    key={s.href}
+                                    href={s.href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label={s.label}
+                                    className="fp-social-icon"
+                                    style={socialIconStyle}
+                                >
+                                    {s.icon}
+                                </a>
+                            ))}
+                        </Space>
+                    </Col>
+
+                    {/* ── Quick links ───────────────────────────────── */}
+                    <Col xs={24} sm={12} md={6}>
+                        <Title level={5} style={{ color: headingColor, marginBottom: 16, fontWeight: 700 }}>
+                            Liên kết nhanh
+                        </Title>
+                        <nav>
+                            {quickLinks.map(link => (
+                                <Link
+                                    key={link.to}
+                                    to={link.to}
+                                    className="fp-nav-link"
+                                    style={navLinkStyle}
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
+                        </nav>
+                    </Col>
+
+                    {/* ── Contact ───────────────────────────────────── */}
+                    <Col xs={24} sm={12} md={10}>
+                        <Title level={5} style={{ color: headingColor, marginBottom: 16, fontWeight: 700 }}>
+                            Liên hệ
+                        </Title>
+                        <Space orientation="vertical" size={10} style={{ width: '100%' }}>
+                            {contactItems.map((item, i) => (
+                                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                                    <span style={{ color: gold, marginTop: 2, flexShrink: 0 }}>
+                                        {item.icon}
+                                    </span>
+                                    <Text style={{ color: textColor, fontSize: '0.875rem', lineHeight: 1.6 }}>
+                                        {item.text}
+                                    </Text>
+                                </div>
+                            ))}
+                        </Space>
+                    </Col>
+
+                </Row>
+
+                <Divider style={{ borderColor: dividerColor, margin: '36px 0 20px' }} />
+
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 8,
+                }}>
+                    <Text style={{ color: subColor, fontSize: '0.83rem' }}>
+                        © {new Date().getFullYear()}{' '}
+                        <span style={{ color: headingColor, fontWeight: 600 }}>UTBSport</span>.
+                        {' '}Tất cả quyền được bảo lưu.
                     </Text>
-                </Col>
 
-                <Col xs={24} sm={12} md={6}>
-                    <Title level={4} style={{ color: goldColor }}>Liên hệ</Title>
-                    <Space orientation="vertical">
-                        <Text style={{ color: textColor }}>📍 Đường Đặng Thai Mai, Phường Tô Hiệu, Sơn La</Text>
-                        <Text style={{ color: textColor }}>📞 0123 456 789</Text>
-                        <Text style={{ color: textColor }}>✉️ admin@email.com</Text>
-                    </Space>
-                </Col>
+                    <Text style={{ color: subColor, fontSize: '0.78rem' }}>
+                        Bản quyền © {new Date().getFullYear()} Bàn Văn Phúc
+                    </Text>
 
-                <Col xs={24} sm={12} md={6}>
-                    <Title level={4} style={{ color: goldColor }}>Liên kết nhanh</Title>
-                    <Space orientation="vertical">
-                        <Link to="/" className="footer-link" style={linkStyle}>Trang chủ</Link>
-                        <Link to="/booking" className="footer-link" style={linkStyle}>Đặt sân</Link>
-                        <Link to="/about" className="footer-link" style={linkStyle}>Về chúng tôi</Link>
-                        <Link to="/contact" className="footer-link" style={linkStyle}>Liên hệ</Link>
-                        <Link to="/admin" className="footer-link" style={linkStyle}>Trang quản trị</Link>
-                    </Space>
-                </Col>
-
-                <Col xs={24} sm={12} md={6}>
-                    <Title level={4} style={{ color: goldColor }}>Theo dõi</Title>
-                    <Space size="middle" style={{ fontSize: 28 }}>
-                        <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" style={{ color: goldColor }}><BiLogoFacebookCircle /></a>
-                        <a href="https://chat.zalo.me" target="_blank" rel="noopener noreferrer" style={{ color: goldColor }}><SiZalo /></a>
-                        <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" style={{ color: goldColor }}><AiFillTikTok /></a>
-                        <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" style={{ color: goldColor }}><AiFillYoutube /></a>
-                    </Space>
-                </Col>
-            </Row>
-
-            <div style={{ textAlign: 'center', marginTop: 30, color: textColor }}>
-                © {new Date().getFullYear()} Football Pro. <span style={{ color: goldColor }}>Tất cả quyền được bảo lưu.</span>
+                    <Text style={{ color: subColor, fontSize: '0.78rem' }}>
+                        Được xây dựng với ❤️ tại Sơn La
+                    </Text>
+                </div>
             </div>
         </AntFooter>
     );

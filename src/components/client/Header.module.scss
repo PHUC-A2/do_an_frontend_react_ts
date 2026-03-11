@@ -1,0 +1,312 @@
+// ─────────────────────────────────────────────────────────────
+// Header.module.scss
+// Theme tokens injected via CSS custom properties on .fpHeader
+// ─────────────────────────────────────────────────────────────
+
+// ── Breakpoints ──────────────────────────────────────────────
+$bp-md: 768px;
+
+// ── Hamburger animation (global — inside SVG <style>) ────────
+:global {
+    .hb-top {
+        transform-origin: 11px 7px;
+        transition      : transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .hb-mid {
+        transform-origin: 11px 11px;
+        transition      : transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s;
+    }
+
+    .hb-bot {
+        transform-origin: 11px 15px;
+        transition      : transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+}
+
+// ── Header bar ───────────────────────────────────────────────
+.fpHeader {
+    position               : fixed;
+    top                    : 0;
+    left                   : 0;
+    right                  : 0;
+    z-index                : 1000;
+    height                 : 64px;
+    display                : flex;
+    align-items            : center;
+    padding                : 0 24px;
+    background             : var(--fp-header-bg);
+    backdrop-filter        : blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-bottom          : var(--fp-border);
+    box-shadow             : var(--fp-shadow);
+    transition             : background 0.3s, box-shadow 0.3s;
+}
+
+// ── Logo ─────────────────────────────────────────────────────
+.fpLogo {
+    display        : flex;
+    align-items    : center;
+    gap            : 10px;
+    text-decoration: none;
+    flex-shrink    : 0;
+    margin-right   : 28px;
+    transition     : opacity 0.2s;
+
+    &:hover {
+        opacity: 0.8;
+    }
+}
+
+.fpLogoText {
+    display       : flex;
+    flex-direction: column;
+    gap           : 2px;
+}
+
+.fpLogoName {
+    font-size     : 1.05rem;
+    font-weight   : 800;
+    letter-spacing: -0.5px;
+    color         : var(--fp-text);
+    line-height   : 1;
+
+    em {
+        font-style: normal;
+        color     : var(--fp-gold);
+    }
+}
+
+.fpLogoTagline {
+    font-size     : 0.6rem;
+    font-weight   : 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color         : var(--fp-muted);
+    line-height   : 1;
+}
+
+// ── Desktop Ant Design menu overrides ────────────────────────
+:global {
+    .fp-menu.ant-menu-horizontal {
+        background   : transparent !important;
+        border-bottom: none !important;
+        flex         : 1;
+        line-height  : 62px;
+    }
+
+    .fp-menu.ant-menu-horizontal>.ant-menu-item::after,
+    .fp-menu.ant-menu-horizontal>.ant-menu-submenu::after {
+        transition: border-color 0.2s ease !important;
+    }
+
+    .fp-menu.ant-menu-horizontal>.ant-menu-item-selected::after {
+        border-bottom: 2px solid var(--fp-gold) !important;
+    }
+
+    .fp-menu.ant-menu-horizontal>.ant-menu-item:hover::after {
+        border-bottom: 2px solid var(--fp-gold) !important;
+    }
+
+    .fp-menu.ant-menu-horizontal>.ant-menu-item-selected a,
+    .fp-menu.ant-menu-horizontal>.ant-menu-item-selected .anticon,
+    .fp-menu.ant-menu-horizontal>.ant-menu-item:hover a,
+    .fp-menu.ant-menu-horizontal>.ant-menu-item:hover .anticon {
+        color: var(--fp-gold) !important;
+    }
+
+    .fp-menu.ant-menu-dark.ant-menu-horizontal>.ant-menu-item-selected {
+        background: transparent !important;
+    }
+}
+
+// ── Right-side icon button ────────────────────────────────────
+.fpIconBtn {
+    display        : flex;
+    align-items    : center;
+    justify-content: center;
+    width          : 36px;
+    height         : 36px;
+    border-radius  : 9px;
+    color          : var(--fp-text);
+    cursor         : pointer;
+    transition     : background 0.18s, color 0.18s;
+
+    &:hover {
+        background: var(--fp-hover-bg);
+        color     : var(--fp-gold);
+    }
+}
+
+// ── Account / settings button ─────────────────────────────────
+:global {
+    .fp-acct-btn.ant-btn {
+        color        : var(--fp-text) !important;
+        font-weight  : 500 !important;
+        border-radius: 9px !important;
+        height       : 36px !important;
+        padding      : 0 12px !important;
+        transition   : background 0.18s, color 0.18s !important;
+
+        &:hover {
+            background: var(--fp-hover-bg) !important;
+            color     : var(--fp-gold) !important;
+        }
+    }
+}
+
+// ── Hamburger button ──────────────────────────────────────────
+.fpHamburger {
+    display                    : flex;
+    align-items                : center;
+    justify-content            : center;
+    width                      : 40px;
+    height                     : 40px;
+    border-radius              : 10px;
+    cursor                     : pointer;
+    border                     : none;
+    background                 : transparent;
+    padding                    : 0;
+    transition                 : background 0.18s;
+    -webkit-tap-highlight-color: transparent;
+
+    &:hover,
+    &:focus-visible {
+        background: var(--fp-hover-bg);
+        outline   : none;
+    }
+}
+
+// ── Mobile nav overlay ────────────────────────────────────────
+.fpMobileOverlay {
+    position       : fixed;
+    inset          : 64px 0 0 0;
+    background     : rgba(0, 0, 0, 0.45);
+    z-index        : 998;
+    opacity        : 0;
+    pointer-events : none;
+    transition     : opacity 0.28s ease;
+    backdrop-filter: blur(2px);
+
+    &.open {
+        opacity       : 1;
+        pointer-events: auto;
+    }
+}
+
+// ── Mobile slide-down panel ───────────────────────────────────
+.fpMobilePanel {
+    position      : fixed;
+    top           : 64px;
+    left          : 0;
+    right         : 0;
+    z-index       : 999;
+    background    : var(--fp-panel-bg);
+    border-bottom : var(--fp-border);
+    box-shadow    : var(--fp-panel-shadow);
+    border-radius : 0 0 16px 16px;
+    padding       : 12px 16px 20px;
+    transform     : translateY(-8px);
+    opacity       : 0;
+    pointer-events: none;
+    transition    :
+        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.25s ease;
+
+    &.open {
+        transform     : translateY(0);
+        opacity       : 1;
+        pointer-events: auto;
+    }
+}
+
+// ── Mobile nav links ──────────────────────────────────────────
+.fpMobileNav {
+    display       : flex;
+    flex-direction: column;
+    gap           : 4px;
+    margin-bottom : 12px;
+}
+
+.fpMobileLink {
+    display                    : flex;
+    align-items                : center;
+    gap                        : 12px;
+    padding                    : 12px 16px;
+    border-radius              : 12px;
+    text-decoration            : none;
+    font-size                  : 0.975rem;
+    font-weight                : 600;
+    color                      : var(--fp-text);
+    transition                 : background 0.18s, color 0.18s;
+    -webkit-tap-highlight-color: transparent;
+
+    &:hover,
+    &.active {
+        background: var(--fp-link-active-bg);
+        color     : var(--fp-gold);
+
+        .fpMobileLinkIcon {
+            background: rgba(250, 173, 20, 0.18);
+            color     : var(--fp-gold);
+        }
+    }
+
+    &.active {
+        background: var(--fp-link-active-bg-strong);
+    }
+}
+
+.fpMobileLinkIcon {
+    width          : 36px;
+    height         : 36px;
+    display        : flex;
+    align-items    : center;
+    justify-content: center;
+    border-radius  : 9px;
+    font-size      : 17px;
+    background     : var(--fp-icon-bg);
+    flex-shrink    : 0;
+    transition     : background 0.18s, color 0.18s;
+}
+
+// ── Mobile divider ────────────────────────────────────────────
+.fpMobileDivider {
+    height    : 1px;
+    background: var(--fp-divider);
+    margin    : 8px 0 12px;
+}
+
+// ── Mobile bottom actions ─────────────────────────────────────
+.fpMobileActions {
+    display        : flex;
+    align-items    : center;
+    justify-content: space-between;
+    padding        : 0 4px;
+}
+
+.fpMobileActionLabel {
+    font-size     : 0.8rem;
+    font-weight   : 600;
+    color         : var(--fp-muted);
+    letter-spacing: 0.04em;
+}
+
+.fpMobileActionRow {
+    display    : flex;
+    align-items: center;
+    gap        : 8px;
+}
+
+// ── Responsive visibility ─────────────────────────────────────
+.fpDesktopOnly {
+    @media (max-width: #{$bp-md - 1px}) {
+        display: none !important;
+    }
+}
+
+.fpMobileOnly {
+    @media (min-width: $bp-md) {
+        display: none !important;
+    }
+}
