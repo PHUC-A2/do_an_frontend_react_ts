@@ -60,4 +60,17 @@
             }
         }
     }
+
+    .terms-section {
+        margin-top: 60px;
+
+        .terms-text {
+            color  : var(--text-color);
+            opacity: 0.85;
+        }
+
+        a {
+            text-decoration: underline;
+        }
+    }
 }

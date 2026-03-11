@@ -2,6 +2,7 @@ import { Layout, Typography, Row, Col, Card } from "antd";
 import { motion, type Variants } from "framer-motion";
 import { TeamOutlined, FieldTimeOutlined, AppstoreOutlined } from "@ant-design/icons";
 import './AboutPage.scss'
+import { Link } from "react-router";
 
 const { Content } = Layout;
 const { Title, Paragraph } = Typography;
@@ -75,6 +76,13 @@ const AboutPage: React.FC<AboutPageProps> = ({ theme }) => {
                             </Col>
                         ))}
                     </Row>
+                </motion.div>
+
+                {/* Điều khoản và dịch vụ */}
+                <motion.div className="terms-section" variants={pageVariants} initial="initial" animate="animate">
+                    <Paragraph className="terms-text" style={{ marginTop: 60, textAlign: 'center', fontSize: 14 }}>
+                        Bằng việc sử dụng nền tảng, bạn đồng ý với các <Link to="/terms" style={{ color: isDark ? '#faad14' : '#001529' }}>Điều khoản và Dịch vụ</Link> của chúng tôi.
+                    </Paragraph>
                 </motion.div>
             </Content>
         </Layout>

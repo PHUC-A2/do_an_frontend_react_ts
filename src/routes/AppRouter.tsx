@@ -16,6 +16,7 @@ import AdminBookingPage from '../pages/admin/booking/AdminBookingPage';
 import PitchPage from '../pages/client/pitch/PitchPage';
 import PitchDetailsPage from '../pages/client/pitch/PitchDetailsPage';
 import AdminPaymentPage from '../pages/admin/payment/AdminPaymentPage';
+import TermsOfService from '../pages/client/terms-of-service/TermsOfService';
 
 interface AppRouterProps {
     theme: 'light' | 'dark';
@@ -33,6 +34,7 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
                 { path: "/pitch/:id", element: <PitchDetailsPage /> },
                 { path: "/booking/:pitchId", element: <BookingPage theme={theme} /> },
                 { path: "/about", element: <AboutPage theme={theme} /> },
+                { path: "/terms", element: <TermsOfService theme={theme} /> },
             ]
         },
         {

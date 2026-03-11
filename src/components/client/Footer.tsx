@@ -51,7 +51,7 @@ const Footer = ({ theme }: FooterProps) => {
         { to: '/', label: 'Trang chủ' },
         { to: '/pitch', label: 'Sân bóng' },
         { to: '/about', label: 'Về chúng tôi' },
-        { to: '/terms-of-service', label: 'Điều khoản dịch vụ' },
+        { to: '/terms', label: 'Điều khoản dịch vụ' },
     ];
 
     const socials = [
