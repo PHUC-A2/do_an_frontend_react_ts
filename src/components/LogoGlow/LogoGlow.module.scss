@@ -1,0 +1,147 @@
+// ─────────────────────────────────────────────────────────────
+// LogoGlow.module.scss
+// Glow animation — màu logo trường: #007b3d, #da251c, #0064a8
+// Sizes: header = 40px  |  footer = 32px (nhỏ hơn header)
+// ─────────────────────────────────────────────────────────────
+
+// ── Keyframes ─────────────────────────────────────────────────
+
+@keyframes logoGlowCycle {
+    0% {
+        box-shadow:
+            0 0 0 0 transparent,
+            0 0 12px 3px rgba(0, 123, 61, 0),
+            0 0 0 0 transparent;
+    }
+
+    15% {
+        box-shadow:
+            0 0 14px 4px rgba(0, 123, 61, 0.55),
+            0 0 28px 8px rgba(0, 123, 61, 0.22),
+            0 0 0 0 transparent;
+    }
+
+    33% {
+        box-shadow:
+            0 0 14px 4px rgba(0, 100, 168, 0.55),
+            0 0 28px 8px rgba(0, 100, 168, 0.22),
+            0 0 0 0 transparent;
+    }
+
+    50% {
+        box-shadow:
+            0 0 14px 4px rgba(218, 37, 28, 0.50),
+            0 0 28px 8px rgba(218, 37, 28, 0.18),
+            0 0 0 0 transparent;
+    }
+
+    66% {
+        box-shadow:
+            0 0 14px 4px rgba(0, 123, 61, 0.55),
+            0 0 28px 8px rgba(0, 123, 61, 0.22),
+            0 0 0 0 transparent;
+    }
+
+    85% {
+        box-shadow:
+            0 0 10px 3px rgba(0, 100, 168, 0.40),
+            0 0 22px 6px rgba(0, 100, 168, 0.15),
+            0 0 0 0 transparent;
+    }
+
+    100% {
+        box-shadow:
+            0 0 0 0 transparent,
+            0 0 12px 3px rgba(0, 123, 61, 0),
+            0 0 0 0 transparent;
+    }
+}
+
+@keyframes ringRotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes logoPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.04);
+    }
+}
+
+// ── Wrapper ───────────────────────────────────────────────────
+.logoGlowWrapper {
+    position       : relative;
+    display        : inline-flex;
+    align-items    : center;
+    justify-content: center;
+    flex-shrink    : 0;
+}
+
+// ── Spinning ring ─────────────────────────────────────────────
+.logoRing {
+    position      : absolute;
+    inset         : -5px;
+    border-radius : 50%;
+    pointer-events: none;
+
+    background: conic-gradient(from 0deg,
+            rgba(0, 123, 61, 0.9) 0%,
+            rgba(0, 100, 168, 0.9) 33%,
+            rgba(218, 37, 28, 0.85) 66%,
+            rgba(0, 123, 61, 0.9) 100%);
+
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), black calc(100% - 2.5px));
+    mask        : radial-gradient(farthest-side, transparent calc(100% - 2.5px), black calc(100% - 2.5px));
+
+    animation: ringRotate 4s linear infinite;
+}
+
+// ── Logo image — Header default (40px) ───────────────────────
+.logoGlowImg {
+    position     : relative;
+    z-index      : 1;
+    border-radius: 50%;
+    object-fit   : cover;
+    width        : 40px;
+    height       : 40px;
+    animation    :
+        logoGlowCycle 6s ease-in-out infinite,
+        logoPulse 6s ease-in-out infinite;
+    transition: filter 0.3s ease;
+}
+
+// ── Hover ─────────────────────────────────────────────────────
+.logoGlowWrapper:hover .logoGlowImg {
+    filter: brightness(1.08) saturate(1.15);
+}
+
+.logoGlowWrapper:hover .logoRing {
+    animation-duration: 1.8s;
+}
+
+// ── Variant: Footer — 32px (nhỏ hơn header 40px) ─────────────
+.logoGlowWrapper.footer {
+
+    .logoGlowImg {
+        width : 32px;
+        height: 32px;
+    }
+
+    // Ring sát hơn + mảnh hơn cho size nhỏ
+    .logoRing {
+        inset       : -4px;
+        -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), black calc(100% - 2px));
+        mask        : radial-gradient(farthest-side, transparent calc(100% - 2px), black calc(100% - 2px));
+    }
+}

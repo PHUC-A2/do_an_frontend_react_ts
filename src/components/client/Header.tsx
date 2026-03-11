@@ -18,6 +18,7 @@ import { toast } from 'react-toastify';
 import ModalBookingHistory from '../../pages/client/booking/modals/ModalBookingHistory';
 import { useRole } from '../../hooks/common/useRole';
 import styles from './Header.module.scss';
+import LogoGlow from '../../components/LogoGlow/LogoGlow';
 
 const { useBreakpoint } = Grid;
 
@@ -26,9 +27,6 @@ interface HeaderProps {
     toggleTheme: () => void;
 }
 
-// ── CSS custom properties per theme/scroll state ──────────────
-// Injected as inline style vars on root elements so SCSS can
-// consume via var(--fp-*) without any JS string interpolation.
 function buildCssVars(isDark: boolean, scrolled: boolean): React.CSSProperties {
     return {
         '--fp-gold': '#faad14',
@@ -55,33 +53,9 @@ function buildCssVars(isDark: boolean, scrolled: boolean): React.CSSProperties {
     } as React.CSSProperties;
 }
 
-// ── SVG Logo ──────────────────────────────────────────────────
-const LogoMark = ({ size = 34 }: { size?: number }) => (
-    <svg width={size} height={size} viewBox="0 0 34 34" fill="none" aria-hidden>
-        <rect width="34" height="34" rx="10" fill="url(#fp-g)" />
-        <polygon points="17,7 24,11.5 24,20.5 17,25 10,20.5 10,11.5"
-            stroke="white" strokeWidth="2" fill="none" strokeLinejoin="round" />
-        <circle cx="17" cy="16" r="2.5" fill="white" />
-        {([
-            [17, 7, 17, 10], [24, 11.5, 21.5, 13], [24, 20.5, 21.5, 19],
-            [17, 25, 17, 22], [10, 20.5, 12.5, 19], [10, 11.5, 12.5, 13],
-        ] as number[][]).map(([x1, y1, x2, y2], i) => (
-            <line key={i} x1={x1} y1={y1} x2={x2} y2={y2}
-                stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-        ))}
-        <defs>
-            <linearGradient id="fp-g" x1="0" y1="0" x2="34" y2="34" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#fbbf24" />
-                <stop offset="1" stopColor="#d97706" />
-            </linearGradient>
-        </defs>
-    </svg>
-);
-
 // ── Animated hamburger ────────────────────────────────────────
 const HamburgerIcon = ({ open, color }: { open: boolean; color: string }) => (
     <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-        {/* Transition rules live in Header.module.scss :global(.hb-*) */}
         <rect className="hb-top" x="3" y="6" width="16" height="2" rx="1" fill={color}
             style={{ transform: open ? 'rotate(45deg) translateY(4px)' : undefined }} />
         <rect className="hb-mid" x="3" y="10" width="16" height="2" rx="1" fill={color}
@@ -109,7 +83,6 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const textColor = isDark ? '#e2e8f0' : '#1a2733';
     const cssVars = buildCssVars(isDark, scrolled);
 
-    // Active menu key derived from route
     const activeKey = (() => {
         if (location.pathname === '/') return 'home';
         if (location.pathname.startsWith('/pitch')) return 'pitch';
@@ -182,8 +155,9 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
             {/* ── Header bar ──────────────────────────────────── */}
             <header className={styles.fpHeader} style={cssVars}>
 
+                {/* ── Logo ── */}
                 <Link to="/" className={styles.fpLogo} onClick={() => setMobileOpen(false)}>
-                    <LogoMark size={34} />
+                    <LogoGlow variant="header" />
                     <div className={styles.fpLogoText}>
                         <span className={styles.fpLogoName}>TBU <em>Sport</em></span>
                         <span className={styles.fpLogoTagline}>Đặt sân · Thi đấu</span>

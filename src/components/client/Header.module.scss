@@ -3,10 +3,9 @@
 // Theme tokens injected via CSS custom properties on .fpHeader
 // ─────────────────────────────────────────────────────────────
 
-// ── Breakpoints ──────────────────────────────────────────────
 $bp-md: 768px;
 
-// ── Hamburger animation (global — inside SVG <style>) ────────
+// ── Hamburger animation (global — lives inside SVG rects) ─────
 :global {
     .hb-top {
         transform-origin: 11px 7px;
@@ -43,7 +42,7 @@ $bp-md: 768px;
     transition             : background 0.3s, box-shadow 0.3s;
 }
 
-// ── Logo ─────────────────────────────────────────────────────
+// ── Logo link ─────────────────────────────────────────────────
 .fpLogo {
     display        : flex;
     align-items    : center;
@@ -54,10 +53,21 @@ $bp-md: 768px;
     transition     : opacity 0.2s;
 
     &:hover {
-        opacity: 0.8;
+        opacity: 0.85;
     }
 }
 
+// ── Logo image ────────────────────────────────────────────────
+.fpLogoImg {
+    width        : 40px;
+    height       : 40px;
+    object-fit   : cover;
+    flex-shrink  : 0;
+    border-radius: 50%;
+    filter       : drop-shadow(0 1px 3px rgba(0, 0, 0, 0.18));
+}
+
+// ── Logo wordmark ─────────────────────────────────────────────
 .fpLogoText {
     display       : flex;
     flex-direction: column;
@@ -86,7 +96,7 @@ $bp-md: 768px;
     line-height   : 1;
 }
 
-// ── Desktop Ant Design menu overrides ────────────────────────
+// ── Desktop Ant Design menu overrides ─────────────────────────
 :global {
     .fp-menu.ant-menu-horizontal {
         background   : transparent !important;
@@ -138,7 +148,7 @@ $bp-md: 768px;
     }
 }
 
-// ── Account / settings button ─────────────────────────────────
+// ── Account / settings Ant button ────────────────────────────
 :global {
     .fp-acct-btn.ant-btn {
         color        : var(--fp-text) !important;
@@ -177,7 +187,7 @@ $bp-md: 768px;
     }
 }
 
-// ── Mobile nav overlay ────────────────────────────────────────
+// ── Mobile nav overlay (backdrop) ─────────────────────────────
 .fpMobileOverlay {
     position       : fixed;
     inset          : 64px 0 0 0;
@@ -225,7 +235,7 @@ $bp-md: 768px;
     display       : flex;
     flex-direction: column;
     gap           : 4px;
-    margin-bottom : 12px;
+    margin-bottom : 0;
 }
 
 .fpMobileLink {
