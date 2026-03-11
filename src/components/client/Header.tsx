@@ -18,7 +18,7 @@ import { toast } from 'react-toastify';
 import ModalBookingHistory from '../../pages/client/booking/modals/ModalBookingHistory';
 import { useRole } from '../../hooks/common/useRole';
 import styles from './Header.module.scss';
-import LogoGlow from '../../components/LogoGlow/LogoGlow';
+import LogoGlow from '../logo-glow/LogoGlow';
 
 const { useBreakpoint } = Grid;
 

@@ -4,7 +4,7 @@ import { BiLogoFacebookCircle } from "react-icons/bi";
 import { SiZalo } from "react-icons/si";
 import { MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
 import { Link } from "react-router";
-import LogoGlow from "../../components/LogoGlow/LogoGlow";
+import LogoGlow from "../logo-glow/LogoGlow";
 
 const { Footer: AntFooter } = Layout;
 const { Title, Text, Paragraph } = Typography;
