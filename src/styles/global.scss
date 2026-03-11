@@ -1,45 +1,38 @@
-
 /* ====================== global.scss ====================== */
 
-/* ------------------ */
-/* Variables & Theme  */
-/* ------------------ */
+/* ─────────────────────────────────────────
+   Variables & Theme
+   ───────────────────────────────────────── */
 :root {
-    /* Colors */
     --luxury-gold : #faad14;
     --luxury-dark : #2b3a4b;
     --luxury-light: #ffffff;
-    --text-light  : #fff;
-    --text-dark   : #000;
+    --text-light  : #e2e8f0;
+    --text-dark   : #1a2733;
 
-    /* Buttons */
     --btn-bg  : var(--luxury-gold);
-    --btn-text: var(--text-light);
+    --btn-text: #000;
 
-    /* Card */
     --card-bg-light: #fff;
-    --card-bg-dark : #283446;
+    --card-bg-dark : #0f1c2b;
 
-    /* Page text */
     --text-page-light: #333;
-    --text-page-dark : wheat;
+    --text-page-dark : #e2e8f0;
 
-    /* Layout */
     --header-bg-light : #f0f2f5;
     --header-bg-dark  : #1a2733;
     --footer-bg-light : #f0f2f5;
     --footer-bg-dark  : #1a2733;
     --primary-bg-light: #fff;
-    --primary-bg-dark : var(--luxury-dark);
+    --primary-bg-dark : #2b3a4b;
 
-    /* Footer border */
     --footer-border-light: rgba(0, 0, 0, 0.1);
     --footer-border-dark : rgba(255, 255, 255, 0.1);
 }
 
-/* ------------------ */
-/* Light / Dark mode */
-/* ------------------ */
+/* ─────────────────────────────────────────
+   Light / Dark mode
+   ───────────────────────────────────────── */
 body.light {
     --bg-color  : var(--primary-bg-light);
     --text-color: var(--text-dark);
@@ -54,23 +47,387 @@ body.dark {
     --text-page : var(--text-page-dark);
 }
 
-/* ------------------ */
-/* Global Reset       */
-/* ------------------ */
+/* ═══════════════════════════════════════════════════════════
+   ANT DESIGN 5.x — CSS TOKEN OVERRIDE
+   
+   Ant Design 5 dùng CSS-in-JS + seed tokens. Để override
+   mà không cần ConfigProvider, ghi đè các --ant-* vars.
+   Selector phải đủ mạnh hơn :where() mà Ant Design dùng.
+   ══════════════════════════════════════════════════════════ */
+
+/* ── LIGHT ─────────────────────────────── */
+body.light {
+    /* Text colors */
+    --ant-color-text            : #1a2733;
+    --ant-color-text-secondary  : #5a6a7e;
+    --ant-color-text-tertiary   : #8c9db0;
+    --ant-color-text-quaternary : #b0bec5;
+    --ant-color-text-heading    : #1a2733;
+    --ant-color-text-label      : #1a2733;
+    --ant-color-text-description: #5a6a7e;
+    --ant-color-text-disabled   : rgba(0, 0, 0, 0.25);
+    --ant-color-text-placeholder: rgba(0, 0, 0, 0.35);
+
+    /* Backgrounds */
+    --ant-color-bg-base     : #ffffff;
+    --ant-color-bg-container: #ffffff;
+    --ant-color-bg-elevated : #ffffff;
+    --ant-color-bg-layout   : #f5f7fa;
+    --ant-color-bg-spotlight: rgba(0, 0, 0, 0.06);
+    --ant-color-bg-mask     : rgba(0, 0, 0, 0.45);
+
+    /* Borders */
+    --ant-color-border          : rgba(0, 0, 0, 0.12);
+    --ant-color-border-secondary: rgba(0, 0, 0, 0.06);
+    --ant-color-split           : rgba(0, 0, 0, 0.06);
+
+    /* Fill */
+    --ant-color-fill           : rgba(0, 0, 0, 0.06);
+    --ant-color-fill-secondary : rgba(0, 0, 0, 0.04);
+    --ant-color-fill-tertiary  : rgba(0, 0, 0, 0.02);
+    --ant-color-fill-quaternary: rgba(0, 0, 0, 0.01);
+}
+
+/* ── DARK ──────────────────────────────── */
+body.dark {
+    /* Text colors */
+    --ant-color-text            : #e2e8f0;
+    --ant-color-text-secondary  : #94a3b8;
+    --ant-color-text-tertiary   : #64748b;
+    --ant-color-text-quaternary : #475569;
+    --ant-color-text-heading    : #e2e8f0;
+    --ant-color-text-label      : #e2e8f0;
+    --ant-color-text-description: #94a3b8;
+    --ant-color-text-disabled   : rgba(255, 255, 255, 0.25);
+    --ant-color-text-placeholder: rgba(255, 255, 255, 0.35);
+
+    /* Backgrounds */
+    --ant-color-bg-base     : #0f1c2b;
+    --ant-color-bg-container: #0f1c2b;
+    --ant-color-bg-elevated : #162436;
+    --ant-color-bg-layout   : #080f17;
+    --ant-color-bg-spotlight: rgba(255, 255, 255, 0.08);
+    --ant-color-bg-mask     : rgba(0, 0, 0, 0.65);
+
+    /* Borders */
+    --ant-color-border          : rgba(255, 255, 255, 0.10);
+    --ant-color-border-secondary: rgba(255, 255, 255, 0.06);
+    --ant-color-split           : rgba(255, 255, 255, 0.06);
+
+    /* Fill */
+    --ant-color-fill           : rgba(255, 255, 255, 0.08);
+    --ant-color-fill-secondary : rgba(255, 255, 255, 0.06);
+    --ant-color-fill-tertiary  : rgba(255, 255, 255, 0.04);
+    --ant-color-fill-quaternary: rgba(255, 255, 255, 0.02);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ANT DESIGN COMPONENT OVERRIDES
+   Fallback cho các component inject style trực tiếp
+   ══════════════════════════════════════════════════════════ */
+
+/* Layout */
+body.dark .ant-layout {
+    background: #080f17 !important;
+}
+
+body.light .ant-layout {
+    background: #f5f7fa !important;
+}
+
+/* Typography */
+body.dark .ant-typography {
+    color: #e2e8f0;
+}
+
+body.light .ant-typography {
+    color: #1a2733;
+}
+
+body.dark h1.ant-typography,
+body.dark h2.ant-typography,
+body.dark h3.ant-typography,
+body.dark h4.ant-typography,
+body.dark h5.ant-typography {
+    color: #e2e8f0;
+}
+
+body.light h1.ant-typography,
+body.light h2.ant-typography,
+body.light h3.ant-typography,
+body.light h4.ant-typography,
+body.light h5.ant-typography {
+    color: #1a2733;
+}
+
+/* Card */
+body.dark .ant-card {
+    background  : #0f1c2b;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark .ant-card-head {
+    color       : #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.08);
+    background  : #0f1c2b;
+}
+
+body.dark .ant-card-body {
+    color: #e2e8f0;
+}
+
+body.light .ant-card {
+    background: #ffffff;
+}
+
+body.light .ant-card-head {
+    color: #1a2733 !important;
+}
+
+/* Table */
+body.dark .ant-table {
+    background: #0f1c2b;
+    color     : #e2e8f0;
+}
+
+body.dark .ant-table-thead>tr>th {
+    background  : #162436 !important;
+    color       : #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark .ant-table-tbody>tr>td {
+    border-color: rgba(255, 255, 255, 0.06) !important;
+    color       : #e2e8f0;
+}
+
+body.dark .ant-table-tbody>tr:hover>td {
+    background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Form / Input */
+body.dark .ant-form-item-label>label {
+    color: #e2e8f0 !important;
+}
+
+body.dark .ant-input {
+    background  : #162436;
+    color       : #e2e8f0;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark .ant-input::placeholder {
+    color: rgba(255, 255, 255, 0.35);
+}
+
+body.dark .ant-input-affix-wrapper {
+    background  : #162436;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark .ant-select-selector {
+    background  : #162436 !important;
+    color       : #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.dark .ant-select-selection-placeholder {
+    color: rgba(255, 255, 255, 0.35) !important;
+}
+
+body.dark .ant-select-arrow {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* Select dropdown */
+body.dark .ant-select-dropdown {
+    background: #162436;
+}
+
+body.dark .ant-select-item {
+    color: #e2e8f0;
+}
+
+body.dark .ant-select-item-option-active {
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
+body.dark .ant-select-item-option-selected {
+    background: rgba(250, 173, 20, 0.15) !important;
+    color     : #faad14 !important;
+}
+
+/* Menu */
+body.dark .ant-menu {
+    background: transparent;
+    color     : #e2e8f0;
+}
+
+body.dark .ant-menu-item {
+    color: #e2e8f0;
+}
+
+body.dark .ant-menu-item:hover {
+    color: #faad14 !important;
+}
+
+body.dark .ant-menu-item-selected {
+    color: #faad14 !important;
+}
+
+/* Modal */
+body.dark .ant-modal-content {
+    background: #0f1c2b;
+    color     : #e2e8f0;
+}
+
+body.dark .ant-modal-header {
+    background  : #0f1c2b;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark .ant-modal-title {
+    color: #e2e8f0 !important;
+}
+
+body.dark .ant-modal-close {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* Drawer */
+body.dark .ant-drawer-content {
+    background: #0f1c2b;
+}
+
+body.dark .ant-drawer-header {
+    background  : #0f1c2b;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark .ant-drawer-title {
+    color: #e2e8f0 !important;
+}
+
+body.dark .ant-drawer-body {
+    color: #e2e8f0;
+}
+
+/* Divider */
+body.dark .ant-divider {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.light .ant-divider {
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Tag */
+body.dark .ant-tag {
+    background  : rgba(255, 255, 255, 0.08);
+    color       : #e2e8f0;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* List */
+body.dark .ant-list-item {
+    color       : #e2e8f0;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+body.dark .ant-list-item-meta-title {
+    color: #e2e8f0 !important;
+}
+
+body.dark .ant-list-item-meta-description {
+    color: #94a3b8 !important;
+}
+
+/* Pagination */
+body.dark .ant-pagination-item {
+    background  : #162436;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark .ant-pagination-item a {
+    color: #e2e8f0;
+}
+
+body.dark .ant-pagination-item-active {
+    border-color: #faad14 !important;
+}
+
+body.dark .ant-pagination-item-active a {
+    color: #faad14 !important;
+}
+
+/* Tooltip */
+body.dark .ant-tooltip-inner {
+    background: #162436;
+    color     : #e2e8f0;
+}
+
+/* Popover */
+body.dark .ant-popover-inner {
+    background: #0f1c2b;
+}
+
+body.dark .ant-popover-inner-content {
+    color: #e2e8f0;
+}
+
+body.dark .ant-popover-title {
+    color       : #e2e8f0;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Tabs */
+body.dark .ant-tabs-tab {
+    color: #94a3b8;
+}
+
+body.dark .ant-tabs-tab:hover {
+    color: #e2e8f0;
+}
+
+body.dark .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: #faad14 !important;
+}
+
+body.dark .ant-tabs-ink-bar {
+    background: #faad14;
+}
+
+body.dark .ant-tabs-nav::before {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Badge / Statistic */
+body.dark .ant-statistic-title {
+    color: #94a3b8;
+}
+
+body.dark .ant-statistic-content {
+    color: #e2e8f0;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL RESET
+   ══════════════════════════════════════════════════════════ */
 html,
 body {
     margin          : 0;
     padding         : 0;
-    font-family     : 'Segoe UI', Roboto, sans-serif;
+    font-family     : 'Segoe UI', 'Be Vietnam Pro', Roboto, sans-serif;
     width           : 100%;
     min-height      : 100vh;
     background-color: var(--bg-color);
     color           : var(--text-color);
+    transition      : background-color 0.3s ease, color 0.3s ease;
 }
 
-/* ------------------ */
-/* Layout Helpers     */
-/* ------------------ */
+/* ─────────────────────────────────────────
+   Layout Helpers
+   ───────────────────────────────────────── */
 .layout-full {
     display       : flex;
     flex-direction: column;
@@ -86,9 +443,9 @@ body {
     width    : 100%;
 }
 
-/* ------------------ */
-/* Card / Buttons     */
-/* ------------------ */
+/* ─────────────────────────────────────────
+   Card / Buttons
+   ───────────────────────────────────────── */
 .card {
     background-color: var(--card-bg);
     color           : var(--text-page);
@@ -110,15 +467,17 @@ body {
     }
 }
 
-/* ------------------ */
-/* Typography helpers */
-/* ------------------ */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+/* ─────────────────────────────────────────
+   Typography helpers
+   Dùng :not([class]) để không conflict
+   với các class hp__, ant-, etc.
+   ───────────────────────────────────────── */
+h1:not([class]),
+h2:not([class]),
+h3:not([class]),
+h4:not([class]),
+h5:not([class]),
+h6:not([class]) {
     color: var(--luxury-gold);
 }
 
@@ -146,9 +505,9 @@ h6 {
     margin-bottom: 16px;
 }
 
-/* ------------------ */
-/* Container / Grid   */
-/* ------------------ */
+/* ─────────────────────────────────────────
+   Container / Grid
+   ───────────────────────────────────────── */
 .container {
     width    : 100%;
     max-width: 1200px;
@@ -156,19 +515,27 @@ h6 {
     padding  : 0 16px;
 }
 
-/* ------------------ */
-/* Scrollbar          */
-/* ------------------ */
+/* ─────────────────────────────────────────
+   Scrollbar
+   ───────────────────────────────────────── */
 ::-webkit-scrollbar {
-    height: 8px;
     width : 8px;
-}
-
-::-webkit-scrollbar-thumb {
-    background   : rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background   : rgba(128, 128, 128, 0.3);
+
+    &:hover {
+        background: rgba(128, 128, 128, 0.5);
+    }
+}
+
+body.dark ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
 }

@@ -44,6 +44,8 @@ const scaleIn: Variants = {
         transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: i * 0.13 },
     }),
 };
+
+
 // ── Data ───────────────────────────────────────────────────────
 const features = [
     {
@@ -74,11 +76,12 @@ const stats = [
 ];
 
 const benefits = [
-    "Đặt sân nhanh chóng, xác nhận tức thì",
+    "Xác nhận đặt sân qua email & SMS",
     "Thanh toán an toàn, nhiều hình thức",
     "Lịch sử đặt sân chi tiết",
     "Hủy & hoàn tiền linh hoạt",
     "Giao diện tối / sáng theo sở thích",
+    "Hỗ trợ cả mobile và desktop",
 ];
 
 const slides = [
@@ -153,7 +156,7 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                                     className="hp__btn-primary"
                                     size="large"
                                     icon={<ArrowRightOutlined />}
-                                    iconPlacement="end"
+                                    iconPosition="end"
                                     onClick={() => navigate("/pitch")}
                                 >
                                     Đặt sân ngay
@@ -222,8 +225,8 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                                 >
                                     <CalendarOutlined style={{ color: '#faad14' }} />
                                     <div>
-                                        <p>Sân A3 • 18:00–20:00</p>
-                                        <span>Đã xác nhận ✓</span>
+                                        <p className="hp__float-title">Sân A3 • 18:00–20:00</p>
+                                        <span className="hp__float-sub">Đã xác nhận ✓</span>
                                     </div>
                                 </motion.div>
                             </div>
