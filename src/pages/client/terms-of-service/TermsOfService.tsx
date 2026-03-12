@@ -1,4 +1,11 @@
 import { Layout } from "antd";
+import {
+    InfoCircleOutlined,
+    UserOutlined,
+    SafetyOutlined,
+    EditOutlined,
+    CustomerServiceOutlined,
+} from "@ant-design/icons";
 import { motion, type Variants } from "framer-motion";
 import "./TermsOfService.scss";
 
@@ -20,22 +27,27 @@ const fadeUp: Variants = {
 const terms = [
     {
         title: "Giới thiệu",
+        icon: <InfoCircleOutlined />,
         text: "Hệ thống đặt sân bóng Đại học Tây Bắc cung cấp nền tảng giúp sinh viên và giảng viên dễ dàng đặt sân, theo dõi lịch thi đấu và quản lý hoạt động thể thao."
     },
     {
         title: "Quyền và trách nhiệm của người dùng",
+        icon: <UserOutlined />,
         text: "Người dùng phải cung cấp thông tin chính xác khi đăng ký tài khoản và bảo mật thông tin đăng nhập của mình."
     },
     {
         title: "Quyền và trách nhiệm của hệ thống",
+        icon: <SafetyOutlined />,
         text: "Chúng tôi cam kết bảo mật dữ liệu, đảm bảo hệ thống hoạt động ổn định và hỗ trợ người dùng khi cần thiết."
     },
     {
         title: "Thay đổi điều khoản",
+        icon: <EditOutlined />,
         text: "Các điều khoản có thể được cập nhật theo thời gian. Người dùng nên thường xuyên kiểm tra để nắm rõ các thay đổi."
     },
     {
         title: "Liên hệ hỗ trợ",
+        icon: <CustomerServiceOutlined />,
         text: "Nếu có thắc mắc vui lòng liên hệ bộ phận quản trị hệ thống để được hỗ trợ."
     }
 ];
@@ -111,6 +123,7 @@ const TermsOfService: React.FC<TermsOfServiceProps> = ({ theme }) => {
                                     variants={fadeUp}
                                     custom={i}
                                 >
+                                    <div className="terms-card-icon">{t.icon}</div>
                                     <h3>{i + 1}. {t.title}</h3>
                                     <p>{t.text}</p>
                                 </motion.div>

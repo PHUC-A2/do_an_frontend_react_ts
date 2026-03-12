@@ -1,5 +1,6 @@
 import { Layout, ConfigProvider, theme as antdTheme } from 'antd';
 import { Outlet } from 'react-router';
+import type { CSSProperties } from 'react';
 import Header from '../components/client/Header';
 import Footer from '../components/client/Footer';
 import MessageButton from '../components/client/chat/MessageButton';
@@ -10,6 +11,15 @@ interface ClientLayoutProps {
 }
 
 const { Content } = Layout;
+
+const layoutStyle = {
+    minHeight: '100vh',
+} as CSSProperties;
+
+const contentStyle = {
+    padding: 'var(--header-height, 70px) 24px 24px',
+    background: 'transparent',
+} as CSSProperties;
 
 const ClientLayout = ({ theme, toggleTheme }: ClientLayoutProps) => {
     const isDark = theme === 'dark';
@@ -24,10 +34,10 @@ const ClientLayout = ({ theme, toggleTheme }: ClientLayoutProps) => {
                 },
             }}
         >
-            <Layout style={{ minHeight: '100vh' }}>
+            <Layout style={layoutStyle}>
                 <MessageButton />
                 <Header theme={theme} toggleTheme={toggleTheme} />
-                <Content style={{ padding: 24, marginTop: 64, background: 'transparent' }}>
+                <Content style={contentStyle}>
                     <Outlet />
                 </Content>
                 <Footer theme={isDark ? 'dark' : 'light'} />
@@ -35,6 +45,5 @@ const ClientLayout = ({ theme, toggleTheme }: ClientLayoutProps) => {
         </ConfigProvider>
     );
 };
-
 
 export default ClientLayout;

@@ -30,6 +30,24 @@
     --footer-border-dark : rgba(255, 255, 255, 0.1);
 }
 
+/* Enforce a single vertical system scrollbar */
+html,
+body {
+    width     : 100%;
+    max-width : 100%;
+    overflow-x: hidden;
+}
+
+body {
+    overflow-y: auto;
+}
+
+#root {
+    width     : 100%;
+    max-width : 100%;
+    overflow-x: hidden;
+}
+
 /* ─────────────────────────────────────────
    Light / Dark mode
    ───────────────────────────────────────── */

@@ -225,8 +225,8 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                                 >
                                     <CalendarOutlined style={{ color: '#faad14' }} />
                                     <div>
-                                        <p className="hp__float-title">Sân A3 • 18:00–20:00</p>
-                                        <span className="hp__float-sub">Đã xác nhận ✓</span>
+                                        <p className="hp__float-title">Lịch đặt theo thời gian thực</p>
+                                        <span className="hp__float-sub">Cập nhật trạng thái tức thì</span>
                                     </div>
                                 </motion.div>
                             </div>

@@ -14,37 +14,39 @@ $bp-lg : 1024px;
     width     : 100%;
 
     &--light {
-        --bg        : #f5f7fa;
-        --bg-card   : #ffffff;
-        --bg-card2  : #f0f4f8;
-        --text      : #1a2733;
-        --text-muted: #64748b;
-        --border    : rgba(0, 0, 0, 0.08);
-        --orb-1     : rgba(0, 123, 61, 0.12);
-        --orb-2     : rgba(0, 100, 168, 0.10);
-        --orb-3     : rgba(250, 173, 20, 0.08);
+        --bg          : #f5f7fa;
+        --bg-card     : rgba(255, 255, 255, 0.78);
+        --bg-card2    : rgba(240, 244, 248, 0.68);
+        --text        : #1a2733;
+        --text-muted  : #64748b;
+        --border      : rgba(15, 23, 42, 0.10);
+        --orb-1       : rgba(0, 123, 61, 0.12);
+        --orb-2       : rgba(0, 100, 168, 0.10);
+        --orb-3       : rgba(250, 173, 20, 0.08);
+        --glass-shadow: 0 18px 46px rgba(15, 23, 42, 0.10);
         // float card
-        --float-bg  : rgba(255, 255, 255, 0.95);
-        --float-text: #1a2733;
-        background  : var(--bg);
-        color       : var(--text);
+        --float-bg    : rgba(255, 255, 255, 0.84);
+        --float-text  : #1a2733;
+        background    : var(--bg);
+        color         : var(--text);
     }
 
     &--dark {
-        --bg        : #080f17;
-        --bg-card   : #0f1c2b;
-        --bg-card2  : #0d1a26;
-        --text      : #e2e8f0;
-        --text-muted: #64748b;
-        --border    : rgba(255, 255, 255, 0.07);
-        --orb-1     : rgba(0, 123, 61, 0.18);
-        --orb-2     : rgba(0, 100, 168, 0.16);
-        --orb-3     : rgba(250, 173, 20, 0.10);
+        --bg          : #080f17;
+        --bg-card     : rgba(15, 28, 43, 0.74);
+        --bg-card2    : rgba(13, 26, 38, 0.64);
+        --text        : #e2e8f0;
+        --text-muted  : #64748b;
+        --border      : rgba(250, 173, 20, 0.13);
+        --orb-1       : rgba(0, 123, 61, 0.18);
+        --orb-2       : rgba(0, 100, 168, 0.16);
+        --orb-3       : rgba(250, 173, 20, 0.10);
+        --glass-shadow: 0 20px 48px rgba(2, 6, 23, 0.35);
         // float card
-        --float-bg  : rgba(15, 28, 43, 0.92);
-        --float-text: #e2e8f0;
-        background  : var(--bg);
-        color       : var(--text);
+        --float-bg    : rgba(15, 28, 43, 0.82);
+        --float-text  : #e2e8f0;
+        background    : var(--bg);
+        color         : var(--text);
     }
 }
 
@@ -312,7 +314,7 @@ $bp-lg : 1024px;
     border-radius: 20px;
     overflow     : hidden;
     aspect-ratio : 4/3;
-    box-shadow   : 0 32px 80px rgba(0, 0, 0, 0.25);
+    box-shadow   : var(--glass-shadow);
 
     &::before {
         content   : '';
@@ -370,7 +372,7 @@ $bp-lg : 1024px;
     display        : flex;
     align-items    : center;
     gap            : 10px;
-    box-shadow     : 0 8px 32px rgba(0, 0, 0, 0.15);
+    box-shadow     : 0 12px 34px rgba(0, 0, 0, 0.18);
     min-width      : 190px;
 
     .anticon {
@@ -426,18 +428,21 @@ $bp-lg : 1024px;
 }
 
 .hp__feat-card {
-    background   : var(--bg-card);
-    border       : 1px solid var(--border);
-    border-radius: 20px;
-    padding      : 36px 28px 32px;
-    position     : relative;
-    overflow     : hidden;
-    cursor       : default;
-    transition   : border-color 0.3s, box-shadow 0.3s;
+    background             : var(--bg-card);
+    border                 : 1px solid var(--border);
+    border-radius          : 20px;
+    padding                : 36px 28px 32px;
+    position               : relative;
+    overflow               : hidden;
+    cursor                 : default;
+    transition             : border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+    backdrop-filter        : blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 
     &:hover {
-        border-color: rgba(250, 173, 20, 0.25);
-        box-shadow  : 0 20px 60px rgba(0, 0, 0, 0.1);
+        border-color: rgba(250, 173, 20, 0.28);
+        box-shadow  : 0 20px 54px rgba(0, 0, 0, 0.16);
+        background  : color-mix(in srgb, var(--bg-card) 88%, rgba(250, 173, 20, 0.08));
     }
 }
 
@@ -479,8 +484,12 @@ $bp-lg : 1024px;
 // WHY US
 // ──────────────────────────────────────────────────────────────
 .hp__why {
-    padding   : 96px 0;
-    background: var(--bg-card2);
+    padding                : 96px 0;
+    background             : var(--bg-card2);
+    backdrop-filter        : blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top             : 1px solid var(--border);
+    border-bottom          : 1px solid var(--border);
 
     @media (max-width: $bp-md) {
         padding: 64px 0;
@@ -513,7 +522,7 @@ $bp-lg : 1024px;
     object-fit   : cover;
     aspect-ratio : 4/3;
     display      : block;
-    box-shadow   : 0 24px 60px rgba(0, 0, 0, 0.2);
+    box-shadow   : var(--glass-shadow);
 }
 
 .hp__why-badge {
@@ -596,7 +605,14 @@ $bp-lg : 1024px;
     padding      : 80px 48px;
     text-align   : center;
     overflow     : hidden;
-    background   : linear-gradient(135deg, #00622f 0%, #004d7a 50%, #003d6e 100%);
+    background   : linear-gradient(135deg,
+            rgba(0, 98, 47, 0.9) 0%,
+            rgba(0, 77, 122, 0.88) 50%,
+            rgba(0, 61, 110, 0.9) 100%);
+    border                 : 1px solid rgba(250, 173, 20, 0.22);
+    box-shadow             : var(--glass-shadow);
+    backdrop-filter        : blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 
     @media (max-width: $bp-md) {
         padding: 56px 24px;

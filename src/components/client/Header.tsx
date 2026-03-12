@@ -1,283 +1,500 @@
-import { Menu, Button, Dropdown, Space, Switch, Tooltip, Grid } from 'antd';
-import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router';
+import { Avatar, Switch } from 'antd';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router';
 import {
-    AiFillHome, AiOutlineLogin, AiOutlineLogout,
-    AiOutlineUserAdd, AiFillDashboard, AiFillCodepenCircle,
-} from 'react-icons/ai';
-import { MdAccountCircle, MdWorkHistory } from 'react-icons/md';
-import { FaInfoCircle } from 'react-icons/fa';
-import ModalAccount from '../../pages/auth/modal/ModalAccount';
-import type { MenuProps } from 'antd';
-import { LuMoon } from 'react-icons/lu';
-import { IoSettingsOutline, IoSunny } from 'react-icons/io5';
-import { useAppDispatch, useAppSelector } from '../../redux/hooks';
-import { logout } from '../../config/Api';
-import { setLogout } from '../../redux/features/authSlice';
+    FiBell,
+    FiBookOpen,
+    FiCalendar,
+    FiChevronDown,
+    FiEdit3,
+    FiHome,
+    FiInfo,
+    FiKey,
+    FiLogIn,
+    FiLogOut,
+    FiMapPin,
+    FiMenu,
+    FiMoon,
+    FiSearch,
+    FiShield,
+    FiSun,
+    FiUser,
+    FiUserPlus,
+    FiX,
+} from 'react-icons/fi';
+import type { IconType } from 'react-icons';
 import { toast } from 'react-toastify';
+import { logout } from '../../config/Api';
+import { useOutsideClick } from '../../hooks/common/useOutsideClick';
+import ModalAccount from '../../pages/auth/modal/ModalAccount';
+import ModalForget from '../../pages/auth/modal/ModalForget';
+import ModalUpdateAccount from '../../pages/auth/modal/ModalUpdateAccount';
 import ModalBookingHistory from '../../pages/client/booking/modals/ModalBookingHistory';
-import { useRole } from '../../hooks/common/useRole';
+import { setLogout } from '../../redux/features/authSlice';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { hasRole } from '../../utils/role';
 import styles from './Header.module.scss';
 import LogoGlow from '../logo-glow/LogoGlow';
-
-const { useBreakpoint } = Grid;
 
 interface HeaderProps {
     theme: 'light' | 'dark';
     toggleTheme: () => void;
 }
 
-function buildCssVars(isDark: boolean, scrolled: boolean): React.CSSProperties {
-    return {
-        '--fp-gold': '#faad14',
-        '--fp-text': isDark ? '#e2e8f0' : '#1a2733',
-        '--fp-muted': isDark ? '#475569' : '#94a3b8',
-        '--fp-header-bg': isDark
-            ? (scrolled ? 'rgba(0,21,41,0.97)' : 'rgba(0,21,41,0.88)')
-            : (scrolled ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.88)'),
-        '--fp-border': isDark
-            ? '1px solid rgba(250,173,20,0.1)'
-            : '1px solid rgba(0,0,0,0.07)',
-        '--fp-shadow': scrolled
-            ? (isDark ? '0 4px 24px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.08)')
-            : 'none',
-        '--fp-panel-bg': isDark ? '#001529' : '#ffffff',
-        '--fp-panel-shadow': isDark
-            ? '0 16px 40px rgba(0,0,0,0.6)'
-            : '0 16px 40px rgba(0,0,0,0.12)',
-        '--fp-hover-bg': isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-        '--fp-icon-bg': isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-        '--fp-link-active-bg': isDark ? 'rgba(250,173,20,0.10)' : 'rgba(250,173,20,0.08)',
-        '--fp-link-active-bg-strong': isDark ? 'rgba(250,173,20,0.14)' : 'rgba(250,173,20,0.10)',
-        '--fp-divider': isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)',
-    } as React.CSSProperties;
+interface NavItem {
+    key: 'home' | 'pitch' | 'booking' | 'about';
+    label: string;
+    to: string;
+    matches: string[];
+    icon: IconType;
 }
 
-// ── Animated hamburger ────────────────────────────────────────
-const HamburgerIcon = ({ open, color }: { open: boolean; color: string }) => (
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-        <rect className="hb-top" x="3" y="6" width="16" height="2" rx="1" fill={color}
-            style={{ transform: open ? 'rotate(45deg) translateY(4px)' : undefined }} />
-        <rect className="hb-mid" x="3" y="10" width="16" height="2" rx="1" fill={color}
-            style={{ opacity: open ? 0 : 1, transform: open ? 'scaleX(0)' : undefined }} />
-        <rect className="hb-bot" x="3" y="14" width="16" height="2" rx="1" fill={color}
-            style={{ transform: open ? 'rotate(-45deg) translateY(-4px)' : undefined }} />
-    </svg>
-);
+const NAV_ITEMS: NavItem[] = [
+    { key: 'home', label: 'Trang chủ', to: '/', matches: ['/'], icon: FiHome },
+    { key: 'pitch', label: 'Sân bóng', to: '/pitch', matches: ['/pitch'], icon: FiMapPin },
+    { key: 'booking', label: 'Đặt sân', to: '/pitch', matches: ['/booking'], icon: FiBookOpen },
+    { key: 'about', label: 'Giới thiệu', to: '/about', matches: ['/about'], icon: FiInfo },
+];
 
-// ─────────────────────────────────────────────────────────────
+const buildCssVars = (isDark: boolean): CSSProperties => ({
+    '--header-accent': '#faad14',
+    '--header-accent-strong': '#d48806',
+    '--header-hover-text': isDark ? '#faad14' : '#92700a',
+    '--header-surface-soft': isDark ? 'rgba(15, 28, 43, 0.86)' : 'rgba(248, 250, 252, 0.9)',
+    '--header-surface-solid': isDark ? '#0f1c2b' : '#f8fafc',
+    '--header-panel': isDark ? '#102033' : '#ffffff',
+    '--header-border': isDark ? 'rgba(250, 173, 20, 0.14)' : 'rgba(15, 23, 42, 0.12)',
+    '--header-text': isDark ? '#e2e8f0' : '#1a2733',
+    '--header-muted': isDark ? '#94a3b8' : '#5a6a7e',
+    '--header-hover': isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(250, 173, 20, 0.12)',
+    '--header-shadow': isDark ? '0 18px 48px rgba(2, 6, 23, 0.35)' : '0 18px 42px rgba(15, 23, 42, 0.10)',
+    '--header-overlay': 'rgba(5, 8, 16, 0.54)',
+    '--header-menu-shadow': isDark ? '0 22px 48px rgba(2, 6, 23, 0.55)' : '0 22px 48px rgba(15, 23, 42, 0.16)',
+}) as CSSProperties;
+
+const getHeaderHeight = (compact: boolean) => {
+    if (typeof window === 'undefined') {
+        return compact ? 52 : 70;
+    }
+
+    const isMobileViewport = window.innerWidth <= 768;
+
+    if (isMobileViewport) {
+        return compact ? 56 : 68;
+    }
+
+    return compact ? 52 : 70;
+};
+
 const Header = ({ theme, toggleTheme }: HeaderProps) => {
-    const [mobileOpen, setMobileOpen] = useState(false);
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+    const [compact, setCompact] = useState(false);
     const [openModalAccount, setOpenModalAccount] = useState(false);
+    const [openModalUpdateAccount, setOpenModalUpdateAccount] = useState(false);
+    const [openModalForget, setOpenModalForget] = useState(false);
     const [openModalBookingHistory, setOpenModalBookingHistory] = useState(false);
-    const [scrolled, setScrolled] = useState(false);
 
-    const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
+    const account = useAppSelector((state) => state.account.account);
+    const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const location = useLocation();
-    const screens = useBreakpoint();
-    const isViewRole = useRole('VIEW');
+    const accountMenuRef = useRef<HTMLDivElement | null>(null);
+    const lastScrollYRef = useRef(0);
+    const tickingRef = useRef(false);
 
     const isDark = theme === 'dark';
-    const textColor = isDark ? '#e2e8f0' : '#1a2733';
-    const cssVars = buildCssVars(isDark, scrolled);
+    const displayName = account?.fullName || account?.name || 'Tài khoản của bạn';
+    const roleLabel = account?.roles?.[0]?.name || 'MEMBER';
+    const canOpenAdmin = hasRole(account, 'ADMIN');
+    const initials = (displayName.trim()[0] || 'U').toUpperCase();
 
-    const activeKey = (() => {
-        if (location.pathname === '/') return 'home';
-        if (location.pathname.startsWith('/pitch')) return 'pitch';
-        if (location.pathname.startsWith('/about')) return 'about';
-        return '';
-    })();
+    useOutsideClick(accountMenuRef, () => setAccountMenuOpen(false), accountMenuOpen);
 
     useEffect(() => {
-        const onScroll = () => setScrolled(window.scrollY > 8);
-        window.addEventListener('scroll', onScroll, { passive: true });
-        return () => window.removeEventListener('scroll', onScroll);
+        const vars = buildCssVars(isDark);
+        const entries = Object.entries(vars);
+        entries.forEach(([key, value]) => {
+            if (typeof value === 'string') {
+                document.documentElement.style.setProperty(key, value);
+            }
+        });
+        return () => {
+            entries.forEach(([key]) => {
+                document.documentElement.style.removeProperty(key);
+            });
+        };
+    }, [isDark]);
+
+
+    useEffect(() => {
+        const updateHeaderHeight = () => {
+            document.documentElement.style.setProperty('--header-height', `${getHeaderHeight(compact)}px`);
+        };
+
+        updateHeaderHeight();
+        window.addEventListener('resize', updateHeaderHeight);
+
+        return () => {
+            window.removeEventListener('resize', updateHeaderHeight);
+            document.documentElement.style.setProperty('--header-height', '70px');
+        };
+    }, [compact]);
+
+    useEffect(() => {
+        const updateOnScroll = () => {
+            const currentScrollY = window.scrollY;
+            const scrollingDown = currentScrollY > lastScrollYRef.current;
+            const scrollingUp = currentScrollY < lastScrollYRef.current;
+
+            if (currentScrollY <= 24) {
+                setCompact(false);
+            } else if (currentScrollY > 80 && scrollingDown) {
+                setCompact(true);
+            } else if (scrollingUp) {
+                setCompact(false);
+            }
+
+            lastScrollYRef.current = currentScrollY;
+            tickingRef.current = false;
+        };
+
+        const handleScroll = () => {
+            if (tickingRef.current) {
+                return;
+            }
+
+            tickingRef.current = true;
+            window.requestAnimationFrame(updateOnScroll);
+        };
+
+        handleScroll();
+        window.addEventListener('scroll', handleScroll, { passive: true });
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
     }, []);
 
-    useEffect(() => { if (screens.md) setMobileOpen(false); }, [screens.md]);
-    useEffect(() => { setMobileOpen(false); }, [location.pathname]);
-    useEffect(() => {
-        document.body.style.overflow = mobileOpen ? 'hidden' : '';
-        return () => { document.body.style.overflow = ''; };
-    }, [mobileOpen]);
+    const closeAllPanels = () => {
+        setDrawerOpen(false);
+        setAccountMenuOpen(false);
+    };
 
     const handleLogout = async () => {
         try {
-            const res = await logout();
-            if (res?.data?.statusCode === 200) {
+            const response = await logout();
+
+            if (response?.data?.statusCode === 200) {
                 dispatch(setLogout());
+                closeAllPanels();
                 toast.success('Đăng xuất thành công');
                 navigate('/');
             }
-        } catch (error: any) {
-            toast.error(error?.response?.data?.message || 'Có lỗi xảy ra!');
+        } catch (error: unknown) {
+            const message = typeof error === 'object' && error !== null && 'response' in error
+                ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+                : undefined;
+            toast.error(message || 'Có lỗi xảy ra');
         }
     };
 
-    const linkStyle = { textDecoration: 'none', color: textColor };
+    const handleSearch = () => {
+        closeAllPanels();
+        navigate('/pitch');
+    };
 
-    const mainMenuItems: MenuProps['items'] = [
-        { label: <Link to="/" style={linkStyle}>Trang chủ</Link>, key: 'home', icon: <AiFillHome /> },
-        { label: <Link to="/pitch" style={linkStyle}>Sân bóng</Link>, key: 'pitch', icon: <AiFillCodepenCircle /> },
-        { label: <Link to="/about" style={linkStyle}>Về chúng tôi</Link>, key: 'about', icon: <FaInfoCircle /> },
-    ];
+    const handleNotifications = () => {
+        closeAllPanels();
 
-    const settingsMenu: MenuProps['items'] = isAuthenticated
-        ? [
-            {
-                label: <Link to="#" onClick={() => setOpenModalAccount(true)} style={linkStyle}>Tài khoản</Link>,
-                key: 'account', icon: <MdAccountCircle />,
-            },
-            {
-                label: <Link to="#" style={linkStyle} onClick={handleLogout}>Đăng xuất</Link>,
-                key: 'logout', icon: <AiOutlineLogout />,
-            },
-            ...(!isViewRole ? [{
-                label: <Link to="/admin" style={linkStyle}>Trang quản trị</Link>,
-                key: 'admin', icon: <AiFillDashboard />,
-            }] : []),
-        ]
-        : [
-            { label: <Link to="/login" style={linkStyle}>Đăng nhập</Link>, key: 'login', icon: <AiOutlineLogin /> },
-            { label: <Link to="/register" style={linkStyle}>Đăng ký</Link>, key: 'register', icon: <AiOutlineUserAdd /> },
-        ];
+        if (!isAuthenticated) {
+            toast.info('Đăng nhập để nhận thông báo đặt sân.');
+            navigate('/login');
+            return;
+        }
 
-    const mobileNavLinks = [
-        { to: '/', label: 'Trang chủ', icon: <AiFillHome />, key: 'home' },
-        { to: '/pitch', label: 'Sân bóng', icon: <AiFillCodepenCircle />, key: 'pitch' },
-        { to: '/about', label: 'Về chúng tôi', icon: <FaInfoCircle />, key: 'about' },
-    ];
+        toast.info('Bạn chưa có thông báo mới.');
+    };
+
+    const handleBookingShortcut = () => {
+        closeAllPanels();
+
+        if (!isAuthenticated) {
+            toast.info('Vui lòng đăng nhập để xem lịch đặt sân.');
+            navigate('/login');
+            return;
+        }
+
+        setOpenModalBookingHistory(true);
+    };
+
+    const openAccountInfo = () => {
+        closeAllPanels();
+        setOpenModalAccount(true);
+    };
+
+    const openAccountUpdate = () => {
+        closeAllPanels();
+        setOpenModalUpdateAccount(true);
+    };
+
+    const openPasswordReset = () => {
+        closeAllPanels();
+        setOpenModalForget(true);
+    };
+
+    const openAdminPortal = () => {
+        closeAllPanels();
+        navigate('/admin');
+    };
+
+    const isActiveLink = (item: NavItem) => {
+        if (item.key === 'home') {
+            return location.pathname === '/';
+        }
+
+        return item.matches.some((match) => location.pathname.startsWith(match));
+    };
 
     return (
         <>
-            {/* ── Header bar ──────────────────────────────────── */}
-            <header className={styles.fpHeader} style={cssVars}>
+            <header className={`${styles.header}${compact ? ` ${styles.compact}` : ''}`}>
+                <div className={styles.headerInner}>
+                    <Link to="/" className={styles.brand} onClick={closeAllPanels}>
+                        <LogoGlow variant="header" />
+                        <div className={styles.brandText}>
+                            <span className={styles.brandTitle}>UTB <em>Sport</em></span>
+                            <span className={styles.brandSubtitle}>Đặt sân chuyên nghiệp</span>
+                        </div>
+                    </Link>
 
-                {/* ── Logo ── */}
-                <Link to="/" className={styles.fpLogo} onClick={() => setMobileOpen(false)}>
-                    <LogoGlow variant="header" />
-                    <div className={styles.fpLogoText}>
-                        <span className={styles.fpLogoName}>TBU <em>Sport</em></span>
-                        <span className={styles.fpLogoTagline}>Đặt sân · Thi đấu</span>
-                    </div>
-                </Link>
+                    <nav className={styles.desktopNav} aria-label="Điều hướng chính">
+                        {NAV_ITEMS.map((item) => (
+                            <Link
+                                key={item.key}
+                                to={item.to}
+                                className={`${styles.navLink}${isActiveLink(item) ? ` ${styles.navLinkActive}` : ''}`}
+                            >
+                                <item.icon className={styles.navLinkIcon} />
+                                {item.label}
+                            </Link>
+                        ))}
+                    </nav>
 
-                {/* Desktop nav */}
-                <div className={styles.fpDesktopOnly} style={{ flex: 1 }}>
-                    <Menu
-                        onClick={() => setMobileOpen(false)}
-                        selectedKeys={[activeKey]}
-                        mode="horizontal"
-                        theme={isDark ? 'dark' : 'light'}
-                        items={mainMenuItems}
-                        className="fp-menu"
-                    />
-                </div>
+                    <div className={styles.desktopActions}>
+                        <button type="button" className={styles.actionButton} onClick={handleSearch} aria-label="Tìm kiếm sân" title="Tìm kiếm sân">
+                            <FiSearch />
+                        </button>
+                        <button type="button" className={styles.actionButton} onClick={handleNotifications} aria-label="Thông báo" title="Thông báo">
+                            <FiBell />
+                            <span className={styles.notificationDot} aria-hidden="true" />
+                        </button>
+                        <button type="button" className={styles.actionButton} onClick={handleBookingShortcut} aria-label="Lịch đặt sân" title="Lịch đặt sân">
+                            <FiCalendar />
+                        </button>
 
-                {/* Right controls */}
-                <Space size={4} style={{ marginLeft: 'auto' }}>
-                    {isAuthenticated && (
-                        <Tooltip title="Lịch đặt sân" placement="bottom">
-                            <div className={styles.fpIconBtn}
-                                onClick={() => setOpenModalBookingHistory(true)}>
-                                <MdWorkHistory size={19} />
+                        {isAuthenticated ? (
+                            <div className={styles.accountShell} ref={accountMenuRef}>
+                                <button
+                                    type="button"
+                                    className={`${styles.accountTrigger}${accountMenuOpen ? ` ${styles.accountTriggerOpen}` : ''}`}
+                                    onClick={() => setAccountMenuOpen((current) => !current)}
+                                    aria-expanded={accountMenuOpen}
+                                    aria-haspopup="menu"
+                                    aria-label="Mở menu tài khoản"
+                                >
+                                    <Avatar src={account?.avatarUrl || undefined} size={36}>
+                                        {!account?.avatarUrl && initials}
+                                    </Avatar>
+                                    <FiChevronDown className={styles.accountChevron} />
+                                </button>
+
+                                <div className={`${styles.accountMenu}${accountMenuOpen ? ` ${styles.accountMenuOpen}` : ''}`} role="menu">
+                                    <div className={styles.accountCardTop}>
+                                        <Avatar src={account?.avatarUrl || undefined} size={60}>
+                                            {!account?.avatarUrl && initials}
+                                        </Avatar>
+                                        <div className={styles.accountCardMeta}>
+                                            <span className={styles.accountName}>{displayName}</span>
+                                            <span className={styles.accountEmail}>{account?.email || 'Không có email'}</span>
+                                            <span className={styles.roleBadge}>{roleLabel}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className={styles.accountMenuList}>
+                                        {canOpenAdmin ? (
+                                            <button type="button" className={styles.accountMenuItem} onClick={openAdminPortal}>
+                                                <FiShield />
+                                                <span>Trang quản trị</span>
+                                            </button>
+                                        ) : null}
+                                        <button type="button" className={styles.accountMenuItem} onClick={openAccountInfo}>
+                                            <FiUser />
+                                            <span>Thông tin tài khoản</span>
+                                        </button>
+                                        <button type="button" className={styles.accountMenuItem} onClick={openAccountUpdate}>
+                                            <FiEdit3 />
+                                            <span>Cập nhật tài khoản</span>
+                                        </button>
+                                        <button type="button" className={styles.accountMenuItem} onClick={openPasswordReset}>
+                                            <FiKey />
+                                            <span>Đổi mật khẩu</span>
+                                        </button>
+                                        <button type="button" className={`${styles.accountMenuItem} ${styles.logoutAction}`} onClick={handleLogout}>
+                                            <FiLogOut />
+                                            <span>Đăng xuất</span>
+                                        </button>
+                                    </div>
+
+                                    <div className={styles.accountMenuFooter}>
+                                        <span>Giao diện</span>
+                                        <Switch
+                                            size="small"
+                                            checked={isDark}
+                                            onChange={toggleTheme}
+                                            checkedChildren={<FiMoon />}
+                                            unCheckedChildren={<FiSun />}
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                        </Tooltip>
-                    )}
-
-                    {/* Theme switch — desktop only */}
-                    <div className={styles.fpDesktopOnly}>
-                        <Tooltip title={isDark ? 'Giao diện sáng' : 'Giao diện tối'} placement="bottom">
-                            <div style={{ display: 'flex', alignItems: 'center', padding: '0 6px' }}>
-                                <Switch size="small" checked={isDark} onChange={toggleTheme}
-                                    checkedChildren={<LuMoon />} unCheckedChildren={<IoSunny />} />
-                            </div>
-                        </Tooltip>
+                        ) : (
+                            <button type="button" className={styles.loginButton} onClick={() => navigate('/login')}>
+                                <FiLogIn />
+                                <span>Đăng nhập</span>
+                            </button>
+                        )}
                     </div>
 
-                    {/* Settings dropdown — desktop only */}
-                    <div className={styles.fpDesktopOnly}>
-                        <Dropdown menu={{ items: settingsMenu }} placement="bottomRight" trigger={['click']}>
-                            <Button type="text" icon={<IoSettingsOutline />} className="fp-acct-btn">
-                                Tài khoản
-                            </Button>
-                        </Dropdown>
-                    </div>
-
-                    {/* Hamburger — mobile only */}
                     <button
-                        className={`${styles.fpHamburger} ${styles.fpMobileOnly}`}
-                        onClick={() => setMobileOpen(v => !v)}
-                        aria-label={mobileOpen ? 'Đóng menu' : 'Mở menu'}
-                        aria-expanded={mobileOpen}
+                        type="button"
+                        className={`${styles.mobileMenuButton}${drawerOpen ? ` ${styles.mobileMenuButtonOpen}` : ''}`}
+                        onClick={() => setDrawerOpen((current) => !current)}
+                        aria-label={drawerOpen ? 'Đóng menu' : 'Mở menu'}
+                        aria-expanded={drawerOpen}
                     >
-                        <HamburgerIcon open={mobileOpen} color={textColor} />
+                        <span className={styles.mobileMenuIconWrap} aria-hidden="true">
+                            <FiMenu className={styles.mobileMenuIconMenu} />
+                            <FiX className={styles.mobileMenuIconClose} />
+                        </span>
                     </button>
-                </Space>
+                </div>
             </header>
 
-            {/* ── Mobile backdrop ─────────────────────────────── */}
             <div
-                className={`${styles.fpMobileOverlay}${mobileOpen ? ` ${styles.open}` : ''}`}
-                style={cssVars}
-                onClick={() => setMobileOpen(false)}
-                aria-hidden
+                className={`${styles.mobileOverlay}${drawerOpen ? ` ${styles.mobileOverlayOpen}` : ''}`}
+                onClick={() => setDrawerOpen(false)}
+                aria-hidden="true"
             />
 
-            {/* ── Mobile slide-down panel ──────────────────────── */}
-            <div
-                className={`${styles.fpMobilePanel}${mobileOpen ? ` ${styles.open}` : ''}`}
-                style={cssVars}
-                role="navigation"
-            >
-                <nav className={styles.fpMobileNav}>
-                    {mobileNavLinks.map(link => (
+            <aside className={`${styles.mobileDrawer}${drawerOpen ? ` ${styles.mobileDrawerOpen}` : ''}`} aria-label="Menu di động">
+                <div className={styles.drawerHeader}>
+                    {isAuthenticated ? (
+                        <div className={styles.drawerUserBlock}>
+                            <Avatar src={account?.avatarUrl || undefined} size={40}>
+                                {!account?.avatarUrl && initials}
+                            </Avatar>
+                            <div>
+                                <div className={styles.drawerTitle}>{displayName}</div>
+                                <div className={styles.drawerEmail}>{account?.email || 'Không có email'}</div>
+                                <span className={styles.drawerRole}>{roleLabel}</span>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className={styles.drawerGuestBlock}>
+                            <span className={styles.drawerSectionTitle}>Tài khoản</span>
+                            <div className={styles.drawerAuthActions}>
+                                <button type="button" className={styles.primaryDrawerButton} onClick={() => { setDrawerOpen(false); navigate('/login'); }}>
+                                    <FiLogIn />
+                                    <span>Đăng nhập</span>
+                                </button>
+                                <button type="button" className={styles.secondaryDrawerButton} onClick={() => { setDrawerOpen(false); navigate('/register'); }}>
+                                    <FiUserPlus />
+                                    <span>Đăng ký</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <nav className={styles.drawerNav}>
+                    {NAV_ITEMS.map((item) => (
                         <Link
-                            key={link.key}
-                            to={link.to}
-                            className={`${styles.fpMobileLink}${activeKey === link.key ? ` ${styles.active}` : ''}`}
-                            onClick={() => setMobileOpen(false)}
+                            key={item.key}
+                            to={item.to}
+                            className={`${styles.drawerNavLink}${isActiveLink(item) ? ` ${styles.drawerNavLinkActive}` : ''}`}
+                            onClick={() => setDrawerOpen(false)}
                         >
-                            <span className={styles.fpMobileLinkIcon}>{link.icon}</span>
-                            {link.label}
+                            <item.icon className={styles.drawerNavIcon} />
+                            {item.label}
                         </Link>
                     ))}
                 </nav>
 
-                <div className={styles.fpMobileDivider} />
-
-                <div className={styles.fpMobileActions}>
-                    <span className={styles.fpMobileActionLabel}>Giao diện</span>
-                    <div className={styles.fpMobileActionRow}>
-                        <Switch size="small" checked={isDark} onChange={toggleTheme}
-                            checkedChildren={<LuMoon />} unCheckedChildren={<IoSunny />} />
-                        <Dropdown menu={{ items: settingsMenu }} placement="bottomRight" trigger={['click']}>
-                            <Button
-                                size="small"
-                                icon={<IoSettingsOutline />}
-                                style={{
-                                    borderRadius: 8,
-                                    fontWeight: 600,
-                                    fontSize: '0.8rem',
-                                    color: textColor,
-                                    borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
-                                    background: 'transparent',
-                                }}
-                            >
-                                Tài khoản
-                            </Button>
-                        </Dropdown>
-                    </div>
+                <div className={styles.drawerQuickActions}>
+                    <button type="button" className={styles.drawerQuickButton} onClick={handleSearch}>
+                        <FiSearch />
+                        <span>Tìm sân</span>
+                    </button>
+                    <button type="button" className={styles.drawerQuickButton} onClick={handleNotifications}>
+                        <FiBell />
+                        <span>Thông báo</span>
+                    </button>
+                    <button type="button" className={styles.drawerQuickButton} onClick={handleBookingShortcut}>
+                        <FiCalendar />
+                        <span>Lịch đặt</span>
+                    </button>
                 </div>
-            </div>
 
-            {/* ── Modals ──────────────────────────────────────── */}
+                {isAuthenticated ? (
+                    <div className={styles.drawerAccountActions}>
+                        {canOpenAdmin ? (
+                            <button type="button" className={styles.drawerActionItem} onClick={openAdminPortal}>
+                                <FiShield />
+                                <span>Trang quản trị</span>
+                            </button>
+                        ) : null}
+                        <button type="button" className={styles.drawerActionItem} onClick={openAccountInfo}>
+                            <FiUser />
+                            <span>Thông tin tài khoản</span>
+                        </button>
+                        <button type="button" className={styles.drawerActionItem} onClick={openAccountUpdate}>
+                            <FiEdit3 />
+                            <span>Cập nhật tài khoản</span>
+                        </button>
+                        <button type="button" className={styles.drawerActionItem} onClick={openPasswordReset}>
+                            <FiKey />
+                            <span>Đổi mật khẩu</span>
+                        </button>
+                        <button type="button" className={`${styles.drawerActionItem} ${styles.logoutAction}`} onClick={handleLogout}>
+                            <FiLogOut />
+                            <span>Đăng xuất</span>
+                        </button>
+                    </div>
+                ) : null}
+
+                <div className={styles.drawerBottom}>
+                    <span>Giao diện</span>
+                    <Switch
+                        size="small"
+                        checked={isDark}
+                        onChange={toggleTheme}
+                        checkedChildren={<FiMoon />}
+                        unCheckedChildren={<FiSun />}
+                    />
+                </div>
+            </aside>
+
             <ModalAccount
                 openModalAccount={openModalAccount}
                 setOpenModalAccount={setOpenModalAccount}
             />
+            <ModalUpdateAccount
+                openModalUpdateAccount={openModalUpdateAccount}
+                setOpenModalUpdateAccount={setOpenModalUpdateAccount}
+            />
+            <ModalForget open={openModalForget} setOpen={setOpenModalForget} />
             <ModalBookingHistory
                 openModalBookingHistory={openModalBookingHistory}
                 setOpenModalBookingHistory={setOpenModalBookingHistory}

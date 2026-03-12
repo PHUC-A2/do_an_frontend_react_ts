@@ -13,11 +13,14 @@ const BackToTop: React.FC<BackToTopProps> = ({ theme }) => {
 
     useEffect(() => {
         const onScroll = (): void => {
-            setVisible(window.scrollY > 300);
+            setVisible(window.scrollY > 320);
         };
 
+        onScroll();
         window.addEventListener("scroll", onScroll);
-        return () => window.removeEventListener("scroll", onScroll);
+        return () => {
+            window.removeEventListener("scroll", onScroll);
+        };
     }, []);
 
     const scrollToTop = (): void => {
@@ -33,31 +36,47 @@ const BackToTop: React.FC<BackToTopProps> = ({ theme }) => {
                 role="button"
                 aria-label="Back to top"
                 tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && scrollToTop()}
-                initial={{ opacity: 0, y: 40 }}
+                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && scrollToTop()}
+                initial={{ opacity: 0, y: 30, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 40 }}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.92 }}
 
                 style={{
                     position: "fixed",
-                    bottom: 90,
-                    right: 24,
-                    width: 40,
-                    height: 40,
+                    bottom: 64,
+                    right: 18,
+                    width: 32,
+                    height: 32,
                     borderRadius: "50%",
-                    backgroundColor: isDark ? "rgba(250, 173, 20, 0.3)" : "rgba(0,21,41,0.3)", // dùng rgba để giảm opacity nền
-                    color: isDark ? "#001529" : "#fff", // chữ vẫn đầy đủ màu
+                    backgroundColor: isDark ? "rgba(250, 173, 20, 0.30)" : "rgba(0, 21, 41, 0.30)",
+                    color: isDark ? "#001529" : "#fff",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     cursor: "pointer",
                     zIndex: 2000,
-                    boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
+                    boxShadow: isDark
+                        ? "0 8px 18px rgba(250, 173, 20, 0.32)"
+                        : "0 8px 18px rgba(0, 21, 41, 0.30)",
                     outline: "none",
+                    overflow: "visible",
                 }}
             >
+                <motion.span
+                    aria-hidden="true"
+                    style={{
+                        position: "absolute",
+                        inset: -8,
+                        borderRadius: "50%",
+                        background: "radial-gradient(circle, rgba(255,160,0,0.44) 0%, rgba(255,88,0,0.25) 38%, rgba(255,88,0,0) 72%)",
+                        filter: "blur(3px)",
+                        pointerEvents: "none",
+                    }}
+                    animate={{ opacity: [0.4, 0.86, 0.4], scale: [0.88, 1.18, 0.88] }}
+                    transition={{ duration: 1.05, repeat: Infinity, ease: "easeInOut" }}
+                />
                 <UpOutlined />
             </motion.div>
         </Tooltip>

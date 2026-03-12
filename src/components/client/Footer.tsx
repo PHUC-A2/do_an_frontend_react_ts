@@ -3,6 +3,7 @@ import { AiFillTikTok, AiFillYoutube } from "react-icons/ai";
 import { BiLogoFacebookCircle } from "react-icons/bi";
 import { SiZalo } from "react-icons/si";
 import { MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
+import { FiHome, FiMapPin, FiInfo, FiFileText } from "react-icons/fi";
 import { Link } from "react-router";
 import LogoGlow from "../logo-glow/LogoGlow";
 
@@ -16,10 +17,11 @@ interface FooterProps {
 const Footer = ({ theme }: FooterProps) => {
     const isDark = theme === 'dark';
 
-    const bg = isDark ? '#001529' : '#f8fafc';
-    const topBorder = isDark ? '1px solid rgba(250,173,20,0.1)' : '1px solid rgba(0,0,0,0.07)';
-    const dividerColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)';
+    const bg = isDark ? 'rgba(15, 28, 43, 0.86)' : 'rgba(248, 250, 252, 0.88)';
+    const topBorder = isDark ? '1px solid rgba(250, 173, 20, 0.14)' : '1px solid rgba(15, 23, 42, 0.12)';
+    const dividerColor = isDark ? 'rgba(250, 173, 20, 0.12)' : 'rgba(15, 23, 42, 0.10)';
     const gold = '#faad14';
+    const linkBlue = '#1677ff';
     const headingColor = isDark ? '#e2e8f0' : '#1a2733';
     const subColor = isDark ? '#64748b' : '#94a3b8';
     const textColor = isDark ? '#94a3b8' : '#64748b';
@@ -28,8 +30,11 @@ const Footer = ({ theme }: FooterProps) => {
         textDecoration: 'none',
         color: textColor,
         fontSize: '0.88rem',
-        display: 'block',
-        lineHeight: '2.1',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        lineHeight: '1.9',
+        width: '100%',
         transition: 'color 0.18s',
     };
 
@@ -43,15 +48,14 @@ const Footer = ({ theme }: FooterProps) => {
     const contactItems = [
         { icon: <MdLocationOn size={15} />, text: 'Đường Đặng Thai Mai, Phường Tô Hiệu, Sơn La' },
         { icon: <MdPhone size={15} />, text: '0123 456 789' },
-        { icon: <MdEmail size={15} />, text: 'admin@footballpro.vn' },
         { icon: <MdEmail size={15} />, text: 'phucban297@gmail.com' },
     ];
 
     const quickLinks = [
-        { to: '/', label: 'Trang chủ' },
-        { to: '/pitch', label: 'Sân bóng' },
-        { to: '/about', label: 'Về chúng tôi' },
-        { to: '/terms', label: 'Điều khoản dịch vụ' },
+        { to: '/', label: 'Trang chủ', icon: <FiHome size={14} /> },
+        { to: '/pitch', label: 'Sân bóng', icon: <FiMapPin size={14} /> },
+        { to: '/about', label: 'Về chúng tôi', icon: <FiInfo size={14} /> },
+        { to: '/terms', label: 'Điều khoản dịch vụ', icon: <FiFileText size={14} /> },
     ];
 
     const socials = [
@@ -62,24 +66,36 @@ const Footer = ({ theme }: FooterProps) => {
     ];
 
     return (
-        <AntFooter style={{ padding: 0, background: bg, borderTop: topBorder }}>
+        <AntFooter style={{ padding: 0, background: 'transparent', borderTop: 'none' }}>
             <style>{`
-                .fp-footer a.fp-nav-link:hover { color: ${gold} !important; }
+                .fp-footer a.fp-nav-link:hover { color: ${linkBlue} !important; }
                 .fp-footer .fp-social-icon:hover { color: ${gold} !important; transform: translateY(-3px); }
+                .fp-footer-shell {
+                    padding: 52px 28px 32px;
+                    background: ${bg};
+                    border-top: ${topBorder};
+                    overflow-x: hidden;
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
+                }
+                @media (max-width: 768px) {
+                    .fp-footer-shell { padding: 40px 16px 24px; }
+                }
             `}</style>
 
-            <div className="fp-footer" style={{ padding: '52px 60px 32px' }}>
-                <Row gutter={[48, 40]}>
+            <div className="fp-footer fp-footer-shell">
+                <Row gutter={[{ xs: 20, sm: 28, md: 48 }, 40]}>
 
                     {/* ── Brand column ──────────────────────────────── */}
                     <Col xs={24} md={8}>
                         <Link to="/" style={{ textDecoration: 'none' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                                <LogoGlow variant="footer" />
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, marginBottom: 14, minWidth: 0 }}>
+                                <LogoGlow variant="header" />
                                 <span style={{
-                                    fontSize: '1.1rem',
+                                    fontSize: '1.08rem',
                                     fontWeight: 800,
-                                    letterSpacing: '-0.4px',
+                                    letterSpacing: '-0.04em',
+                                    lineHeight: 1.05,
                                     color: headingColor,
                                 }}>
                                     UTB <span style={{ color: gold }}>Sport</span>
@@ -112,9 +128,10 @@ const Footer = ({ theme }: FooterProps) => {
                         <Title level={5} style={{ color: headingColor, marginBottom: 16, fontWeight: 700 }}>
                             Liên kết nhanh
                         </Title>
-                        <nav>
+                        <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                             {quickLinks.map(link => (
                                 <Link key={link.to} to={link.to} className="fp-nav-link" style={navLinkStyle}>
+                                    <span style={{ display: 'inline-flex', color: 'currentColor' }}>{link.icon}</span>
                                     {link.label}
                                 </Link>
                             ))}

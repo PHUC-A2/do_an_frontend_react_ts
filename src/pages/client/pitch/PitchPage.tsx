@@ -5,7 +5,8 @@ import {
     EnvironmentOutlined,
     ClockCircleOutlined,
     ArrowRightOutlined,
-    EyeOutlined
+    EyeOutlined,
+    StarFilled,
 } from "@ant-design/icons";
 import "./PitchPage.scss";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks";
@@ -50,10 +51,23 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
     return (
         <Layout className={`pitch-page ${isDark ? "dark" : "light"}`}>
             <Content className="pitch-content">
-                <div className="container-custom">
 
-                    {/* HERO */}
-                    <section className="hero-section">
+                {/* HERO — full-width with orb background */}
+                <section className="hero-section">
+                    <div className="pitch-hero-bg" aria-hidden>
+                        <div className="pitch-hero-orb pitch-hero-orb--1" />
+                        <div className="pitch-hero-orb pitch-hero-orb--2" />
+                        <div className="pitch-hero-orb pitch-hero-orb--3" />
+                    </div>
+                    <div className="container-custom hero-inner">
+                        <motion.div
+                            className="hero-badge"
+                            initial="hidden" animate="visible"
+                            variants={fadeInUp}
+                        >
+                            <StarFilled style={{ color: '#faad14', fontSize: 11 }} />
+                            <span>Tất cả sân bóng · TBU Sport</span>
+                        </motion.div>
                         <motion.div
                             initial="hidden"
                             animate="visible"
@@ -67,9 +81,11 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                                 Chọn sân phù hợp, xem lịch trống và đặt sân ngay tức thì.
                             </Paragraph>
                         </motion.div>
-                    </section>
+                    </div>
+                </section>
 
-                    {/* LIST PITCHES */}
+                {/* LIST PITCHES */}
+                <div className="container-custom">
                     <section style={{ paddingBottom: 80 }}>
                         <Row gutter={[24, 24]}>
                             {pitches.map((pitch: IPitch) => (

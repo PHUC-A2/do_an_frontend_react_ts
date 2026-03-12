@@ -1,7 +1,18 @@
 .pitch-details-page {
     min-height      : 100vh;
-    background-color: var(--primary-background); // Biến từ trang About
+    --page-bg       : #f5f7fa;
+    background-color: var(--page-bg);
     color           : var(--text-page);
+    --glass-card    : rgba(255, 255, 255, 0.74);
+    --glass-border  : rgba(15, 23, 42, 0.12);
+    --glass-shadow  : 0 20px 48px rgba(15, 23, 42, 0.12);
+
+    body.dark & {
+        --page-bg     : #080f17;
+        --glass-card  : rgba(15, 28, 43, 0.76);
+        --glass-border: rgba(250, 173, 20, 0.14);
+        --glass-shadow: 0 22px 50px rgba(2, 6, 23, 0.36);
+    }
 
     .loading-container {
         height         : 100vh;
@@ -68,7 +79,7 @@
     .content-section {
         height    : 100vh;
         overflow-y: auto;
-        background: var(--primary-background);
+        background: var(--page-bg);
 
         &::-webkit-scrollbar {
             width: 4px;
@@ -85,17 +96,20 @@
 
         .pitch-title {
             color         : var(--text-page) !important;
-            font-size     : 42px !important;
+            font-size     : clamp(2rem, 4vw, 2.6rem) !important;
             margin-bottom : 8px !important;
-            letter-spacing: -1px;
+            letter-spacing: -0.03em;
+            line-height   : 1.1;
         }
 
         .booking-card-glass {
-            background   : var(--card-bg);
-            border       : 1px solid rgba(128, 128, 128, 0.1);
-            border-radius: 16px;
-            margin       : 32px 0;
-            box-shadow   : 0 10px 30px rgba(0, 0, 0, 0.05);
+            background             : var(--glass-card);
+            border                 : 1px solid var(--glass-border);
+            border-radius          : 16px;
+            margin                 : 32px 0;
+            box-shadow             : var(--glass-shadow);
+            backdrop-filter        : blur(10px);
+            -webkit-backdrop-filter: blur(10px);
 
             .price-label {
                 font-size     : 12px;
@@ -122,7 +136,7 @@
                 border-radius: 12px;
                 font-weight  : 700;
                 background   : #faad14;
-                color: #fff;
+                color        : #fff;
                 border       : none;
 
                 &:hover {
@@ -133,10 +147,13 @@
         }
 
         .feature-item-card {
-            background   : var(--card-bg);
-            border-radius: 12px;
-            border       : none;
-            border-left  : 4px solid #faad14;
+            background             : var(--glass-card);
+            border-radius          : 12px;
+            border                 : 1px solid var(--glass-border);
+            border-left            : 4px solid #faad14;
+            backdrop-filter        : blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow             : var(--glass-shadow);
 
             .ant-typography {
                 color: var(--text-page);
@@ -151,8 +168,8 @@
         }
 
         .utility-tag {
-            background   : rgba(128, 128, 128, 0.05);
-            border       : 1px solid rgba(128, 128, 128, 0.1);
+            background   : rgba(250, 173, 20, 0.10);
+            border       : 1px solid rgba(250, 173, 20, 0.24);
             color        : var(--text-page);
             padding      : 4px 12px;
             border-radius: 6px;
