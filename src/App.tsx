@@ -3,6 +3,7 @@ import AppRouter from "./routes/AppRouter";
 import { useEffect, useState } from "react";
 import 'react-toastify/dist/ReactToastify.css';
 import BackToTop from "./components/client/backtotop/BackToTop";
+import TopProgressBar from "./components/common/ProgressBar/TopProgressBar";
 import { useAuthInit } from "./hooks/init/useAuthInit";
 import { useAccountInit } from "./hooks/init/useAccountInit";
 
@@ -21,6 +22,7 @@ const App = () => {
 
   return (
     <>
+      <TopProgressBar />
       <BackToTop theme={theme} />
       <AppRouter theme={theme} toggleTheme={toggleTheme} />
       <ToastContainer

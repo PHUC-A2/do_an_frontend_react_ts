@@ -1,7 +1,12 @@
-import axios from "axios";
+import axios, { type InternalAxiosRequestConfig } from "axios";
 import { setLogout } from "../redux/features/authSlice";
 import { store } from "../redux/store";
+import { topProgress } from "../hooks/common/useTopProgress";
 
+type TrackedAxiosConfig = InternalAxiosRequestConfig & {
+    _retry?: boolean;
+    __topProgressSettled?: boolean;
+};
 
 const instance = axios.create({
     baseURL: import.meta.env.VITE_BACKEND_URL,
@@ -14,11 +19,17 @@ const instance = axios.create({
 // Tự động gắn access token vào header
 // ======================
 instance.interceptors.request.use((config) => {
+    const trackedConfig = config as TrackedAxiosConfig;
+
+    trackedConfig.__topProgressSettled = false;
+    topProgress.start();
+
     const token = localStorage.getItem("access_token");
     if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+        trackedConfig.headers.Authorization = `Bearer ${token}`;
     }
-    return config;
+
+    return trackedConfig;
 });
 
 // ======================
@@ -27,27 +38,57 @@ instance.interceptors.request.use((config) => {
 // ======================
 let isLoggingOut = false;
 instance.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        const trackedConfig = response.config as TrackedAxiosConfig;
+
+        if (!trackedConfig.__topProgressSettled) {
+            trackedConfig.__topProgressSettled = true;
+            topProgress.done();
+        }
+
+        return response;
+    },
     async (error) => {
-        const originalRequest = error.config as any;
+        const originalRequest = error.config as TrackedAxiosConfig | undefined;
+
+        const settleAsDone = () => {
+            if (!originalRequest || originalRequest.__topProgressSettled) {
+                return;
+            }
+
+            originalRequest.__topProgressSettled = true;
+            topProgress.done();
+        };
+
+        const settleAsError = () => {
+            if (!originalRequest || originalRequest.__topProgressSettled) {
+                return;
+            }
+
+            originalRequest.__topProgressSettled = true;
+            topProgress.error();
+        };
 
         // Chỉ xử lý khi API trả 401 và request chưa retry
-        if (error.response?.status === 401 &&
+        if (originalRequest &&
+            error.response?.status === 401 &&
             !originalRequest._retry &&
             localStorage.getItem("access_token")
         ) {
-
             // Không refresh khi login fail
             if (originalRequest.url?.includes("/auth/login")) {
+                settleAsError();
                 return Promise.reject(error);
             }
 
             // KHÔNG refresh cho refresh (FIX LOOP)
             if (originalRequest.url?.includes("/auth/refresh")) {
+                settleAsError();
                 logout();
                 return Promise.reject(error);
             }
 
+            settleAsDone();
             originalRequest._retry = true;
 
             try {
@@ -66,6 +107,7 @@ instance.interceptors.response.use(
                 // Refresh thành công
                 localStorage.setItem("access_token", newToken);
                 originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                originalRequest.__topProgressSettled = false;
 
                 // Retry lại request ban đầu
                 return instance(originalRequest);
@@ -78,6 +120,7 @@ instance.interceptors.response.use(
         }
 
         // Các lỗi khác không xử lý
+        settleAsError();
         return Promise.reject(error);
     }
 );
