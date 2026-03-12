@@ -23,7 +23,7 @@ const ModalUserDetails = (props: IProps) => {
         <Drawer
             title="Chi tiết người dùng"
             placement="right"
-            closable={false}
+            // closable={false}
             onClose={() => setOpenModalUserDetails(false)}
             open={openModalUserDetails}
         >

@@ -1,28 +1,15 @@
-import {
-    Card,
-    DatePicker,
-    Form,
-    Input,
-    Popconfirm,
-    Select,
-    Spin,
-    Switch,
-    Typography,
-    type PopconfirmProps,
-} from "antd";
-import { SHIRT_OPTION_OPTIONS } from "../../../../utils/constants/booking.constants";
-import { toast } from "react-toastify";
-import type { ShirtOptionEnum } from "../../../../types/booking";
-import {
-    getBookingById,
-    updateBookingClient,
-} from "../../../../config/Api";
+import { DatePicker, Form, Input, Popconfirm, Select, Spin, Switch, type PopconfirmProps } from "antd";
+import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
-import type { IPitch } from "../../../../types/pitch";
-import dayjs, { Dayjs } from "dayjs";
-import { Button, Spinner } from "react-bootstrap";
-import { formatVND } from "../../../../utils/format/price";
+import dayjs, { type Dayjs } from "dayjs";
+import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
+
+import { SHIRT_OPTION_OPTIONS } from "../../../../utils/constants/booking.constants";
+import type { ShirtOptionEnum } from "../../../../types/booking";
+import { getBookingById, updateBookingClient } from "../../../../config/Api";
+import type { IPitch } from "../../../../types/pitch";
+import { formatVND } from "../../../../utils/format/price";
 import {
     fetchPitches,
     selectPitches,
@@ -30,83 +17,72 @@ import {
 } from "../../../../redux/features/pitchSlice";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 import { fetchBookingsClient } from "../../../../redux/features/bookingClientSlice";
-
-const { Text } = Typography;
+import { TbSoccerField } from "react-icons/tb";
 
 interface IProps {
     bookingId: number;
-    pitchIdNumber: number; // sân hiện tại (route)
+    pitchIdNumber: number;
     pitch: IPitch | null;
     pitchLoading: boolean;
+    bookingDate: Dayjs;
+    isDark: boolean;
     onSuccess?: () => void;
     onPitchChange?: (pitchId: number) => void;
 }
 
-type BookingFormValues = {
+type FormValues = {
     shirtOption: ShirtOptionEnum;
     contactPhone?: string;
-    dateTimeRange: [Dayjs, Dayjs];
     pitchId?: number;
 };
+
+const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
+    const h = String(Math.floor(i / 2)).padStart(2, "0");
+    const m = i % 2 === 0 ? "00" : "30";
+    return `${h}:${m}`;
+});
 
 const UpdateBookingForm = ({
     bookingId,
     pitchIdNumber,
     pitch,
     pitchLoading,
+    bookingDate,
+    isDark,
     onSuccess,
-    onPitchChange
+    onPitchChange,
 }: IProps) => {
-    const [form] = Form.useForm<BookingFormValues>();
-
-    const dateTimeRange = Form.useWatch("dateTimeRange", form);
+    const [form] = Form.useForm<FormValues>();
     const shirtOption = Form.useWatch("shirtOption", form);
     const selectedPitchId = Form.useWatch("pitchId", form);
+
+    const dispatch = useAppDispatch();
+    const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
+    const pitches = useSelector(selectPitches);
+    const pitchLoadingRedux = useSelector(selectPitchLoading);
 
     const [loading, setLoading] = useState(false);
     const [initLoading, setInitLoading] = useState(true);
     const [changePitch, setChangePitch] = useState(false);
     const [blocked, setBlocked] = useState(false);
+    const [touched, setTouched] = useState(false);
 
-    /* ===== Redux ===== */
-    const pitches = useSelector(selectPitches);
-    const pitchLoadingRedux = useSelector(selectPitchLoading);
-    const dispatch = useAppDispatch();
-    const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
+    const [startDate, setStartDate] = useState(bookingDate.format("YYYY-MM-DD"));
+    const [startTime, setStartTime] = useState("07:00");
+    const [endDate, setEndDate] = useState(bookingDate.format("YYYY-MM-DD"));
+    const [endTime, setEndTime] = useState("08:00");
+
+    // Sync pitch change
     useEffect(() => {
-        if (changePitch && selectedPitchId) {
-            onPitchChange?.(selectedPitchId);
-        }
-
-        if (!changePitch) {
-            onPitchChange?.(pitchIdNumber);
-        }
+        if (changePitch && selectedPitchId) onPitchChange?.(selectedPitchId);
+        if (!changePitch) onPitchChange?.(pitchIdNumber);
     }, [changePitch, selectedPitchId]);
 
     useEffect(() => {
-        if (pitches.length === 0) {
-            dispatch(fetchPitches("page=1&pageSize=100"));
-        }
+        if (pitches.length === 0) dispatch(fetchPitches("page=1&pageSize=100"));
     }, [dispatch, pitches.length]);
-    /* ===== Load booking ===== */
-    // useEffect(() => {
-    //     setInitLoading(true);
-    //     getBookingById(bookingId)
-    //         .then(res => {
-    //             const b = res.data.data;
-    //             if (!b) return;
 
-    //             form.setFieldsValue({
-    //                 dateTimeRange: [
-    //                     dayjs(b.startDateTime),
-    //                     dayjs(b.endDateTime),
-    //                 ],
-    //                 shirtOption: b.shirtOption,
-    //                 contactPhone: b.contactPhone,
-    //             });
-    //         })
-    //         .finally(() => setInitLoading(false));
-    // }, [bookingId, form]);
+    // Load booking
     useEffect(() => {
         setInitLoading(true);
         getBookingById(bookingId)
@@ -114,30 +90,42 @@ const UpdateBookingForm = ({
                 const b = res.data.data;
                 if (!b) return;
 
-                // BLOCK UPDATE
-                // if (b.status === "CANCELLED") {
-                //     toast.error("Booking đã bị hủy, không thể cập nhật");
-                //     return;
-                // }
-
                 if (b.status === "CANCELLED") {
-                    toast.error("Booking đã bị hủy, không thể cập nhật");
+                    toast.error("Booking đã bị huỷ, không thể cập nhật");
                     setBlocked(true);
                     return;
                 }
-
                 if (b.deletedByUser) {
-                    toast.error("Booking đã bị xóa khỏi lịch sử");
+                    toast.error("Booking đã bị xoá khỏi lịch sử");
                     setBlocked(true);
                     return;
                 }
 
-                // OK thì mới set form
+                const start = dayjs(b.startDateTime);
+                const end = dayjs(b.endDateTime);
+
+                setStartDate(start.format("YYYY-MM-DD"));
+                setStartTime(start.format("HH:mm").slice(0, 5).replace(/:\d+$/, m => m.replace(/\d+/, v => {
+                    const n = parseInt(v);
+                    return String(n < 30 ? 0 : 30).padStart(2, "0");
+                })));
+                setEndDate(end.format("YYYY-MM-DD"));
+                setEndTime(end.format("HH:mm").slice(0, 5).replace(/:\d+$/, m => m.replace(/\d+/, v => {
+                    const n = parseInt(v);
+                    return String(n < 30 ? 0 : 30).padStart(2, "0");
+                })));
+
+                // round to nearest 30-min option
+                const roundTime = (dj: Dayjs) => {
+                    const m = dj.minute() < 30 ? "00" : "30";
+                    return `${String(dj.hour()).padStart(2, "0")}:${m}`;
+                };
+                setStartTime(roundTime(start));
+                setEndTime(roundTime(end));
+                setStartDate(start.format("YYYY-MM-DD"));
+                setEndDate(end.format("YYYY-MM-DD"));
+
                 form.setFieldsValue({
-                    dateTimeRange: [
-                        dayjs(b.startDateTime),
-                        dayjs(b.endDateTime),
-                    ],
                     shirtOption: b.shirtOption,
                     contactPhone: b.contactPhone,
                 });
@@ -145,119 +133,87 @@ const UpdateBookingForm = ({
             .finally(() => setInitLoading(false));
     }, [bookingId, form]);
 
-
-    /* ===== Pitch options ===== */
     const pitchOptions = useMemo(
-        () =>
-            pitches
-                .filter(p => p.status === "ACTIVE")
-                .map(p => ({
-                    label: `${p.name} - ${formatVND(p.pricePerHour)}/giờ`,
-                    value: p.id,
-                })),
+        () => pitches
+            .filter(p => p.status === "ACTIVE")
+            .map(p => ({ label: `${p.name} — ${formatVND(p.pricePerHour)}/giờ`, value: p.id })),
         [pitches]
     );
 
-    /* ===== Pitch đang dùng để tính tiền ===== */
     const currentPitch: IPitch | null = useMemo(() => {
         if (!changePitch) return pitch ?? null;
         return pitches.find(p => p.id === selectedPitchId) ?? null;
     }, [changePitch, pitch, pitches, selectedPitchId]);
 
-    /* ===== Preview price ===== */
-    const previewPrice = useMemo(() => {
-        if (!dateTimeRange || !currentPitch) return 0;
+    const startDj = useMemo(() => dayjs(`${startDate}T${startTime}`), [startDate, startTime]);
+    const endDj = useMemo(() => dayjs(`${endDate}T${endTime}`), [endDate, endTime]);
+    const minutes = endDj.diff(startDj, "minute");
+    const isValid = minutes > 0;
 
-        const minutes = dateTimeRange[1].diff(
-            dateTimeRange[0],
-            "minute"
-        );
-        if (minutes <= 0) return 0;
+    const preview = currentPitch && isValid
+        ? Math.round((currentPitch.pricePerHour / 60) * minutes)
+        : 0;
 
-        return Math.round(
-            (currentPitch.pricePerHour / 60) * minutes
-        );
-    }, [dateTimeRange, currentPitch]);
+    const dtError = touched && !isValid ? "Giờ kết thúc phải sau giờ bắt đầu" : null;
 
-    /* ===== Submit ===== */
-    const handleUpdate = async (values: BookingFormValues) => {
-        if (blocked) return;
+    const handleUpdate = async (values: FormValues) => {
+        setTouched(true);
+        if (blocked || !isValid) return;
+
+        if (!isAuthenticated) {
+            toast.warning("Vui lòng đăng nhập để cập nhật lịch đặt");
+            await new Promise(r => setTimeout(r, 2000));
+            window.location.href = `/login?redirect=${location.pathname}`;
+            return;
+        }
+
         setLoading(true);
-        const [start, end] = values.dateTimeRange;
-
         try {
-            const finalPitchId =
-                changePitch
-                    ? values.pitchId!
-                    : pitchIdNumber;
-
             await updateBookingClient(bookingId, {
-                pitchId: finalPitchId,
+                pitchId: changePitch ? values.pitchId! : pitchIdNumber,
                 shirtOption: values.shirtOption,
                 contactPhone: values.contactPhone,
-                startDateTime: start.format("YYYY-MM-DDTHH:mm:ss"),
-                endDateTime: end.format("YYYY-MM-DDTHH:mm:ss"),
+                startDateTime: startDj.format("YYYY-MM-DDTHH:mm:ss"),
+                endDateTime: endDj.format("YYYY-MM-DDTHH:mm:ss"),
             });
-
-            toast.success("Cập nhật lịch đặt thành công");
-            dispatch(fetchBookingsClient(''));
+            toast.success("Cập nhật lịch đặt thành công!");
+            dispatch(fetchBookingsClient(""));
             onSuccess?.();
         } catch (e: any) {
             const m = e?.response?.data?.message ?? "Lỗi không xác định";
-            toast.error(
-                <div>
-                    <strong>Có lỗi xảy ra!</strong>
-                    <div>{m}</div>
-                </div>
-            );
+            toast.error(<div><strong>Có lỗi xảy ra!</strong><div>{m}</div></div>);
         } finally {
             setLoading(false);
         }
     };
 
-    const cancel: PopconfirmProps["onCancel"] = () => {
-        toast.info("Đã hủy cập nhật");
-    };
+    const cancel: PopconfirmProps["onCancel"] = () => toast.info("Đã huỷ cập nhật");
+    const pickerPopupClass = isDark ? "bk__picker-popup bk__picker-popup--dark" : "bk__picker-popup bk__picker-popup--light";
 
-    if (initLoading) return <Spin />;
+    if (initLoading) return <div className="bk__spin-center"><Spin size="large" /></div>;
+    if (blocked) return <div className="bk__blocked">Booking này không thể cập nhật (đã bị huỷ hoặc xoá).</div>;
 
-    if (blocked) {
-        return (
-            <Card size="small">
-                <Text type="danger">
-                    Booking này không thể cập nhật
-                </Text>
-            </Card>
-        );
-    }
+    const canSubmit = isValid && !loading;
 
-    const handleConfirmBooking = async () => {
-        if (!isAuthenticated) {
-            const minDelay = new Promise(resolve => setTimeout(resolve, 2000));
-            toast.warning("Vui lòng đăng nhập để cập nhật lịch đặt");
-            await minDelay; // chạy spin 2s
-            window.location.href = `/login?redirect=${location.pathname}`;
-            return;
+    const handleConfirmSubmit = async () => {
+        try {
+            await form.validateFields();
+            form.submit();
+        } catch {
+            toast.warning("Vui lòng kiểm tra lại thông tin trước khi cập nhật lịch đặt");
         }
-        form.submit();
     };
 
     return (
-        <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleUpdate}
-            style={{ marginTop: 24 }}
-        >
-            {/* ===== SWITCH ĐỔI SÂN ===== */}
-            <Form.Item label="Đổi sân thi đấu">
+        <Form form={form} layout="vertical" onFinish={handleUpdate}>
+
+            {/* Switch đổi sân */}
+            <Form.Item label="Đổi sân thi đấu" style={{ marginBottom: 12 }}>
                 <Switch
                     checked={changePitch}
-                    onChange={(checked) => {
+                    onChange={checked => {
                         setChangePitch(checked);
-                        if (!checked) {
-                            form.setFieldValue("pitchId", undefined);
-                        }
+                        if (!checked) form.setFieldValue("pitchId", undefined);
                     }}
                 />
             </Form.Item>
@@ -266,130 +222,149 @@ const UpdateBookingForm = ({
                 <Form.Item
                     label="Chọn sân mới"
                     name="pitchId"
-                    rules={[
-                        {
-                            required: true,
-                            message: "Vui lòng chọn sân",
-                        },
-                    ]}
+                    rules={[{ required: true, message: "Vui lòng chọn sân" }]}
+                    style={{ marginBottom: 12 }}
                 >
                     <Select
+                        className="bk__select-wrap"
                         placeholder="Chọn sân"
                         options={pitchOptions}
                         loading={pitchLoadingRedux}
-                        showSearch={{
-                            optionFilterProp: "label",
-                        }}
+                        showSearch={{ optionFilterProp: "label" }}
                     />
                 </Form.Item>
             )}
 
-            {/* ===== TIME RANGE ===== */}
-            <Form.Item
-                label="Thời gian thi đấu"
-                name="dateTimeRange"
-                rules={[{ required: true, message: "Vui lòng nhập thời gian thi đấu" }]}
-            >
-                <DatePicker.RangePicker
-                    showTime={{ format: "HH:mm" }}
-                    format=" HH:mm DD/MM/YYYY"
-                    style={{ width: "100%" }}
-                    minuteStep={5}
-                    placeholder={[
-                        "Thời gian bắt đầu",
-                        "Thời gian kết thúc",
-                    ]}
-                    disabledDate={d =>
-                        d.isBefore(dayjs().startOf("day"))
-                    }
-                />
-            </Form.Item>
+            {/* Date / time pickers */}
+            <div className="bk__dt-group">
+                <div className="bk__dt-block">
+                    <span className="bk__dt-label">📅 Ngày bắt đầu</span>
+                    <DatePicker
+                        className={`bk__picker-input${dtError ? " bk__picker-input--error" : ""}`}
+                        value={dayjs(startDate, "YYYY-MM-DD")}
+                        format="DD/MM/YYYY"
+                        allowClear={false}
+                        inputReadOnly
+                        classNames={{ popup: pickerPopupClass }}
+                        disabledDate={current => !!current && current.startOf("day").isBefore(dayjs().startOf("day"))}
+                        onChange={value => {
+                            if (!value) return;
+                            setStartDate(value.format("YYYY-MM-DD"));
+                            setTouched(true);
+                        }}
+                    />
+                </div>
 
-            {/* ===== PREVIEW ===== */}
-            {(pitchLoading || pitchLoadingRedux) ? (
-                <Spin />
-            ) : (
-                currentPitch &&
-                dateTimeRange && (
-                    <Card size="small" style={{ marginBottom: 16 }}>
-                        <Text>
-                            ⏱ Thời lượng:{" "}
-                            {dateTimeRange[1].diff(
-                                dateTimeRange[0],
-                                "minute"
-                            )}{" "}
-                            phút
-                        </Text>
-                        <br />
+                <div className="bk__dt-block">
+                    <span className="bk__dt-label">🕐 Giờ bắt đầu</span>
+                    <Select
+                        className="bk__time-select"
+                        value={startTime}
+                        options={TIME_OPTIONS.map(t => ({ label: t, value: t }))}
+                        classNames={{ popup: { root: pickerPopupClass } }}
+                        onChange={value => { setStartTime(value); setTouched(true); }}
+                    />
+                </div>
 
+                <div className="bk__dt-block">
+                    <span className="bk__dt-label">📅 Ngày kết thúc</span>
+                    <DatePicker
+                        className={`bk__picker-input${dtError ? " bk__picker-input--error" : ""}`}
+                        value={dayjs(endDate, "YYYY-MM-DD")}
+                        format="DD/MM/YYYY"
+                        allowClear={false}
+                        inputReadOnly
+                        classNames={{ popup: pickerPopupClass }}
+                        disabledDate={current => !!current && current.startOf("day").isBefore(dayjs(startDate).startOf("day"))}
+                        onChange={value => {
+                            if (!value) return;
+                            setEndDate(value.format("YYYY-MM-DD"));
+                            setTouched(true);
+                        }}
+                    />
+                </div>
+
+                <div className="bk__dt-block">
+                    <span className="bk__dt-label">🕐 Giờ kết thúc</span>
+                    <Select
+                        className={`bk__time-select${dtError ? " bk__time-select--error" : ""}`}
+                        value={endTime}
+                        options={TIME_OPTIONS.map(t => ({ label: t, value: t }))}
+                        classNames={{ popup: { root: pickerPopupClass } }}
+                        onChange={value => { setEndTime(value); setTouched(true); }}
+                    />
+                </div>
+            </div>
+
+            {dtError && <p className="bk__dt-error">{dtError}</p>}
+
+            {/* Price preview */}
+            <AnimatePresence>
+                {!(pitchLoading || pitchLoadingRedux) && currentPitch && isValid && (
+                    <motion.div
+                        className="bk__price-preview"
+                        initial={{ opacity: 0, y: -8, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: "auto" }}
+                        exit={{ opacity: 0, y: -8, height: 0 }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
+                    >
+                        <p className="bk__price-row">⏱ Thời lượng: {minutes} phút</p>
                         {shirtOption === "WITH_PITCH_SHIRT" && (
-                            <>
-                                <Text>👕 Áo pitch: free</Text>
-                                <br />
-                            </>
+                            <p className="bk__price-row">👕 Áo pitch: miễn phí</p>
                         )}
+                        <div className="bk__price-total">
+                            💰 Tạm tính: {formatVND(preview)}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-                        <Text
-                            strong
-                            style={{
-                                fontSize: 18,
-                                color: "#22c55e",
-                            }}
-                        >
-                            💰Tạm tính: {formatVND(previewPrice)}
-                        </Text>
-                    </Card>
-                )
-            )}
-
-            {/* ===== SHIRT ===== */}
+            {/* Shirt */}
             <Form.Item
                 label="Áo pitch"
                 name="shirtOption"
-                rules={[{ required: true }]}
+                rules={[{ required: true, message: "Vui lòng chọn" }]}
+                style={{ marginBottom: 12 }}
             >
-                <Select options={SHIRT_OPTION_OPTIONS} />
+                <Select className="bk__select-wrap" options={SHIRT_OPTION_OPTIONS} placeholder="Chọn tuỳ chọn áo" />
             </Form.Item>
 
-            {/* ===== PHONE ===== */}
-            <Form.Item label="Số điện thoại" name="contactPhone">
-                <Input />
+            {/* Phone */}
+            <Form.Item
+                label="Số điện thoại liên hệ"
+                name="contactPhone"
+                style={{ marginBottom: 16 }}
+            >
+                <Input className="bk__input-wrap" placeholder="0912 345 678" />
             </Form.Item>
 
-            {/* ===== SUBMIT ===== */}
+            {/* Submit */}
             <Popconfirm
+                title="Xác nhận cập nhật"
+                description={
+                    <span>
+                        {startDj.format("HH:mm DD/MM")} → {endDj.format("HH:mm DD/MM")}
+                        {preview > 0 && ` · ${formatVND(preview)}`}
+                    </span>
+                }
+                okText="Xác nhận"
+                cancelText="Huỷ"
                 placement="topLeft"
-                title="Xác nhận"
-                description="Bạn có chắc chắn muốn cập nhật lịch đặt không?"
-                okText="Có"
-                cancelText="Không"
                 onCancel={cancel}
-                onConfirm={handleConfirmBooking}
+                onConfirm={handleConfirmSubmit}
+                disabled={!canSubmit}
             >
-                <Button
-                    variant="outline-warning"
-                    className="w-100 d-flex justify-content-center align-items-center gap-2"
-                    disabled={
-                        blocked ||
-                        loading ||
-                        !dateTimeRange ||
-                        !shirtOption ||
-                        (changePitch && !selectedPitchId)
-                    }
+                <button
+                    className="bk__submit-btn"
+                    type="button"
+                    disabled={!canSubmit}
                 >
-                    {loading ? (
-                        <>
-                            <Spinner
-                                animation="border"
-                                size="sm"
-                            />
-                            Đang cập nhật...
-                        </>
-                    ) : (
-                        "Cập nhật lịch đặt"
-                    )}
-                </Button>
+                    {loading
+                        ? <><Spin size="small" /> Đang cập nhật...</>
+                        : <><TbSoccerField size={16} /> Cập nhật lịch đặt</>}
+                </button>
             </Popconfirm>
+
         </Form>
     );
 };

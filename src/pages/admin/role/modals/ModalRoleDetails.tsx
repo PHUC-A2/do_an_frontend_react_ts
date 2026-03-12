@@ -21,7 +21,7 @@ const ModalRoleDetails = (props: IProps) => {
         <Drawer
             title="Chi tiết vai trò (Role)"
             placement="right"
-            closable={false}
+            // closable={false}
             onClose={() => setOpenModalRoleDetails(false)}
             open={openModalRoleDetails}
         >

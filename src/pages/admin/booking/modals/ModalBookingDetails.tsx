@@ -23,7 +23,7 @@ const ModalBookingDetails = (props: IProps) => {
         <Drawer
             title="Chi tiết lịch đặt sân"
             placement="right"
-            closable={false}
+            // closable={false}
             onClose={() => setOpenModalBookingDetails(false)}
             open={openModalBookingDetails}
         >

@@ -1,309 +1,406 @@
-import {
-    Card,
-    Col,
-    DatePicker,
-    Row,
-    Typography,
-    Space,
-    Spin,
-    Tag,
-    Tooltip,
-    Image,
-} from "antd";
-import dayjs, { Dayjs } from "dayjs";
-import { useEffect, useState } from "react";
-import "./BookingPage.scss";
-import { useLocation, useParams } from "react-router";
-import type { IPitch } from "../../../types/pitch";
-import { getPitchById } from "../../../config/Api";
-import BookingTime from "./components/BookingTimeline";
-import CreateBookingForm from "./components/CreateBookingForm";
-import { useBookingTimeline } from "./hook/useBookingTimeline";
-import { Button } from "react-bootstrap";
-import { FaMapMarkerAlt } from "react-icons/fa";
-import { formatVND } from "../../../utils/format/price";
+import React, { useEffect, useRef, useState } from "react";
+import { DatePicker, Layout, Spin, Tag, Tooltip, Image } from "antd";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import {
     EnvironmentOutlined,
     ClockCircleOutlined,
+    CalendarOutlined,
+    StarFilled,
+    LeftOutlined,
+    RightOutlined,
+    DownOutlined,
 } from "@ant-design/icons";
-import { getPitchTypeLabel, PITCH_STATUS_META } from "../../../utils/constants/pitch.constants";
-import { GrStatusGood } from "react-icons/gr";
-import { MdDateRange, MdMergeType, MdPriceChange } from "react-icons/md";
-import { GiSloth } from "react-icons/gi";
 import { TbSoccerField } from "react-icons/tb";
 import { IoMdClock } from "react-icons/io";
-import UpdateBookingForm from "./components/UpdateBookingForm";
+import { MdMergeType, MdPriceChange } from "react-icons/md";
+import { GiSloth } from "react-icons/gi";
+import { FaMapMarkerAlt } from "react-icons/fa";
+import { GrStatusGood } from "react-icons/gr";
+import dayjs, { type Dayjs } from "dayjs";
+import { useLocation, useParams } from "react-router";
+
+import "./BookingPage.scss";
+import { getPitchById } from "../../../config/Api";
+import type { IPitch } from "../../../types/pitch";
+import { useBookingTimeline } from "./hook/useBookingTimeline";
 import { useAppSelector } from "../../../redux/hooks";
-const { Title, Text } = Typography;
+import { formatVND } from "../../../utils/format/price";
+import { getPitchTypeLabel, PITCH_STATUS_META } from "../../../utils/constants/pitch.constants";
+import BookingTime from "./components/BookingTimeline";
+import CreateBookingForm from "./components/CreateBookingForm";
+import UpdateBookingForm from "./components/UpdateBookingForm";
+
+const { Content } = Layout;
 
 interface BookingPageProps {
     theme: "light" | "dark";
 }
 
+// ── Variants đồng bộ HomePage ──────────────────────────────────
+const fadeUp: Variants = {
+    hidden: { opacity: 0, y: 40 },
+    visible: (i = 0) => ({
+        opacity: 1, y: 0,
+        transition: { duration: 0.7, ease: "easeOut", delay: i * 0.12 },
+    }),
+};
+const fadeIn: Variants = {
+    hidden: { opacity: 0 },
+    visible: (i = 0) => ({
+        opacity: 1,
+        transition: { duration: 0.8, ease: "easeOut", delay: i * 0.1 },
+    }),
+};
+const scaleIn: Variants = {
+    hidden: { opacity: 0, scale: 0.94 },
+    visible: { opacity: 1, scale: 1, transition: { duration: 0.45, ease: "easeOut" } },
+    exit: { opacity: 0, scale: 0.94, transition: { duration: 0.2, ease: "easeIn" } },
+};
+
+const DOW_VN = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+
+/** 7 ngày của tuần chứa `anchor` */
+function weekOf(anchor: Dayjs): Dayjs[] {
+    const monday = anchor.startOf("week"); // dayjs default: Sunday=0
+    return Array.from({ length: 7 }, (_, i) => monday.add(i, "day"));
+}
+
+// ── Component ───────────────────────────────────────────────────
 const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
     const isDark = theme === "dark";
     const { pitchId } = useParams<{ pitchId: string }>();
     const pitchIdNumber = Number(pitchId);
 
-    const [bookingDate, setBookingDate] = useState<Dayjs | null>(dayjs());
+    const [bookingDate, setBookingDate] = useState<Dayjs>(dayjs());
+    const [weekAnchor, setWeekAnchor] = useState<Dayjs>(dayjs()); // week nav
     const [pitch, setPitch] = useState<IPitch | null>(null);
     const [pitchLoading, setPitchLoading] = useState(false);
+    const [activePitchId, setActivePitchId] = useState(pitchIdNumber);
+    const [pitchOpen, setPitchOpen] = useState(true); // accordion on mobile
+
+    const stripRef = useRef<HTMLDivElement>(null);
 
     const location = useLocation();
-
     const mode: "CREATE" | "UPDATE" = location.state?.mode ?? "CREATE";
     const bookingId: number | undefined = location.state?.bookingId;
-    const [activePitchId, setActivePitchId] = useState(pitchIdNumber);
 
-    const {
-        timeline,
-        timelineLoading,
-        reloadTimeline,
-    } = useBookingTimeline(activePitchId, bookingDate);
+    const { timeline, timelineLoading, reloadTimeline } =
+        useBookingTimeline(activePitchId, bookingDate);
 
-    const bookingChangedAt = useAppSelector(
-        state => state.bookingUi.bookingChangedAt
-    );
-
-
-    useEffect(() => {
-        if (bookingChangedAt) {
-            reloadTimeline();
-        }
-    }, [bookingChangedAt, reloadTimeline]);
-
-    useEffect(() => {
-        if (!pitchIdNumber) return;
-        setActivePitchId(pitchIdNumber);
-    }, [pitchIdNumber]);
-
-    // } = useBookingTimeline(pitchIdNumber, bookingDate);
-
-    // useEffect(() => {
-    //     if (!pitchIdNumber) return;
-
-    //     setPitchLoading(true);
-    // getPitchById(pitchIdNumber)
-    // getPitchById(activePitchId)
-    //         .then(res => {
-    //             if (res.data.statusCode === 200) {
-    //                 setPitch(res.data.data ?? null);
-    //             }
-    //         })
-    //         .finally(() => setPitchLoading(false));
-    // }, [pitchIdNumber]);
+    const bookingChangedAt = useAppSelector(s => s.bookingUi.bookingChangedAt);
+    useEffect(() => { if (bookingChangedAt) reloadTimeline(); }, [bookingChangedAt, reloadTimeline]);
+    useEffect(() => { if (pitchIdNumber) setActivePitchId(pitchIdNumber); }, [pitchIdNumber]);
     useEffect(() => {
         if (!activePitchId) return;
-
         setPitchLoading(true);
         getPitchById(activePitchId)
-            .then(res => {
-                if (res.data.statusCode === 200) {
-                    setPitch(res.data.data ?? null);
-                }
-            })
+            .then(res => { if (res.data.statusCode === 200) setPitch(res.data.data ?? null); })
             .finally(() => setPitchLoading(false));
     }, [activePitchId]);
 
+    // Scroll active chip into view on mobile strip
+    useEffect(() => {
+        if (!stripRef.current) return;
+        const el = stripRef.current.querySelector<HTMLElement>(".bk__date-chip--active");
+        el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }, [bookingDate]);
+
+    const weekDays = weekOf(weekAnchor);
+
+    const goToPrevWeek = () => setWeekAnchor(a => a.subtract(7, "day"));
+    const goToNextWeek = () => setWeekAnchor(a => a.add(7, "day"));
+    const pickerPopupClass = isDark ? "bk__picker-popup bk__picker-popup--dark" : "bk__picker-popup bk__picker-popup--light";
+
+    const handlePickerChange = (value: Dayjs | null) => {
+        if (!value) return;
+        setBookingDate(value);
+        setWeekAnchor(value);
+    };
+
+    const selectDay = (d: Dayjs) => {
+        setBookingDate(d);
+        setWeekAnchor(d);
+    };
+
     return (
-        <div className={`luxury-card-wrapper ${isDark ? "dark" : "light"}`}>
+        <Layout className={`bk ${isDark ? "bk--dark" : "bk--light"}`}>
+            <Content className="bk__content">
 
-            <Card
-                className="booking-card"
-                title={
-                    <Space>
-                        <TbSoccerField style={{ marginBottom: 2 }} size={20} />
-                        <span>
-                            {mode === "CREATE" ? "Tạo lịch đặt sân" : "Cập nhật lịch đặt sân"}
-                        </span>
-                    </Space>
-                }
-                extra={
-                    <Space wrap size={[8, 4]}>
-                        <IoMdClock size={18} />
-                        <Tag color="green">Trống</Tag>
-                        <Tag color="red">Đã đặt</Tag>
-                    </Space>
-                }
-            >
-                <Row gutter={[24, 24]}>
-                    <Col xs={24} lg={16}>
-                        <BookingTime
-                            timelineLoading={timelineLoading}
-                            timeline={timeline}
-                        />
-                    </Col>
+                {/* ══════════════════════════════════════════ HERO */}
+                <section className="bk__hero">
+                    <div className="bk__hero-bg" aria-hidden>
+                        <div className="bk__hero-orb bk__hero-orb--1" />
+                        <div className="bk__hero-orb bk__hero-orb--2" />
+                        <div className="bk__hero-orb bk__hero-orb--3" />
+                    </div>
+                    <div className="bk__container bk__hero-inner">
+                        <motion.div className="bk__hero-badge"
+                            initial="hidden" animate="visible" variants={fadeIn} custom={0}>
+                            <StarFilled style={{ color: "#faad14", fontSize: 11 }} />
+                            <span>TBU Sport · Đặt sân trực tuyến</span>
+                        </motion.div>
 
-                    <Col xs={24} lg={8}
-                        style={{ paddingTop: 12 }}
-                    >
-                        <Title level={5}
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 8,
-                                marginBottom: 8,
-                            }}
-                        >
-                            <MdDateRange size={20} /> Chọn ngày để xem các khung giờ còn trống!
-                        </Title>
+                        <motion.h1 className="bk__hero-title"
+                            initial="hidden" animate="visible" variants={fadeUp} custom={1}>
+                            {mode === "CREATE"
+                                ? <>Đặt lịch sân bóng <em className="bk__gold-text">tức thì</em></>
+                                : <>Cập nhật <em className="bk__gold-text">lịch đặt sân</em></>}
+                        </motion.h1>
 
-                        <DatePicker
-                            style={{ width: "100%" }}
-                            value={bookingDate}
-                            onChange={setBookingDate}
-                            format="DD/MM/YYYY"
-                            placeholder="Chọn ngày"
-                        />
+                        <motion.p className="bk__hero-sub"
+                            initial="hidden" animate="visible" variants={fadeUp} custom={2}>
+                            Chọn ngày, xem khung giờ trống và hoàn tất đặt sân trong vài giây.
+                            Mượt mà trên mọi thiết bị.
+                        </motion.p>
 
+                        <motion.div className="bk__legend"
+                            initial="hidden" animate="visible" variants={fadeIn} custom={3}>
+                            <IoMdClock size={14} style={{ opacity: 0.5 }} />
+                            <span className="bk__legend-item">
+                                <span className="bk__legend-dot bk__legend-dot--free" />Trống
+                            </span>
+                            <span className="bk__legend-item">
+                                <span className="bk__legend-dot bk__legend-dot--booked" />Đã đặt
+                            </span>
+                        </motion.div>
+                    </div>
+                </section>
 
+                {/* ══════════════════════════════════════════ MAIN */}
+                <section className="bk__main">
+                    <div className="bk__container bk__main-inner">
 
-                        {pitchLoading ? (
-                            <Spin />
-                        ) : (
-                            pitch && (
-                                <Card size="small" style={{ marginTop: 16 }}>
-                                    {/* <img
-                                        src={
-                                            pitch.pitchUrl ||
-                                            "https://images.unsplash.com/photo-1574629810360-7efbbe195018"
-                                        }
-                                        alt={pitch.name ?? undefined}
-                                        style={{
-                                            width: "100%",
-                                            height: 160,
-                                            objectFit: "cover",
-                                            borderRadius: 8,
-                                            marginBottom: 12,
-                                        }}
-                                    /> */}
-                                    <Image
-                                        src={
-                                            pitch.pitchUrl ||
-                                            "https://images.unsplash.com/photo-1574629810360-7efbbe195018"
-                                        }
-                                        alt={pitch.name ?? undefined}
-                                        width="100%"
-                                        height={160}
-                                        style={{
-                                            objectFit: "cover",
-                                            borderRadius: 8,
-                                            marginBottom: 12,
-                                        }}
-                                        fallback="https://images.unsplash.com/photo-1574629810360-7efbbe195018"
-                                        preview={{
-                                            mask: "Xem ảnh",
-                                        }}
-                                    />
+                        {/* ── LEFT: calendar nav + timeline ── */}
+                        <motion.div className="bk__panel"
+                            initial="hidden" animate="visible" variants={fadeUp} custom={1}>
 
+                            {/* Row: label + nav + pick any date */}
+                            <div className="bk__cal-header">
+                                <span className="bk__panel-label" style={{ margin: 0 }}>
+                                    <CalendarOutlined />
+                                    Chọn ngày xem lịch
+                                </span>
 
-                                    <Title
-                                        level={5}
-                                        style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 8,
-                                            marginBottom: 8,
-                                        }}
-                                    >
-                                        <TbSoccerField size={20} />
-                                        {pitch.name}
-                                    </Title>
+                                <div className="bk__cal-nav">
+                                    <button className="bk__nav-btn" onClick={goToPrevWeek}
+                                        title="Tuần trước">
+                                        <LeftOutlined />
+                                    </button>
 
-                                    <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                                        <Tag color="blue">
-                                            <MdMergeType /> {getPitchTypeLabel(pitch.pitchType)}
-                                        </Tag>
+                                    <Tooltip title="Chọn ngày bất kỳ">
+                                        <DatePicker
+                                            className="bk__nav-picker"
+                                            value={bookingDate}
+                                            format="DD/MM/YYYY"
+                                            allowClear={false}
+                                            inputReadOnly
+                                            suffixIcon={<CalendarOutlined />}
+                                            classNames={{ popup: pickerPopupClass }}
+                                            disabledDate={current => !!current && current.startOf("day").isBefore(dayjs().startOf("day"))}
+                                            onChange={handlePickerChange}
+                                        />
+                                    </Tooltip>
 
-                                        <Tag color={PITCH_STATUS_META[pitch.status].color}>
-                                            <GrStatusGood /> {PITCH_STATUS_META[pitch.status].label}
-                                        </Tag>
-                                    </div>
+                                    <button className="bk__nav-btn" onClick={goToNextWeek}
+                                        title="Tuần sau">
+                                        <RightOutlined />
+                                    </button>
+                                </div>
+                            </div>
 
-                                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                                        <Text type="warning">
-                                            <EnvironmentOutlined /> Địa chỉ:
-                                            <Tag color="success" style={{ marginLeft: 6 }}>
-                                                {pitch.address}
-                                            </Tag>
-                                        </Text>
+                            {/* Week label */}
+                            <p className="bk__week-label">
+                                {weekDays[0].format("DD/MM")} – {weekDays[6].format("DD/MM/YYYY")}
+                            </p>
 
-                                        <Text type="warning">
-                                            <GiSloth /> Slot:
-                                            <Tag color="success" style={{ marginLeft: 6 }}>
-                                                {timeline?.slotMinutes} phút
-                                            </Tag>
-                                        </Text>
+                            {/* 7-day strip */}
+                            <div className="bk__date-strip" ref={stripRef}>
+                                {weekDays.map(d => {
+                                    const isActive = d.isSame(bookingDate, "day");
+                                    const isToday = d.isSame(dayjs(), "day");
+                                    return (
+                                        <motion.button
+                                            key={d.format("YYYY-MM-DD")}
+                                            type="button"
+                                            className={[
+                                                "bk__date-chip",
+                                                isActive ? "bk__date-chip--active" : "",
+                                                isToday ? "bk__date-chip--today" : "",
+                                            ].filter(Boolean).join(" ")}
+                                            onClick={() => selectDay(d)}
+                                            whileTap={{ scale: 0.9 }}
+                                        >
+                                            <span className="bk__date-chip__dow">{DOW_VN[d.day()]}</span>
+                                            <span className="bk__date-chip__day">{d.format("DD")}</span>
+                                            <span className="bk__date-chip__mon">Th{d.format("M")}</span>
+                                        </motion.button>
+                                    );
+                                })}
+                            </div>
 
-                                        <Text type="warning">
-                                            <ClockCircleOutlined /> Giờ mở cửa:
-                                            <Tag color="success" style={{ marginLeft: 6 }}>
-                                                {pitch.open24h
-                                                    ? "Mở cửa 24/7"
-                                                    : `${pitch.openTime} - ${pitch.closeTime}`}
-                                            </Tag>
-                                        </Text>
-                                    </div>
+                            {/* Slot label */}
+                            <p className="bk__panel-label" style={{ marginBottom: 10 }}>
+                                <IoMdClock size={12} />
+                                {bookingDate.format("dddd, DD/MM/YYYY")}
+                            </p>
 
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            alignItems: "center",
-                                            width: "100%",
-                                        }}
-                                    >
-                                        <Text type="warning" strong style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                            <MdPriceChange />{" Giá: "}
-                                            <Tag color="success">{formatVND(pitch.pricePerHour)} / giờ</Tag>
-                                        </Text>
+                            <BookingTime timelineLoading={timelineLoading} timeline={timeline} />
+                        </motion.div>
 
-                                        <Tooltip title="Chỉ đường">
-                                            <Button
-                                                variant="outline-info"
-                                                onClick={() => {
-                                                    if (pitch?.latitude == null || pitch?.longitude == null) return;
+                        {/* ── RIGHT column ── */}
+                        <div className="bk__right">
 
-                                                    const url = `https://www.google.com/maps/dir/?api=1&destination=${pitch.latitude},${pitch.longitude}`;
-                                                    window.open(url, "_blank");
-                                                }}
-                                                disabled={pitch?.latitude == null || pitch?.longitude == null}
-                                                style={{ display: "flex", alignItems: "center", gap: 6 }}
+                            {/* Pitch info — collapsible on mobile */}
+                            <AnimatePresence mode="wait">
+                                {pitchLoading ? (
+                                    <motion.div key="spin"
+                                        className="bk__panel bk__spin-center"
+                                        variants={scaleIn} initial="hidden" animate="visible" exit="exit">
+                                        <Spin size="large" />
+                                    </motion.div>
+                                ) : pitch ? (
+                                    <motion.div key={`pitch-${pitch.id}`}
+                                        className="bk__panel bk__pitch-panel"
+                                        variants={scaleIn} initial="hidden" animate="visible" exit="exit">
+
+                                        {/* Accordion header */}
+                                        <button
+                                            className="bk__pitch-accordion"
+                                            onClick={() => setPitchOpen(o => !o)}
+                                        >
+                                            <span className="bk__pitch-accordion__title">
+                                                <TbSoccerField size={15} />
+                                                {pitch.name}
+                                            </span>
+                                            <motion.span
+                                                animate={{ rotate: pitchOpen ? 180 : 0 }}
+                                                transition={{ duration: 0.25 }}
+                                                className="bk__pitch-accordion__arrow"
                                             >
-                                                <FaMapMarkerAlt />
-                                                {/* Chỉ đường */}
-                                            </Button>
-                                        </Tooltip>
-                                    </div>
+                                                <DownOutlined />
+                                            </motion.span>
+                                        </button>
 
-                                </Card>
-                            )
-                        )}
+                                        <AnimatePresence initial={false}>
+                                            {pitchOpen && (
+                                                <motion.div
+                                                    key="pitch-body"
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: "auto", opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                                                    style={{ overflow: "hidden" }}
+                                                >
+                                                    <div className="bk__pitch-img-wrap">
+                                                        <Image
+                                                            src={pitch.pitchUrl || "https://images.unsplash.com/photo-1574629810360-7efbbe195018"}
+                                                            alt={pitch.name ?? undefined}
+                                                            width="100%" height={148}
+                                                            style={{ objectFit: "cover" }}
+                                                            fallback="https://images.unsplash.com/photo-1574629810360-7efbbe195018"
+                                                            preview={{ mask: "Xem ảnh" }}
+                                                        />
+                                                    </div>
 
-                        {mode === "CREATE" && (
-                            <CreateBookingForm
-                                pitchIdNumber={pitchIdNumber}
-                                pitch={pitch}
-                                pitchLoading={pitchLoading}
-                                onSuccess={reloadTimeline}
-                            />
-                        )}
+                                                    <div className="bk__pitch-body">
+                                                        <div className="bk__pitch-tags">
+                                                            <Tag color="blue">
+                                                                <MdMergeType /> {getPitchTypeLabel(pitch.pitchType)}
+                                                            </Tag>
+                                                            <Tag color={PITCH_STATUS_META[pitch.status].color}>
+                                                                <GrStatusGood /> {PITCH_STATUS_META[pitch.status].label}
+                                                            </Tag>
+                                                        </div>
 
-                        {mode === "UPDATE" && bookingId && (
-                            <UpdateBookingForm
-                                bookingId={bookingId}
-                                pitchIdNumber={pitchIdNumber}
-                                pitch={pitch}
-                                pitchLoading={pitchLoading}
-                                onSuccess={reloadTimeline}
-                                onPitchChange={setActivePitchId}
-                            />
-                        )}
+                                                        <div className="bk__pitch-meta">
+                                                            <div className="bk__pitch-meta-row">
+                                                                <EnvironmentOutlined />
+                                                                <span>Địa chỉ:</span>
+                                                                <span>{pitch.address}</span>
+                                                            </div>
+                                                            <div className="bk__pitch-meta-row">
+                                                                <GiSloth />
+                                                                <span>Slot:</span>
+                                                                <span>{timeline?.slotMinutes ?? "—"} phút</span>
+                                                            </div>
+                                                            <div className="bk__pitch-meta-row">
+                                                                <ClockCircleOutlined />
+                                                                <span>Giờ mở cửa:</span>
+                                                                <span>
+                                                                    {pitch.open24h
+                                                                        ? "Mở cửa 24/7"
+                                                                        : `${pitch.openTime} – ${pitch.closeTime}`}
+                                                                </span>
+                                                            </div>
+                                                        </div>
 
-                    </Col>
-                </Row>
-            </Card>
-        </div>
+                                                        <div className="bk__pitch-footer">
+                                                            <div className="bk__pitch-price">
+                                                                <MdPriceChange size={15} />
+                                                                {formatVND(pitch.pricePerHour)} / giờ
+                                                            </div>
+                                                            <Tooltip title="Chỉ đường Google Maps">
+                                                                <button
+                                                                    className="bk__dir-btn"
+                                                                    disabled={pitch?.latitude == null || pitch?.longitude == null}
+                                                                    onClick={() => {
+                                                                        if (pitch?.latitude == null || pitch?.longitude == null) return;
+                                                                        window.open(
+                                                                            `https://www.google.com/maps/dir/?api=1&destination=${pitch.latitude},${pitch.longitude}`,
+                                                                            "_blank"
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    <FaMapMarkerAlt size={12} />
+                                                                </button>
+                                                            </Tooltip>
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </motion.div>
+                                ) : null}
+                            </AnimatePresence>
+
+                            {/* Booking form */}
+                            <motion.div className="bk__panel bk__form-panel"
+                                initial="hidden" animate="visible" variants={fadeUp} custom={3}>
+                                <p className="bk__panel-label">
+                                    <TbSoccerField size={12} />
+                                    {mode === "CREATE" ? "Thông tin đặt sân" : "Cập nhật thông tin"}
+                                </p>
+
+                                {mode === "CREATE" && (
+                                    <CreateBookingForm
+                                        pitchIdNumber={pitchIdNumber}
+                                        pitch={pitch}
+                                        pitchLoading={pitchLoading}
+                                        bookingDate={bookingDate}
+                                        isDark={isDark}
+                                        onSuccess={reloadTimeline}
+                                    />
+                                )}
+
+                                {mode === "UPDATE" && bookingId && (
+                                    <UpdateBookingForm
+                                        bookingId={bookingId}
+                                        pitchIdNumber={pitchIdNumber}
+                                        pitch={pitch}
+                                        pitchLoading={pitchLoading}
+                                        bookingDate={bookingDate}
+                                        isDark={isDark}
+                                        onSuccess={reloadTimeline}
+                                        onPitchChange={setActivePitchId}
+                                    />
+                                )}
+                            </motion.div>
+                        </div>
+                    </div>
+                </section>
+
+            </Content>
+        </Layout>
     );
 };
 

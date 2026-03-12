@@ -26,7 +26,7 @@ const ModalPitchDetails = (props: IProps) => {
         <Drawer
             title="Chi tiết sân"
             placement="right"
-            closable={false}
+            // closable={false}
             onClose={() => setOpenModalPitchDetails(false)}
             open={openModalPitchDetails}
         // size=

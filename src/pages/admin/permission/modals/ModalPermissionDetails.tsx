@@ -28,7 +28,7 @@ const ModalPermissionDetails = (props: IProps) => {
         <Drawer
             title="Chi tiết quyền (Permission)"
             placement="right"
-            closable={false}
+            // closable={false}
             onClose={() => setOpenModalPermissionDetails(false)}
             open={openModalPermissionDetails}
         >
