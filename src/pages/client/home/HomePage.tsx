@@ -156,7 +156,7 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                                     className="hp__btn-primary"
                                     size="large"
                                     icon={<ArrowRightOutlined />}
-                                    iconPosition="end"
+                                    iconPlacement="end"
                                     onClick={() => navigate("/pitch")}
                                 >
                                     Đặt sân ngay

@@ -24,3 +24,4 @@ dist-ssr
 *.sw?
 INSTALL.md
 ghi_chu.md
+.env

@@ -1,13 +1,82 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/src/assets/logo-utb.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/src/assets/logo-utb.svg" id="favicon" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tbu sport</title>
+
+  <script>
+    window.addEventListener('load', () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = 64
+      canvas.height = 64
+      const ctx = canvas.getContext('2d')
+      const img = new Image()
+      img.src = '/src/assets/logo-utb.svg'
+
+      const favicon = document.getElementById('favicon')
+      let angle = 0
+
+      img.onload = () => {
+        const animate = () => {
+          ctx.clearRect(0, 0, 64, 64)
+          const cx = 32, cy = 32
+
+          // Vẽ vòng sáng xoay
+          const gradient = ctx.createConicalGradient
+            ? null
+            : (() => {
+              // Dùng arc thay thế
+              ctx.save()
+              ctx.translate(cx, cy)
+              ctx.rotate(angle)
+              const g = ctx.createLinearGradient(-32, 0, 32, 0)
+              g.addColorStop(0, 'rgba(97,218,251,0)')
+              g.addColorStop(0.5, 'rgba(97,218,251,0.9)')
+              g.addColorStop(1, 'rgba(97,218,251,0)')
+              ctx.strokeStyle = g
+              ctx.lineWidth = 3
+              ctx.beginPath()
+              ctx.arc(0, 0, 29, 0, Math.PI * 2)
+              ctx.stroke()
+              ctx.restore()
+            })()
+
+          // Chấm sáng chạy vòng
+          const dotX = cx + 29 * Math.cos(angle)
+          const dotY = cy + 29 * Math.sin(angle)
+          const dotGlow = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, 8)
+          dotGlow.addColorStop(0, 'rgba(97,218,251,1)')
+          dotGlow.addColorStop(1, 'rgba(97,218,251,0)')
+          ctx.fillStyle = dotGlow
+          ctx.beginPath()
+          ctx.arc(dotX, dotY, 8, 0, Math.PI * 2)
+          ctx.fill()
+
+          // Logo xoay
+          ctx.save()
+          ctx.translate(cx, cy)
+          ctx.rotate(-angle * 0.3) // xoay ngược chậm hơn
+          ctx.drawImage(img, -20, -20, 40, 40)
+          ctx.restore()
+
+          // Cập nhật favicon
+          favicon.href = canvas.toDataURL('image/png')
+          angle += 0.05
+          requestAnimationFrame(animate)
+        }
+
+        animate()
+      }
+    })
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>
