@@ -86,9 +86,27 @@ const getHeaderHeight = (compact: boolean) => {
     return compact ? 52 : 70;
 };
 
+const DEFAULT_PITCH_PAGE_SIZE = 12;
+
+const buildPitchSearchPath = (keyword: string) => {
+    const params = new URLSearchParams();
+    const trimmedKeyword = keyword.trim();
+
+    params.set('page', '1');
+    params.set('pageSize', String(DEFAULT_PITCH_PAGE_SIZE));
+
+    if (trimmedKeyword) {
+        params.set('keyword', trimmedKeyword);
+    }
+
+    return `/pitch?${params.toString()}`;
+};
+
 const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [searchValue, setSearchValue] = useState('');
     const [compact, setCompact] = useState(false);
     const [openModalAccount, setOpenModalAccount] = useState(false);
     const [openModalUpdateAccount, setOpenModalUpdateAccount] = useState(false);
@@ -101,6 +119,10 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const navigate = useNavigate();
     const location = useLocation();
     const accountMenuRef = useRef<HTMLDivElement | null>(null);
+    const searchPanelRef = useRef<HTMLDivElement | null>(null);
+    const searchInputRef = useRef<HTMLInputElement | null>(null);
+    const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const searchDirtyRef = useRef(false);
     const lastScrollYRef = useRef(0);
     const tickingRef = useRef(false);
 
@@ -111,6 +133,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const initials = (displayName.trim()[0] || 'U').toUpperCase();
 
     useOutsideClick(accountMenuRef, () => setAccountMenuOpen(false), accountMenuOpen);
+    useOutsideClick(searchPanelRef, () => setSearchOpen(false), searchOpen);
 
     useEffect(() => {
         const vars = buildCssVars(isDark);
@@ -126,6 +149,45 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
             });
         };
     }, [isDark]);
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        setSearchValue(params.get('keyword') ?? '');
+        searchDirtyRef.current = false;
+        setSearchOpen(false);
+    }, [location.pathname, location.search]);
+
+    useEffect(() => {
+        if (!searchDirtyRef.current) {
+            return;
+        }
+
+        if (!searchOpen && !drawerOpen) {
+            return;
+        }
+
+        if (searchDebounceRef.current) {
+            clearTimeout(searchDebounceRef.current);
+        }
+
+        searchDebounceRef.current = setTimeout(() => {
+            submitPitchSearch();
+        }, 420);
+
+        return () => {
+            if (searchDebounceRef.current) {
+                clearTimeout(searchDebounceRef.current);
+            }
+        };
+    }, [drawerOpen, searchOpen, searchValue]);
+
+    useEffect(() => {
+        if (!searchOpen) {
+            return;
+        }
+
+        searchInputRef.current?.focus();
+    }, [searchOpen]);
 
 
     useEffect(() => {
@@ -180,6 +242,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const closeAllPanels = () => {
         setDrawerOpen(false);
         setAccountMenuOpen(false);
+        setSearchOpen(false);
     };
 
     const handleLogout = async () => {
@@ -200,9 +263,22 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
         }
     };
 
-    const handleSearch = () => {
-        closeAllPanels();
-        navigate('/pitch');
+    const handleSearchToggle = () => {
+        setAccountMenuOpen(false);
+        setSearchOpen((current) => !current);
+    };
+
+    const submitPitchSearch = () => {
+        const nextPath = buildPitchSearchPath(searchValue);
+
+        if (`${location.pathname}${location.search}` === nextPath) {
+            return;
+        }
+
+        setDrawerOpen(false);
+        setAccountMenuOpen(false);
+        setSearchOpen(false);
+        navigate(nextPath);
     };
 
     const handleNotifications = () => {
@@ -283,7 +359,14 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                     </nav>
 
                     <div className={styles.desktopActions}>
-                        <button type="button" className={styles.actionButton} onClick={handleSearch} aria-label="Tìm kiếm sân" title="Tìm kiếm sân">
+                        <button
+                            type="button"
+                            className={`${styles.actionButton}${searchOpen ? ` ${styles.actionButtonActive}` : ''}`}
+                            onClick={handleSearchToggle}
+                            aria-label="Tìm kiếm sân"
+                            title="Tìm kiếm sân"
+                            aria-expanded={searchOpen}
+                        >
                             <FiSearch />
                         </button>
                         <button type="button" className={styles.actionButton} onClick={handleNotifications} aria-label="Thông báo" title="Thông báo">
@@ -380,6 +463,44 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                         </span>
                     </button>
                 </div>
+
+                <div className={`${styles.searchPanel}${searchOpen ? ` ${styles.searchPanelOpen}` : ''}`} ref={searchPanelRef}>
+                    <form
+                        className={styles.searchForm}
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            submitPitchSearch();
+                        }}
+                    >
+                        <input
+                            ref={searchInputRef}
+                            type="text"
+                            className={styles.searchInput}
+                            value={searchValue}
+                            onChange={(event) => {
+                                searchDirtyRef.current = true;
+                                const nextValue = event.target.value;
+                                setSearchValue(nextValue);
+
+                                // Auto-expand when typing
+                                if (nextValue.trim() && !searchOpen) {
+                                    setSearchOpen(true);
+                                }
+
+                                // Auto-collapse when empty
+                                if (!nextValue.trim() && searchOpen) {
+                                    setSearchOpen(false);
+                                }
+                            }}
+                            placeholder="Nhập tên sân, khu vực hoặc từ khóa..."
+                            aria-label="Từ khóa tìm sân"
+                        />
+                        <button type="submit" className={styles.searchSubmit}>
+                            <FiSearch />
+                            <span>Tìm sân</span>
+                        </button>
+                    </form>
+                </div>
             </header>
 
             <div
@@ -432,11 +553,37 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                     ))}
                 </nav>
 
-                <div className={styles.drawerQuickActions}>
-                    <button type="button" className={styles.drawerQuickButton} onClick={handleSearch}>
+                <form
+                    className={styles.drawerSearchForm}
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        submitPitchSearch();
+                    }}
+                >
+                    <input
+                        type="text"
+                        className={styles.drawerSearchInput}
+                        value={searchValue}
+                        onChange={(event) => {
+                            searchDirtyRef.current = true;
+                            const nextValue = event.target.value;
+                            setSearchValue(nextValue);
+
+                            // Auto-submit on typing in drawer
+                            if (nextValue.trim()) {
+                                // The debounce effect will trigger submit automatically
+                            }
+                        }}
+                        placeholder="Tìm tên sân..."
+                        aria-label="Tìm sân trong menu di động"
+                    />
+                    <button type="submit" className={styles.drawerSearchSubmit}>
                         <FiSearch />
                         <span>Tìm sân</span>
                     </button>
+                </form>
+
+                <div className={styles.drawerQuickActions}>
                     <button type="button" className={styles.drawerQuickButton} onClick={handleNotifications}>
                         <FiBell />
                         <span>Thông báo</span>

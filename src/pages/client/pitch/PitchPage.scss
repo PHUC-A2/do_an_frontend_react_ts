@@ -178,11 +178,294 @@
     .hero-paragraph {
         font-size: 1.15rem;
         margin   : 24px 0 40px;
-        color    : var(--text-main);
-        opacity  : 0.8;
+        color    : var(--text-main) !important;
+        opacity  : 0.82;
 
         @media (max-width: 768px) {
             font-size: 1rem;
+        }
+    }
+
+    .pitch-list-section {
+        padding-bottom: 80px;
+    }
+
+    .pitch-summaryBar {
+        display        : flex;
+        align-items    : center;
+        justify-content: space-between;
+        gap            : 16px;
+        flex-wrap      : wrap;
+        margin-bottom  : 28px;
+        padding        : 26px 28px;
+        border         : 1px solid var(--border);
+        border-radius  : 24px;
+        background     : var(--card-bg);
+        box-shadow     : var(--glass-shadow);
+        backdrop-filter: blur(10px);
+
+        @media (max-width: 768px) {
+            padding: 20px;
+        }
+    }
+
+    .pitch-summaryLabel {
+        margin        : 0 0 10px;
+        color         : var(--gold-main);
+        font-size     : 0.76rem;
+        font-weight   : 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+    }
+
+    .pitch-summaryTitle {
+        margin        : 0;
+        color         : var(--text-main);
+        font-size     : clamp(1.35rem, 2.8vw, 1.9rem);
+        font-weight   : 800;
+        letter-spacing: -0.03em;
+        line-height   : 1.14;
+    }
+
+    .pitch-summaryMeta {
+        padding      : 8px 14px;
+        border-radius: 999px;
+        background   : rgba(250, 173, 20, 0.12);
+        color        : var(--gold-main);
+        font-size    : 0.88rem;
+        font-weight  : 700;
+    }
+
+    .pitch-emptyState {
+        padding                : 36px 20px;
+        border                 : 1px solid var(--border);
+        border-radius          : 24px;
+        background             : var(--card-bg);
+        box-shadow             : var(--glass-shadow);
+        backdrop-filter        : blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    .pitch-card {
+        height: 100%;
+
+        :global(.ant-card-cover img) {
+            height: 180px !important;
+        }
+
+        :global(.ant-card-body) {
+            padding: 18px 18px 16px;
+        }
+    }
+
+    .pitch-card-title {
+        margin-bottom: 10px !important;
+        font-size    : 1rem !important;
+        line-height  : 1.25 !important;
+    }
+
+    .pitch-card-tags {
+        display   : flex;
+        flex-wrap : wrap;
+        gap       : 6px;
+        min-height: 32px;
+
+        :global(.ant-tag) {
+            margin-inline-end: 0;
+            font-size        : 0.74rem;
+        }
+    }
+
+    .pitch-card-price,
+    .pitch-card-time,
+    .pitch-card-address {
+        font-size  : 0.86rem;
+        line-height: 1.55;
+    }
+
+    .pitch-card-address {
+        gap: 8px;
+
+        >span {
+            min-width    : 0;
+            overflow     : hidden;
+            text-overflow: ellipsis;
+            white-space  : nowrap;
+        }
+
+        :global(.ant-btn-link) {
+            padding-inline: 0;
+            font-size     : 0.82rem;
+            white-space   : nowrap;
+        }
+    }
+
+    .pitch-card-actions {
+        align-items: stretch;
+
+        .pitch-card-actionButton {
+            display        : inline-flex;
+            align-items    : center;
+            justify-content: center;
+            gap            : 6px;
+        }
+
+        .pitch-card-actionIcon {
+            flex-shrink: 0;
+        }
+
+        :global(.btn) {
+            min-height : 34px;
+            padding    : 0.3rem 0.45rem;
+            font-size  : 0.76rem;
+            font-weight: 600;
+            line-height: 1.1;
+        }
+    }
+
+    .pitch-paginationWrap {
+        display        : flex;
+        justify-content: center;
+        margin-top     : 32px;
+
+        :global(.ant-pagination-item),
+        :global(.ant-pagination-prev .ant-pagination-item-link),
+        :global(.ant-pagination-next .ant-pagination-item-link) {
+            background: color-mix(in srgb, var(--card-bg) 94%, transparent);
+            border    : 1px solid var(--border);
+            color     : var(--text-main);
+        }
+
+        :global(.ant-pagination-item-active) {
+            border-color: rgba(250, 173, 20, 0.38);
+            box-shadow  : 0 10px 22px rgba(250, 173, 20, 0.14);
+        }
+
+        :global(.ant-pagination-item-active a) {
+            color: var(--gold-main);
+        }
+
+        :global(.ant-select-selector) {
+            background: color-mix(in srgb, var(--card-bg) 94%, transparent) !important;
+            border    : 1px solid var(--border) !important;
+            color     : var(--text-main) !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .container-custom {
+            padding: 0 16px;
+        }
+
+        .pitch-pageSearchInput {
+            max-width: 100%;
+        }
+
+        .pitch-card {
+            border-radius: 16px;
+
+            :global(.ant-card-cover img) {
+                height: 128px !important;
+            }
+
+            :global(.ant-card-body) {
+                padding: 12px 12px 12px;
+            }
+        }
+
+        .pitch-card-title {
+            margin-bottom: 8px !important;
+            font-size    : 0.9rem !important;
+        }
+
+        .pitch-card-tags {
+            gap: 4px;
+
+            :global(.ant-tag) {
+                padding  : 1px 6px;
+                font-size: 0.66rem;
+            }
+        }
+
+        .pitch-card-price,
+        .pitch-card-time,
+        .pitch-card-address {
+            font-size: 0.76rem;
+        }
+
+        .pitch-card-address {
+            flex-direction: column;
+            align-items   : flex-start !important;
+
+            >span {
+                width      : 100%;
+                white-space: normal;
+            }
+
+            :global(.ant-btn-link) {
+                font-size: 0.74rem;
+            }
+        }
+
+        .pitch-card-actions {
+            gap: 6px !important;
+
+            :global(.btn) {
+                min-height : 31px;
+                padding    : 0.28rem 0.22rem;
+                font-size  : 0.68rem;
+                line-height: 1.2;
+            }
+
+            .pitch-card-actionButton {
+                gap: 4px;
+            }
+
+            .pitch-card-actionText {
+                letter-spacing: -0.01em;
+            }
+        }
+    }
+
+    @media (max-width: 420px) {
+        .pitch-summaryBar {
+            padding: 16px;
+        }
+
+        .pitch-summaryMeta {
+            font-size: 0.8rem;
+        }
+
+        .pitch-card {
+            :global(.ant-card-cover img) {
+                height: 112px !important;
+            }
+
+            :global(.ant-card-body) {
+                padding: 10px;
+            }
+        }
+
+        .pitch-card-title {
+            font-size: 0.82rem !important;
+        }
+
+        .pitch-card-price,
+        .pitch-card-time,
+        .pitch-card-address {
+            font-size: 0.72rem;
+        }
+
+        .pitch-card-actions {
+            :global(.btn) {
+                min-height: 29px;
+                padding   : 0.24rem 0.18rem;
+                font-size : 0.64rem;
+            }
+
+            .pitch-card-actionButton {
+                gap: 3px;
+            }
         }
     }
 }

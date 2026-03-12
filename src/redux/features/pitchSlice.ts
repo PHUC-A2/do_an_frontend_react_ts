@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import { getAllPitches } from '../../config/Api';
 import type { IPitch } from '../../types/pitch';
+import type { IBackendRes, IModelPaginate } from '../../types/common';
 
 interface PitchState {
     loading: boolean;
@@ -27,7 +28,7 @@ const initialState: PitchState = {
 };
 
 export const fetchPitches = createAsyncThunk<
-    { result: IPitch[]; meta: PitchState["meta"] },
+    IModelPaginate<IPitch>,
     string,
     { rejectValue: string }
 >(
@@ -35,19 +36,22 @@ export const fetchPitches = createAsyncThunk<
     async (query, { rejectWithValue }) => {
         try {
             const res = await getAllPitches(query);
+            const apiResponse: IBackendRes<IModelPaginate<IPitch>> = res.data;
 
-            if (res.data.statusCode === 200 && res.data.data) {
-                return {
-                    result: res.data.data.result,
-                    meta: res.data.data.meta,
-                };
+            // Check for success: statusCode 200 and no error
+            if (apiResponse.statusCode === 200 && !apiResponse.error && apiResponse.data) {
+                return apiResponse.data;
             }
 
-            return rejectWithValue(res.data.message || "Lấy danh sách sân thất bại");
+            // If error field is set or statusCode is not 200
+            const errorMessage = apiResponse.error
+                ? (Array.isArray(apiResponse.error) ? apiResponse.error.join(', ') : apiResponse.error)
+                : apiResponse.message || "Lấy danh sách sân thất bại";
+
+            return rejectWithValue(errorMessage);
         } catch (error: any) {
-            return rejectWithValue(
-                error?.response?.data?.message || "Lỗi hệ thống"
-            );
+            const errorMessage = error?.response?.data?.message || error?.message || "Lỗi hệ thống";
+            return rejectWithValue(errorMessage);
         }
     }
 );
@@ -66,10 +70,12 @@ export const pitchSlice = createSlice({
                 state.loading = false;
                 state.result = action.payload.result;
                 state.meta = action.payload.meta;
+                state.error = undefined;
             })
             .addCase(fetchPitches.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload;
+                state.error = action.payload || "Lỗi không xác định";
+                state.result = [];
             });
     },
 });
@@ -77,5 +83,6 @@ export const pitchSlice = createSlice({
 export const selectPitches = (state: RootState) => state.pitch.result;
 export const selectPitchMeta = (state: RootState) => state.pitch.meta;
 export const selectPitchLoading = (state: RootState) => state.pitch.loading;
+export const selectPitchError = (state: RootState) => state.pitch.error;
 
 export default pitchSlice.reducer;
