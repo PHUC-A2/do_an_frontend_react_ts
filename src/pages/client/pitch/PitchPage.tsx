@@ -6,6 +6,8 @@ import {
     ClockCircleOutlined,
     ArrowRightOutlined,
     EyeOutlined,
+    AppstoreOutlined,
+    CheckCircleOutlined,
     StarFilled,
 } from "@ant-design/icons";
 import "./PitchPage.scss";
@@ -16,8 +18,6 @@ import type { IPitch } from "../../../types/pitch";
 import { getPitchTypeLabel, PITCH_STATUS_META } from "../../../utils/constants/pitch.constants";
 import { formatVND } from "../../../utils/format/price";
 import RBButton from 'react-bootstrap/Button';
-import { MdMergeType, MdPriceChange } from "react-icons/md";
-import { GrStatusGood } from "react-icons/gr";
 const { Content } = Layout;
 const { Title, Paragraph, Text } = Typography;
 
@@ -168,7 +168,7 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                             <>
                                 <Row className="pitch-cardGrid" gutter={[{ xs: 12, sm: 16, md: 24 }, { xs: 12, sm: 16, md: 24 }]}>
                                     {visiblePitches.map((pitch: IPitch) => (
-                                        <Col xs={12} sm={12} md={8} lg={6} key={pitch.id}>
+                                        <Col xs={24} sm={12} md={8} lg={6} key={pitch.id}>
                                             <MotionCard
                                                 className="pitch-card"
                                                 hoverable
@@ -188,20 +188,20 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                                                 }
                                             >
                                                 <Title level={5} ellipsis className="pitch-card-title">
-                                                    🏟 {pitch.name}
+                                                    {pitch.name}
                                                 </Title>
 
                                                 <div className="pitch-card-tags" style={{ marginBottom: 8 }}>
                                                     <Tag color="blue">
-                                                        <MdMergeType /> {getPitchTypeLabel(pitch.pitchType)}
+                                                        <AppstoreOutlined className="pitch-inlineIcon" /> {getPitchTypeLabel(pitch.pitchType)}
                                                     </Tag>
                                                     <Tag color={PITCH_STATUS_META[pitch.status].color}>
-                                                        <GrStatusGood /> {PITCH_STATUS_META[pitch.status].label}
+                                                        <CheckCircleOutlined className="pitch-inlineIcon" /> {PITCH_STATUS_META[pitch.status].label}
                                                     </Tag>
                                                 </div>
 
                                                 <Text strong type="warning" className="pitch-card-price" style={{ display: "block" }}>
-                                                    <MdPriceChange /> <Tag color={"success"}>{formatVND(pitch.pricePerHour)} / giờ</Tag>
+                                                    <Tag color={"success"}>{formatVND(pitch.pricePerHour)} / giờ</Tag>
                                                 </Text>
 
                                                 <Text type="warning" className="pitch-card-time" style={{ display: "block", marginTop: 4 }}>
@@ -211,13 +211,7 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                                                         : `${pitch.openTime} - ${pitch.closeTime}`}
                                                 </Text>
 
-                                                <Text type="warning" className="pitch-card-address" style={{
-                                                    marginTop: 4,
-                                                    display: "flex",
-                                                    justifyContent: "space-between",
-                                                    alignItems: "center",
-                                                    width: "100%",
-                                                }}>
+                                                <Text type="warning" className="pitch-card-address" style={{ marginTop: 4 }}>
                                                     <span>
                                                         <EnvironmentOutlined /> {pitch.address}
                                                     </span>
@@ -235,18 +229,10 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                                                         <span>Google Maps</span>
                                                     </Button>
                                                 </Text>
-                                                <div
-                                                    className="pitch-card-actions"
-                                                    style={{
-                                                        display: "flex",
-                                                        gap: 8,
-                                                        marginTop: 12,
-                                                    }}
-                                                >
+                                                <div className="pitch-card-actions">
                                                     <RBButton
                                                         variant="outline-secondary"
                                                         className="pitch-card-actionButton"
-                                                        style={{ flex: 1 }}
                                                         title="Xem chi tiết sân"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -260,7 +246,6 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                                                     <RBButton
                                                         variant="outline-warning"
                                                         className="pitch-card-actionButton"
-                                                        style={{ flex: 1 }}
                                                         title="Đặt sân ngay"
                                                         onClick={(e) => {
                                                             e.stopPropagation();

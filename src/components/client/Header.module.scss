@@ -131,6 +131,99 @@ $bp-md: 768px;
     flex-shrink    : 0;
 }
 
+.desktopSearchShell {
+    position   : relative;
+    display    : inline-flex;
+    align-items: center;
+}
+
+.desktopSearchShellOpen {
+    min-width: min(360px, 32vw);
+}
+
+.desktopSearchForm {
+    position      : relative;
+    width         : 0;
+    opacity       : 0;
+    overflow      : hidden;
+    pointer-events: none;
+    transition    : width 0.26s ease, opacity 0.2s ease;
+}
+
+.desktopSearchFormOpen {
+    width         : min(360px, 32vw);
+    opacity       : 1;
+    pointer-events: auto;
+}
+
+.desktopSearchInput {
+    width        : 100%;
+    height       : 40px;
+    border       : 1px solid var(--header-border);
+    border-radius: 999px;
+    background   : var(--header-panel);
+    color        : var(--header-text);
+    padding      : 0 68px 0 14px;
+    outline      : none;
+    transition   : border-color 0.22s ease, box-shadow 0.22s ease;
+
+    &::placeholder {
+        color: var(--header-muted);
+    }
+
+    &:focus {
+        border-color: rgba(250, 173, 20, 0.4);
+        box-shadow  : 0 0 0 3px rgba(250, 173, 20, 0.12);
+    }
+}
+
+.desktopSearchToggle {
+    flex-shrink: 0;
+}
+
+.desktopSearchShell .desktopSearchToggle {
+    position: relative;
+}
+
+.desktopSearchShellOpen .desktopSearchToggle {
+    position  : absolute;
+    top       : 50%;
+    right     : 6px;
+    width     : 30px;
+    height    : 30px;
+    transform : translateY(-50%);
+    background: transparent;
+    color     : var(--header-muted);
+}
+
+.desktopSearchShellOpen .desktopSearchToggle:hover,
+.desktopSearchShellOpen .desktopSearchToggle:active,
+.desktopSearchShellOpen .desktopSearchToggle.actionButtonActive {
+    background: transparent;
+    color     : var(--header-hover-text);
+    transform : translateY(-50%);
+}
+
+.desktopSearchShellOpen .searchClear {
+    right: 38px;
+}
+
+.headerTooltip {
+    :global(.ant-tooltip-inner) {
+        border-radius: 10px;
+        background   : var(--header-panel);
+        color        : var(--header-text);
+        border       : 1px solid var(--header-border);
+        box-shadow   : 0 10px 24px rgba(15, 23, 42, 0.16);
+        font-weight  : 600;
+        padding      : 6px 10px;
+    }
+
+    :global(.ant-tooltip-arrow)::before {
+        background: var(--header-panel);
+    }
+}
+
 .actionButton,
 .loginButton,
 .mobileMenuButton,
@@ -356,46 +449,83 @@ $bp-md: 768px;
     font-weight    : 700;
 }
 
-.searchPanel {
-    position      : absolute;
-    top           : calc(100% + 10px);
-    left          : 50%;
-    width         : min(720px, calc(100vw - 32px));
-    padding       : 18px;
-    border        : 1px solid var(--header-border);
-    border-radius : 24px;
-    background    : var(--header-panel);
-    box-shadow    : var(--header-menu-shadow);
-    opacity       : 0;
-    pointer-events: none;
-    transform     : translate(-50%, -10px);
-    transition    : opacity 0.22s ease, transform 0.22s ease;
+.drawerSearchForm {
+    display    : flex;
+    gap        : 10px;
+    align-items: center;
 }
 
-.searchPanelOpen {
+.searchClear {
+    position       : absolute;
+    top            : 50%;
+    right          : 8px;
+    transform      : translateY(-50%);
+    width          : 30px;
+    height         : 30px;
+    border         : none;
+    border-radius  : 999px;
+    display        : inline-flex;
+    align-items    : center;
+    justify-content: center;
+    background     : transparent;
+    color          : var(--header-muted);
+    cursor         : pointer;
+    transition     : background-color 0.2s ease, color 0.2s ease;
+
+    &:hover {
+        background: var(--header-hover);
+        color     : var(--header-hover-text);
+    }
+
+    &:active {
+        transform : translateY(-50%) scale(0.96);
+        transition: transform 0.08s ease;
+    }
+}
+
+.mobileMenuButton {
+    display: none;
+}
+
+.mobileHeaderActions {
+    display: none;
+}
+
+.mobileSearchShell {
+    position   : relative;
+    display    : inline-flex;
+    align-items: center;
+}
+
+.mobileSearchShellOpen {
+    min-width: min(62vw, 230px);
+}
+
+.mobileSearchForm {
+    position      : relative;
+    width         : 0;
+    opacity       : 0;
+    overflow      : hidden;
+    pointer-events: none;
+    transition    : width 0.26s ease, opacity 0.2s ease;
+}
+
+.mobileSearchFormOpen {
+    width         : min(62vw, 230px);
     opacity       : 1;
     pointer-events: auto;
-    transform     : translate(-50%, 0);
 }
 
-.searchForm,
-.drawerSearchForm {
-    display: flex;
-    gap    : 10px;
-}
-
-.searchInput,
-.drawerSearchInput {
-    flex         : 1;
-    min-width    : 0;
-    height       : 48px;
-    padding      : 0 16px;
+.mobileSearchInput {
+    width        : 100%;
+    height       : 38px;
     border       : 1px solid var(--header-border);
-    border-radius: 14px;
-    background   : var(--header-surface-soft);
+    border-radius: 999px;
+    background   : var(--header-panel);
     color        : var(--header-text);
+    padding      : 0 66px 0 12px;
     outline      : none;
-    transition   : border-color 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
+    transition   : border-color 0.22s ease, box-shadow 0.22s ease;
 
     &::placeholder {
         color: var(--header-muted);
@@ -407,32 +537,35 @@ $bp-md: 768px;
     }
 }
 
-.searchSubmit,
-.drawerSearchSubmit {
-    display        : inline-flex;
-    align-items    : center;
-    justify-content: center;
-    gap            : 8px;
-    min-width      : 124px;
-    height         : 48px;
-    padding        : 0 18px;
-    border         : none;
-    border-radius  : 14px;
-    background     : linear-gradient(135deg, var(--header-accent), var(--header-accent-strong));
-    color          : #1f1300;
-    font-size      : 0.92rem;
-    font-weight    : 800;
-    cursor         : pointer;
-    transition     : transform 0.22s ease, filter 0.22s ease;
-
-    &:hover {
-        filter   : brightness(1.04);
-        transform: translateY(-1px);
-    }
+.mobileSearchToggle {
+    flex-shrink: 0;
 }
 
-.mobileMenuButton {
-    display: none;
+.mobileSearchShell .mobileSearchToggle {
+    position: relative;
+}
+
+.mobileSearchShellOpen .mobileSearchToggle {
+    position  : absolute;
+    top       : 50%;
+    right     : 4px;
+    width     : 30px;
+    height    : 30px;
+    transform : translateY(-50%);
+    background: transparent;
+    color     : var(--header-muted);
+}
+
+.mobileSearchShellOpen .mobileSearchToggle:hover,
+.mobileSearchShellOpen .mobileSearchToggle:active,
+.mobileSearchShellOpen .mobileSearchToggle.actionButtonActive {
+    background: transparent;
+    color     : var(--header-hover-text);
+    transform : translateY(-50%);
+}
+
+.mobileSearchShellOpen .mobileSearchClear {
+    right: 34px;
 }
 
 .mobileMenuIconWrap {
@@ -575,9 +708,72 @@ $bp-md: 768px;
 }
 
 .drawerSearchForm {
-    margin        : 22px 0 18px;
-    padding-bottom: 20px;
+    margin        : 20px 0 16px;
+    padding-bottom: 16px;
     border-bottom : 1px solid var(--header-border);
+}
+
+.drawerSearchInputWrap {
+    position     : relative;
+    display      : flex;
+    align-items  : center;
+    width        : 100%;
+    border-radius: 999px;
+    background   : var(--header-panel);
+    border       : 1px solid rgba(15, 23, 42, 0.14);
+    box-shadow   : 0 1px 4px rgba(15, 23, 42, 0.08);
+    transition   : border-color 0.2s ease, box-shadow 0.2s ease;
+
+    &:focus-within {
+        border-color: rgba(250, 173, 20, 0.45);
+        box-shadow  : 0 0 0 3px rgba(250, 173, 20, 0.12);
+    }
+}
+
+.drawerSearchInput {
+    width        : 100%;
+    height       : 44px;
+    border       : none;
+    border-radius: 999px;
+    background   : transparent;
+    padding      : 0 82px 0 14px;
+    box-shadow   : none;
+
+    &:focus {
+        border    : none;
+        box-shadow: none;
+    }
+}
+
+.drawerSearchClear {
+    right: 44px;
+}
+
+.drawerSearchSubmitIcon {
+    position       : absolute;
+    top            : 50%;
+    right          : 6px;
+    transform      : translateY(-50%);
+    width          : 32px;
+    height         : 32px;
+    border         : none;
+    border-radius  : 999px;
+    display        : inline-flex;
+    align-items    : center;
+    justify-content: center;
+    background     : rgba(250, 173, 20, 0.16);
+    color          : #7a5a05;
+    cursor         : pointer;
+    transition     : background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+
+    &:hover {
+        background: rgba(250, 173, 20, 0.25);
+        color     : #5c4303;
+    }
+
+    &:active {
+        transform: translateY(-50%) scale(0.96);
+    }
 }
 
 .primaryDrawerButton,
@@ -588,12 +784,22 @@ $bp-md: 768px;
     justify-content: center;
     gap            : 8px;
     width          : 100%;
-    min-height     : 46px;
-    padding        : 0 16px;
-    border-radius  : 16px;
+    min-height     : 42px;
+    padding        : 0 14px;
+    border-radius  : 12px;
     font-size      : 0.92rem;
     font-weight    : 700;
     transition     : transform 0.22s ease, background-color 0.22s ease, color 0.22s ease;
+}
+
+.mobileMenuButton,
+.primaryDrawerButton,
+.secondaryDrawerButton,
+.drawerQuickButton,
+.drawerActionItem,
+.drawerSearchSubmitIcon {
+    touch-action               : manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .primaryDrawerButton {
@@ -649,28 +855,25 @@ $bp-md: 768px;
 .drawerQuickActions {
     display              : grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap                  : 10px;
-    padding              : 2px 0 22px;
+    gap                  : 8px;
+    padding              : 2px 0 18px;
     border-bottom        : 1px solid var(--header-border);
 
     .drawerQuickButton {
-        flex-direction: column;
-        min-height    : 92px;
-        padding       : 16px 12px;
-        border-radius : 18px;
-        font-size     : 0.78rem;
+        flex-direction : row;
+        justify-content: flex-start;
+        min-height     : 44px;
+        padding        : 0 12px;
+        border-radius  : 12px;
+        font-size      : 0.84rem;
 
         svg {
-            font-size: 1.05rem;
+            font-size: 0.95rem;
         }
     }
 }
 
 @media (max-width: #{$bp-md}) {
-    .searchPanel {
-        display: none;
-    }
-
     .mobileOverlay {
         display: none;
     }
@@ -693,6 +896,13 @@ $bp-md: 768px;
         display: none;
     }
 
+    .mobileHeaderActions {
+        display    : inline-flex;
+        align-items: center;
+        gap        : 8px;
+        margin-left: auto;
+    }
+
     .mobileMenuButton {
         display: inline-flex;
     }
@@ -703,6 +913,18 @@ $bp-md: 768px;
 
     .mobileDrawerOpen {
         padding: 18px 16px 22px;
+    }
+
+    .drawerSearchForm {
+        flex-direction: row;
+        align-items   : center;
+    }
+
+    .drawerQuickButton,
+    .drawerActionItem,
+    .primaryDrawerButton,
+    .secondaryDrawerButton {
+        min-height: 44px;
     }
 }
 
@@ -723,21 +945,50 @@ $bp-md: 768px;
         font-size: 0.98rem;
     }
 
-    .drawerSearchForm {
-        flex-direction: column;
-    }
-
-    .drawerSearchSubmit {
-        width: 100%;
-    }
-
     .drawerQuickActions {
         grid-template-columns: 1fr;
 
         .drawerQuickButton {
             flex-direction : row;
             justify-content: flex-start;
-            min-height     : 48px;
+            min-height     : 42px;
         }
     }
+
+    .mobileSearchShellOpen {
+        min-width: min(60vw, 200px);
+    }
+
+    .mobileSearchFormOpen {
+        width: min(60vw, 200px);
+    }
+}
+
+@media (hover: none) {
+
+    .actionButton:hover,
+    .mobileMenuButton:hover,
+    .primaryDrawerButton:hover,
+    .secondaryDrawerButton:hover,
+    .drawerQuickButton:hover,
+    .drawerActionItem:hover,
+    .accountMenuItem:hover,
+    .drawerSearchSubmitIcon:hover,
+    .searchClear:hover {
+        transform : none;
+        filter    : none;
+        background: unset;
+    }
+
+    .actionButton:active,
+    .mobileMenuButton:active,
+    .primaryDrawerButton:active,
+    .secondaryDrawerButton:active,
+    .drawerQuickButton:active,
+    .drawerActionItem:active,
+    .drawerSearchSubmitIcon:active {
+        transform : scale(0.98);
+        transition: transform 0.08s ease;
+    }
+
 }

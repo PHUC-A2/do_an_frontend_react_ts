@@ -1,5 +1,5 @@
-import { Avatar, Switch } from 'antd';
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { Avatar, Switch, Tooltip } from 'antd';
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type KeyboardEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import {
     FiBell,
@@ -119,9 +119,11 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const navigate = useNavigate();
     const location = useLocation();
     const accountMenuRef = useRef<HTMLDivElement | null>(null);
-    const searchPanelRef = useRef<HTMLDivElement | null>(null);
+    const desktopSearchRef = useRef<HTMLDivElement | null>(null);
+    const mobileSearchRef = useRef<HTMLDivElement | null>(null);
     const searchInputRef = useRef<HTMLInputElement | null>(null);
-    const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
+    const searchSubmitIntentRef = useRef<'enter' | null>(null);
     const searchDirtyRef = useRef(false);
     const lastScrollYRef = useRef(0);
     const tickingRef = useRef(false);
@@ -133,7 +135,16 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const initials = (displayName.trim()[0] || 'U').toUpperCase();
 
     useOutsideClick(accountMenuRef, () => setAccountMenuOpen(false), accountMenuOpen);
-    useOutsideClick(searchPanelRef, () => setSearchOpen(false), searchOpen);
+    useOutsideClick(desktopSearchRef, () => {
+        if (window.innerWidth > 768) {
+            setSearchOpen(false);
+        }
+    }, searchOpen);
+    useOutsideClick(mobileSearchRef, () => {
+        if (window.innerWidth <= 768) {
+            setSearchOpen(false);
+        }
+    }, searchOpen);
 
     useEffect(() => {
         const vars = buildCssVars(isDark);
@@ -158,36 +169,25 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     }, [location.pathname, location.search]);
 
     useEffect(() => {
-        if (!searchDirtyRef.current) {
-            return;
-        }
-
-        if (!searchOpen && !drawerOpen) {
-            return;
-        }
-
-        if (searchDebounceRef.current) {
-            clearTimeout(searchDebounceRef.current);
-        }
-
-        searchDebounceRef.current = setTimeout(() => {
-            submitPitchSearch();
-        }, 420);
-
-        return () => {
-            if (searchDebounceRef.current) {
-                clearTimeout(searchDebounceRef.current);
-            }
-        };
-    }, [drawerOpen, searchOpen, searchValue]);
-
-    useEffect(() => {
         if (!searchOpen) {
+            return;
+        }
+
+        if (window.innerWidth <= 768) {
+            mobileSearchInputRef.current?.focus();
             return;
         }
 
         searchInputRef.current?.focus();
     }, [searchOpen]);
+
+    useEffect(() => {
+        if (!drawerOpen) {
+            return;
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [drawerOpen]);
 
 
     useEffect(() => {
@@ -263,15 +263,40 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
         }
     };
 
-    const handleSearchToggle = () => {
+    const handleDesktopSearchAction = () => {
         setAccountMenuOpen(false);
-        setSearchOpen((current) => !current);
+
+        if (!searchOpen) {
+            setSearchOpen(true);
+            return;
+        }
+
+        submitPitchSearch();
+    };
+
+    const handleMobileSearchAction = () => {
+        setDrawerOpen(false);
+
+        if (!searchOpen) {
+            setSearchOpen(true);
+            return;
+        }
+
+        submitPitchSearch();
     };
 
     const submitPitchSearch = () => {
-        const nextPath = buildPitchSearchPath(searchValue);
+        const trimmedKeyword = searchValue.trim();
+        const currentPath = `${location.pathname}${location.search}`;
+        const isPitchListingPage = location.pathname === '/pitch';
+        const nextPath = trimmedKeyword
+            ? buildPitchSearchPath(trimmedKeyword)
+            : (isPitchListingPage ? buildPitchSearchPath('') : currentPath);
 
-        if (`${location.pathname}${location.search}` === nextPath) {
+        if (currentPath === nextPath) {
+            setDrawerOpen(false);
+            setAccountMenuOpen(false);
+            setSearchOpen(false);
             return;
         }
 
@@ -279,6 +304,28 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
         setAccountMenuOpen(false);
         setSearchOpen(false);
         navigate(nextPath);
+    };
+
+    const markEnterSubmitIntent = (event: KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+            searchSubmitIntentRef.current = 'enter';
+            return;
+        }
+
+        searchSubmitIntentRef.current = null;
+    };
+
+    const handleSearchFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        // Prevent accidental submits (tap outside/header interactions); only Enter can submit form.
+        if (searchSubmitIntentRef.current !== 'enter') {
+            searchSubmitIntentRef.current = null;
+            return;
+        }
+
+        searchSubmitIntentRef.current = null;
+        submitPitchSearch();
     };
 
     const handleNotifications = () => {
@@ -359,23 +406,63 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                     </nav>
 
                     <div className={styles.desktopActions}>
-                        <button
-                            type="button"
-                            className={`${styles.actionButton}${searchOpen ? ` ${styles.actionButtonActive}` : ''}`}
-                            onClick={handleSearchToggle}
-                            aria-label="Tìm kiếm sân"
-                            title="Tìm kiếm sân"
-                            aria-expanded={searchOpen}
-                        >
-                            <FiSearch />
-                        </button>
-                        <button type="button" className={styles.actionButton} onClick={handleNotifications} aria-label="Thông báo" title="Thông báo">
-                            <FiBell />
-                            <span className={styles.notificationDot} aria-hidden="true" />
-                        </button>
-                        <button type="button" className={styles.actionButton} onClick={handleBookingShortcut} aria-label="Lịch đặt sân" title="Lịch đặt sân">
-                            <FiCalendar />
-                        </button>
+                        <div className={`${styles.desktopSearchShell}${searchOpen ? ` ${styles.desktopSearchShellOpen}` : ''}`} ref={desktopSearchRef}>
+                            <form
+                                className={`${styles.desktopSearchForm}${searchOpen ? ` ${styles.desktopSearchFormOpen}` : ''}`}
+                                onSubmit={handleSearchFormSubmit}
+                            >
+                                <input
+                                    ref={searchInputRef}
+                                    type="text"
+                                    className={styles.desktopSearchInput}
+                                    value={searchValue}
+                                    onChange={(event) => {
+                                        searchDirtyRef.current = true;
+                                        setSearchValue(event.target.value);
+                                    }}
+                                    placeholder="Tìm tên sân, khu vực..."
+                                    aria-label="Từ khóa tìm sân"
+                                    onKeyDown={markEnterSubmitIntent}
+                                />
+                                {searchValue.trim() ? (
+                                    <button
+                                        type="button"
+                                        className={styles.searchClear}
+                                        onClick={() => {
+                                            searchDirtyRef.current = true;
+                                            setSearchValue('');
+                                            searchInputRef.current?.focus();
+                                        }}
+                                        aria-label="Xóa từ khóa tìm kiếm"
+                                    >
+                                        <FiX />
+                                    </button>
+                                ) : null}
+                            </form>
+
+                            <Tooltip title="Tìm kiếm sân" placement="bottom" classNames={{ root: styles.headerTooltip }}>
+                                <button
+                                    type="button"
+                                    className={`${styles.actionButton} ${styles.desktopSearchToggle}${searchOpen ? ` ${styles.actionButtonActive}` : ''}`}
+                                    onClick={handleDesktopSearchAction}
+                                    aria-label="Tìm kiếm sân"
+                                    aria-expanded={searchOpen}
+                                >
+                                    <FiSearch />
+                                </button>
+                            </Tooltip>
+                        </div>
+                        <Tooltip title="Thông báo" placement="bottom" classNames={{ root: styles.headerTooltip }}>
+                            <button type="button" className={styles.actionButton} onClick={handleNotifications} aria-label="Thông báo">
+                                <FiBell />
+                                <span className={styles.notificationDot} aria-hidden="true" />
+                            </button>
+                        </Tooltip>
+                        <Tooltip title="Lịch đặt sân" placement="bottom" classNames={{ root: styles.headerTooltip }}>
+                            <button type="button" className={styles.actionButton} onClick={handleBookingShortcut} aria-label="Lịch đặt sân">
+                                <FiCalendar />
+                            </button>
+                        </Tooltip>
 
                         {isAuthenticated ? (
                             <div className={styles.accountShell} ref={accountMenuRef}>
@@ -450,57 +537,69 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                         )}
                     </div>
 
-                    <button
-                        type="button"
-                        className={`${styles.mobileMenuButton}${drawerOpen ? ` ${styles.mobileMenuButtonOpen}` : ''}`}
-                        onClick={() => setDrawerOpen((current) => !current)}
-                        aria-label={drawerOpen ? 'Đóng menu' : 'Mở menu'}
-                        aria-expanded={drawerOpen}
-                    >
-                        <span className={styles.mobileMenuIconWrap} aria-hidden="true">
-                            <FiMenu className={styles.mobileMenuIconMenu} />
-                            <FiX className={styles.mobileMenuIconClose} />
-                        </span>
-                    </button>
-                </div>
+                    <div className={styles.mobileHeaderActions}>
+                        <div className={`${styles.mobileSearchShell}${searchOpen ? ` ${styles.mobileSearchShellOpen}` : ''}`} ref={mobileSearchRef}>
+                            <form
+                                className={`${styles.mobileSearchForm}${searchOpen ? ` ${styles.mobileSearchFormOpen}` : ''}`}
+                                onSubmit={handleSearchFormSubmit}
+                            >
+                                <input
+                                    ref={mobileSearchInputRef}
+                                    type="text"
+                                    className={styles.mobileSearchInput}
+                                    value={searchValue}
+                                    onChange={(event) => {
+                                        searchDirtyRef.current = true;
+                                        setSearchValue(event.target.value);
+                                    }}
+                                    placeholder="Tìm tên sân..."
+                                    aria-label="Tìm sân trên mobile"
+                                    onKeyDown={markEnterSubmitIntent}
+                                />
+                                {searchValue.trim() ? (
+                                    <button
+                                        type="button"
+                                        className={`${styles.searchClear} ${styles.mobileSearchClear}`}
+                                        onClick={() => {
+                                            searchDirtyRef.current = true;
+                                            setSearchValue('');
+                                            mobileSearchInputRef.current?.focus();
+                                        }}
+                                        aria-label="Xóa từ khóa tìm kiếm"
+                                    >
+                                        <FiX />
+                                    </button>
+                                ) : null}
+                            </form>
+                            <button
+                                type="button"
+                                className={`${styles.actionButton} ${styles.mobileSearchToggle}${searchOpen ? ` ${styles.actionButtonActive}` : ''}`}
+                                onClick={handleMobileSearchAction}
+                                aria-label="Tìm kiếm sân"
+                                aria-expanded={searchOpen}
+                            >
+                                <FiSearch />
+                            </button>
+                        </div>
 
-                <div className={`${styles.searchPanel}${searchOpen ? ` ${styles.searchPanelOpen}` : ''}`} ref={searchPanelRef}>
-                    <form
-                        className={styles.searchForm}
-                        onSubmit={(event) => {
-                            event.preventDefault();
-                            submitPitchSearch();
-                        }}
-                    >
-                        <input
-                            ref={searchInputRef}
-                            type="text"
-                            className={styles.searchInput}
-                            value={searchValue}
-                            onChange={(event) => {
-                                searchDirtyRef.current = true;
-                                const nextValue = event.target.value;
-                                setSearchValue(nextValue);
-
-                                // Auto-expand when typing
-                                if (nextValue.trim() && !searchOpen) {
-                                    setSearchOpen(true);
-                                }
-
-                                // Auto-collapse when empty
-                                if (!nextValue.trim() && searchOpen) {
-                                    setSearchOpen(false);
-                                }
+                        <button
+                            type="button"
+                            className={`${styles.mobileMenuButton}${drawerOpen ? ` ${styles.mobileMenuButtonOpen}` : ''}`}
+                            onClick={() => {
+                                setSearchOpen(false);
+                                setDrawerOpen((current) => !current);
                             }}
-                            placeholder="Nhập tên sân, khu vực hoặc từ khóa..."
-                            aria-label="Từ khóa tìm sân"
-                        />
-                        <button type="submit" className={styles.searchSubmit}>
-                            <FiSearch />
-                            <span>Tìm sân</span>
+                            aria-label={drawerOpen ? 'Đóng menu' : 'Mở menu'}
+                            aria-expanded={drawerOpen}
+                        >
+                            <span className={styles.mobileMenuIconWrap} aria-hidden="true">
+                                <FiMenu className={styles.mobileMenuIconMenu} />
+                                <FiX className={styles.mobileMenuIconClose} />
+                            </span>
                         </button>
-                    </form>
+                    </div>
                 </div>
+
             </header>
 
             <div
@@ -552,36 +651,6 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                         </Link>
                     ))}
                 </nav>
-
-                <form
-                    className={styles.drawerSearchForm}
-                    onSubmit={(event) => {
-                        event.preventDefault();
-                        submitPitchSearch();
-                    }}
-                >
-                    <input
-                        type="text"
-                        className={styles.drawerSearchInput}
-                        value={searchValue}
-                        onChange={(event) => {
-                            searchDirtyRef.current = true;
-                            const nextValue = event.target.value;
-                            setSearchValue(nextValue);
-
-                            // Auto-submit on typing in drawer
-                            if (nextValue.trim()) {
-                                // The debounce effect will trigger submit automatically
-                            }
-                        }}
-                        placeholder="Tìm tên sân..."
-                        aria-label="Tìm sân trong menu di động"
-                    />
-                    <button type="submit" className={styles.drawerSearchSubmit}>
-                        <FiSearch />
-                        <span>Tìm sân</span>
-                    </button>
-                </form>
 
                 <div className={styles.drawerQuickActions}>
                     <button type="button" className={styles.drawerQuickButton} onClick={handleNotifications}>
