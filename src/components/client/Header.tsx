@@ -132,7 +132,6 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
 
     const isDark = theme === 'dark';
     const displayName = account?.fullName || account?.name || 'Tài khoản của bạn';
-    const roleLabel = account?.roles?.[0]?.name || 'MEMBER';
     const canOpenAdmin = hasRole(account, 'ADMIN');
     const initials = (displayName.trim()[0] || 'U').toUpperCase();
 
@@ -463,7 +462,6 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                                         <Flex vertical className={styles.accountCardMeta}>
                                             <Text className={styles.accountName}>{displayName}</Text>
                                             <Text className={styles.accountEmail}>{account?.email || 'Không có email'}</Text>
-                                            <Text className={styles.roleBadge}>{roleLabel}</Text>
                                         </Flex>
                                     </Flex>
 
@@ -576,7 +574,6 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                             <Flex vertical>
                                 <Text className={styles.drawerTitle}>{displayName}</Text>
                                 <Text className={styles.drawerEmail}>{account?.email || 'Không có email'}</Text>
-                                <Text className={styles.drawerRole}>{roleLabel}</Text>
                             </Flex>
                         </Flex>
                     ) : (

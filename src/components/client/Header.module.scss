@@ -470,13 +470,13 @@ $bp-md: 768px;
 }
 
 .accountName {
-    color      : var(--header-text);
+    color      : var(--header-text) !important;
     font-size  : 0.98rem;
     font-weight: 700;
 }
 
 .accountEmail {
-    color        : var(--header-muted);
+    color        : var(--header-muted) !important;
     font-size    : 0.84rem;
     overflow     : hidden;
     text-overflow: ellipsis;
@@ -484,7 +484,7 @@ $bp-md: 768px;
 
 .roleBadge,
 .drawerRole {
-    display        : inline-flex;
+    display        : none;
     align-items    : center;
     justify-content: center;
     width          : fit-content;
@@ -813,16 +813,16 @@ $bp-md: 768px;
 }
 
 .drawerTitle {
-    color      : var(--header-text);
+    color      : var(--header-text) !important;
     font-size  : 1rem;
     font-weight: 800;
     line-height: 1.2;
 }
 
 .drawerEmail {
-    color    : var(--header-muted);
+    color    : var(--header-muted) !important;
     font-size: 0.84rem;
-    margin   : 4px 0 8px;
+    margin   : 4px 0 0;
 }
 
 .drawerSectionTitle {
