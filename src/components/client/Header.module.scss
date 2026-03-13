@@ -10,6 +10,17 @@ $bp-md: 768px;
     transition: height 0.28s ease;
 }
 
+.header:global(.ant-layout-header) {
+    padding      : 0;
+    line-height  : normal;
+    background   : transparent;
+    border-radius: 0;
+}
+
+.header :global(.ant-typography) {
+    margin: 0;
+}
+
 .headerInner {
     display        : flex;
     align-items    : center;
@@ -57,11 +68,10 @@ $bp-md: 768px;
     letter-spacing: -0.04em;
     color         : var(--header-text);
     line-height   : 1.05;
+}
 
-    em {
-        color     : var(--header-accent);
-        font-style: normal;
-    }
+.brandTitleAccent {
+    color: var(--header-accent);
 }
 
 .brandSubtitle {
@@ -131,6 +141,36 @@ $bp-md: 768px;
     flex-shrink    : 0;
 }
 
+.themeSwitchShell {
+    display      : inline-flex;
+    align-items  : center;
+    height       : 40px;
+    padding      : 0 2px;
+    border-radius: 999px;
+    background   : transparent;
+}
+
+.themeSwitchHidden {
+    width         : 0;
+    opacity       : 0;
+    margin        : 0;
+    padding       : 0;
+    pointer-events: none;
+    overflow      : hidden;
+}
+
+.themeSwitch {
+    :global(.ant-switch-inner) {
+        font-size: 0.7rem;
+    }
+
+    :global(.ant-switch-inner-checked),
+    :global(.ant-switch-inner-unchecked) {
+        display    : inline-flex;
+        align-items: center;
+    }
+}
+
 .desktopSearchShell {
     position   : relative;
     display    : inline-flex;
@@ -167,13 +207,32 @@ $bp-md: 768px;
     outline      : none;
     transition   : border-color 0.22s ease, box-shadow 0.22s ease;
 
-    &::placeholder {
+    &:global(.ant-input-affix-wrapper) {
+        padding: 0 10px 0 14px;
+    }
+
+    :global(input) {
+        color     : var(--header-text);
+        background: transparent;
+        padding   : 0;
+        font      : inherit;
+    }
+
+    :global(input)::placeholder {
         color: var(--header-muted);
     }
 
-    &:focus {
+    &:global(.ant-input-affix-wrapper-focused) {
         border-color: rgba(250, 173, 20, 0.4);
         box-shadow  : 0 0 0 3px rgba(250, 173, 20, 0.12);
+    }
+
+    :global(.ant-input-clear-icon) {
+        color: var(--header-muted);
+    }
+
+    :global(.ant-input-suffix) {
+        margin-inline-start: 8px;
     }
 }
 
@@ -239,6 +298,50 @@ $bp-md: 768px;
     cursor    : pointer;
 }
 
+.actionButton:global(.ant-btn),
+.loginButton:global(.ant-btn),
+.mobileMenuButton:global(.ant-btn),
+.accountTrigger:global(.ant-btn),
+.accountMenuItem:global(.ant-btn),
+.drawerQuickButton:global(.ant-btn),
+.primaryDrawerButton:global(.ant-btn),
+.secondaryDrawerButton:global(.ant-btn),
+.drawerActionItem:global(.ant-btn) {
+    padding    : 0;
+    border     : none;
+    box-shadow : none;
+    line-height: inherit;
+    text-align : inherit;
+    min-width  : 0;
+    height     : auto;
+    background : transparent;
+}
+
+.actionButton:global(.ant-btn) :global(.ant-btn-icon),
+.mobileMenuButton:global(.ant-btn) :global(.ant-btn-icon) {
+    margin-inline-end: 0;
+}
+
+.accountMenuItem:global(.ant-btn),
+.drawerActionItem:global(.ant-btn),
+.drawerQuickButton:global(.ant-btn) {
+    justify-content: flex-start;
+}
+
+.loginButton:global(.ant-btn) {
+    padding: 0 16px;
+}
+
+.accountTrigger:global(.ant-btn) {
+    padding: 2px 6px 2px 2px;
+}
+
+.primaryDrawerButton:global(.ant-btn),
+.secondaryDrawerButton:global(.ant-btn),
+.drawerQuickButton:global(.ant-btn) {
+    padding: 0 14px;
+}
+
 .actionButton,
 .mobileMenuButton {
     position       : relative;
@@ -301,6 +404,7 @@ $bp-md: 768px;
 
 .accountShell {
     position: relative;
+    display : block;
 }
 
 .accountTrigger {
@@ -492,13 +596,17 @@ $bp-md: 768px;
 }
 
 .mobileSearchShell {
-    position   : relative;
-    display    : inline-flex;
-    align-items: center;
+    position       : relative;
+    display        : inline-flex;
+    align-items    : center;
+    justify-content: flex-end;
+    margin-left    : auto;
+    flex           : 0 1 auto;
+    min-width      : 40px;
 }
 
 .mobileSearchShellOpen {
-    min-width: min(62vw, 230px);
+    width: min(62vw, 230px);
 }
 
 .mobileSearchForm {
@@ -511,7 +619,8 @@ $bp-md: 768px;
 }
 
 .mobileSearchFormOpen {
-    width         : min(62vw, 230px);
+    width         : 100%;
+    max-width     : min(62vw, 230px);
     opacity       : 1;
     pointer-events: auto;
 }
@@ -527,14 +636,37 @@ $bp-md: 768px;
     outline      : none;
     transition   : border-color 0.22s ease, box-shadow 0.22s ease;
 
-    &::placeholder {
+    &:global(.ant-input-affix-wrapper) {
+        padding: 0 10px 0 12px;
+    }
+
+    :global(input) {
+        color     : var(--header-text);
+        background: transparent;
+        padding   : 0;
+        font      : inherit;
+    }
+
+    :global(input)::placeholder {
         color: var(--header-muted);
     }
 
-    &:focus {
+    &:global(.ant-input-affix-wrapper-focused) {
         border-color: rgba(250, 173, 20, 0.4);
         box-shadow  : 0 0 0 3px rgba(250, 173, 20, 0.12);
     }
+
+    :global(.ant-input-clear-icon) {
+        color: var(--header-muted);
+    }
+
+    :global(.ant-input-suffix) {
+        margin-inline-start: 8px;
+    }
+}
+
+.clearIcon {
+    font-size: 0.9rem;
 }
 
 .mobileSearchToggle {
@@ -897,10 +1029,24 @@ $bp-md: 768px;
     }
 
     .mobileHeaderActions {
-        display    : inline-flex;
-        align-items: center;
-        gap        : 8px;
-        margin-left: auto;
+        display        : inline-flex;
+        align-items    : center;
+        justify-content: flex-end;
+        gap            : 8px;
+        margin-left    : auto;
+        flex           : 1;
+        min-width      : 0;
+
+        .themeSwitchShell {
+            height     : 38px;
+            padding    : 0;
+            flex-shrink: 0;
+            transition : opacity 0.18s ease, width 0.18s ease;
+        }
+
+        .mobileMenuButton {
+            flex-shrink: 0;
+        }
     }
 
     .mobileMenuButton {
@@ -956,11 +1102,11 @@ $bp-md: 768px;
     }
 
     .mobileSearchShellOpen {
-        min-width: min(60vw, 200px);
+        width: min(60vw, 200px);
     }
 
     .mobileSearchFormOpen {
-        width: min(60vw, 200px);
+        max-width: min(60vw, 200px);
     }
 }
 

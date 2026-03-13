@@ -1,4 +1,4 @@
-import { Layout, Row, Col, Typography, Space, Divider } from "antd";
+import { Layout, Row, Col, Typography, Space, Divider, Flex } from "antd";
 import { AiFillTikTok, AiFillYoutube } from "react-icons/ai";
 import { BiLogoFacebookCircle } from "react-icons/bi";
 import { SiZalo } from "react-icons/si";
@@ -8,7 +8,7 @@ import { Link } from "react-router";
 import LogoGlow from "../logo-glow/LogoGlow";
 
 const { Footer: AntFooter } = Layout;
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text, Paragraph, Link: AntLink } = Typography;
 
 interface FooterProps {
     theme: 'light' | 'dark';
@@ -83,24 +83,24 @@ const Footer = ({ theme }: FooterProps) => {
                 }
             `}</style>
 
-            <div className="fp-footer fp-footer-shell">
+            <Flex vertical className="fp-footer fp-footer-shell">
                 <Row gutter={[{ xs: 20, sm: 28, md: 48 }, 40]}>
 
                     {/* ── Brand column ──────────────────────────────── */}
                     <Col xs={24} md={8}>
                         <Link to="/" style={{ textDecoration: 'none' }}>
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, marginBottom: 14, minWidth: 0 }}>
+                            <Flex align="center" gap={12} style={{ marginBottom: 14, minWidth: 0, display: 'inline-flex' }}>
                                 <LogoGlow variant="header" />
-                                <span style={{
+                                <Text style={{
                                     fontSize: '1.08rem',
                                     fontWeight: 800,
                                     letterSpacing: '-0.04em',
                                     lineHeight: 1.05,
                                     color: headingColor,
                                 }}>
-                                    UTB <span style={{ color: gold }}>Sport</span>
-                                </span>
-                            </div>
+                                    UTB <Text style={{ color: gold }}>Sport</Text>
+                                </Text>
+                            </Flex>
                         </Link>
 
                         <Paragraph style={{
@@ -115,10 +115,10 @@ const Footer = ({ theme }: FooterProps) => {
 
                         <Space size={14}>
                             {socials.map(s => (
-                                <a key={s.href} href={s.href} target="_blank" rel="noopener noreferrer"
+                                <AntLink key={s.href} href={s.href} target="_blank" rel="noopener noreferrer"
                                     aria-label={s.label} className="fp-social-icon" style={socialIconStyle}>
                                     {s.icon}
-                                </a>
+                                </AntLink>
                             ))}
                         </Space>
                     </Col>
@@ -128,14 +128,14 @@ const Footer = ({ theme }: FooterProps) => {
                         <Title level={5} style={{ color: headingColor, marginBottom: 16, fontWeight: 700 }}>
                             Liên kết nhanh
                         </Title>
-                        <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Flex vertical gap={2}>
                             {quickLinks.map(link => (
                                 <Link key={link.to} to={link.to} className="fp-nav-link" style={navLinkStyle}>
-                                    <span style={{ display: 'inline-flex', color: 'currentColor' }}>{link.icon}</span>
+                                    <Text style={{ display: 'inline-flex', color: 'currentColor' }}>{link.icon}</Text>
                                     {link.label}
                                 </Link>
                             ))}
-                        </nav>
+                        </Flex>
                     </Col>
 
                     {/* ── Contact ───────────────────────────────────── */}
@@ -145,12 +145,12 @@ const Footer = ({ theme }: FooterProps) => {
                         </Title>
                         <Space orientation="vertical" size={10} style={{ width: '100%' }}>
                             {contactItems.map((item, i) => (
-                                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                                    <span style={{ color: gold, marginTop: 2, flexShrink: 0 }}>{item.icon}</span>
+                                <Flex key={i} align="flex-start" gap={8}>
+                                    <Text style={{ color: gold, marginTop: 2, flexShrink: 0 }}>{item.icon}</Text>
                                     <Text style={{ color: textColor, fontSize: '0.875rem', lineHeight: 1.6 }}>
                                         {item.text}
                                     </Text>
-                                </div>
+                                </Flex>
                             ))}
                         </Space>
                     </Col>
@@ -159,10 +159,10 @@ const Footer = ({ theme }: FooterProps) => {
 
                 <Divider style={{ borderColor: dividerColor, margin: '36px 0 20px' }} />
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                <Flex justify="space-between" align="center" wrap gap={8}>
                     <Text style={{ color: subColor, fontSize: '0.83rem' }}>
                         © {new Date().getFullYear()}{' '}
-                        <span style={{ color: headingColor, fontWeight: 600 }}>UTB Sport</span>.
+                        <Text style={{ color: headingColor, fontWeight: 600 }}>UTB Sport</Text>.
                         {' '}Tất cả quyền được bảo lưu.
                     </Text>
                     <Text style={{ color: subColor, fontSize: '0.78rem' }}>
@@ -171,8 +171,8 @@ const Footer = ({ theme }: FooterProps) => {
                     <Text style={{ color: subColor, fontSize: '0.78rem' }}>
                         Được xây dựng với ❤️ tại Sơn La
                     </Text>
-                </div>
-            </div>
+                </Flex>
+            </Flex>
         </AntFooter>
     );
 };

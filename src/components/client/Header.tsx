@@ -1,5 +1,5 @@
-import { Avatar, Switch, Tooltip } from 'antd';
-import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type KeyboardEvent } from 'react';
+import { Avatar, Button, Flex, Input, Layout, Switch, Tooltip, Typography, type InputRef } from 'antd';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import {
     FiBell,
@@ -40,6 +40,9 @@ interface HeaderProps {
     theme: 'light' | 'dark';
     toggleTheme: () => void;
 }
+
+const { Text } = Typography;
+const { Header: AntHeader } = Layout;
 
 interface NavItem {
     key: 'home' | 'pitch' | 'booking' | 'about';
@@ -121,9 +124,8 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const accountMenuRef = useRef<HTMLDivElement | null>(null);
     const desktopSearchRef = useRef<HTMLDivElement | null>(null);
     const mobileSearchRef = useRef<HTMLDivElement | null>(null);
-    const searchInputRef = useRef<HTMLInputElement | null>(null);
-    const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
-    const searchSubmitIntentRef = useRef<'enter' | null>(null);
+    const searchInputRef = useRef<InputRef | null>(null);
+    const mobileSearchInputRef = useRef<InputRef | null>(null);
     const searchDirtyRef = useRef(false);
     const lastScrollYRef = useRef(0);
     const tickingRef = useRef(false);
@@ -306,25 +308,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
         navigate(nextPath);
     };
 
-    const markEnterSubmitIntent = (event: KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === 'Enter') {
-            searchSubmitIntentRef.current = 'enter';
-            return;
-        }
-
-        searchSubmitIntentRef.current = null;
-    };
-
-    const handleSearchFormSubmit = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-
-        // Prevent accidental submits (tap outside/header interactions); only Enter can submit form.
-        if (searchSubmitIntentRef.current !== 'enter') {
-            searchSubmitIntentRef.current = null;
-            return;
-        }
-
-        searchSubmitIntentRef.current = null;
+    const handleSearchPressEnter = () => {
         submitPitchSearch();
     };
 
@@ -382,17 +366,17 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
 
     return (
         <>
-            <header className={`${styles.header}${compact ? ` ${styles.compact}` : ''}`}>
-                <div className={styles.headerInner}>
+            <AntHeader className={`${styles.header}${compact ? ` ${styles.compact}` : ''}`}>
+                <Flex className={styles.headerInner}>
                     <Link to="/" className={styles.brand} onClick={closeAllPanels}>
                         <LogoGlow variant="header" />
-                        <div className={styles.brandText}>
-                            <span className={styles.brandTitle}>UTB <em>Sport</em></span>
-                            <span className={styles.brandSubtitle}>Đặt sân chuyên nghiệp</span>
-                        </div>
+                        <Flex vertical className={styles.brandText}>
+                            <Text className={styles.brandTitle}>UTB <Text className={styles.brandTitleAccent} italic>Sport</Text></Text>
+                            <Text className={styles.brandSubtitle}>Đặt sân chuyên nghiệp</Text>
+                        </Flex>
                     </Link>
 
-                    <nav className={styles.desktopNav} aria-label="Điều hướng chính">
+                    <Flex className={styles.desktopNav} aria-label="Điều hướng chính">
                         {NAV_ITEMS.map((item) => (
                             <Link
                                 key={item.key}
@@ -403,71 +387,62 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                                 {item.label}
                             </Link>
                         ))}
-                    </nav>
+                    </Flex>
 
-                    <div className={styles.desktopActions}>
-                        <div className={`${styles.desktopSearchShell}${searchOpen ? ` ${styles.desktopSearchShellOpen}` : ''}`} ref={desktopSearchRef}>
-                            <form
-                                className={`${styles.desktopSearchForm}${searchOpen ? ` ${styles.desktopSearchFormOpen}` : ''}`}
-                                onSubmit={handleSearchFormSubmit}
-                            >
-                                <input
+                    <Flex className={styles.desktopActions}>
+                        <Flex className={`${styles.desktopSearchShell}${searchOpen ? ` ${styles.desktopSearchShellOpen}` : ''}`} ref={desktopSearchRef}>
+                            <Flex className={`${styles.desktopSearchForm}${searchOpen ? ` ${styles.desktopSearchFormOpen}` : ''}`}>
+                                <Input
                                     ref={searchInputRef}
-                                    type="text"
                                     className={styles.desktopSearchInput}
                                     value={searchValue}
                                     onChange={(event) => {
                                         searchDirtyRef.current = true;
                                         setSearchValue(event.target.value);
                                     }}
+                                    allowClear={{ clearIcon: <FiX className={styles.clearIcon} /> }}
                                     placeholder="Tìm tên sân, khu vực..."
                                     aria-label="Từ khóa tìm sân"
-                                    onKeyDown={markEnterSubmitIntent}
+                                    onPressEnter={handleSearchPressEnter}
                                 />
-                                {searchValue.trim() ? (
-                                    <button
-                                        type="button"
-                                        className={styles.searchClear}
-                                        onClick={() => {
-                                            searchDirtyRef.current = true;
-                                            setSearchValue('');
-                                            searchInputRef.current?.focus();
-                                        }}
-                                        aria-label="Xóa từ khóa tìm kiếm"
-                                    >
-                                        <FiX />
-                                    </button>
-                                ) : null}
-                            </form>
+                            </Flex>
 
                             <Tooltip title="Tìm kiếm sân" placement="bottom" classNames={{ root: styles.headerTooltip }}>
-                                <button
-                                    type="button"
+                                <Button
+                                    type="text"
                                     className={`${styles.actionButton} ${styles.desktopSearchToggle}${searchOpen ? ` ${styles.actionButtonActive}` : ''}`}
                                     onClick={handleDesktopSearchAction}
                                     aria-label="Tìm kiếm sân"
                                     aria-expanded={searchOpen}
-                                >
-                                    <FiSearch />
-                                </button>
+                                    icon={<FiSearch />}
+                                />
                             </Tooltip>
-                        </div>
+                        </Flex>
                         <Tooltip title="Thông báo" placement="bottom" classNames={{ root: styles.headerTooltip }}>
-                            <button type="button" className={styles.actionButton} onClick={handleNotifications} aria-label="Thông báo">
-                                <FiBell />
-                                <span className={styles.notificationDot} aria-hidden="true" />
-                            </button>
+                            <Button type="text" className={styles.actionButton} onClick={handleNotifications} aria-label="Thông báo" icon={<FiBell />}>
+                                <Text className={styles.notificationDot} aria-hidden="true" />
+                            </Button>
                         </Tooltip>
                         <Tooltip title="Lịch đặt sân" placement="bottom" classNames={{ root: styles.headerTooltip }}>
-                            <button type="button" className={styles.actionButton} onClick={handleBookingShortcut} aria-label="Lịch đặt sân">
-                                <FiCalendar />
-                            </button>
+                            <Button type="text" className={styles.actionButton} onClick={handleBookingShortcut} aria-label="Lịch đặt sân" icon={<FiCalendar />} />
+                        </Tooltip>
+                        <Tooltip title={isDark ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'} placement="bottom" classNames={{ root: styles.headerTooltip }}>
+                            <Flex className={styles.themeSwitchShell}>
+                                <Switch
+                                    className={styles.themeSwitch}
+                                    size="small"
+                                    checked={isDark}
+                                    onChange={toggleTheme}
+                                    checkedChildren={<FiMoon />}
+                                    unCheckedChildren={<FiSun />}
+                                />
+                            </Flex>
                         </Tooltip>
 
                         {isAuthenticated ? (
-                            <div className={styles.accountShell} ref={accountMenuRef}>
-                                <button
-                                    type="button"
+                            <Flex vertical className={styles.accountShell} ref={accountMenuRef}>
+                                <Button
+                                    type="text"
                                     className={`${styles.accountTrigger}${accountMenuOpen ? ` ${styles.accountTriggerOpen}` : ''}`}
                                     onClick={() => setAccountMenuOpen((current) => !current)}
                                     aria-expanded={accountMenuOpen}
@@ -478,112 +453,95 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                                         {!account?.avatarUrl && initials}
                                     </Avatar>
                                     <FiChevronDown className={styles.accountChevron} />
-                                </button>
+                                </Button>
 
-                                <div className={`${styles.accountMenu}${accountMenuOpen ? ` ${styles.accountMenuOpen}` : ''}`} role="menu">
-                                    <div className={styles.accountCardTop}>
+                                <Flex vertical className={`${styles.accountMenu}${accountMenuOpen ? ` ${styles.accountMenuOpen}` : ''}`} role="menu">
+                                    <Flex className={styles.accountCardTop}>
                                         <Avatar src={account?.avatarUrl || undefined} size={60}>
                                             {!account?.avatarUrl && initials}
                                         </Avatar>
-                                        <div className={styles.accountCardMeta}>
-                                            <span className={styles.accountName}>{displayName}</span>
-                                            <span className={styles.accountEmail}>{account?.email || 'Không có email'}</span>
-                                            <span className={styles.roleBadge}>{roleLabel}</span>
-                                        </div>
-                                    </div>
+                                        <Flex vertical className={styles.accountCardMeta}>
+                                            <Text className={styles.accountName}>{displayName}</Text>
+                                            <Text className={styles.accountEmail}>{account?.email || 'Không có email'}</Text>
+                                            <Text className={styles.roleBadge}>{roleLabel}</Text>
+                                        </Flex>
+                                    </Flex>
 
-                                    <div className={styles.accountMenuList}>
+                                    <Flex vertical className={styles.accountMenuList}>
                                         {canOpenAdmin ? (
-                                            <button type="button" className={styles.accountMenuItem} onClick={openAdminPortal}>
+                                            <Button type="text" className={styles.accountMenuItem} onClick={openAdminPortal}>
                                                 <FiShield />
-                                                <span>Trang quản trị</span>
-                                            </button>
+                                                <Text>Trang quản trị</Text>
+                                            </Button>
                                         ) : null}
-                                        <button type="button" className={styles.accountMenuItem} onClick={openAccountInfo}>
+                                        <Button type="text" className={styles.accountMenuItem} onClick={openAccountInfo}>
                                             <FiUser />
-                                            <span>Thông tin tài khoản</span>
-                                        </button>
-                                        <button type="button" className={styles.accountMenuItem} onClick={openAccountUpdate}>
+                                            <Text>Thông tin tài khoản</Text>
+                                        </Button>
+                                        <Button type="text" className={styles.accountMenuItem} onClick={openAccountUpdate}>
                                             <FiEdit3 />
-                                            <span>Cập nhật tài khoản</span>
-                                        </button>
-                                        <button type="button" className={styles.accountMenuItem} onClick={openPasswordReset}>
+                                            <Text>Cập nhật tài khoản</Text>
+                                        </Button>
+                                        <Button type="text" className={styles.accountMenuItem} onClick={openPasswordReset}>
                                             <FiKey />
-                                            <span>Đổi mật khẩu</span>
-                                        </button>
-                                        <button type="button" className={`${styles.accountMenuItem} ${styles.logoutAction}`} onClick={handleLogout}>
+                                            <Text>Đổi mật khẩu</Text>
+                                        </Button>
+                                        <Button type="text" className={`${styles.accountMenuItem} ${styles.logoutAction}`} onClick={handleLogout}>
                                             <FiLogOut />
-                                            <span>Đăng xuất</span>
-                                        </button>
-                                    </div>
+                                            <Text>Đăng xuất</Text>
+                                        </Button>
+                                    </Flex>
 
-                                    <div className={styles.accountMenuFooter}>
-                                        <span>Giao diện</span>
-                                        <Switch
-                                            size="small"
-                                            checked={isDark}
-                                            onChange={toggleTheme}
-                                            checkedChildren={<FiMoon />}
-                                            unCheckedChildren={<FiSun />}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                                </Flex>
+                            </Flex>
                         ) : (
-                            <button type="button" className={styles.loginButton} onClick={() => navigate('/login')}>
+                            <Button type="text" className={styles.loginButton} onClick={() => navigate('/login')}>
                                 <FiLogIn />
-                                <span>Đăng nhập</span>
-                            </button>
+                                <Text>Đăng nhập</Text>
+                            </Button>
                         )}
-                    </div>
+                    </Flex>
 
-                    <div className={styles.mobileHeaderActions}>
-                        <div className={`${styles.mobileSearchShell}${searchOpen ? ` ${styles.mobileSearchShellOpen}` : ''}`} ref={mobileSearchRef}>
-                            <form
-                                className={`${styles.mobileSearchForm}${searchOpen ? ` ${styles.mobileSearchFormOpen}` : ''}`}
-                                onSubmit={handleSearchFormSubmit}
-                            >
-                                <input
+                    <Flex className={styles.mobileHeaderActions}>
+                        <Flex className={`${styles.mobileSearchShell}${searchOpen ? ` ${styles.mobileSearchShellOpen}` : ''}`} ref={mobileSearchRef}>
+                            <Flex className={`${styles.mobileSearchForm}${searchOpen ? ` ${styles.mobileSearchFormOpen}` : ''}`}>
+                                <Input
                                     ref={mobileSearchInputRef}
-                                    type="text"
                                     className={styles.mobileSearchInput}
                                     value={searchValue}
                                     onChange={(event) => {
                                         searchDirtyRef.current = true;
                                         setSearchValue(event.target.value);
                                     }}
+                                    allowClear={{ clearIcon: <FiX className={styles.clearIcon} /> }}
                                     placeholder="Tìm tên sân..."
                                     aria-label="Tìm sân trên mobile"
-                                    onKeyDown={markEnterSubmitIntent}
+                                    onPressEnter={handleSearchPressEnter}
                                 />
-                                {searchValue.trim() ? (
-                                    <button
-                                        type="button"
-                                        className={`${styles.searchClear} ${styles.mobileSearchClear}`}
-                                        onClick={() => {
-                                            searchDirtyRef.current = true;
-                                            setSearchValue('');
-                                            mobileSearchInputRef.current?.focus();
-                                        }}
-                                        aria-label="Xóa từ khóa tìm kiếm"
-                                    >
-                                        <FiX />
-                                    </button>
-                                ) : null}
-                            </form>
-                            <button
-                                type="button"
+                            </Flex>
+                            <Button
+                                type="text"
                                 className={`${styles.actionButton} ${styles.mobileSearchToggle}${searchOpen ? ` ${styles.actionButtonActive}` : ''}`}
                                 onClick={handleMobileSearchAction}
                                 aria-label="Tìm kiếm sân"
                                 aria-expanded={searchOpen}
-                            >
-                                <FiSearch />
-                            </button>
-                        </div>
+                                icon={<FiSearch />}
+                            />
+                        </Flex>
 
-                        <button
-                            type="button"
+                        <Flex className={`${styles.themeSwitchShell}${searchOpen ? ` ${styles.themeSwitchHidden}` : ''}`}>
+                            <Switch
+                                className={styles.themeSwitch}
+                                size="small"
+                                checked={isDark}
+                                onChange={toggleTheme}
+                                checkedChildren={<FiMoon />}
+                                unCheckedChildren={<FiSun />}
+                            />
+                        </Flex>
+
+                        <Button
+                            type="text"
                             className={`${styles.mobileMenuButton}${drawerOpen ? ` ${styles.mobileMenuButtonOpen}` : ''}`}
                             onClick={() => {
                                 setSearchOpen(false);
@@ -592,53 +550,53 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                             aria-label={drawerOpen ? 'Đóng menu' : 'Mở menu'}
                             aria-expanded={drawerOpen}
                         >
-                            <span className={styles.mobileMenuIconWrap} aria-hidden="true">
+                            <Flex className={styles.mobileMenuIconWrap} aria-hidden="true">
                                 <FiMenu className={styles.mobileMenuIconMenu} />
                                 <FiX className={styles.mobileMenuIconClose} />
-                            </span>
-                        </button>
-                    </div>
-                </div>
+                            </Flex>
+                        </Button>
+                    </Flex>
+                </Flex>
 
-            </header>
+            </AntHeader>
 
-            <div
+            <Flex
                 className={`${styles.mobileOverlay}${drawerOpen ? ` ${styles.mobileOverlayOpen}` : ''}`}
                 onClick={() => setDrawerOpen(false)}
                 aria-hidden="true"
             />
 
-            <aside className={`${styles.mobileDrawer}${drawerOpen ? ` ${styles.mobileDrawerOpen}` : ''}`} aria-label="Menu di động">
-                <div className={styles.drawerHeader}>
+            <Flex vertical className={`${styles.mobileDrawer}${drawerOpen ? ` ${styles.mobileDrawerOpen}` : ''}`} aria-label="Menu di động">
+                <Flex vertical className={styles.drawerHeader}>
                     {isAuthenticated ? (
-                        <div className={styles.drawerUserBlock}>
+                        <Flex className={styles.drawerUserBlock}>
                             <Avatar src={account?.avatarUrl || undefined} size={40}>
                                 {!account?.avatarUrl && initials}
                             </Avatar>
-                            <div>
-                                <div className={styles.drawerTitle}>{displayName}</div>
-                                <div className={styles.drawerEmail}>{account?.email || 'Không có email'}</div>
-                                <span className={styles.drawerRole}>{roleLabel}</span>
-                            </div>
-                        </div>
+                            <Flex vertical>
+                                <Text className={styles.drawerTitle}>{displayName}</Text>
+                                <Text className={styles.drawerEmail}>{account?.email || 'Không có email'}</Text>
+                                <Text className={styles.drawerRole}>{roleLabel}</Text>
+                            </Flex>
+                        </Flex>
                     ) : (
-                        <div className={styles.drawerGuestBlock}>
-                            <span className={styles.drawerSectionTitle}>Tài khoản</span>
-                            <div className={styles.drawerAuthActions}>
-                                <button type="button" className={styles.primaryDrawerButton} onClick={() => { setDrawerOpen(false); navigate('/login'); }}>
+                        <Flex vertical className={styles.drawerGuestBlock}>
+                            <Text className={styles.drawerSectionTitle}>Tài khoản</Text>
+                            <Flex vertical className={styles.drawerAuthActions}>
+                                <Button type="text" className={styles.primaryDrawerButton} onClick={() => { setDrawerOpen(false); navigate('/login'); }}>
                                     <FiLogIn />
-                                    <span>Đăng nhập</span>
-                                </button>
-                                <button type="button" className={styles.secondaryDrawerButton} onClick={() => { setDrawerOpen(false); navigate('/register'); }}>
+                                    <Text>Đăng nhập</Text>
+                                </Button>
+                                <Button type="text" className={styles.secondaryDrawerButton} onClick={() => { setDrawerOpen(false); navigate('/register'); }}>
                                     <FiUserPlus />
-                                    <span>Đăng ký</span>
-                                </button>
-                            </div>
-                        </div>
+                                    <Text>Đăng ký</Text>
+                                </Button>
+                            </Flex>
+                        </Flex>
                     )}
-                </div>
+                </Flex>
 
-                <nav className={styles.drawerNav}>
+                <Flex vertical className={styles.drawerNav}>
                     {NAV_ITEMS.map((item) => (
                         <Link
                             key={item.key}
@@ -650,57 +608,47 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                             {item.label}
                         </Link>
                     ))}
-                </nav>
+                </Flex>
 
-                <div className={styles.drawerQuickActions}>
-                    <button type="button" className={styles.drawerQuickButton} onClick={handleNotifications}>
+                <Flex className={styles.drawerQuickActions}>
+                    <Button type="text" className={styles.drawerQuickButton} onClick={handleNotifications}>
                         <FiBell />
-                        <span>Thông báo</span>
-                    </button>
-                    <button type="button" className={styles.drawerQuickButton} onClick={handleBookingShortcut}>
+                        <Text>Thông báo</Text>
+                    </Button>
+                    <Button type="text" className={styles.drawerQuickButton} onClick={handleBookingShortcut}>
                         <FiCalendar />
-                        <span>Lịch đặt</span>
-                    </button>
-                </div>
+                        <Text>Lịch đặt</Text>
+                    </Button>
+                </Flex>
 
                 {isAuthenticated ? (
-                    <div className={styles.drawerAccountActions}>
+                    <Flex vertical className={styles.drawerAccountActions}>
                         {canOpenAdmin ? (
-                            <button type="button" className={styles.drawerActionItem} onClick={openAdminPortal}>
+                            <Button type="text" className={styles.drawerActionItem} onClick={openAdminPortal}>
                                 <FiShield />
-                                <span>Trang quản trị</span>
-                            </button>
+                                <Text>Trang quản trị</Text>
+                            </Button>
                         ) : null}
-                        <button type="button" className={styles.drawerActionItem} onClick={openAccountInfo}>
+                        <Button type="text" className={styles.drawerActionItem} onClick={openAccountInfo}>
                             <FiUser />
-                            <span>Thông tin tài khoản</span>
-                        </button>
-                        <button type="button" className={styles.drawerActionItem} onClick={openAccountUpdate}>
+                            <Text>Thông tin tài khoản</Text>
+                        </Button>
+                        <Button type="text" className={styles.drawerActionItem} onClick={openAccountUpdate}>
                             <FiEdit3 />
-                            <span>Cập nhật tài khoản</span>
-                        </button>
-                        <button type="button" className={styles.drawerActionItem} onClick={openPasswordReset}>
+                            <Text>Cập nhật tài khoản</Text>
+                        </Button>
+                        <Button type="text" className={styles.drawerActionItem} onClick={openPasswordReset}>
                             <FiKey />
-                            <span>Đổi mật khẩu</span>
-                        </button>
-                        <button type="button" className={`${styles.drawerActionItem} ${styles.logoutAction}`} onClick={handleLogout}>
+                            <Text>Đổi mật khẩu</Text>
+                        </Button>
+                        <Button type="text" className={`${styles.drawerActionItem} ${styles.logoutAction}`} onClick={handleLogout}>
                             <FiLogOut />
-                            <span>Đăng xuất</span>
-                        </button>
-                    </div>
+                            <Text>Đăng xuất</Text>
+                        </Button>
+                    </Flex>
                 ) : null}
 
-                <div className={styles.drawerBottom}>
-                    <span>Giao diện</span>
-                    <Switch
-                        size="small"
-                        checked={isDark}
-                        onChange={toggleTheme}
-                        checkedChildren={<FiMoon />}
-                        unCheckedChildren={<FiSun />}
-                    />
-                </div>
-            </aside>
+            </Flex>
 
             <ModalAccount
                 openModalAccount={openModalAccount}
