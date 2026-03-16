@@ -1,5 +1,5 @@
-import { Layout, Menu, Breadcrumb, Button, Grid, Drawer, Switch, Tooltip } from 'antd';
-import { useState } from 'react';
+import { Layout, Menu, Breadcrumb, Button, Grid, Drawer, Switch, Tooltip, Typography } from 'antd';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import {
     UserOutlined,
@@ -14,15 +14,17 @@ import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { logout } from '../../config/Api';
 import { toast } from 'react-toastify';
 import { setLogout } from '../../redux/features/authSlice';
-import { IoMenu, IoSunny } from 'react-icons/io5';
+import { IoMenu, IoSunny, IoChevronBackOutline, IoChevronForwardOutline } from 'react-icons/io5';
 import { LuMoon } from 'react-icons/lu';
 import { PiSoccerBallBold } from 'react-icons/pi';
 import { useRole } from '../../hooks/common/useRole';
 import { usePermission } from '../../hooks/common/usePermission';
 import { TbBrandBooking } from 'react-icons/tb';
+import styles from './AdminSidebar.module.scss';
 
 const { Sider, Header, Content } = Layout;
 const { useBreakpoint } = Grid;
+const { Text } = Typography;
 
 interface AdminSidebarProps {
     theme: 'light' | 'dark';
@@ -40,7 +42,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
 
     const isDark = theme === 'dark';
-    const siderWidth = collapsed ? 80 : 200;
     const isViewRole = useRole("VIEW");
     const canViewUsers = usePermission("USER_VIEW_LIST");
     const canViewRoles = usePermission("ROLE_VIEW_LIST");
@@ -48,6 +49,29 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const canViewPitches = usePermission("PITCH_VIEW_LIST");
     const canViewBookings = usePermission("BOOKING_VIEW_LIST");
     const canViewPayments = usePermission("PAYMENT_VIEW_LIST");
+
+    const routeLabelMap: Record<string, string> = {
+        admin: 'Bảng điều khiển',
+        user: 'Người dùng',
+        role: 'Vai trò',
+        permission: 'Quyền hạn',
+        pitch: 'Sân bóng',
+        booking: 'Lịch đặt',
+        payment: 'Thanh toán',
+    };
+
+    const cssVars = useMemo(() => ({
+        '--admin-accent': '#faad14',
+        '--admin-accent-strong': '#d48806',
+        '--admin-surface': isDark ? '#0f1c2b' : '#f8fafc',
+        '--admin-surface-soft': isDark ? 'rgba(15, 28, 43, 0.86)' : 'rgba(248, 250, 252, 0.9)',
+        '--admin-panel': isDark ? '#102033' : '#ffffff',
+        '--admin-layout': isDark ? '#080f17' : '#f1f5f9',
+        '--admin-border': isDark ? 'rgba(250, 173, 20, 0.15)' : 'rgba(15, 23, 42, 0.1)',
+        '--admin-text': isDark ? '#e2e8f0' : '#1a2733',
+        '--admin-muted': isDark ? '#94a3b8' : '#5a6a7e',
+        '--admin-shadow': isDark ? '0 24px 56px rgba(2, 6, 23, 0.42)' : '0 18px 42px rgba(15, 23, 42, 0.12)',
+    }) as CSSProperties, [isDark]);
 
     const handleLogout = async () => {
         try {
@@ -62,48 +86,65 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         }
     };
 
+    const routeMenuKeys = ['/admin', '/admin/user', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment'];
+
+    const selectedMenuKey = useMemo(() => {
+        const currentPath = location.pathname;
+        const directMatch = routeMenuKeys.find((path) => currentPath === path || currentPath.startsWith(`${path}/`));
+        return directMatch || '';
+    }, [location.pathname]);
+
+    const breadcrumbText = useMemo(() => {
+        const segments = location.pathname.split('/').filter(Boolean);
+        return segments.map((segment) => routeLabelMap[segment] ?? segment).join(' / ');
+    }, [location.pathname]);
+
     const menuItems = [
-        { key: '1', label: <Link to="/admin" style={{ textDecoration: 'none' }}>Dashboard</Link>, icon: <FaReact className='icon-spin' /> },
         {
-            key: 'sub1',
+            key: '/admin',
+            label: <Link to="/admin" className={styles.menuLink}>Dashboard</Link>,
+            icon: <FaReact className='icon-spin' />,
+        },
+        {
+            key: 'features',
             label: 'Tính năng',
             icon: <MdFeaturedPlayList />,
             children: [
                 ...(!isViewRole
                     ? [
                         ...(canViewUsers ? [{
-                            key: '2',
-                            label: <Link to="/admin/user" style={{ textDecoration: 'none' }}>QL Người dùng</Link>,
+                            key: '/admin/user',
+                            label: <Link to="/admin/user" className={styles.menuLink}>QL Người dùng</Link>,
                             icon: <UserOutlined />,
                         }] : []),
 
                         ...(canViewRoles ? [{
-                            key: '3',
-                            label: <Link to="/admin/role" style={{ textDecoration: 'none' }}>QL Vai trò</Link>,
+                            key: '/admin/role',
+                            label: <Link to="/admin/role" className={styles.menuLink}>QL Vai trò</Link>,
                             icon: <FaUserCog />,
                         }] : []),
 
                         ...(canViewPermissions ? [{
-                            key: '4',
-                            label: <Link to="/admin/permission" style={{ textDecoration: 'none' }}>QL Quyền hạn</Link>,
+                            key: '/admin/permission',
+                            label: <Link to="/admin/permission" className={styles.menuLink}>QL Quyền hạn</Link>,
                             icon: <MdOutlineSecurity />,
                         }] : []),
 
                         ...(canViewPitches ? [{
-                            key: '5',
-                            label: <Link to="/admin/pitch" style={{ textDecoration: 'none' }}>QL Sân</Link>,
+                            key: '/admin/pitch',
+                            label: <Link to="/admin/pitch" className={styles.menuLink}>QL Sân</Link>,
                             icon: <PiSoccerBallBold />,
                         }] : []),
 
                         ...(canViewBookings ? [{
-                            key: '6',
-                            label: <Link to="/admin/booking" style={{ textDecoration: 'none' }}>QL Lịch đặt</Link>,
+                            key: '/admin/booking',
+                            label: <Link to="/admin/booking" className={styles.menuLink}>QL Lịch đặt</Link>,
                             icon: <TbBrandBooking />,
                         }] : []),
 
                         ...(canViewPayments ? [{
-                            key: '7',
-                            label: <Link to="/admin/payment" style={{ textDecoration: 'none' }}>QL thanh toán</Link>,
+                            key: '/admin/payment',
+                            label: <Link to="/admin/payment" className={styles.menuLink}>QL thanh toán</Link>,
                             icon: <MdPayments />,
                         }] : [])
 
@@ -113,124 +154,121 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
             ],
         },
         {
-            key: 'sub2',
+            key: 'settings',
             label: 'Cài đặt',
             icon: <SettingOutlined />,
             children: [
-                { key: '8', label: <Link to="/" style={{ textDecoration: 'none' }}>Trang khách</Link>, icon: <UserOutlined /> },
+                { key: 'go-client', label: <Link to="/" className={styles.menuLink}>Trang khách</Link>, icon: <UserOutlined /> },
 
                 ...(isAuthenticated ?
                     [
-                        { key: '9', label: <span onClick={() => setOpenModalAccount(true)} style={{ cursor: 'pointer' }}>Tài khoản</span>, icon: <FaUserCircle /> },
-                        { key: '10', label: <span onClick={handleLogout} style={{ cursor: 'pointer' }}>Đăng xuất</span>, icon: <LogoutOutlined /> },
+                        { key: 'account', label: <span onClick={() => setOpenModalAccount(true)} className={styles.menuAction}>Tài khoản</span>, icon: <FaUserCircle /> },
+                        { key: 'logout', label: <span onClick={handleLogout} className={styles.menuAction}>Đăng xuất</span>, icon: <LogoutOutlined /> },
                     ]
                     :
                     [
-                        { key: '1q', label: <span onClick={() => navigate("/login")} style={{ cursor: 'pointer' }}>Đăng nhập</span>, icon: <LoginOutlined /> },
+                        { key: 'login', label: <span onClick={() => navigate("/login")} className={styles.menuAction}>Đăng nhập</span>, icon: <LoginOutlined /> },
                     ]),
 
             ],
         },
     ];
 
-    const breadcrumbText = location.pathname.split('/').filter(Boolean).join(' / ');
-
     return (
-        <Layout style={{ minHeight: '100vh' }}>
-            {/* Desktop Sider */}
+        <Layout className={styles.adminShell} style={cssVars}>
             {screens.md && (
                 <Sider
                     collapsible
                     collapsed={collapsed}
                     onCollapse={setCollapsed}
+                    trigger={null}
                     theme={isDark ? 'dark' : 'light'}
-                    style={{ position: 'fixed', height: '100vh', left: 0, top: 0, bottom: 0, zIndex: 100 }}
+                    width={252}
+                    collapsedWidth={88}
+                    className={styles.desktopSider}
                 >
+                    <div className={styles.siderBrand}>
+                        <FaReact className={`icon-spin ${styles.brandIcon}`} />
+                        {!collapsed && (
+                            <div className={styles.brandText}>
+                                <span className={styles.brandTitle}>UTB Admin</span>
+                                <span className={styles.brandSubTitle}>Control Center</span>
+                            </div>
+                        )}
+                        <Tooltip title={collapsed ? 'Mở rộng' : 'Thu gọn'} placement="right">
+                            <Button
+                                type="text"
+                                onClick={() => setCollapsed(!collapsed)}
+                                className={styles.collapseButton}
+                                icon={collapsed ? <IoChevronForwardOutline /> : <IoChevronBackOutline />}
+                            />
+                        </Tooltip>
+                    </div>
+
                     <Menu
                         theme={isDark ? 'dark' : 'light'}
                         mode="inline"
                         items={menuItems}
-                        defaultSelectedKeys={['1']}
-                        style={{ borderRight: 0 }}
+                        selectedKeys={selectedMenuKey ? [selectedMenuKey] : []}
+                        defaultOpenKeys={['features', 'settings']}
+                        className={styles.sidebarMenu}
                     />
                 </Sider>
             )}
 
-            {/* Mobile Drawer */}
             {!screens.md && (
                 <Drawer
-                    title="Menu"
+                    title={<span className={styles.drawerTitle}>UTB Admin</span>}
                     placement="left"
                     onClose={() => setDrawerVisible(false)}
                     open={drawerVisible}
-                    styles={{
-                        body: {
-                            padding: 0
-                        }
-                    }}
-                    closeIcon={true}
-                    style={{
-                        background: isDark ? '#001529' : '#fff', // set màu nền
-                    }}
-                    size={200}
-                    mask={false} // tắt overlay để vẫn tương tác với body
+                    rootClassName={styles.mobileDrawer}
+                    rootStyle={cssVars}
+                    styles={{ body: { padding: 12 }, wrapper: { width: 280 } }}
+                    mask={false}
                 >
                     <Menu
                         mode="inline"
                         items={menuItems}
                         theme={isDark ? 'dark' : 'light'}
                         onClick={() => setDrawerVisible(false)}
+                        selectedKeys={selectedMenuKey ? [selectedMenuKey] : []}
+                        defaultOpenKeys={['features', 'settings']}
+                        className={styles.sidebarMenu}
                     />
                 </Drawer>
             )}
 
-            {/* Main Layout */}
-            <Layout style={{ marginLeft: screens.md ? siderWidth : 0, transition: 'all 0.2s' }}>
-                {/* Header */}
+            <Layout
+                className={`${styles.mainLayout} ${collapsed ? styles.mainLayoutCollapsed : styles.mainLayoutExpanded}`}
+            >
                 <Header
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        zIndex: 99,
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '20px 24px 24px 24px',
-                        background: isDark ? '#001529' : '#fff',
-                        color: isDark ? '#fff' : '#000',
-                        transition: 'all 0.2s',
-                        height: '90px'
-                    }}
+                    className={styles.adminHeader}
                 >
-                    {/* BÊN TRÁI */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: screens.md ? siderWidth : 0 }}>
+                    <div className={styles.headerLeft}>
                         {!screens.md && (
-                            <Button
-                                type="text"
-                                onClick={() => setDrawerVisible(!drawerVisible)}
-                                style={{ color: isDark ? '#fff' : '#000', fontSize: 24 }}
-                            >
-                                <Tooltip title={drawerVisible ? 'Đóng menu' : 'Mở menu'}>
-                                    <IoMenu />
-                                </Tooltip>
-                            </Button>
+                            <Tooltip title={drawerVisible ? 'Đóng menu' : 'Mở menu'}>
+                                <Button
+                                    type="text"
+                                    icon={<IoMenu />}
+                                    onClick={() => setDrawerVisible(!drawerVisible)}
+                                    className={styles.mobileMenuButton}
+                                />
+                            </Tooltip>
                         )}
 
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <h5>
-                                <FaReact className='icon-spin' /> {" "}
-                                Chào mừng bạn đến với trang quản trị!
-                            </h5>
+                        <div className={styles.headerInfo}>
+                            <Text className={styles.welcomeTitle}>
+                                Chào mừng bạn đến với trang quản trị
+                            </Text>
                             <Breadcrumb
                                 items={[{ title: breadcrumbText }]}
-                                style={{ color: isDark ? '#fff' : '#000', marginBottom: 0 }}
+                                className={styles.breadcrumb}
                             />
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div className={styles.headerRight}>
                         <Tooltip placement="topLeft" title={isDark ? 'Giao diện sáng' : 'Giao diện tối'}>
                             <Switch
                                 size='small'
@@ -238,26 +276,19 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                                 onChange={toggleTheme}
                                 checkedChildren={<LuMoon />}
                                 unCheckedChildren={<IoSunny />}
+                                className={styles.themeSwitch}
                             />
                         </Tooltip>
                     </div>
                 </Header>
 
-                {/* Content */}
                 <Content
-                    style={{
-                        marginTop: 80,
-                        padding: 24,
-                        background: isDark ? '#141414' : '#f0f2f5',
-                        minHeight: 'calc(100vh - 64px)',
-                        marginLeft: screens.md ? 0 : 0,
-                    }}
+                    className={styles.adminContent}
                 >
                     <Outlet />
                 </Content>
             </Layout>
 
-            {/* Modal Account */}
             <ModalAccount
                 openModalAccount={openModalAccount}
                 setOpenModalAccount={setOpenModalAccount}

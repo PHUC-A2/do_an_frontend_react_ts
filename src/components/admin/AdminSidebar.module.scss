@@ -1,0 +1,286 @@
+.adminShell {
+    min-height      : 100vh;
+    background      : var(--admin-layout);
+    transition      : background-color 0.25s ease, color 0.25s ease;
+}
+
+.desktopSider {
+    position        : fixed !important;
+    top             : 0;
+    left            : 0;
+    bottom          : 0;
+    height          : 100vh;
+    z-index         : 105;
+    border-right    : 1px solid var(--admin-border);
+    box-shadow      : var(--admin-shadow);
+    transition      : width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    will-change     : width;
+    background      : var(--admin-layout) !important;
+
+    :global(.ant-layout-sider-children) {
+        display       : flex;
+        flex-direction: column;
+        overflow-y    : auto;
+        background    : var(--admin-layout) !important;
+        transition    : background 0.25s ease;
+    }
+
+    :global(.ant-layout-sider-trigger) {
+        background: var(--admin-layout) !important;
+    }
+}
+
+.siderBrand {
+    display        : flex;
+    align-items    : center;
+    gap            : 10px;
+    padding        : 18px 16px 12px;
+    min-height     : 66px;
+    justify-content: space-between;
+}
+
+.collapseButton {
+    flex-shrink    : 0;
+    width          : 28px;
+    height         : 28px;
+    min-width      : 28px;
+    border-radius  : 8px;
+    color          : var(--admin-muted) !important;
+    font-size      : 1rem;
+    display        : flex;
+    align-items    : center;
+    justify-content: center;
+    transition     : background 0.2s ease, color 0.2s ease;
+    margin-left    : auto;
+
+    :global(.ant-btn-icon) {
+        display        : flex;
+        align-items    : center;
+        justify-content: center;
+    }
+
+    &:hover {
+        background: color-mix(in srgb, var(--admin-accent) 14%, transparent) !important;
+        color     : var(--admin-accent) !important;
+    }
+}
+
+.brandIcon {
+    color    : var(--admin-accent);
+    font-size: 1.25rem;
+}
+
+.brandText {
+    display       : flex;
+    flex-direction: column;
+    line-height   : 1.1;
+}
+
+.brandTitle {
+    color         : var(--admin-text);
+    font-weight   : 800;
+    letter-spacing: 0.02em;
+}
+
+.brandSubTitle {
+    color         : var(--admin-muted);
+    font-size     : 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+.sidebarMenu {
+    border-inline-end: none !important;
+    background       : transparent !important;
+    color            : var(--admin-text);
+    font-weight      : 600;
+    padding          : 8px;
+
+    :global(.ant-menu-item),
+    :global(.ant-menu-submenu-title) {
+        border-radius: 12px;
+        margin-block : 4px;
+        height       : 42px;
+        line-height  : 42px;
+        transition   : background-color 0.24s ease, color 0.24s ease, transform 0.24s ease;
+    }
+
+    :global(.ant-menu-item:hover),
+    :global(.ant-menu-submenu-title:hover) {
+        color     : var(--admin-accent) !important;
+        background: color-mix(in srgb, var(--admin-accent) 13%, transparent);
+        transform : translateX(2px);
+    }
+
+    :global(.ant-menu-item-selected) {
+        color     : var(--admin-accent) !important;
+        background: color-mix(in srgb, var(--admin-accent) 18%, transparent);
+    }
+
+    :global(.ant-menu-item-selected::after) {
+        border-inline-end-color: var(--admin-accent) !important;
+    }
+
+    :global(.ant-menu-submenu-selected > .ant-menu-submenu-title) {
+        color: var(--admin-accent) !important;
+    }
+
+    :global(.ant-menu-sub) {
+        background: transparent !important;
+    }
+}
+
+.menuLink {
+    color          : inherit;
+    text-decoration: none;
+}
+
+.menuAction {
+    color : inherit;
+    cursor: pointer;
+}
+
+.mobileDrawer {
+
+    :global(.ant-drawer-content),
+    :global(.ant-drawer-header),
+    :global(.ant-drawer-body),
+    :global(.ant-drawer-wrapper-body) {
+        background         : var(--admin-layout) !important;
+        border-bottom-color: var(--admin-border);
+        transition         : background 0.25s ease, border-color 0.25s ease;
+    }
+
+    :global(.ant-drawer-title),
+    :global(.ant-drawer-close) {
+        color: var(--admin-text);
+    }
+}
+
+.drawerTitle {
+    color         : var(--admin-text);
+    font-weight   : 800;
+    letter-spacing: 0.04em;
+}
+
+.mainLayout {
+    min-height : 100vh;
+    background : transparent;
+    transition : margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                 background-color 0.25s ease,
+                 color 0.25s ease;
+    will-change: margin-left;
+}
+
+.mainLayoutExpanded {
+    margin-left: 252px;
+}
+
+.mainLayoutCollapsed {
+    margin-left: 88px;
+}
+
+@media (max-width: 768px) {
+    .mainLayoutExpanded,
+    .mainLayoutCollapsed {
+        margin-left: 0 !important;
+    }
+}
+
+.adminHeader {
+    position               : sticky !important;
+    top                    : 0;
+    z-index                : 98;
+    height                 : 84px;
+    display                : flex;
+    align-items            : center;
+    justify-content        : space-between;
+    padding                : 14px 24px;
+    border-bottom          : 1px solid var(--admin-border);
+    background             : var(--admin-layout) !important;
+    backdrop-filter        : blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition             : background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.headerLeft {
+    display    : flex;
+    align-items: center;
+    gap        : 12px;
+    min-width  : 0;
+}
+
+.mobileMenuButton {
+    color        : var(--admin-text) !important;
+    width        : 44px !important;
+    height       : 44px !important;
+    border-radius: 10px;
+    font-size    : 1.5rem !important;
+    padding      : 0 !important;
+    line-height  : 1 !important;
+
+    &:hover {
+        background: color-mix(in srgb, var(--admin-accent) 14%, transparent) !important;
+        color     : var(--admin-accent) !important;
+    }
+}
+
+.headerInfo {
+    display       : flex;
+    flex-direction: column;
+    min-width     : 0;
+}
+
+.welcomeTitle {
+    font-size  : 1.02rem;
+    font-weight: 700;
+    color      : var(--admin-text);
+    line-height: 1.2;
+}
+
+.breadcrumb {
+    margin-top: 4px;
+
+    :global(.ant-breadcrumb-link),
+    :global(.ant-breadcrumb-separator) {
+        color: var(--admin-muted) !important;
+    }
+}
+
+.headerRight {
+    display    : flex;
+    align-items: center;
+    gap        : 8px;
+}
+
+.themeSwitch {
+    min-width: 54px;
+}
+
+.adminContent {
+    padding   : 24px;
+    min-height: calc(100vh - 84px);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--admin-layout) 88%, #ffffff) 0%, var(--admin-layout) 100%);
+    transition: background 0.25s ease;
+}
+
+
+@media (max-width: 992px) {
+    .adminHeader {
+        height : 76px;
+        padding: 12px 16px;
+    }
+
+    .welcomeTitle {
+        font-size    : 0.95rem;
+        max-width    : 58vw;
+        white-space  : nowrap;
+        overflow     : hidden;
+        text-overflow: ellipsis;
+    }
+
+    .adminContent {
+        padding   : 16px;
+        min-height: calc(100vh - 76px);
+    }
+}

@@ -2,8 +2,13 @@
     overflow-y: auto;
 }
 
+body.ant-scrolling-effect {
+    overflow: auto !important;
+    width   : auto !important;
+}
+
 .icon-spin {
-    color: aquamarine !important;
+    color    : var(--admin-accent, #faad14) !important;
     animation: spin 3s linear infinite;
 }
 
