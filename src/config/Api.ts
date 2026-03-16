@@ -1,7 +1,7 @@
 /* api auth  */
 
 import type { IUpdateAccountReq, IUpdateAccountRes } from "../types/account";
-import type { IRegister } from "../types/auth";
+import type { IRegister, IResendOtpReq, IVerifyEmailReq } from "../types/auth";
 import type { IBooking, ICreateBookingClientReq, ICreateBookingReq, IUpdateBookingClientReq, IUpdateBookingReq } from "../types/booking";
 import type { IBackendRes, IModelPaginate } from "../types/common";
 import type { ICreatePaymentReq, IPayment, IPaymentRes } from "../types/payment";
@@ -16,6 +16,8 @@ import instance from "./customAxios";
 
 export const register = (data: IRegister) => instance.post("/api/v1/auth/register", data);
 export const login = (username: string, password: string) => instance.post("/api/v1/auth/login", { username, password });
+export const verifyEmail = (data: IVerifyEmailReq) => instance.post("/api/v1/auth/verify-email", data);
+export const resendOtp = (data: IResendOtpReq) => instance.post("/api/v1/auth/resend-otp", data);
 // export const logout = () => instance.post("/api/v1/auth/logout");
 export const logout = async () => {
     try {

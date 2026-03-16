@@ -10,6 +10,7 @@ import { toast } from 'react-toastify';
 import ModalForget from './modal/ModalForget';
 
 const RegisterPage = () => {
+    const PENDING_VERIFICATION_KEY = 'pending_verification';
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState<boolean>(false);
@@ -31,11 +32,31 @@ const RegisterPage = () => {
             await minDelay;
             setLoading(false);
             if (res?.data?.statusCode === 201) {
-                // dispatch(fetchUsers());
-                toast.success(res.data?.data?.message);
+                const payload = res?.data?.data?.message;
+                const responseMessage = typeof payload === 'object' && payload?.message
+                    ? payload.message
+                    : (typeof payload === 'string' ? payload : 'Đăng ký tài khoản thành công. Vui lòng xác thực email.');
+
+                const userId = typeof payload === 'object' && Number.isFinite(Number(payload?.userId))
+                    ? Number(payload.userId)
+                    : null;
+
+                const email = typeof payload === 'object' && typeof payload?.email === 'string'
+                    ? payload.email
+                    : cleanedData.email;
+
+                if (userId && email) {
+                    localStorage.setItem(PENDING_VERIFICATION_KEY, JSON.stringify({ userId, email }));
+                }
+
+                toast.success(responseMessage);
                 form.resetFields();
                 setTimeout(() => {
-                    navigate('/login');
+                    if (userId && email) {
+                        navigate(`/verify-email?userId=${userId}&email=${encodeURIComponent(email)}`);
+                    } else {
+                        navigate('/login');
+                    }
                 }, 2000);
             } else {
                 toast.error(

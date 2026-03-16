@@ -12,6 +12,7 @@ import { setToken } from '../../redux/features/authSlice';
 import ModalForget from './modal/ModalForget';
 
 const LoginPage = () => {
+    const PENDING_VERIFICATION_KEY = 'pending_verification';
     const [form] = Form.useForm();
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
@@ -51,6 +52,25 @@ const LoginPage = () => {
             }
         } catch (error: any) {
             const m = error?.response?.data?.message ?? "Không xác định";
+
+            if (
+                typeof m === 'string' &&
+                m.toLowerCase().includes('chưa xác thực email')
+            ) {
+                try {
+                    const raw = localStorage.getItem(PENDING_VERIFICATION_KEY);
+                    const parsed = raw ? JSON.parse(raw) : null;
+                    const userId = Number(parsed?.userId);
+                    const email = typeof parsed?.email === 'string' ? parsed.email : values.username;
+
+                    if (Number.isFinite(userId) && userId > 0 && email) {
+                        navigate(`/verify-email?userId=${userId}&email=${encodeURIComponent(email)}`);
+                    }
+                } catch {
+                    // no-op
+                }
+            }
+
             toast.error(
                 <div>
                     <div><strong>Có lỗi xảy ra!</strong></div>

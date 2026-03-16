@@ -9,6 +9,17 @@ export interface IRegister {
     password: string;
 }
 
+export interface IVerifyEmailReq {
+    userId: number;
+    email: string;
+    otp: string;
+}
+
+export interface IResendOtpReq {
+    userId: number;
+    email: string;
+}
+
 /**
  * {
     "statusCode": 201,

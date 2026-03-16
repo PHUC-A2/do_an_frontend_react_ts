@@ -6,6 +6,7 @@ import AboutPage from "../pages/client/about/AboutPage";
 import BookingPage from "../pages/client/booking/BookingPage";
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
+import VerifyEmailPage from '../pages/auth/VerifyEmailPage';
 import NotFoundPage from "../pages/error/NotFoundPage";
 import AdminLayout from '../layouts/AdminLayout';
 import AdminPage from '../pages/admin/AdminPage';
@@ -110,6 +111,7 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
                 },
                 { path: "/login", element: <LoginPage /> },
                 { path: "/register", element: <RegisterPage /> },
+                { path: "/verify-email", element: <VerifyEmailPage /> },
                 { path: "*", element: <NotFoundPage /> },
             ]
         },
