@@ -285,6 +285,7 @@ $bp-md: 768px;
 
 .actionButton,
 .loginButton,
+.registerButton,
 .mobileMenuButton,
 .accountTrigger,
 .accountMenuItem,
@@ -300,6 +301,7 @@ $bp-md: 768px;
 
 .actionButton:global(.ant-btn),
 .loginButton:global(.ant-btn),
+.registerButton:global(.ant-btn),
 .mobileMenuButton:global(.ant-btn),
 .accountTrigger:global(.ant-btn),
 .accountMenuItem:global(.ant-btn),
@@ -330,6 +332,23 @@ $bp-md: 768px;
 
 .loginButton:global(.ant-btn) {
     padding: 0 16px;
+}
+
+.registerButton:global(.ant-btn) {
+    padding   : 0 16px;
+    background: linear-gradient(135deg, var(--header-accent), var(--header-accent-strong)) !important;
+    color     : #1f1300 !important;
+    border    : none !important;
+}
+
+.registerButton:global(.ant-btn.ant-btn-text) {
+    background: linear-gradient(135deg, var(--header-accent), var(--header-accent-strong)) !important;
+    color     : #1f1300 !important;
+}
+
+.registerButton :global(.ant-typography),
+.registerButton svg {
+    color: #1f1300 !important;
 }
 
 .accountTrigger:global(.ant-btn) {
@@ -398,6 +417,27 @@ $bp-md: 768px;
     &:hover {
         background: var(--header-hover);
         color     : var(--header-hover-text);
+        transform : translateY(-1px);
+    }
+}
+
+.registerButton {
+    display      : inline-flex;
+    align-items  : center;
+    gap          : 8px;
+    height       : 40px;
+    padding      : 0 16px;
+    border-radius: 999px;
+    color        : #1f1300;
+    background   : linear-gradient(135deg, var(--header-accent), var(--header-accent-strong));
+    font-size    : 0.92rem;
+    font-weight  : 700;
+    transition   : filter 0.22s ease, transform 0.22s ease;
+
+    &:hover {
+        color     : #1f1300;
+        background: linear-gradient(135deg, var(--header-accent), var(--header-accent-strong));
+        filter    : brightness(0.98);
         transform : translateY(-1px);
     }
 }
@@ -826,11 +866,15 @@ $bp-md: 768px;
 }
 
 .drawerSectionTitle {
-    color         : var(--header-muted);
+    color         : var(--header-text) !important;
     font-size     : 0.78rem;
     font-weight   : 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
+}
+
+.drawerSectionTitle:global(.ant-typography) {
+    color: var(--header-text) !important;
 }
 
 .drawerAuthActions {
@@ -935,8 +979,23 @@ $bp-md: 768px;
 }
 
 .primaryDrawerButton {
-    background: linear-gradient(135deg, var(--header-accent), var(--header-accent-strong));
-    color     : #1f1300;
+    background: linear-gradient(135deg, var(--header-accent), var(--header-accent-strong)) !important;
+    color     : #1f1300 !important;
+}
+
+.primaryDrawerButton:global(.ant-btn) {
+    background: linear-gradient(135deg, var(--header-accent), var(--header-accent-strong)) !important;
+    color     : #1f1300 !important;
+}
+
+.primaryDrawerButton:global(.ant-btn.ant-btn-text) {
+    background: linear-gradient(135deg, var(--header-accent), var(--header-accent-strong)) !important;
+    color     : #1f1300 !important;
+}
+
+.primaryDrawerButton :global(.ant-typography),
+.primaryDrawerButton svg {
+    color: #1f1300 !important;
 }
 
 .secondaryDrawerButton,
@@ -1114,7 +1173,6 @@ $bp-md: 768px;
 
     .actionButton:hover,
     .mobileMenuButton:hover,
-    .primaryDrawerButton:hover,
     .secondaryDrawerButton:hover,
     .drawerQuickButton:hover,
     .drawerActionItem:hover,
@@ -1124,6 +1182,18 @@ $bp-md: 768px;
         transform : none;
         filter    : none;
         background: unset;
+    }
+
+    .primaryDrawerButton:hover {
+        transform : none;
+        filter    : none;
+        background: linear-gradient(135deg, var(--header-accent), var(--header-accent-strong));
+        color     : #1f1300 !important;
+    }
+
+    .primaryDrawerButton:hover :global(.ant-typography),
+    .primaryDrawerButton:hover svg {
+        color: #1f1300 !important;
     }
 
     .actionButton:active,

@@ -6,6 +6,8 @@ export interface IUser {
     phoneNumber?: string | null;
     avatarUrl?: string | null;
     status?: UserEnum;
+    bannedReason?: string | null;
+    bannedAt?: string | null;
     createdAt: string;         // hoặc Date, tùy backend
     updatedAt: string | null;  // có thể null nếu chưa cập nhật
     createdBy: string;         // email hoặc username
@@ -37,6 +39,19 @@ export interface IUpdateUserReq {
 
 export interface IAssignRoleReq {
     roleIds: number[];
+}
+
+export interface IUpdateUserStatusReq {
+    status: UserEnum;
+    reason?: string | null;
+}
+
+export interface IUpdateUserStatusRes {
+    id: number;
+    status: UserEnum;
+    bannedReason?: string | null;
+    bannedAt?: string | null;
+    updatedAt?: string;
 }
 
 export type UserEnum = "ACTIVE" | "INACTIVE" | "PENDING_VERIFICATION" | "BANNED" | "DELETED";

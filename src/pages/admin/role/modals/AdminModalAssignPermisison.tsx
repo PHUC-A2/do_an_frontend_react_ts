@@ -120,7 +120,7 @@ const AdminModalAssignPermission = (props: IProps) => {
             maskClosable={false}
             closable={true}
             open={openModalAssignPermisison}
-            okText="Save"
+            okText="Lưu"
             onOk={() => form.submit()}
             onCancel={() => {
                 setOpenModalAssignPermisison(false)

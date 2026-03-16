@@ -11,7 +11,7 @@ import type { IRevenueRes } from "../types/revenue";
 import type { IAssignPermissionReq, ICreateRoleReq, IRole, IUpdateRoleReq } from "../types/role";
 import type { IPitchTimeline } from "../types/timeline";
 import type { IGetUploadResponse } from "../types/upload";
-import type { IAssignRoleReq, ICreateUserReq, IUpdateUserReq, IUser } from "../types/user";
+import type { IAssignRoleReq, ICreateUserReq, IUpdateUserReq, IUser, IUpdateUserStatusReq, IUpdateUserStatusRes } from "../types/user";
 import instance from "./customAxios";
 
 export const register = (data: IRegister) => instance.post("/api/v1/auth/register", data);
@@ -56,6 +56,7 @@ export const createUser = (data: ICreateUserReq) => instance.post<IBackendRes<IU
 export const deleteUser = (id: number) => instance.delete<IBackendRes<IUser>>(`/api/v1/users/${id}`);
 export const getUserById = (id: number) => instance.get<IBackendRes<IUser>>(`/api/v1/users/${id}`);
 export const updateUser = (id: number, data: IUpdateUserReq) => instance.put<IBackendRes<IUser>>(`/api/v1/users/${id}`, data);
+export const updateUserStatus = (id: number, data: IUpdateUserStatusReq) => instance.patch<IBackendRes<IUpdateUserStatusRes>>(`/api/v1/users/${id}/status`, data);
 
 /* api pitch */
 export const getAllPitches = (query: string) => instance.get<IBackendRes<IModelPaginate<IPitch>>>(`/api/v1/pitches?${query}`);

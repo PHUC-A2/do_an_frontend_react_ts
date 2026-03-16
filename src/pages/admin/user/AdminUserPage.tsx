@@ -16,6 +16,8 @@ import ModalUserDetails from './modals/ModalUserDetails';
 import ModalUpdateUser from './modals/ModalUpdateUser';
 import { USER_STATUS_META } from '../../../utils/constants/user.constants';
 import AdminModalAssignRole from './modals/AdminModalAssignRole';
+import ModalBanUser from './modals/ModalBanUser';
+import { MdBlock } from 'react-icons/md';
 import { fetchRoles } from '../../../redux/features/roleSlice';
 import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
 import { usePermission } from '../../../hooks/common/usePermission';
@@ -38,6 +40,8 @@ const AdminUserPage = () => {
     const [userEdit, setUserEdit] = useState<IUser | null>(null);
     const [userAssignRole, setUserAssignRole] = useState<IUser | null>(null);
     const [openModalAssignRole, setOpenModalAssignRole] = useState<boolean>(false);
+    const [userBan, setUserBan] = useState<IUser | null>(null);
+    const [openModalBanUser, setOpenModalBanUser] = useState<boolean>(false);
     const canViewUsers = usePermission("USER_VIEW_LIST");
 
     // assign role
@@ -45,6 +49,16 @@ const AdminUserPage = () => {
         setUserAssignRole(data);
         setOpenModalAssignRole(true);
         await dispatch(fetchRoles("")).unwrap();
+    }
+
+    // ban/unban user
+    const handleBanUser = (data: IUser) => {
+        setUserBan(data);
+        setOpenModalBanUser(true);
+    }
+
+    const handleBanSuccess = () => {
+        dispatch(fetchUsers(""));
     }
 
     const handleView = async (id: number) => {
@@ -231,6 +245,17 @@ const AdminUserPage = () => {
                             </RBButton>
                         </Tooltip>
                     </PermissionWrapper>
+
+                    <PermissionWrapper required={"USER_UPDATE"}>
+                        <Tooltip placement="left" title={record.status === 'BANNED' ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}>
+                            <RBButton size="sm"
+                                variant={record.status === 'BANNED' ? 'outline-success' : 'outline-danger'}
+                                onClick={() => handleBanUser(record)}
+                            >
+                                <MdBlock />
+                            </RBButton>
+                        </Tooltip>
+                    </PermissionWrapper>
                 </Space>
             ),
         },
@@ -253,7 +278,7 @@ const AdminUserPage = () => {
                     size='small'
                     title="Quản lý người dùng (User)"
                     extra={
-                       <Space align='center'>
+                        <Space align='center'>
                             <PermissionWrapper required={"USER_CREATE"}>
                                 <RBButton variant="outline-primary"
                                     size='sm'
@@ -273,7 +298,7 @@ const AdminUserPage = () => {
                             >
                                 Xuất Excel
                             </Button>
-                       </Space>
+                        </Space>
                     }
                     hoverable={false}
                     style={{ width: '100%', overflowX: 'auto', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
@@ -323,6 +348,13 @@ const AdminUserPage = () => {
                     openModalAssignRole={openModalAssignRole}
                     setOpenModalAssignRole={setOpenModalAssignRole}
                     userAssignRole={userAssignRole}
+                />
+
+                <ModalBanUser
+                    open={openModalBanUser}
+                    onCancel={() => setOpenModalBanUser(false)}
+                    user={userBan}
+                    onSuccess={handleBanSuccess}
                 />
             </AdminWrapper>
         </>

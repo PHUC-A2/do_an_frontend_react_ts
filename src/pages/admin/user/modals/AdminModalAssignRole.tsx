@@ -83,7 +83,7 @@ const AdminModalAssignRole = (props: IProps) => {
             maskClosable={false}
             closable={true}
             open={openModalAssignRole}
-            okText="Save"
+            okText="Lưu"
             onOk={() => form.submit()}
             onCancel={() => setOpenModalAssignRole(false)}
         >

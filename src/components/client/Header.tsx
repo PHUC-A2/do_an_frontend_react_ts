@@ -493,10 +493,16 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                                 </Flex>
                             </Flex>
                         ) : (
-                            <Button type="text" className={styles.loginButton} onClick={() => navigate('/login')}>
-                                <FiLogIn />
-                                <Text>Đăng nhập</Text>
-                            </Button>
+                            <Flex gap={8} align="center">
+                                <Button type="text" className={styles.loginButton} onClick={() => navigate('/login')}>
+                                    <FiLogIn />
+                                    <Text>Đăng nhập</Text>
+                                </Button>
+                                <Button type="text" className={styles.loginButton} onClick={() => navigate('/register')}>
+                                    <FiUserPlus />
+                                    <Text>Đăng ký</Text>
+                                </Button>
+                            </Flex>
                         )}
                     </Flex>
 
@@ -580,7 +586,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                         <Flex vertical className={styles.drawerGuestBlock}>
                             <Text className={styles.drawerSectionTitle}>Tài khoản</Text>
                             <Flex vertical className={styles.drawerAuthActions}>
-                                <Button type="text" className={styles.primaryDrawerButton} onClick={() => { setDrawerOpen(false); navigate('/login'); }}>
+                                <Button type="text" className={styles.secondaryDrawerButton} onClick={() => { setDrawerOpen(false); navigate('/login'); }}>
                                     <FiLogIn />
                                     <Text>Đăng nhập</Text>
                                 </Button>
