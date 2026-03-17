@@ -592,16 +592,16 @@ $bp-lg  : 1024px;
 // ── Time grid — 3 cột trên mobile nhỏ ───────────────────────
 .bk__time-grid {
     display              : grid;
-    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
     gap                  : 7px;
 
     @media (max-width: $bp-md) {
-        grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
         gap                  : 6px;
     }
 
     @media (max-width: $bp-xxs) {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap                  : 5px;
     }
 }
@@ -615,7 +615,7 @@ $bp-lg  : 1024px;
 
 // Slot card
 .bk__slot {
-    height       : 64px;
+    height       : 72px;
     position     : relative;
     border-radius: 10px;
     overflow     : hidden;
@@ -624,7 +624,7 @@ $bp-lg  : 1024px;
     transition   : transform .22s cubic-bezier(.34, 1.56, .64, 1), box-shadow .22s ease;
 
     @media (max-width: $bp-xxs) {
-        height: 56px;
+        height: 64px;
     }
 
     &::before {
@@ -660,10 +660,11 @@ $bp-lg  : 1024px;
     }
 
     &__time {
-        font-size     : clamp(0.72rem, 2.5vw, 0.88rem);
+        font-size     : clamp(0.62rem, 2vw, 0.78rem);
         font-weight   : 700;
-        letter-spacing: 0.3px;
+        letter-spacing: 0.2px;
         white-space   : nowrap;
+        line-height   : 1.2;
     }
 
     &__label {
@@ -1206,6 +1207,51 @@ $bp-lg  : 1024px;
         .ant-select-item {
             font-size: 0.78rem !important;
         }
+    }
+}
+
+// ── Equipment section ─────────────────────────────────────────
+.bk__equipment-section {
+    margin-bottom  : 16px;
+    padding        : 12px 14px;
+    border-radius  : 10px;
+    border         : 1px solid var(--border);
+    background     : var(--bg-card2);
+
+    .bk__section-title {
+        font-weight  : 600;
+        font-size    : 0.85rem;
+        color        : var(--text);
+        margin-bottom: 10px;
+    }
+}
+
+.bk__equip-row {
+    display    : flex;
+    align-items: center;
+    gap        : 10px;
+    margin-bottom: 8px;
+
+    &:last-child { margin-bottom: 0; }
+
+    .bk__equip-label {
+        font-size : 0.83rem;
+        color     : var(--text);
+        min-width : 120px;
+    }
+
+    .bk__equip-avail {
+        font-size : 0.75rem;
+        color     : var(--text-muted);
+    }
+
+    .bk__equip-unavail {
+        font-size : 0.75rem;
+        color     : #ff4d4f;
+    }
+
+    .bk__equip-qty {
+        width: 80px;
     }
 }
 

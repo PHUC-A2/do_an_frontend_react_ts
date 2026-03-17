@@ -10,6 +10,7 @@ import roleReducer from './features/roleSlice'
 import permissionReducer from './features/permissionSlice'
 import messengerButtonUiReducer from './features/messengerButtonUiSlice'
 import paymentReducer from './features/paymentSlice'
+import equipmentReducer from './features/equipmentSlice'
 
 export const store = configureStore({
     reducer: {
@@ -24,6 +25,7 @@ export const store = configureStore({
         permission: permissionReducer,
         messengerButtonUi: messengerButtonUiReducer,
         payment: paymentReducer,
+        equipment: equipmentReducer,
     }
 })
 

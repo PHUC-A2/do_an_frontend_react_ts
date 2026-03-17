@@ -3,7 +3,9 @@
 import type { IUpdateAccountReq, IUpdateAccountRes } from "../types/account";
 import type { IRegister, IResendOtpReq, IVerifyEmailReq } from "../types/auth";
 import type { IBooking, ICreateBookingClientReq, ICreateBookingReq, IUpdateBookingClientReq, IUpdateBookingReq } from "../types/booking";
+import type { IBookingEquipment, ICreateBookingEquipmentReq, IUpdateBookingEquipmentStatusReq } from "../types/bookingEquipment";
 import type { IBackendRes, IModelPaginate } from "../types/common";
+import type { IEquipment, ICreateEquipmentReq, IUpdateEquipmentReq } from "../types/equipment";
 import type { ICreatePaymentReq, IPayment, IPaymentRes } from "../types/payment";
 import type { ICreatePermissionReq, IPermission, IUpdatePermissionReq } from "../types/permission";
 import type { ICreatePitchReq, IPitch, IUpdatePitchReq } from "../types/pitch";
@@ -153,6 +155,43 @@ export const uploadImagePitch = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("folder", "pitch"); // folder riêng cho sân
+
+    const { data } = await instance.post<IGetUploadResponse>(
+        "/api/v1/files/upload",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+    );
+
+    return data;
+};
+
+/* api equipment */
+export const getAllEquipments = (query: string) => instance.get<IBackendRes<IModelPaginate<IEquipment>>>(`/api/v1/equipments?${query}`);
+export const createEquipment = (data: ICreateEquipmentReq) => instance.post<IBackendRes<IEquipment>>(`/api/v1/equipments`, data);
+export const getEquipmentById = (id: number) => instance.get<IBackendRes<IEquipment>>(`/api/v1/equipments/${id}`);
+export const updateEquipment = (id: number, data: IUpdateEquipmentReq) => instance.put<IBackendRes<IEquipment>>(`/api/v1/equipments/${id}`, data);
+export const deleteEquipment = (id: number) => instance.delete<IBackendRes<IEquipment>>(`/api/v1/equipments/${id}`);
+
+/* api booking equipment — admin */
+export const getAllBookingEquipments = () => instance.get<IBackendRes<IBookingEquipment[]>>(`/api/v1/booking-equipments`);
+export const getBookingEquipmentsByBookingId = (bookingId: number) => instance.get<IBackendRes<IBookingEquipment[]>>(`/api/v1/booking-equipments/booking/${bookingId}`);
+export const updateBookingEquipmentStatus = (id: number, data: IUpdateBookingEquipmentStatusReq) => instance.patch<IBackendRes<IBookingEquipment>>(`/api/v1/booking-equipments/${id}/status`, data);
+
+/* api booking equipment — client */
+export const clientBorrowEquipment = (data: ICreateBookingEquipmentReq) => instance.post<IBackendRes<IBookingEquipment>>(`/api/v1/client/booking-equipments`, data);
+export const clientGetAllMyEquipments = () => instance.get<IBackendRes<IBookingEquipment[]>>(`/api/v1/client/booking-equipments`);
+export const clientGetBookingEquipments = (bookingId: number) => instance.get<IBackendRes<IBookingEquipment[]>>(`/api/v1/client/booking-equipments/booking/${bookingId}`);
+export const clientUpdateBookingEquipmentStatus = (id: number, data: IUpdateBookingEquipmentStatusReq) => instance.patch<IBackendRes<IBookingEquipment>>(`/api/v1/client/booking-equipments/${id}/status`, data);
+export const clientSoftDeleteBookingEquipment = (id: number) => instance.delete<IBackendRes<null>>(`/api/v1/client/booking-equipments/${id}`);
+
+/* api public equipments — client (không cần đăng nhập) */
+export const getPublicEquipments = () => instance.get<IBackendRes<IEquipment[]>>(`/api/v1/client/public/equipments`);
+
+// upload equipment image
+export const uploadImageEquipment = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", "equipment");
 
     const { data } = await instance.post<IGetUploadResponse>(
         "/api/v1/files/upload",

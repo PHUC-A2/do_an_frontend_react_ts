@@ -7,9 +7,11 @@ import { useSelector } from "react-redux";
 
 import { SHIRT_OPTION_OPTIONS } from "../../../../utils/constants/booking.constants";
 import type { ShirtOptionEnum } from "../../../../types/booking";
-import { getBookingById, updateBookingClient } from "../../../../config/Api";
+import { getBookingById, updateBookingClient, getPublicEquipments, clientBorrowEquipment } from "../../../../config/Api";
+import type { IEquipment } from "../../../../types/equipment";
 import type { IPitch } from "../../../../types/pitch";
 import { formatVND } from "../../../../utils/format/price";
+import EquipmentBorrowSection from "./EquipmentBorrowSection";
 import {
     fetchPitches,
     selectPitches,
@@ -71,6 +73,27 @@ const UpdateBookingForm = ({
     const [startTime, setStartTime] = useState("07:00");
     const [endDate, setEndDate] = useState(bookingDate.format("YYYY-MM-DD"));
     const [endTime, setEndTime] = useState("08:00");
+
+    // Equipment state
+    const [equipments, setEquipments] = useState<IEquipment[]>([]);
+    const [ballQty, setBallQty] = useState<number>(1);
+    const [borrowShirt, setBorrowShirt] = useState(false);
+    const [shirtQty, setShirtQty] = useState<number>(1);
+    // Chỉ borrow khi user chủ động thay đổi — không borrow mặc định
+    const [equipmentTouched, setEquipmentTouched] = useState(false);
+
+    // Fetch equipments
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        getPublicEquipments()
+            .then(res => { if (res.data.statusCode === 200) setEquipments(res.data.data ?? []); })
+            .catch(() => { });
+    }, [isAuthenticated]);
+
+    // Reset mượn áo khi bỏ chọn "Có lấy áo"
+    useEffect(() => {
+        if (shirtOption !== "WITH_PITCH_SHIRT") setBorrowShirt(false);
+    }, [shirtOption]);
 
     // Sync pitch change
     useEffect(() => {
@@ -177,6 +200,19 @@ const UpdateBookingForm = ({
                 endDateTime: endDj.format("YYYY-MM-DDTHH:mm:ss"),
             });
             toast.success("Cập nhật lịch đặt thành công!");
+
+            // Chỉ borrow khi user chủ động thay đổi equipment
+            if (equipmentTouched) {
+                const ballEq = equipments.find(e => e.name.toLowerCase().includes("bóng") || e.name.toLowerCase().includes("ball"));
+                const shirtEq = equipments.find(e => e.name.toLowerCase().includes("áo") || e.name.toLowerCase().includes("shirt"));
+                const tasks: Promise<any>[] = [];
+                if (ballEq && ballQty > 0)
+                    tasks.push(clientBorrowEquipment({ bookingId, equipmentId: ballEq.id, quantity: ballQty }).catch(() => { }));
+                if (borrowShirt && shirtEq && shirtQty > 0)
+                    tasks.push(clientBorrowEquipment({ bookingId, equipmentId: shirtEq.id, quantity: shirtQty }).catch(() => { }));
+                if (tasks.length > 0) await Promise.all(tasks);
+            }
+
             dispatch(fetchBookingsClient(""));
             onSuccess?.();
         } catch (e: any) {
@@ -309,9 +345,6 @@ const UpdateBookingForm = ({
                         transition={{ duration: 0.3, ease: "easeOut" }}
                     >
                         <p className="bk__price-row">⏱ Thời lượng: {minutes} phút</p>
-                        {shirtOption === "WITH_PITCH_SHIRT" && (
-                            <p className="bk__price-row">👕 Áo pitch: miễn phí</p>
-                        )}
                         <div className="bk__price-total">
                             💰 Tạm tính: {formatVND(preview)}
                         </div>
@@ -337,6 +370,18 @@ const UpdateBookingForm = ({
             >
                 <Input className="bk__input-wrap" placeholder="0912 345 678" />
             </Form.Item>
+
+            <EquipmentBorrowSection
+                isAuthenticated={isAuthenticated}
+                shirtOption={shirtOption}
+                equipments={equipments}
+                ballQty={ballQty}
+                setBallQty={v => { setBallQty(v); setEquipmentTouched(true); }}
+                borrowShirt={borrowShirt}
+                setBorrowShirt={v => { setBorrowShirt(v); setEquipmentTouched(true); }}
+                shirtQty={shirtQty}
+                setShirtQty={v => { setShirtQty(v); setEquipmentTouched(true); }}
+            />
 
             {/* Submit */}
             <Popconfirm

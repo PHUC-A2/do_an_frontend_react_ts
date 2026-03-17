@@ -14,6 +14,10 @@ export interface IPitch {
     address?: string | null;
     latitude: number;
     longitude: number;
+    length?: number | null;
+    width?: number | null;
+    height?: number | null;
+    imageUrl?: string | null;
     createdAt: string;
     updatedAt: string | null;
     createdBy: string;
@@ -31,6 +35,10 @@ export interface ICreatePitchReq {
     address?: string | null;
     latitude: number;
     longitude: number;
+    length?: number | null;
+    width?: number | null;
+    height?: number | null;
+    imageUrl?: string | null;
 }
 
 export interface IUpdatePitchReq {
@@ -45,6 +53,10 @@ export interface IUpdatePitchReq {
     address?: string | null;
     latitude: number;
     longitude: number;
+    length?: number | null;
+    width?: number | null;
+    height?: number | null;
+    imageUrl?: string | null;
 }
 
 /**

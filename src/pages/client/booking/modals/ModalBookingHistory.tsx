@@ -3,6 +3,7 @@ import {
     Collapse,
     Drawer,
     Empty,
+    Image,
     Popconfirm,
     Row,
     Space,
@@ -12,13 +13,16 @@ import {
     Typography,
     Divider,
     theme,
+    Table,
     type CollapseProps,
     type PopconfirmProps
 } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 import { fetchBookingsClient, selectBookingsClient } from "../../../../redux/features/bookingClientSlice";
 import { useEffect, useState, useMemo } from "react";
 import { SHIRT_OPTION_META } from "../../../../utils/constants/booking.constants";
+import { BOOKING_EQUIPMENT_STATUS_META } from "../../../../utils/constants/bookingEquipment.constants";
 import { formatVND } from "../../../../utils/format/price";
 import { formatDateTimeRange, formatInstant } from "../../../../utils/format/localdatetime";
 import {
@@ -31,14 +35,16 @@ import {
     PhoneOutlined,
     SkinOutlined,
     UserOutlined,
-    DollarCircleOutlined
+    DollarCircleOutlined,
+    ToolOutlined
 } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router";
-import { cancelBookingClient, deleteBookingClient } from "../../../../config/Api";
+import { cancelBookingClient, deleteBookingClient, clientGetAllMyEquipments, clientUpdateBookingEquipmentStatus, clientSoftDeleteBookingEquipment } from "../../../../config/Api";
 import dayjs from "dayjs";
 import { motion } from "framer-motion";
 import type { IBooking } from "../../../../types/booking";
+import type { IBookingEquipment } from "../../../../types/bookingEquipment";
 import { notifyBookingChanged } from "../../../../redux/features/bookingUiSlice";
 import PaymentDrawer from "./PaymentDrawer";
 
@@ -61,11 +67,46 @@ const ModalBookingHistory = (props: IProps) => {
 
     const [deletingId, setDeletingId] = useState<number | null>(null);
 
+    // --- Equipment borrow history ---
+    const [equipList, setEquipList] = useState<IBookingEquipment[]>([]);
+    const [equipLoading, setEquipLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState("1");
+    const [updatingEquipId, setUpdatingEquipId] = useState<number | null>(null);
+    const [deletingEquipId, setDeletingEquipId] = useState<number | null>(null);
+
     useEffect(() => {
         if (isAuthenticated && openModalBookingHistory) {
             dispatch(fetchBookingsClient(""));
         }
     }, [dispatch, isAuthenticated, openModalBookingHistory]);
+
+    // Load toàn bộ lịch sử mượn thiết bị của user khi mở tab 3
+    useEffect(() => {
+        if (activeTab !== "3" || !isAuthenticated || !openModalBookingHistory) return;
+        setEquipLoading(true);
+        clientGetAllMyEquipments()
+            .then(res => setEquipList(res.data.data ?? []))
+            .catch(() => toast.error("Không tải được danh sách thiết bị"))
+            .finally(() => setEquipLoading(false));
+    }, [activeTab, isAuthenticated, openModalBookingHistory]);
+
+    const handleUpdateEquipStatus = async (id: number, status: string) => {
+        setUpdatingEquipId(id);
+        try {
+            const res = await clientUpdateBookingEquipmentStatus(id, { status: status as any });
+            if (res.data.statusCode === 200) {
+                const updated = res.data.data;
+                toast.success("Cập nhật trạng thái thành công");
+                setEquipList(prev => prev.map(e =>
+                    e.id === id ? { ...e, status: status as any, penaltyAmount: updated?.penaltyAmount ?? 0 } : e
+                ));
+            }
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message ?? "Lỗi cập nhật");
+        } finally {
+            setUpdatingEquipId(null);
+        }
+    };
 
     const cancel: PopconfirmProps['onCancel'] = () => {
         toast.info('Đã bỏ chọn');
@@ -290,6 +331,132 @@ const ModalBookingHistory = (props: IProps) => {
         });
     };
 
+    const handleDeleteEquip = async (id: number) => {
+        setDeletingEquipId(id);
+        try {
+            await clientSoftDeleteBookingEquipment(id);
+            toast.success("Đã xóa khỏi danh sách");
+            setEquipList(prev => prev.filter(e => e.id !== id));
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message ?? "Lỗi xóa");
+        } finally {
+            setDeletingEquipId(null);
+        }
+    };
+
+    const equipColumns: ColumnsType<IBookingEquipment> = [
+        {
+            title: "Thiết bị",
+            dataIndex: "equipmentName",
+            key: "equipmentName",
+            render: (name: string, record: IBookingEquipment) => (
+                <Space>
+                    {record.equipmentImageUrl && (
+                        <Image
+                            src={`/storage/equipment/${record.equipmentImageUrl}`}
+                            alt={name}
+                            width={28}
+                            height={28}
+                            style={{ objectFit: "cover", borderRadius: 4 }}
+                            preview={{ mask: false }}
+                        />
+                    )}
+                    <span style={{ fontSize: 13 }}>{name}</span>
+                </Space>
+            ),
+        },
+        { title: "SL", dataIndex: "quantity", key: "quantity", width: 50 },
+        {
+            title: "Trạng thái",
+            dataIndex: "status",
+            key: "status",
+            render: (status: IBookingEquipment["status"], record: IBookingEquipment) => (
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <Tag color={BOOKING_EQUIPMENT_STATUS_META[status].color} style={{ margin: 0, fontSize: 11 }}>
+                        {BOOKING_EQUIPMENT_STATUS_META[status].label}
+                    </Tag>
+                    {status === "LOST" && record.penaltyAmount > 0 && (
+                        <Text type="danger" style={{ fontSize: 11 }}>
+                            Đền: {formatVND(record.penaltyAmount)}
+                        </Text>
+                    )}
+                </div>
+            ),
+        },
+        {
+            title: "Cập nhật",
+            key: "action",
+            render: (_: any, record: IBookingEquipment) =>
+                record.status === "BORROWED" ? (
+                    <Space size={4}>
+                        {/* Trả bình thường */}
+                        <Popconfirm
+                            title="Xác nhận đã trả thiết bị?"
+                            okText="Đã trả"
+                            cancelText="Huỷ"
+                            onConfirm={() => handleUpdateEquipStatus(record.id, "RETURNED")}
+                        >
+                            <Button size="small" type="primary" loading={updatingEquipId === record.id}>
+                                Trả
+                            </Button>
+                        </Popconfirm>
+
+                        {/* Báo hỏng */}
+                        <Popconfirm
+                            title="Báo thiết bị bị hỏng?"
+                            description="Thiết bị sẽ bị loại khỏi kho."
+                            okText="Xác nhận"
+                            cancelText="Huỷ"
+                            okButtonProps={{ danger: true }}
+                            onConfirm={() => handleUpdateEquipStatus(record.id, "DAMAGED")}
+                        >
+                            <Button size="small" danger loading={updatingEquipId === record.id}>
+                                Hỏng
+                            </Button>
+                        </Popconfirm>
+
+                        {/* Báo mất — hiện tiền đền trước khi confirm */}
+                        <Popconfirm
+                            title="Báo thiết bị bị mất?"
+                            description={
+                                <span>
+                                    Tiền đền: <strong style={{ color: "#ff4d4f" }}>
+                                        {formatVND(record.quantity * record.equipmentPrice)}
+                                    </strong>
+                                    <br />Khoản này sẽ được tính vào booking.
+                                </span>
+                            }
+                            okText="Xác nhận mất"
+                            cancelText="Huỷ"
+                            okButtonProps={{ danger: true }}
+                            onConfirm={() => handleUpdateEquipStatus(record.id, "LOST")}
+                        >
+                            <Button size="small" danger loading={updatingEquipId === record.id}>
+                                Mất
+                            </Button>
+                        </Popconfirm>
+                    </Space>
+                ) : (
+                    <Popconfirm
+                        title="Xóa khỏi danh sách?"
+                        description="Bản ghi sẽ bị xóa khỏi lịch sử của bạn, admin vẫn lưu trữ."
+                        okText="Xóa"
+                        cancelText="Huỷ"
+                        okButtonProps={{ danger: true }}
+                        onConfirm={() => handleDeleteEquip(record.id)}
+                    >
+                        <Button
+                            size="small"
+                            danger
+                            loading={deletingEquipId === record.id}
+                        >
+                            Xóa
+                        </Button>
+                    </Popconfirm>
+                ),
+        },
+    ];
+
     return (
         <Drawer
             title={
@@ -309,7 +476,8 @@ const ModalBookingHistory = (props: IProps) => {
             ) : (
                 <Tabs
                     centered
-                    defaultActiveKey="1"
+                    activeKey={activeTab}
+                    onChange={setActiveTab}
                     items={[
                         {
                             key: '1',
@@ -339,6 +507,32 @@ const ModalBookingHistory = (props: IProps) => {
                                     {historyBookings.length > 0 ? (
                                         <Collapse accordion ghost items={renderCollapseItems(historyBookings)} />
                                     ) : <Empty description="Chưa có lịch sử" />}
+                                </div>
+                            )
+                        },
+                        {
+                            key: '3',
+                            label: (
+                                <Space>
+                                    <ToolOutlined /> Thiết bị mượn
+                                    <BadgeCount count={equipList.length} color={token.colorWarning} />
+                                </Space>
+                            ),
+                            children: (
+                                <div style={{ paddingTop: 12 }}>
+                                    {equipList.length > 0 ? (
+                                        <Table<IBookingEquipment>
+                                            columns={equipColumns}
+                                            dataSource={equipList}
+                                            rowKey="id"
+                                            size="small"
+                                            loading={equipLoading}
+                                            pagination={false}
+                                            scroll={{ x: 'max-content' }}
+                                        />
+                                    ) : (
+                                        <Empty description={equipLoading ? "Đang tải..." : "Chưa có thiết bị mượn"} />
+                                    )}
                                 </div>
                             )
                         }

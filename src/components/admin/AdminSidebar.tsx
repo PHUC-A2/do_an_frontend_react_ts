@@ -7,7 +7,8 @@ import {
     LogoutOutlined,
     LoginOutlined,
 } from '@ant-design/icons';
-import { MdFeaturedPlayList, MdOutlineSecurity, MdPayments } from 'react-icons/md';
+import { MdFeaturedPlayList, MdOutlineSecurity, MdPayments, MdSportsHandball } from 'react-icons/md';
+import { GiReturnArrow } from 'react-icons/gi';
 import { FaReact, FaUserCircle, FaUserCog } from 'react-icons/fa';
 import ModalAccount from '../../pages/auth/modal/ModalAccount';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
@@ -49,6 +50,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const canViewPitches = usePermission("PITCH_VIEW_LIST");
     const canViewBookings = usePermission("BOOKING_VIEW_LIST");
     const canViewPayments = usePermission("PAYMENT_VIEW_LIST");
+    const canViewEquipments = usePermission("EQUIPMENT_VIEW_LIST");
+    const canViewBookingEquipments = usePermission("BOOKING_EQUIPMENT_VIEW");
 
     const routeLabelMap: Record<string, string> = {
         admin: 'Bảng điều khiển',
@@ -58,6 +61,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         pitch: 'Sân bóng',
         booking: 'Lịch đặt',
         payment: 'Thanh toán',
+        equipment: 'Thiết bị',
+        'booking-equipment': 'Mượn thiết bị',
     };
 
     const cssVars = useMemo(() => ({
@@ -86,7 +91,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         }
     };
 
-    const routeMenuKeys = ['/admin', '/admin/user', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment'];
+    const routeMenuKeys = ['/admin', '/admin/user', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment'];
 
     const selectedMenuKey = useMemo(() => {
         const currentPath = location.pathname;
@@ -146,7 +151,19 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                             key: '/admin/payment',
                             label: <Link to="/admin/payment" className={styles.menuLink}>QL thanh toán</Link>,
                             icon: <MdPayments />,
-                        }] : [])
+                        }] : []),
+
+                        ...(canViewEquipments ? [{
+                            key: '/admin/equipment',
+                            label: <Link to="/admin/equipment" className={styles.menuLink}>QL thiết bị</Link>,
+                            icon: <MdSportsHandball />,
+                        }] : []),
+
+                        ...(canViewBookingEquipments ? [{
+                            key: '/admin/booking-equipment',
+                            label: <Link to="/admin/booking-equipment" className={styles.menuLink}>Mượn thiết bị</Link>,
+                            icon: <GiReturnArrow />,
+                        }] : []),
 
                     ]
                     : []),

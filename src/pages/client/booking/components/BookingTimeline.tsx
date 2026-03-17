@@ -60,7 +60,7 @@ const BookingTime = ({ timelineLoading, timeline }: IProps) => {
                                     >
                                         <div className="bk__slot__inner">
                                             <div className="bk__slot__time">
-                                                {formatDateTime(slot.start, "HH:mm")}
+                                                {formatDateTime(slot.start, "HH:mm")} – {formatDateTime(slot.end, "HH:mm")}
                                             </div>
                                             <div className="bk__slot__label">
                                                 {isBusy ? "ĐÃ ĐẶT" : "TRỐNG"}

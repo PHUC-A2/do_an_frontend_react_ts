@@ -18,6 +18,8 @@ import AdminBookingPage from '../pages/admin/booking/AdminBookingPage';
 import PitchPage from '../pages/client/pitch/PitchPage';
 import PitchDetailsPage from '../pages/client/pitch/PitchDetailsPage';
 import AdminPaymentPage from '../pages/admin/payment/AdminPaymentPage';
+import AdminEquipmentPage from '../pages/admin/equipment/AdminEquipmentPage';
+import AdminBookingEquipmentPage from '../pages/admin/bookingequipment/AdminBookingEquipmentPage';
 import TermsOfService from '../pages/client/terms-of-service/TermsOfService';
 import { useTopProgress } from '../hooks/common/useTopProgress';
 
@@ -107,6 +109,8 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
                         { path: "/admin/pitch", element: <AdminPitchPage /> },
                         { path: "/admin/booking", element: <AdminBookingPage /> },
                         { path: "/admin/payment", element: <AdminPaymentPage /> },
+                        { path: "/admin/equipment", element: <AdminEquipmentPage /> },
+                        { path: "/admin/booking-equipment", element: <AdminBookingEquipmentPage /> },
                     ]
                 },
                 { path: "/login", element: <LoginPage /> },
