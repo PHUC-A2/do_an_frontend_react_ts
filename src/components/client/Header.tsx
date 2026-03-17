@@ -129,6 +129,21 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const searchDirtyRef = useRef(false);
     const lastScrollYRef = useRef(0);
     const tickingRef = useRef(false);
+    const accountMenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const handleAccountMouseEnter = () => {
+        if (accountMenuCloseTimerRef.current) {
+            clearTimeout(accountMenuCloseTimerRef.current);
+            accountMenuCloseTimerRef.current = null;
+        }
+        setAccountMenuOpen(true);
+    };
+
+    const handleAccountMouseLeave = () => {
+        accountMenuCloseTimerRef.current = setTimeout(() => {
+            setAccountMenuOpen(false);
+        }, 200);
+    };
 
     const isDark = theme === 'dark';
     const displayName = account?.fullName || account?.name || 'Tài khoản của bạn';
@@ -439,7 +454,10 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                         </Tooltip>
 
                         {isAuthenticated ? (
-                            <Flex vertical className={styles.accountShell} ref={accountMenuRef}>
+                            <Flex vertical className={styles.accountShell} ref={accountMenuRef}
+                                onMouseEnter={handleAccountMouseEnter}
+                                onMouseLeave={handleAccountMouseLeave}
+                            >
                                 <Button
                                     type="text"
                                     className={`${styles.accountTrigger}${accountMenuOpen ? ` ${styles.accountTriggerOpen}` : ''}`}

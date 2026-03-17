@@ -557,11 +557,17 @@ $bp-md: 768px;
     border-radius: 16px;
     color        : var(--header-text);
     text-align   : left;
+    font-weight  : 600;
     transition   : background-color 0.22s ease, color 0.22s ease, transform 0.22s ease;
 
     svg {
         flex-shrink: 0;
         font-size  : 1rem;
+    }
+
+    span {
+        font-weight: 600;
+        color      : inherit;
     }
 
     &:hover {
@@ -965,6 +971,11 @@ $bp-md: 768px;
     border-radius  : 12px;
     font-size      : 0.92rem;
     font-weight    : 700;
+
+    span {
+        font-weight: 700;
+        color      : inherit;
+    }
     transition     : transform 0.22s ease, background-color 0.22s ease, color 0.22s ease;
 }
 
