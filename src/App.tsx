@@ -6,9 +6,12 @@ import BackToTop from "./components/client/backtotop/BackToTop";
 import TopProgressBar from "./components/common/ProgressBar/TopProgressBar";
 import { useAuthInit } from "./hooks/init/useAuthInit";
 import { useAccountInit } from "./hooks/init/useAccountInit";
+import { useAppSelector } from "./redux/hooks";
+import { useFcmToken } from "./hooks/common/useFcmToken";
 
 const App = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
@@ -19,6 +22,7 @@ const App = () => {
   // init hooks
   useAuthInit();
   useAccountInit();
+  useFcmToken(isAuthenticated);
 
   return (
     <>

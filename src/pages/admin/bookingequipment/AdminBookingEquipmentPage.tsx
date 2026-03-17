@@ -1,23 +1,21 @@
-import { Table, Tag, Space, Card, Input, Button, Popconfirm, Typography } from 'antd';
+import { Table, Tag, Space, Card, Input, Popconfirm, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-toastify';
 import { SearchOutlined } from '@ant-design/icons';
+import RBButton from 'react-bootstrap/Button';
+import { FaCheck } from 'react-icons/fa6';
+import { MdOutlineHandyman } from 'react-icons/md';
+import { TbAlertTriangle } from 'react-icons/tb';
 import { formatVND } from '../../../utils/format/price';
-
-const { Text } = Typography;
-
 import type { IBookingEquipment } from '../../../types/bookingEquipment';
-import {
-    BOOKING_EQUIPMENT_STATUS_META,
-} from '../../../utils/constants/bookingEquipment.constants';
-import {
-    getAllBookingEquipments,
-    updateBookingEquipmentStatus,
-} from '../../../config/Api';
+import { BOOKING_EQUIPMENT_STATUS_META } from '../../../utils/constants/bookingEquipment.constants';
+import { getAllBookingEquipments, updateBookingEquipmentStatus } from '../../../config/Api';
 import AdminWrapper from '../../../components/wrapper/AdminWrapper';
 import { useAppDispatch } from '../../../redux/hooks';
 import { fetchEquipments } from '../../../redux/features/equipmentSlice';
+
+const { Text } = Typography;
 
 const AdminBookingEquipmentPage = () => {
     const dispatch = useAppDispatch();
@@ -26,7 +24,6 @@ const AdminBookingEquipmentPage = () => {
     const [updatingId, setUpdatingId] = useState<number | null>(null);
     const [searchId, setSearchId] = useState('');
 
-    // Load tất cả khi mount
     useEffect(() => {
         setLoading(true);
         getAllBookingEquipments()
@@ -35,7 +32,6 @@ const AdminBookingEquipmentPage = () => {
             .finally(() => setLoading(false));
     }, []);
 
-    // Lọc theo booking ID nếu có nhập
     const list = useMemo(() => {
         const trimmed = searchId.trim();
         if (!trimmed) return allList;
@@ -50,9 +46,10 @@ const AdminBookingEquipmentPage = () => {
                 toast.success('Cập nhật trạng thái thành công');
                 const updated = res.data.data;
                 setAllList(prev => prev.map(item =>
-                    item.id === id ? { ...item, status: status as any, penaltyAmount: updated?.penaltyAmount ?? 0 } : item
+                    item.id === id
+                        ? { ...item, status: status as any, penaltyAmount: updated?.penaltyAmount ?? 0 }
+                        : item
                 ));
-                // Reload danh sách thiết bị để cập nhật totalQuantity/availableQuantity
                 if (status === 'LOST' || status === 'DAMAGED') {
                     dispatch(fetchEquipments(''));
                 }
@@ -65,14 +62,43 @@ const AdminBookingEquipmentPage = () => {
     };
 
     const columns: ColumnsType<IBookingEquipment> = [
-        { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-        { title: 'Booking ID', dataIndex: 'bookingId', key: 'bookingId', width: 100 },
-        { title: 'Thiết bị', dataIndex: 'equipmentName', key: 'equipmentName' },
-        { title: 'Số lượng', dataIndex: 'quantity', key: 'quantity', width: 90 },
         {
-            title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 130,
+            title: 'ID',
+            dataIndex: 'id',
+            key: 'id',
+            width: 60,
+            align: 'center' as const,
+            sorter: (a, b) => a.id - b.id,
+        },
+        {
+            title: 'Booking ID',
+            dataIndex: 'bookingId',
+            key: 'bookingId',
+            width: 110,
+            align: 'center' as const,
+            sorter: (a, b) => a.bookingId - b.bookingId,
+        },
+        {
+            title: 'Thiết bị',
+            dataIndex: 'equipmentName',
+            key: 'equipmentName',
+        },
+        {
+            title: 'Số lượng',
+            dataIndex: 'quantity',
+            key: 'quantity',
+            width: 100,
+            align: 'center' as const,
+            sorter: (a, b) => a.quantity - b.quantity,
+        },
+        {
+            title: 'Trạng thái',
+            dataIndex: 'status',
+            key: 'status',
+            width: 160,
+            align: 'center' as const,
             render: (status: IBookingEquipment['status'], record: IBookingEquipment) => (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                     <Tag color={BOOKING_EQUIPMENT_STATUS_META[status].color}>
                         {BOOKING_EQUIPMENT_STATUS_META[status].label}
                     </Tag>
@@ -85,29 +111,75 @@ const AdminBookingEquipmentPage = () => {
             ),
         },
         {
-            title: 'Hành động', key: 'actions',
-            render: (_: any, record: IBookingEquipment) => (
+            title: 'Hành động',
+            key: 'actions',
+            width: 210,
+            align: 'center' as const,
+            render: (_: any, record: IBookingEquipment) =>
                 record.status === 'BORROWED' ? (
-                    <Space>
-                        <Popconfirm title="Xác nhận đã trả?" okText="Đã trả" cancelText="Huỷ"
-                            onConfirm={() => handleUpdateStatus(record.id, 'RETURNED')}>
-                            <Button size="small" type="primary" loading={updatingId === record.id}>Trả</Button>
+                    <Space size={4}>
+                        <Popconfirm
+                            title="Xác nhận đã trả?"
+                            okText="Đã trả"
+                            cancelText="Huỷ"
+                            onConfirm={() => handleUpdateStatus(record.id, 'RETURNED')}
+                        >
+                            <RBButton
+                                size="sm"
+                                variant="outline-warning"
+                                disabled={updatingId === record.id}
+                                style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+                            >
+                                <FaCheck /> Trả
+                            </RBButton>
                         </Popconfirm>
-                        <Popconfirm title="Báo hỏng?" description="Thiết bị sẽ bị loại khỏi kho."
-                            okText="Xác nhận" cancelText="Huỷ" okButtonProps={{ danger: true }}
-                            onConfirm={() => handleUpdateStatus(record.id, 'DAMAGED')}>
-                            <Button size="small" danger loading={updatingId === record.id}>Hỏng</Button>
+
+                        <Popconfirm
+                            title="Báo hỏng?"
+                            description="Thiết bị sẽ bị loại khỏi kho."
+                            okText="Xác nhận"
+                            cancelText="Huỷ"
+                            okButtonProps={{ danger: true }}
+                            onConfirm={() => handleUpdateStatus(record.id, 'DAMAGED')}
+                        >
+                            <RBButton
+                                size="sm"
+                                variant="outline-secondary"
+                                disabled={updatingId === record.id}
+                                style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+                            >
+                                <MdOutlineHandyman /> Hỏng
+                            </RBButton>
                         </Popconfirm>
+
                         <Popconfirm
                             title="Báo thiết bị bị mất?"
-                            description={<span>Tiền đền: <strong style={{ color: '#ff4d4f' }}>{formatVND(record.quantity * record.equipmentPrice)}</strong></span>}
-                            okText="Xác nhận mất" cancelText="Huỷ" okButtonProps={{ danger: true }}
-                            onConfirm={() => handleUpdateStatus(record.id, 'LOST')}>
-                            <Button size="small" danger loading={updatingId === record.id}>Mất</Button>
+                            description={
+                                <span>
+                                    Tiền đền:{' '}
+                                    <strong style={{ color: '#ff4d4f' }}>
+                                        {formatVND(record.quantity * record.equipmentPrice)}
+                                    </strong>
+                                </span>
+                            }
+                            okText="Xác nhận mất"
+                            cancelText="Huỷ"
+                            okButtonProps={{ danger: true }}
+                            onConfirm={() => handleUpdateStatus(record.id, 'LOST')}
+                        >
+                            <RBButton
+                                size="sm"
+                                variant="outline-danger"
+                                disabled={updatingId === record.id}
+                                style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+                            >
+                                <TbAlertTriangle /> Mất
+                            </RBButton>
                         </Popconfirm>
                     </Space>
-                ) : <span style={{ color: '#888' }}>—</span>
-            ),
+                ) : (
+                    <Text type="secondary">—</Text>
+                ),
         },
     ];
 
@@ -116,6 +188,7 @@ const AdminBookingEquipmentPage = () => {
             <Card
                 size="small"
                 title="Danh sách thiết bị mượn"
+                hoverable={false}
                 extra={
                     <Input
                         allowClear
@@ -126,7 +199,12 @@ const AdminBookingEquipmentPage = () => {
                         onChange={e => setSearchId(e.target.value)}
                     />
                 }
-                style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+                style={{
+                    width: '100%',
+                    overflowX: 'auto',
+                    borderRadius: 8,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                }}
             >
                 <Table<IBookingEquipment>
                     columns={columns}
@@ -135,7 +213,11 @@ const AdminBookingEquipmentPage = () => {
                     loading={loading}
                     size="small"
                     bordered
-                    pagination={{ pageSize: 20, showSizeChanger: false }}
+                    pagination={{
+                        pageSize: 20,
+                        showSizeChanger: true,
+                        showTotal: (total) => `Tổng ${total} bản ghi`,
+                    }}
                     locale={{ emptyText: 'Không có dữ liệu' }}
                     scroll={{ x: 'max-content' }}
                 />

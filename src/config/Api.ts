@@ -11,6 +11,7 @@ import type { ICreatePermissionReq, IPermission, IUpdatePermissionReq } from "..
 import type { ICreatePitchReq, IPitch, IUpdatePitchReq } from "../types/pitch";
 import type { IRevenueRes } from "../types/revenue";
 import type { IAssignPermissionReq, ICreateRoleReq, IRole, IUpdateRoleReq } from "../types/role";
+import type { INotification } from "../types/notification";
 import type { IPitchTimeline } from "../types/timeline";
 import type { IGetUploadResponse } from "../types/upload";
 import type { IAssignRoleReq, ICreateUserReq, IUpdateUserReq, IUser, IUpdateUserStatusReq, IUpdateUserStatusRes } from "../types/user";
@@ -183,6 +184,13 @@ export const clientGetAllMyEquipments = () => instance.get<IBackendRes<IBookingE
 export const clientGetBookingEquipments = (bookingId: number) => instance.get<IBackendRes<IBookingEquipment[]>>(`/api/v1/client/booking-equipments/booking/${bookingId}`);
 export const clientUpdateBookingEquipmentStatus = (id: number, data: IUpdateBookingEquipmentStatusReq) => instance.patch<IBackendRes<IBookingEquipment>>(`/api/v1/client/booking-equipments/${id}/status`, data);
 export const clientSoftDeleteBookingEquipment = (id: number) => instance.delete<IBackendRes<null>>(`/api/v1/client/booking-equipments/${id}`);
+
+/* notifications */
+export const clientGetNotifications = () => instance.get<IBackendRes<INotification[]>>('/api/v1/client/notifications');
+export const clientMarkAllNotificationsRead = () => instance.patch<IBackendRes<null>>('/api/v1/client/notifications/read-all');
+export const clientMarkNotificationRead = (id: number) => instance.patch<IBackendRes<null>>(`/api/v1/client/notifications/${id}/read`);
+export const clientDeleteNotification = (id: number) => instance.delete<IBackendRes<null>>(`/api/v1/client/notifications/${id}`);
+export const registerFcmToken = (token: string) => instance.post<IBackendRes<null>>('/api/v1/client/notifications/fcm-token', { token });
 
 /* api public equipments — client (không cần đăng nhập) */
 export const getPublicEquipments = () => instance.get<IBackendRes<IEquipment[]>>(`/api/v1/client/public/equipments`);

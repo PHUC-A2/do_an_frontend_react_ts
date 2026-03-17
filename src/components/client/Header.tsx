@@ -1,4 +1,4 @@
-import { Avatar, Button, Flex, Input, Layout, Switch, Tooltip, Typography, type InputRef } from 'antd';
+import { Avatar, Badge, Button, Flex, Input, Layout, Popconfirm, Switch, Tooltip, Typography, type InputRef } from 'antd';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import {
@@ -20,12 +20,15 @@ import {
     FiSun,
     FiUser,
     FiUserPlus,
+    FiTrash2,
     FiX,
 } from 'react-icons/fi';
 import type { IconType } from 'react-icons';
 import { toast } from 'react-toastify';
-import { logout } from '../../config/Api';
+import { clientDeleteNotification, clientGetNotifications, clientMarkAllNotificationsRead, logout } from '../../config/Api';
+import { useBrowserNotification } from '../../hooks/common/useBrowserNotification';
 import { useOutsideClick } from '../../hooks/common/useOutsideClick';
+import type { INotification } from '../../types/notification';
 import ModalAccount from '../../pages/auth/modal/ModalAccount';
 import ModalForget from '../../pages/auth/modal/ModalForget';
 import ModalUpdateAccount from '../../pages/auth/modal/ModalUpdateAccount';
@@ -115,6 +118,14 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const [openModalUpdateAccount, setOpenModalUpdateAccount] = useState(false);
     const [openModalForget, setOpenModalForget] = useState(false);
     const [openModalBookingHistory, setOpenModalBookingHistory] = useState(false);
+    const [notifications, setNotifications] = useState<INotification[]>([]);
+    const [notifOpen, setNotifOpen] = useState(false);
+    const [drawerNotifOpen, setDrawerNotifOpen] = useState(false);
+    const notifRef = useRef<HTMLDivElement | null>(null);
+    const notifCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const sseRef = useRef<EventSource | null>(null);
+
+    const { requestPermission, sendBrowserNotif } = useBrowserNotification();
 
     const account = useAppSelector((state) => state.account.account);
     const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
@@ -130,6 +141,20 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const lastScrollYRef = useRef(0);
     const tickingRef = useRef(false);
     const accountMenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const unreadCount = notifications.filter(n => !n.isRead).length;
+
+    const handleNotifMouseEnter = () => {
+        if (notifCloseTimerRef.current) {
+            clearTimeout(notifCloseTimerRef.current);
+            notifCloseTimerRef.current = null;
+        }
+        setNotifOpen(true);
+    };
+
+    const handleNotifMouseLeave = () => {
+        notifCloseTimerRef.current = setTimeout(() => setNotifOpen(false), 200);
+    };
 
     const handleAccountMouseEnter = () => {
         if (accountMenuCloseTimerRef.current) {
@@ -255,10 +280,64 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
         };
     }, []);
 
+    // SSE: connect when authenticated, disconnect on logout
+    useEffect(() => {
+        if (!isAuthenticated) {
+            if (sseRef.current) {
+                sseRef.current.close();
+                sseRef.current = null;
+            }
+            setNotifications([]);
+            return;
+        }
+
+        // Xin quyền browser notification ngay khi đăng nhập
+        requestPermission();
+
+        // fetch existing notifications
+        clientGetNotifications()
+            .then(res => { if (res.data.statusCode === 200) setNotifications(res.data.data ?? []); })
+            .catch(() => { /* ignore */ });
+
+        // connect SSE — pass token as query param (EventSource cannot set headers)
+        const token = localStorage.getItem('access_token') ?? '';
+        const es = new EventSource(`/api/v1/client/notifications/subscribe?token=${encodeURIComponent(token)}`);
+        sseRef.current = es;
+        es.addEventListener('notification', (e: MessageEvent) => {
+            try {
+                const notif: INotification = JSON.parse(e.data);
+                setNotifications(prev => [notif, ...prev]);
+
+                // Tiêu đề theo loại thông báo
+                const titleMap: Record<string, string> = {
+                    BOOKING_CREATED: '🏟️ Đặt sân thành công',
+                    PAYMENT_CONFIRMED: '💳 Thanh toán xác nhận',
+                    MATCH_REMINDER: '⏰ Sắp đến giờ đá!',
+                };
+                const title = titleMap[notif.type] ?? 'UTB Sport';
+
+                // Browser notification (hiện popup hệ thống)
+                sendBrowserNotif(title, notif.message);
+
+                // Toast chỉ cho MATCH_REMINDER (các loại khác form đã toast)
+                if (notif.type === 'MATCH_REMINDER') {
+                    toast.info(notif.message, { autoClose: 6000 });
+                }
+            } catch { /* ignore */ }
+        });
+        es.onerror = () => { es.close(); };
+
+        return () => { es.close(); sseRef.current = null; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAuthenticated]);
+
+    useOutsideClick(notifRef, () => setNotifOpen(false), notifOpen);
+
     const closeAllPanels = () => {
         setDrawerOpen(false);
         setAccountMenuOpen(false);
         setSearchOpen(false);
+        setNotifOpen(false);
     };
 
     const handleLogout = async () => {
@@ -327,15 +406,25 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     };
 
     const handleNotifications = () => {
-        closeAllPanels();
-
         if (!isAuthenticated) {
             toast.info('Đăng nhập để nhận thông báo đặt sân.');
             navigate('/login');
             return;
         }
+    };
 
-        toast.info('Bạn chưa có thông báo mới.');
+    const handleMarkAllRead = async () => {
+        try {
+            await clientMarkAllNotificationsRead();
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        } catch { /* ignore */ }
+    };
+
+    const handleDeleteNotif = async (id: number) => {
+        try {
+            await clientDeleteNotification(id);
+            setNotifications(prev => prev.filter(n => n.id !== id));
+        } catch { /* ignore */ }
     };
 
     const handleBookingShortcut = () => {
@@ -432,11 +521,62 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                                 />
                             </Tooltip>
                         </Flex>
-                        <Tooltip title="Thông báo" placement="bottom" classNames={{ root: styles.headerTooltip }}>
-                            <Button type="text" className={styles.actionButton} onClick={handleNotifications} aria-label="Thông báo" icon={<FiBell />}>
-                                <Text className={styles.notificationDot} aria-hidden="true" />
-                            </Button>
-                        </Tooltip>
+                        <Flex vertical className={styles.notifShell} ref={notifRef}
+                            onMouseEnter={handleNotifMouseEnter}
+                            onMouseLeave={handleNotifMouseLeave}
+                        >
+                            <Tooltip title="Thông báo" placement="bottom" classNames={{ root: styles.headerTooltip }}>
+                                <Badge count={unreadCount} size="small" offset={[-4, 4]}>
+                                    <Button
+                                        type="text"
+                                        className={`${styles.actionButton}${notifOpen ? ` ${styles.actionButtonActive}` : ''}`}
+                                        onClick={() => { handleNotifications(); setNotifOpen(v => !v); }}
+                                        aria-label="Thông báo"
+                                        icon={<FiBell />}
+                                    />
+                                </Badge>
+                            </Tooltip>
+
+                            <Flex vertical className={`${styles.notifMenu}${notifOpen ? ` ${styles.notifMenuOpen}` : ''}`}>
+                                <Flex className={styles.notifHeader}>
+                                    <Text className={styles.notifTitle}>Thông báo</Text>
+                                    {unreadCount > 0 && (
+                                        <Button type="text" className={styles.notifMarkAll} onClick={handleMarkAllRead}>
+                                            Đánh dấu tất cả đã đọc
+                                        </Button>
+                                    )}
+                                </Flex>
+                                <Flex vertical className={styles.notifList}>
+                                    {notifications.length === 0 ? (
+                                        <Text className={styles.notifEmpty}>Chưa có thông báo nào</Text>
+                                    ) : (
+                                        notifications.slice(0, 10).map(n => (
+                                            <Flex key={n.id} className={`${styles.notifItem}${!n.isRead ? ` ${styles.notifItemUnread}` : ''}`}>
+                                                <FiBell className={styles.notifItemIcon} />
+                                                <Flex vertical className={styles.notifItemBody}>
+                                                    <Text className={styles.notifItemMsg}>{n.message}</Text>
+                                                    <Text className={styles.notifItemTime}>
+                                                        {new Date(n.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
+                                                    </Text>
+                                                </Flex>
+                                                <Flex align="center" gap={4}>
+                                                    {!n.isRead && <span className={styles.notifDot} />}
+                                                    <Popconfirm
+                                                        title="Xóa khỏi lịch sử?"
+                                                        onConfirm={() => handleDeleteNotif(n.id)}
+                                                        okText="Xóa"
+                                                        cancelText="Hủy"
+                                                        placement="left"
+                                                    >
+                                                        <Button type="text" className={styles.notifDeleteBtn} icon={<FiTrash2 />} />
+                                                    </Popconfirm>
+                                                </Flex>
+                                            </Flex>
+                                        ))
+                                    )}
+                                </Flex>
+                            </Flex>
+                        </Flex>
                         <Tooltip title="Lịch đặt sân" placement="bottom" classNames={{ root: styles.headerTooltip }}>
                             <Button type="text" className={styles.actionButton} onClick={handleBookingShortcut} aria-label="Lịch đặt sân" icon={<FiCalendar />} />
                         </Tooltip>
@@ -632,8 +772,12 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                 </Flex>
 
                 <Flex className={styles.drawerQuickActions}>
-                    <Button type="text" className={styles.drawerQuickButton} onClick={handleNotifications}>
-                        <FiBell />
+                    <Button type="text" className={`${styles.drawerQuickButton}${drawerNotifOpen ? ` ${styles.actionButtonActive}` : ''}`}
+                        onClick={() => { handleNotifications(); setDrawerNotifOpen(v => !v); }}
+                    >
+                        <Badge count={unreadCount} size="small">
+                            <FiBell />
+                        </Badge>
                         <Text>Thông báo</Text>
                     </Button>
                     <Button type="text" className={styles.drawerQuickButton} onClick={handleBookingShortcut}>
@@ -641,6 +785,48 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                         <Text>Lịch đặt</Text>
                     </Button>
                 </Flex>
+
+                {drawerNotifOpen && isAuthenticated && (
+                    <Flex vertical className={styles.drawerNotifPanel}>
+                        <Flex className={styles.notifHeader}>
+                            <Text className={styles.notifTitle}>Thông báo</Text>
+                            {unreadCount > 0 && (
+                                <Button type="text" className={styles.notifMarkAll} onClick={handleMarkAllRead}>
+                                    Đánh dấu tất cả đã đọc
+                                </Button>
+                            )}
+                        </Flex>
+                        <Flex vertical className={styles.drawerNotifList}>
+                            {notifications.length === 0 ? (
+                                <Text className={styles.notifEmpty}>Chưa có thông báo nào</Text>
+                            ) : (
+                                notifications.slice(0, 10).map(n => (
+                                    <Flex key={n.id} className={`${styles.notifItem}${!n.isRead ? ` ${styles.notifItemUnread}` : ''}`}>
+                                        <FiBell className={styles.notifItemIcon} />
+                                        <Flex vertical className={styles.notifItemBody}>
+                                            <Text className={styles.notifItemMsg}>{n.message}</Text>
+                                            <Text className={styles.notifItemTime}>
+                                                {new Date(n.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
+                                            </Text>
+                                        </Flex>
+                                        <Flex align="center" gap={4}>
+                                            {!n.isRead && <span className={styles.notifDot} />}
+                                            <Popconfirm
+                                                title="Xóa khỏi lịch sử?"
+                                                onConfirm={() => handleDeleteNotif(n.id)}
+                                                okText="Xóa"
+                                                cancelText="Hủy"
+                                                placement="left"
+                                            >
+                                                <Button type="text" className={styles.notifDeleteBtn} icon={<FiTrash2 />} />
+                                            </Popconfirm>
+                                        </Flex>
+                                    </Flex>
+                                ))
+                            )}
+                        </Flex>
+                    </Flex>
+                )}
 
                 {isAuthenticated ? (
                     <Flex vertical className={styles.drawerAccountActions}>

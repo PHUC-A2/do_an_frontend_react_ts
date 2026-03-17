@@ -12,8 +12,23 @@ export interface IPayment {
     content: string;
     status: PaymentStatusEnum;
     method: PaymentMethodEnum;
+    // user info
+    userId?: number | null;
+    userName?: string | null;
+    userFullName?: string | null;
+    userEmail?: string | null;
+    userPhone?: string | null;
+    userAvatarUrl?: string | null;
+    // booking info
+    pitchName?: string | null;
+    contactPhone?: string | null;
+    bookingStart?: string | null;
+    bookingEnd?: string | null;
     paidAt?: string | null;
     createdAt: string;
+    updatedAt?: string | null;
+    createdBy?: string | null;
+    updatedBy?: string | null;
 }
 
 export interface ICreatePaymentReq {

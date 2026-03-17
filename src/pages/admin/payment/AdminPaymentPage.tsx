@@ -8,7 +8,9 @@ import { fetchPayments, selectPaymentLoading, selectPaymentMeta, selectPayments 
 import type { IPayment } from '../../../types/payment';
 import { toast } from 'react-toastify';
 import AdminWrapper from '../../../components/wrapper/AdminWrapper';
+import ModalPaymentDetails from './modals/ModalPaymentDetails';
 import { FaCheck } from 'react-icons/fa6';
+import { FiEye } from 'react-icons/fi';
 import { PAYMENT_STATUS_META } from '../../../utils/constants/payment.constanst';
 import { confirmPayment } from '../../../config/Api';
 import { exportTableToExcel } from '../../../utils/export/exportExcelFromTable';
@@ -25,6 +27,8 @@ const AdminPaymentPage = () => {
     const loading = useAppSelector(selectPaymentLoading);
    
     const [confirmingId, setConfirmingId] = useState<number | null>(null);
+    const [selectedPayment, setSelectedPayment] = useState<IPayment | null>(null);
+    const [detailOpen, setDetailOpen] = useState(false);
     const canViewPayments = usePermission("PAYMENT_VIEW_LIST");
 
     const handleConfirmPayment = async (id: number) => {
@@ -176,6 +180,14 @@ const AdminPaymentPage = () => {
             key: 'actions',
             render: (_: any, record: IPayment) => (
                 <Space align="center" style={{ justifyContent: "center", width: "100%" }}>
+                    <RBButton
+                        size='sm'
+                        variant="outline-info"
+                        onClick={() => { setSelectedPayment(record); setDetailOpen(true); }}
+                        title="Xem chi tiết"
+                    >
+                        <FiEye />
+                    </RBButton>
                     <PermissionWrapper required={"PAYMENT_UPDATE"}>
                         <Popconfirm
                             title="Xác nhận thanh toán"
@@ -211,6 +223,11 @@ const AdminPaymentPage = () => {
 
     return (
         <>
+            <ModalPaymentDetails
+                open={detailOpen}
+                onClose={() => setDetailOpen(false)}
+                payment={selectedPayment}
+            />
             <AdminWrapper>
                 <Card
                     size='small'
