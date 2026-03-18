@@ -20,8 +20,9 @@ import dayjs, { type Dayjs } from "dayjs";
 import { useLocation, useParams } from "react-router";
 
 import "./BookingPage.scss";
-import { getPitchById } from "../../../config/Api";
+import { clientGetPitchEquipments, getPitchById } from "../../../config/Api";
 import type { IPitch } from "../../../types/pitch";
+import type { IPitchEquipment } from "../../../types/pitchEquipment";
 import { useBookingTimeline } from "./hook/useBookingTimeline";
 import { useAppSelector } from "../../../redux/hooks";
 import { formatVND } from "../../../utils/format/price";
@@ -76,6 +77,7 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
     const [pitch, setPitch] = useState<IPitch | null>(null);
     const [pitchLoading, setPitchLoading] = useState(false);
     const [activePitchId, setActivePitchId] = useState(pitchIdNumber);
+    const [pitchEquipments, setPitchEquipments] = useState<IPitchEquipment[]>([]);
     const [pitchOpen, setPitchOpen] = useState(true); // accordion on mobile
     const [formOpen, setFormOpen] = useState(true);     // accordion on mobile
     const [timelineOpen, setTimelineOpen] = useState(true); // accordion on mobile
@@ -98,6 +100,13 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
         getPitchById(activePitchId)
             .then(res => { if (res.data.statusCode === 200) setPitch(res.data.data ?? null); })
             .finally(() => setPitchLoading(false));
+    }, [activePitchId]);
+
+    useEffect(() => {
+        if (!activePitchId) return;
+        clientGetPitchEquipments(activePitchId)
+            .then((res) => setPitchEquipments(res.data.data ?? []))
+            .catch(() => setPitchEquipments([]));
     }, [activePitchId]);
 
     // Scroll active chip into view on mobile strip
@@ -356,6 +365,33 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                                                                     {pitch.open24h
                                                                         ? "Mở cửa 24/7"
                                                                         : `${pitch.openTime} – ${pitch.closeTime}`}
+                                                                </span>
+                                                            </div>
+                                                            <div className="bk__pitch-meta-row">
+                                                                <span>📐</span>
+                                                                <span>Kích thước:</span>
+                                                                <span>
+                                                                    {pitch.length ?? '--'}m x {pitch.width ?? '--'}m x {pitch.height ?? '--'}m
+                                                                </span>
+                                                            </div>
+                                                            <div className="bk__pitch-meta-row">
+                                                                <span>📏</span>
+                                                                <span>Diện tích:</span>
+                                                                <span>
+                                                                    {pitch.length != null && pitch.width != null
+                                                                        ? `${Number((pitch.length * pitch.width).toFixed(2)).toLocaleString('vi-VN')} m2`
+                                                                        : 'Chưa cập nhật'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="bk__pitch-meta-row">
+                                                                <span>🧰</span>
+                                                                <span>Thiết bị sân:</span>
+                                                                <span>
+                                                                    {pitchEquipments.length > 0
+                                                                        ? pitchEquipments
+                                                                            .map((item) => `${item.equipmentName} x${item.quantity}${item.specification ? ` (${item.specification})` : ''}`)
+                                                                            .join('; ')
+                                                                        : 'Chưa cập nhật'}
                                                                 </span>
                                                             </div>
                                                         </div>

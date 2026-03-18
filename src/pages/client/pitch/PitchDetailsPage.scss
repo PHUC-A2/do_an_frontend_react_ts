@@ -23,24 +23,44 @@
     }
 
     .main-row {
-        height: 100vh;
+        min-height : 100vh;
+        height     : auto;
+        max-width  : 1240px;
+        margin     : 0 auto;
+        padding    : 18px;
+        align-items: flex-start;
     }
 
     // --- MEDIA SECTION (TRÁI) ---
     .media-section {
-        background: #000;
+        background: transparent;
         position  : relative;
 
+        @media (min-width: 992px) {
+            padding-right: 14px;
+            position     : sticky;
+            top          : 18px;
+            align-self   : flex-start;
+            height       : calc(100vh - 36px);
+        }
+
         .sticky-container {
-            height: 100%;
-            width : 100%;
+            height       : 100%;
+            width        : 100%;
+            border-radius: 18px;
+            overflow     : hidden;
+            box-shadow   : var(--glass-shadow);
         }
 
         .pitch-hero-image {
             width     : 100%;
-            height    : 100vh !important;
+            height    : min(66vh, 560px) !important;
             object-fit: cover;
-            opacity   : 0.9;
+            opacity   : 0.92;
+
+            @media (min-width: 992px) {
+                height: 100% !important;
+            }
         }
 
         .back-btn-glass {
@@ -77,9 +97,13 @@
 
     // --- CONTENT SECTION (PHẢI) ---
     .content-section {
-        height    : 100vh;
-        overflow-y: auto;
+        height    : auto;
+        overflow-y: visible;
         background: var(--page-bg);
+
+        @media (min-width: 992px) {
+            padding-left: 14px;
+        }
 
         &::-webkit-scrollbar {
             width: 4px;
@@ -91,7 +115,7 @@
         }
 
         .scroll-content {
-            padding: 60px 40px;
+            padding: 22px 10px 30px;
         }
 
         .pitch-title {
@@ -165,6 +189,46 @@
                 align-items    : center;
                 margin-bottom  : 8px;
             }
+
+            .pitch-equipment-item {
+                padding-left : 0;
+                padding-right: 0;
+            }
+        }
+
+        .pitch-detail-collapse {
+            background: transparent;
+
+            .ant-collapse-item {
+                background   : var(--glass-card);
+                border       : 1px solid var(--glass-border);
+                border-left  : 4px solid #faad14;
+                border-radius: 12px;
+                overflow     : hidden;
+                box-shadow   : var(--glass-shadow);
+                margin-bottom: 12px;
+            }
+
+            .ant-collapse-header {
+                align-items: center !important;
+            }
+
+            .detail-line {
+                display        : flex;
+                align-items    : center;
+                gap            : 8px;
+                justify-content: flex-start;
+                flex-wrap      : wrap;
+            }
+
+            .detail-line--map {
+                justify-content: space-between;
+            }
+
+            .pitch-equipment-item {
+                padding-left : 0;
+                padding-right: 0;
+            }
         }
 
         .utility-tag {
@@ -181,12 +245,18 @@
 @media (max-width: 992px) {
     .pitch-details-page {
         .main-row {
-            height: auto;
+            min-height: auto;
+            padding   : 0;
         }
 
         .media-section {
             .pitch-hero-image {
                 height: 40vh !important;
+            }
+
+            .sticky-container {
+                border-radius: 0;
+                box-shadow   : none;
             }
         }
 
@@ -208,6 +278,12 @@
             .booking-card-glass .price-value-big {
                 font-size: 24px;
             }
+        }
+
+        .media-section {
+            position: relative;
+            top     : auto;
+            height  : auto;
         }
     }
 }

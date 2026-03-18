@@ -157,6 +157,24 @@ const AdminPitchPage = () => {
             render: (text?: string | null) => text || '-',
         },
         {
+            title: 'Kích thước (D x R)',
+            key: 'dimension',
+            render: (_: any, record: IPitch) => {
+                if (record.length == null && record.width == null) return '-';
+                return `${record.length ?? '--'}m x ${record.width ?? '--'}m`;
+            },
+        },
+        {
+            title: 'Diện tích',
+            key: 'area',
+            sorter: (a, b) => (a.length ?? 0) * (a.width ?? 0) - (b.length ?? 0) * (b.width ?? 0),
+            render: (_: any, record: IPitch) => {
+                if (record.length == null || record.width == null) return '-';
+                const area = Number((record.length * record.width).toFixed(2));
+                return `${area.toLocaleString('vi-VN')} m2`;
+            },
+        },
+        {
             title: 'Hành động',
             key: 'actions',
             render: (_: any, record: IPitch) => (

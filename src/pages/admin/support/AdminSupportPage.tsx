@@ -274,7 +274,7 @@ const AdminSupportPage = () => {
                                                     <Text strong style={{ fontSize: 13 }}>{c.name}</Text>
                                                     <Tag color="gold" style={{ fontSize: 10, margin: 0 }}>{c.role}</Tag>
                                                 </div>
-                                                <Space direction="vertical" size={2}>
+                                                <Space orientation="vertical" size={2}>
                                                     {c.phone && (
                                                         <Text style={{ fontSize: 12 }}>
                                                             <PhoneOutlined style={{ marginRight: 5, color: '#52c41a' }} />
@@ -318,7 +318,7 @@ const AdminSupportPage = () => {
                             variant="borderless"
                             style={{ marginTop: 16 }}
                         >
-                            <Space direction="vertical" style={{ width: '100%' }} size={6}>
+                            <Space orientation="vertical" style={{ width: '100%' }} size={6}>
                                 {[
                                     { label: 'Firebase Console', url: 'https://console.firebase.google.com', color: '#ff7a00' },
                                     { label: 'Google Cloud Console', url: 'https://console.cloud.google.com', color: '#1677ff' },
@@ -347,7 +347,7 @@ const AdminSupportPage = () => {
                             size="small"
                             variant="borderless"
                         >
-                            <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                            <Space orientation="vertical" style={{ width: '100%' }} size={12}>
                                 {issues.map((issue) => {
                                     const sev = severityConfig[issue.severity];
                                     return (

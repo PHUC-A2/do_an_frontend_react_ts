@@ -11,6 +11,8 @@ import {
     Divider,
     Space,
     Card,
+    List,
+    Collapse,
 } from "antd";
 import { motion, type Variants } from "framer-motion";
 import {
@@ -19,13 +21,17 @@ import {
     EnvironmentOutlined,
     CheckCircleOutlined,
     GlobalOutlined,
-    ArrowRightOutlined
+    ArrowRightOutlined,
+    InfoCircleOutlined,
+    ToolOutlined,
+    EnvironmentOutlined as EnvironmentIcon,
 } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router";
 import { MdMergeType } from "react-icons/md";
 import RBButton from 'react-bootstrap/Button';
-import { getPitchById } from "../../../config/Api";
+import { clientGetPitchEquipments, getPitchById } from "../../../config/Api";
 import type { IPitch } from "../../../types/pitch";
+import type { IPitchEquipment } from "../../../types/pitchEquipment";
 import {
     getPitchTypeLabel,
     PITCH_STATUS_META
@@ -36,7 +42,7 @@ import "./PitchDetailsPage.scss";
 import { formatDateTime } from "../../../utils/format/localdatetime";
 
 const { Content } = Layout;
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 // Animation Variants đồng bộ với AboutPage
 const containerVariants: Variants = {
@@ -56,6 +62,7 @@ const PitchDetailsPage: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [pitch, setPitch] = useState<IPitch | null>(null);
+    const [pitchEquipments, setPitchEquipments] = useState<IPitchEquipment[]>([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -67,9 +74,27 @@ const PitchDetailsPage: React.FC = () => {
             .finally(() => setLoading(false));
     }, [id]);
 
+    useEffect(() => {
+        if (!id) return;
+        clientGetPitchEquipments(Number(id))
+            .then((res) => setPitchEquipments(res.data.data ?? []))
+            .catch(() => setPitchEquipments([]));
+    }, [id]);
+
+    const pitchArea =
+        pitch?.length != null && pitch?.width != null
+            ? Number((pitch.length * pitch.width).toFixed(2))
+            : null;
+
     const handleOpenMap = () => {
-        if (!pitch?.latitude || !pitch?.longitude) return;
+        if (pitch?.latitude == null || pitch?.longitude == null) return;
         window.open(`https://www.google.com/maps?q=${pitch.latitude},${pitch.longitude}`, "_blank");
+    };
+
+    const getEquipmentImageSrc = (fileName?: string | null) => {
+        if (!fileName) return undefined;
+        if (/^https?:\/\//i.test(fileName) || fileName.startsWith('/')) return fileName;
+        return `/storage/equipment/${fileName}`;
     };
 
     if (loading) {
@@ -161,54 +186,119 @@ const PitchDetailsPage: React.FC = () => {
                             </Divider>
 
 
-                            {/* Features Grid */}
-                            <Row gutter={[16, 16]}>
-                                <Col span={24}>
-                                    <motion.div variants={itemVariants}>
-                                        <Card size="small" className="feature-item-card">
-                                            <Space orientation="vertical">
-                                                <Text strong><ClockCircleOutlined /> Thời gian hoạt động</Text>
-                                                <Paragraph>
-                                                    {pitch.open24h ?
-                                                        <Tag color="green">Mở cửa 24/7</Tag> :
-                                                        <Text code>{pitch.openTime} - {pitch.closeTime}</Text>
-                                                    }
-                                                </Paragraph>
-                                            </Space>
-                                        </Card>
-                                    </motion.div>
-                                </Col>
+                            <motion.div variants={itemVariants}>
+                                <Collapse
+                                    className="pitch-detail-collapse"
+                                    defaultActiveKey={["overview", "equipment"]}
+                                    items={[
+                                        {
+                                            key: "overview",
+                                            label: (
+                                                <Space>
+                                                    <InfoCircleOutlined />
+                                                    <span>Thông tin sân</span>
+                                                </Space>
+                                            ),
+                                            children: (
+                                                <Space orientation="vertical" size={12} style={{ width: '100%' }}>
+                                                    <div className="detail-line">
+                                                        <Text strong><ClockCircleOutlined /> Thời gian hoạt động:</Text>{' '}
+                                                        {pitch.open24h ?
+                                                            <Tag color="green">Mở cửa 24/7</Tag> :
+                                                            <Text code>{pitch.openTime} - {pitch.closeTime}</Text>
+                                                        }
+                                                    </div>
 
-                                <Col span={24}>
-                                    <motion.div variants={itemVariants}>
-                                        <Card size="small" className="feature-item-card">
-                                            <div className="map-header">
-                                                <Text strong><EnvironmentOutlined /> Chỉ đường</Text>
-                                                <Button type="link" onClick={handleOpenMap}>
-                                                    <EnvironmentOutlined />
-                                                    <span>Google Maps</span>
-                                                    {/* Xem Google Maps */}
-                                                </Button>
-                                            </div>
-                                            <Text type="secondary">{pitch.address}</Text>
-                                        </Card>
-                                    </motion.div>
-                                </Col>
+                                                    <div className="detail-line">
+                                                        <Text strong>📐 Kích thước:</Text>{' '}
+                                                        <Text>{pitch.length ?? '--'}m x {pitch.width ?? '--'}m x {pitch.height ?? '--'}m</Text>
+                                                    </div>
 
-                                <Col span={24}>
-                                    <motion.div variants={itemVariants}>
-                                        <Card size="small" className="feature-item-card" title="Tiện ích sân bãi">
-                                            <Space wrap>
-                                                {["Wifi", "Gửi xe", "Nước uống", "Đèn đêm"].map(item => (
-                                                    <Tag key={item} icon={<CheckCircleOutlined />} className="utility-tag">
-                                                        {item}
-                                                    </Tag>
-                                                ))}
-                                            </Space>
-                                        </Card>
-                                    </motion.div>
-                                </Col>
-                            </Row>
+                                                    <div className="detail-line">
+                                                        <Text strong>📏 Diện tích:</Text>{' '}
+                                                        <Text>{pitchArea != null ? `${pitchArea.toLocaleString('vi-VN')} m2` : 'Chưa cập nhật'}</Text>
+                                                    </div>
+
+                                                    <div className="detail-line detail-line--map">
+                                                        <Space>
+                                                            <EnvironmentOutlined />
+                                                            <Text strong>Chỉ đường</Text>
+                                                        </Space>
+                                                        <Button type="link" onClick={handleOpenMap}>
+                                                            <EnvironmentIcon /> Google Maps
+                                                        </Button>
+                                                    </div>
+
+                                                    <Text type="secondary">{pitch.address}</Text>
+                                                </Space>
+                                            ),
+                                        },
+                                        {
+                                            key: "amenities",
+                                            label: (
+                                                <Space>
+                                                    <CheckCircleOutlined />
+                                                    <span>Tiện ích sân bãi</span>
+                                                </Space>
+                                            ),
+                                            children: (
+                                                <Space wrap>
+                                                    {["Wifi", "Gửi xe", "Nước uống", "Đèn đêm"].map(item => (
+                                                        <Tag key={item} icon={<CheckCircleOutlined />} className="utility-tag">
+                                                            {item}
+                                                        </Tag>
+                                                    ))}
+                                                </Space>
+                                            ),
+                                        },
+                                        {
+                                            key: "equipment",
+                                            label: (
+                                                <Space>
+                                                    <ToolOutlined />
+                                                    <span>Thiết bị của sân</span>
+                                                </Space>
+                                            ),
+                                            children: pitchEquipments.length > 0 ? (
+                                                <List
+                                                    dataSource={pitchEquipments}
+                                                    renderItem={(item) => (
+                                                        <List.Item className="pitch-equipment-item">
+                                                            <List.Item.Meta
+                                                                avatar={
+                                                                    <Image
+                                                                        width={56}
+                                                                        height={56}
+                                                                        style={{ borderRadius: 8, objectFit: 'cover' }}
+                                                                        src={getEquipmentImageSrc(item.equipmentImageUrl)}
+                                                                        fallback="/placeholder-pitch.jpg"
+                                                                        preview={{ mask: 'Xem' }}
+                                                                    />
+                                                                }
+                                                                title={
+                                                                    <Space size={6} wrap>
+                                                                        <Text strong>{item.equipmentName}</Text>
+                                                                        <Tag color="processing">SL: {item.quantity}</Tag>
+                                                                    </Space>
+                                                                }
+                                                                description={
+                                                                    <Space orientation="vertical" size={2}>
+                                                                        <Text type="secondary">Mã thiết bị: {item.equipmentId}</Text>
+                                                                        <Text>{item.specification ? `Thông số: ${item.specification}` : 'Thông số: chưa cập nhật'}</Text>
+                                                                        <Text>{item.note ? `Ghi chú: ${item.note}` : 'Ghi chú: chưa cập nhật'}</Text>
+                                                                    </Space>
+                                                                }
+                                                            />
+                                                        </List.Item>
+                                                    )}
+                                                />
+                                            ) : (
+                                                <Text type="secondary">Sân chưa cập nhật thiết bị cố định</Text>
+                                            ),
+                                        },
+                                    ]}
+                                />
+                            </motion.div>
 
                             <div className="meta-footer">
                                 <Divider dashed />

@@ -53,7 +53,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const canViewBookings = usePermission("BOOKING_VIEW_LIST");
     const canViewPayments = usePermission("PAYMENT_VIEW_LIST");
     const canViewEquipments = usePermission("EQUIPMENT_VIEW_LIST");
-    const canViewBookingEquipments = usePermission("BOOKING_EQUIPMENT_VIEW_LIST");
+    const canViewBookingEquipments = usePermission("BOOKING_EQUIPMENT_VIEW");
+    const canManageAi = usePermission(["AI_VIEW_LIST", "AI_CREATE", "AI_UPDATE", "AI_DELETE", "AI_CHAT_ADMIN"]);
 
     const routeLabelMap: Record<string, string> = {
         admin: 'Bảng điều khiển',
@@ -168,11 +169,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                             icon: <GiReturnArrow />,
                         }] : []),
 
-                        {
+                        ...(canManageAi ? [{
                             key: '/admin/ai',
                             label: <Link to="/admin/ai" className={styles.menuLink}>Quản lý AI</Link>,
                             icon: <RiRobot2Line />,
-                        },
+                        }] : []),
                         {
                             key: '/admin/support',
                             label: <Link to="/admin/support" className={styles.menuLink}>Hỗ trợ & Bảo trì</Link>,

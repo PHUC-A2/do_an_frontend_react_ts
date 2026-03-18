@@ -6,6 +6,11 @@ import {
     InputNumber,
     TimePicker,
     Switch,
+    Divider,
+    List,
+    Button,
+    Popconfirm,
+    Space,
     type GetProp,
     type UploadFile,
     type UploadProps,
@@ -16,11 +21,20 @@ import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
 
-import { updatePitch, uploadImagePitch } from '../../../../config/Api';
+import {
+    updatePitch,
+    uploadImagePitch,
+    adminGetPitchEquipments,
+    adminUpsertPitchEquipment,
+    adminDeletePitchEquipment,
+    getAllEquipments,
+} from '../../../../config/Api';
 import { useAppDispatch } from '../../../../redux/hooks';
 import { fetchPitches } from '../../../../redux/features/pitchSlice';
 
 import type { IPitch, IUpdatePitchReq } from '../../../../types/pitch';
+import type { IEquipment } from '../../../../types/equipment';
+import type { IPitchEquipment } from '../../../../types/pitchEquipment';
 import {
     PITCH_STATUS_OPTIONS,
     PITCH_TYPE_OPTIONS,
@@ -56,10 +70,25 @@ const ModalUpdatePitch = (props: IProps) => {
     const [previewOpen, setPreviewOpen] = useState<boolean>(false);
     const [previewImage, setPreviewImage] = useState<string>('');
     const [fileList, setFileList] = useState<UploadFile[]>([]);
+    const [pitchEquipments, setPitchEquipments] = useState<IPitchEquipment[]>([]);
+    const [allEquipments, setAllEquipments] = useState<IEquipment[]>([]);
+    const [selectedEquipmentId, setSelectedEquipmentId] = useState<number | undefined>(undefined);
+    const [peQuantity, setPeQuantity] = useState<number>(1);
+    const [peSpecification, setPeSpecification] = useState<string>('');
+    const [peNote, setPeNote] = useState<string>('');
+    const [loadingPitchEquipments, setLoadingPitchEquipments] = useState(false);
+    const [savingPitchEquipment, setSavingPitchEquipment] = useState(false);
+    const [deletingEquipmentId, setDeletingEquipmentId] = useState<number | null>(null);
 
     const open24h = Form.useWatch('open24h', form);
     const openTime = Form.useWatch('openTime', form);
     const closeTime = Form.useWatch('closeTime', form);
+    const pitchLength = Form.useWatch('length', form);
+    const pitchWidth = Form.useWatch('width', form);
+    const pitchArea =
+        typeof pitchLength === 'number' && typeof pitchWidth === 'number'
+            ? Number((pitchLength * pitchWidth).toFixed(2))
+            : null;
 
     const handlePreview = async (file: UploadFile) => {
         if (!file.url && !file.preview) {
@@ -79,33 +108,33 @@ const ModalUpdatePitch = (props: IProps) => {
         </button>
     );
 
-     const handleUpload = async ({ file, onSuccess, onError }: any) => {
-            try {
-                const res = await uploadImagePitch(file);
-                const pitchUrl = res.data?.url;
-    
-                // Cập nhật form field "pitchUrl"
-                form.setFieldValue('pitchUrl', pitchUrl);
-    
-                // Cập nhật lại danh sách file
-                setFileList([
-                    {
-                        uid: file.uid || Date.now(),
-                        name: file.name,
-                        status: 'done',
-                        url: pitchUrl,
-                        originFileObj: file,
-                    },
-                ]);
-    
-                onSuccess?.('ok');
-                toast.success('Upload ảnh thành công');
-            } catch (err) {
-                console.error(err);
-                onError?.(err);
-                toast.error('Upload ảnh thất bại');
-            }
-        };
+    const handleUpload = async ({ file, onSuccess, onError }: any) => {
+        try {
+            const res = await uploadImagePitch(file);
+            const pitchUrl = res.data?.url;
+
+            // Cập nhật form field "pitchUrl"
+            form.setFieldValue('pitchUrl', pitchUrl);
+
+            // Cập nhật lại danh sách file
+            setFileList([
+                {
+                    uid: file.uid || Date.now(),
+                    name: file.name,
+                    status: 'done',
+                    url: pitchUrl,
+                    originFileObj: file,
+                },
+            ]);
+
+            onSuccess?.('ok');
+            toast.success('Upload ảnh thành công');
+        } catch (err) {
+            console.error(err);
+            onError?.(err);
+            toast.error('Upload ảnh thất bại');
+        }
+    };
 
     const handleEditPitch = async (values: IUpdatePitchForm) => {
         if (!pitchEdit?.id) {
@@ -144,6 +173,78 @@ const ModalUpdatePitch = (props: IProps) => {
         }
     };
 
+    const loadPitchEquipments = async (pitchId: number) => {
+        setLoadingPitchEquipments(true);
+        try {
+            const res = await adminGetPitchEquipments(pitchId);
+            if (res.data.statusCode === 200) {
+                setPitchEquipments(res.data.data ?? []);
+            }
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message ?? 'Không tải được thiết bị sân');
+        } finally {
+            setLoadingPitchEquipments(false);
+        }
+    };
+
+    const loadAllEquipments = async () => {
+        try {
+            const res = await getAllEquipments('page=1&pageSize=200');
+            if (res.data.statusCode === 200) {
+                setAllEquipments(res.data.data?.result ?? []);
+            }
+        } catch {
+            setAllEquipments([]);
+        }
+    };
+
+    const handleAddOrUpdatePitchEquipment = async () => {
+        if (!pitchEdit?.id) return;
+        if (!selectedEquipmentId) {
+            toast.warning('Vui lòng chọn thiết bị');
+            return;
+        }
+
+        setSavingPitchEquipment(true);
+        try {
+            const res = await adminUpsertPitchEquipment(pitchEdit.id, {
+                equipmentId: selectedEquipmentId,
+                quantity: peQuantity,
+                specification: peSpecification || null,
+                note: peNote || null,
+            });
+
+            if (res.data.statusCode === 200) {
+                toast.success('Đã cập nhật thiết bị của sân');
+                await loadPitchEquipments(pitchEdit.id);
+                setSelectedEquipmentId(undefined);
+                setPeQuantity(1);
+                setPeSpecification('');
+                setPeNote('');
+            }
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message ?? 'Không thể cập nhật thiết bị sân');
+        } finally {
+            setSavingPitchEquipment(false);
+        }
+    };
+
+    const handleDeletePitchEquipment = async (equipmentId: number) => {
+        if (!pitchEdit?.id) return;
+        setDeletingEquipmentId(equipmentId);
+        try {
+            const res = await adminDeletePitchEquipment(pitchEdit.id, equipmentId);
+            if (res.data.statusCode === 200) {
+                toast.success('Đã xóa thiết bị khỏi sân');
+                await loadPitchEquipments(pitchEdit.id);
+            }
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message ?? 'Không thể xóa thiết bị khỏi sân');
+        } finally {
+            setDeletingEquipmentId(null);
+        }
+    };
+
     useEffect(() => {
         if (!pitchEdit) return;
 
@@ -163,6 +264,9 @@ const ModalUpdatePitch = (props: IProps) => {
             address: pitchEdit.address,
             latitude: pitchEdit.latitude,
             longitude: pitchEdit.longitude,
+            length: pitchEdit.length,
+            width: pitchEdit.width,
+            height: pitchEdit.height,
             status: pitchEdit.status,
             pitchUrl: pitchEdit.pitchUrl,
         });
@@ -180,6 +284,12 @@ const ModalUpdatePitch = (props: IProps) => {
             setFileList([]);
         }
     }, [pitchEdit]);
+
+    useEffect(() => {
+        if (!openModalUpdatePitch || !pitchEdit?.id) return;
+        loadPitchEquipments(pitchEdit.id);
+        loadAllEquipments();
+    }, [openModalUpdatePitch, pitchEdit?.id]);
 
     useEffect(() => {
         if (open24h) {
@@ -280,6 +390,25 @@ const ModalUpdatePitch = (props: IProps) => {
                     />
                 </Form.Item>
 
+                <Form.Item label="Chiều dài sân (m)" name="length" rules={[{ type: 'number', min: 0, message: 'Chiều dài phải >= 0' }]}>
+                    <InputNumber style={{ width: '100%' }} min={0} placeholder="Ví dụ: 105" />
+                </Form.Item>
+
+                <Form.Item label="Chiều rộng sân (m)" name="width" rules={[{ type: 'number', min: 0, message: 'Chiều rộng phải >= 0' }]}>
+                    <InputNumber style={{ width: '100%' }} min={0} placeholder="Ví dụ: 68" />
+                </Form.Item>
+
+                <Form.Item label="Chiều cao (m)" name="height" rules={[{ type: 'number', min: 0, message: 'Chiều cao phải >= 0' }]}>
+                    <InputNumber style={{ width: '100%' }} min={0} placeholder="Ví dụ: 10" />
+                </Form.Item>
+
+                <Form.Item label="Diện tích sân (m2)">
+                    <Input
+                        readOnly
+                        value={pitchArea != null ? pitchArea.toLocaleString('vi-VN') : 'Tự tính khi nhập chiều dài và chiều rộng'}
+                    />
+                </Form.Item>
+
                 <Form.Item label="Trạng thái" name="status">
                     <Select options={PITCH_STATUS_OPTIONS} />
                 </Form.Item>
@@ -313,6 +442,89 @@ const ModalUpdatePitch = (props: IProps) => {
                 <Form.Item name="pitchUrl" hidden>
                     <Input />
                 </Form.Item>
+
+                <Divider>Thiết bị gắn theo sân</Divider>
+
+                <Space orientation="vertical" style={{ width: '100%' }} size={10}>
+                    <Select
+                        placeholder="Chọn thiết bị để gắn vào sân"
+                        value={selectedEquipmentId}
+                        onChange={setSelectedEquipmentId}
+                        options={allEquipments.map((e) => ({
+                            value: e.id,
+                            label: `${e.name} (kho: ${e.totalQuantity})`,
+                        }))}
+                        showSearch
+                        optionFilterProp="label"
+                    />
+
+                    <InputNumber
+                        style={{ width: '100%' }}
+                        min={1}
+                        value={peQuantity}
+                        onChange={(v) => setPeQuantity(v ?? 1)}
+                        placeholder="Số lượng"
+                    />
+
+                    <Input
+                        value={peSpecification}
+                        onChange={(e) => setPeSpecification(e.target.value)}
+                        placeholder="Thông số kỹ thuật (ví dụ: lưới 7m x 2.5m, đèn LED 400W)"
+                    />
+
+                    <Input
+                        value={peNote}
+                        onChange={(e) => setPeNote(e.target.value)}
+                        placeholder="Ghi chú hiển thị cho người dùng"
+                    />
+
+                    <Button
+                        type="primary"
+                        loading={savingPitchEquipment}
+                        onClick={handleAddOrUpdatePitchEquipment}
+                    >
+                        Thêm/Cập nhật thiết bị sân
+                    </Button>
+
+                    <List
+                        bordered
+                        loading={loadingPitchEquipments}
+                        dataSource={pitchEquipments}
+                        locale={{ emptyText: 'Sân này chưa có thiết bị được gắn' }}
+                        renderItem={(item) => (
+                            <List.Item
+                                actions={[
+                                    <Popconfirm
+                                        key={`delete-${item.equipmentId}`}
+                                        title="Xóa thiết bị khỏi sân?"
+                                        onConfirm={() => handleDeletePitchEquipment(item.equipmentId)}
+                                        okText="Xóa"
+                                        cancelText="Hủy"
+                                    >
+                                        <Button
+                                            danger
+                                            type="link"
+                                            loading={deletingEquipmentId === item.equipmentId}
+                                        >
+                                            Xóa
+                                        </Button>
+                                    </Popconfirm>,
+                                ]}
+                            >
+                                <List.Item.Meta
+                                    title={`${item.equipmentName} x ${item.quantity}`}
+                                    description={
+                                        <>
+                                            {item.specification ? `Thông số: ${item.specification}` : 'Không có thông số'}
+                                            <br />
+                                            {item.note ? `Ghi chú: ${item.note}` : 'Không có ghi chú'}
+                                        </>
+                                    }
+                                />
+                            </List.Item>
+                        )}
+                    />
+                </Space>
             </Form>
         </Modal>
     );

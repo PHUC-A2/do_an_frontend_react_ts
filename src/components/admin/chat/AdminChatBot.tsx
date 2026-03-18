@@ -6,6 +6,7 @@ import { IoSend, IoClose } from 'react-icons/io5';
 import { adminAiChat } from '../../../config/Api';
 import { useAppDispatch } from '../../../redux/hooks';
 import { setAdminChatOpen } from '../../../redux/features/messengerButtonUiSlice';
+import { usePermission } from '../../../hooks/common/usePermission';
 import styles from './AdminChatBot.module.scss';
 
 interface Message {
@@ -18,7 +19,10 @@ const MotionDiv = motion.div;
 
 const AdminChatBot = () => {
     const dispatch = useAppDispatch();
+    const canChat = usePermission('AI_CHAT_ADMIN');
     const [open, setOpen] = useState(false);
+
+    if (!canChat) return null;
 
     const toggleOpen = (val: boolean) => {
         setOpen(val);

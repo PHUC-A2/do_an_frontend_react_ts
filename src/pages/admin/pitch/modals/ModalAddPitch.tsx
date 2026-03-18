@@ -45,6 +45,12 @@ const ModalAddPitch = ({ openModalAddPitch, setOpenModalAddPitch }: IProps) => {
     const open24h = Form.useWatch('open24h', form);
     const openTime = Form.useWatch('openTime', form);
     const closeTime = Form.useWatch('closeTime', form);
+    const pitchLength = Form.useWatch('length', form);
+    const pitchWidth = Form.useWatch('width', form);
+    const pitchArea =
+        typeof pitchLength === 'number' && typeof pitchWidth === 'number'
+            ? Number((pitchLength * pitchWidth).toFixed(2))
+            : null;
 
 
     const [previewOpen, setPreviewOpen] = useState(false);
@@ -242,6 +248,25 @@ const ModalAddPitch = ({ openModalAddPitch, setOpenModalAddPitch }: IProps) => {
                         style={{ width: '100%' }}
                         placeholder="Ví dụ: 103.940030"
                         step={0.000001}
+                    />
+                </Form.Item>
+
+                <Form.Item label="Chiều dài sân (m)" name="length" rules={[{ type: 'number', min: 0, message: 'Chiều dài phải >= 0' }]}>
+                    <InputNumber style={{ width: '100%' }} min={0} placeholder="Ví dụ: 105" />
+                </Form.Item>
+
+                <Form.Item label="Chiều rộng sân (m)" name="width" rules={[{ type: 'number', min: 0, message: 'Chiều rộng phải >= 0' }]}>
+                    <InputNumber style={{ width: '100%' }} min={0} placeholder="Ví dụ: 68" />
+                </Form.Item>
+
+                <Form.Item label="Chiều cao (m)" name="height" rules={[{ type: 'number', min: 0, message: 'Chiều cao phải >= 0' }]}>
+                    <InputNumber style={{ width: '100%' }} min={0} placeholder="Ví dụ: 10" />
+                </Form.Item>
+
+                <Form.Item label="Diện tích sân (m2)">
+                    <Input
+                        readOnly
+                        value={pitchArea != null ? pitchArea.toLocaleString('vi-VN') : 'Tự tính khi nhập chiều dài và chiều rộng'}
                     />
                 </Form.Item>
 

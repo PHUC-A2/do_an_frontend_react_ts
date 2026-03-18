@@ -345,6 +345,14 @@ const UpdateBookingForm = ({
                         transition={{ duration: 0.3, ease: "easeOut" }}
                     >
                         <p className="bk__price-row">⏱ Thời lượng: {minutes} phút</p>
+                        <p className="bk__price-row">
+                            📐 Kích thước: {currentPitch.length ?? '--'}m x {currentPitch.width ?? '--'}m x {currentPitch.height ?? '--'}m
+                        </p>
+                        <p className="bk__price-row">
+                            📏 Diện tích: {currentPitch.length != null && currentPitch.width != null
+                                ? `${Number((currentPitch.length * currentPitch.width).toFixed(2)).toLocaleString('vi-VN')} m2`
+                                : 'Chưa cập nhật'}
+                        </p>
                         <div className="bk__price-total">
                             💰 Tạm tính: {formatVND(preview)}
                         </div>

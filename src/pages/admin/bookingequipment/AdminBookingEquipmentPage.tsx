@@ -1,4 +1,4 @@
-import { Table, Tag, Space, Card, Input, Popconfirm, Typography } from 'antd';
+import { Table, Tag, Space, Card, Input, Popconfirm, Typography, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-toastify';
@@ -14,6 +14,8 @@ import { getAllBookingEquipments, updateBookingEquipmentStatus } from '../../../
 import AdminWrapper from '../../../components/wrapper/AdminWrapper';
 import { useAppDispatch } from '../../../redux/hooks';
 import { fetchEquipments } from '../../../redux/features/equipmentSlice';
+import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
+import { usePermission } from '../../../hooks/common/usePermission';
 
 const { Text } = Typography;
 
@@ -23,14 +25,16 @@ const AdminBookingEquipmentPage = () => {
     const [loading, setLoading] = useState(false);
     const [updatingId, setUpdatingId] = useState<number | null>(null);
     const [searchId, setSearchId] = useState('');
+    const canView = usePermission('BOOKING_EQUIPMENT_VIEW');
 
     useEffect(() => {
+        if (!canView) return;
         setLoading(true);
         getAllBookingEquipments()
             .then(res => setAllList(res.data.data ?? []))
             .catch(() => toast.error('Không tải được danh sách'))
             .finally(() => setLoading(false));
-    }, []);
+    }, [canView]);
 
     const list = useMemo(() => {
         const trimmed = searchId.trim();
@@ -118,64 +122,66 @@ const AdminBookingEquipmentPage = () => {
             render: (_: any, record: IBookingEquipment) =>
                 record.status === 'BORROWED' ? (
                     <Space size={4}>
-                        <Popconfirm
-                            title="Xác nhận đã trả?"
-                            okText="Đã trả"
-                            cancelText="Huỷ"
-                            onConfirm={() => handleUpdateStatus(record.id, 'RETURNED')}
-                        >
-                            <RBButton
-                                size="sm"
-                                variant="outline-warning"
-                                disabled={updatingId === record.id}
-                                style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+                        <PermissionWrapper required="BOOKING_EQUIPMENT_UPDATE" fallback={<Text type="secondary">Không có quyền cập nhật</Text>}>
+                            <Popconfirm
+                                title="Xác nhận đã trả?"
+                                okText="Đã trả"
+                                cancelText="Huỷ"
+                                onConfirm={() => handleUpdateStatus(record.id, 'RETURNED')}
                             >
-                                <FaCheck /> Trả
-                            </RBButton>
-                        </Popconfirm>
+                                <RBButton
+                                    size="sm"
+                                    variant="outline-warning"
+                                    disabled={updatingId === record.id}
+                                    style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+                                >
+                                    <FaCheck /> Trả
+                                </RBButton>
+                            </Popconfirm>
 
-                        <Popconfirm
-                            title="Báo hỏng?"
-                            description="Thiết bị sẽ bị loại khỏi kho."
-                            okText="Xác nhận"
-                            cancelText="Huỷ"
-                            okButtonProps={{ danger: true }}
-                            onConfirm={() => handleUpdateStatus(record.id, 'DAMAGED')}
-                        >
-                            <RBButton
-                                size="sm"
-                                variant="outline-secondary"
-                                disabled={updatingId === record.id}
-                                style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+                            <Popconfirm
+                                title="Báo hỏng?"
+                                description="Thiết bị sẽ bị loại khỏi kho."
+                                okText="Xác nhận"
+                                cancelText="Huỷ"
+                                okButtonProps={{ danger: true }}
+                                onConfirm={() => handleUpdateStatus(record.id, 'DAMAGED')}
                             >
-                                <MdOutlineHandyman /> Hỏng
-                            </RBButton>
-                        </Popconfirm>
+                                <RBButton
+                                    size="sm"
+                                    variant="outline-secondary"
+                                    disabled={updatingId === record.id}
+                                    style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+                                >
+                                    <MdOutlineHandyman /> Hỏng
+                                </RBButton>
+                            </Popconfirm>
 
-                        <Popconfirm
-                            title="Báo thiết bị bị mất?"
-                            description={
-                                <span>
-                                    Tiền đền:{' '}
-                                    <strong style={{ color: '#ff4d4f' }}>
-                                        {formatVND(record.quantity * record.equipmentPrice)}
-                                    </strong>
-                                </span>
-                            }
-                            okText="Xác nhận mất"
-                            cancelText="Huỷ"
-                            okButtonProps={{ danger: true }}
-                            onConfirm={() => handleUpdateStatus(record.id, 'LOST')}
-                        >
-                            <RBButton
-                                size="sm"
-                                variant="outline-danger"
-                                disabled={updatingId === record.id}
-                                style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+                            <Popconfirm
+                                title="Báo thiết bị bị mất?"
+                                description={
+                                    <span>
+                                        Tiền đền:{' '}
+                                        <strong style={{ color: '#ff4d4f' }}>
+                                            {formatVND(record.quantity * record.equipmentPrice)}
+                                        </strong>
+                                    </span>
+                                }
+                                okText="Xác nhận mất"
+                                cancelText="Huỷ"
+                                okButtonProps={{ danger: true }}
+                                onConfirm={() => handleUpdateStatus(record.id, 'LOST')}
                             >
-                                <TbAlertTriangle /> Mất
-                            </RBButton>
-                        </Popconfirm>
+                                <RBButton
+                                    size="sm"
+                                    variant="outline-danger"
+                                    disabled={updatingId === record.id}
+                                    style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+                                >
+                                    <TbAlertTriangle /> Mất
+                                </RBButton>
+                            </Popconfirm>
+                        </PermissionWrapper>
                     </Space>
                 ) : (
                     <Text type="secondary">—</Text>
@@ -206,21 +212,26 @@ const AdminBookingEquipmentPage = () => {
                     boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                 }}
             >
-                <Table<IBookingEquipment>
-                    columns={columns}
-                    dataSource={list}
-                    rowKey="id"
-                    loading={loading}
-                    size="small"
-                    bordered
-                    pagination={{
-                        pageSize: 20,
-                        showSizeChanger: true,
-                        showTotal: (total) => `Tổng ${total} bản ghi`,
-                    }}
-                    locale={{ emptyText: 'Không có dữ liệu' }}
-                    scroll={{ x: 'max-content' }}
-                />
+                <PermissionWrapper
+                    required="BOOKING_EQUIPMENT_VIEW"
+                    fallback={<Empty description="Bạn không có quyền xem danh sách mượn thiết bị" />}
+                >
+                    <Table<IBookingEquipment>
+                        columns={columns}
+                        dataSource={list}
+                        rowKey="id"
+                        loading={loading}
+                        size="small"
+                        bordered
+                        pagination={{
+                            pageSize: 20,
+                            showSizeChanger: true,
+                            showTotal: (total) => `Tổng ${total} bản ghi`,
+                        }}
+                        locale={{ emptyText: 'Không có dữ liệu' }}
+                        scroll={{ x: 'max-content' }}
+                    />
+                </PermissionWrapper>
             </Card>
         </AdminWrapper>
     );

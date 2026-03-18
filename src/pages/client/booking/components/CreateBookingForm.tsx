@@ -212,6 +212,14 @@ const CreateBookingForm = ({ pitchIdNumber, pitch, pitchLoading, bookingDate, is
                         transition={{ duration: 0.3, ease: "easeOut" }}
                     >
                         <p className="bk__price-row">⏱ Thời lượng: {minutes} phút</p>
+                        <p className="bk__price-row">
+                            📐 Kích thước: {pitch.length ?? '--'}m x {pitch.width ?? '--'}m x {pitch.height ?? '--'}m
+                        </p>
+                        <p className="bk__price-row">
+                            📏 Diện tích: {pitch.length != null && pitch.width != null
+                                ? `${Number((pitch.length * pitch.width).toFixed(2)).toLocaleString('vi-VN')} m2`
+                                : 'Chưa cập nhật'}
+                        </p>
                         <div className="bk__price-total">💰 Tạm tính: {formatVND(preview)}</div>
                     </motion.div>
                 )}

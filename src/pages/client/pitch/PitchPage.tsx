@@ -211,6 +211,15 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                                                         : `${pitch.openTime} - ${pitch.closeTime}`}
                                                 </Text>
 
+                                                {(pitch.length != null || pitch.width != null) && (
+                                                    <Text type="warning" style={{ display: "block", marginTop: 4 }}>
+                                                        Kích thước: {pitch.length ?? '--'}m x {pitch.width ?? '--'}m
+                                                        {pitch.length != null && pitch.width != null
+                                                            ? ` (${(pitch.length * pitch.width).toLocaleString('vi-VN')} m2)`
+                                                            : ''}
+                                                    </Text>
+                                                )}
+
                                                 <Text type="warning" className="pitch-card-address" style={{ marginTop: 4 }}>
                                                     <span>
                                                         <EnvironmentOutlined /> {pitch.address}

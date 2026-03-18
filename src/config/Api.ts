@@ -9,6 +9,7 @@ import type { IEquipment, ICreateEquipmentReq, IUpdateEquipmentReq } from "../ty
 import type { ICreatePaymentReq, IPayment, IPaymentRes } from "../types/payment";
 import type { ICreatePermissionReq, IPermission, IUpdatePermissionReq } from "../types/permission";
 import type { ICreatePitchReq, IPitch, IUpdatePitchReq } from "../types/pitch";
+import type { IPitchEquipment, IUpsertPitchEquipmentReq } from "../types/pitchEquipment";
 import type { IRevenueRes } from "../types/revenue";
 import type { IAssignPermissionReq, ICreateRoleReq, IRole, IUpdateRoleReq } from "../types/role";
 import type { INotification } from "../types/notification";
@@ -67,6 +68,14 @@ export const createPitch = (data: ICreatePitchReq) => instance.post<IBackendRes<
 export const getPitchById = (id: number) => instance.get<IBackendRes<IPitch>>(`/api/v1/pitches/${id}`);
 export const updatePitch = (id: number, data: IUpdatePitchReq) => instance.put<IBackendRes<IPitch>>(`/api/v1/pitches/${id}`, data);
 export const deletePitch = (id: number) => instance.delete<IBackendRes<IPitch>>(`/api/v1/pitches/${id}`);
+export const adminGetPitchEquipments = (pitchId: number) =>
+    instance.get<IBackendRes<IPitchEquipment[]>>(`/api/v1/pitches/${pitchId}/pitch-equipments`);
+export const adminUpsertPitchEquipment = (pitchId: number, data: IUpsertPitchEquipmentReq) =>
+    instance.put<IBackendRes<IPitchEquipment>>(`/api/v1/pitches/${pitchId}/pitch-equipments`, data);
+export const adminDeletePitchEquipment = (pitchId: number, equipmentId: number) =>
+    instance.delete<IBackendRes<void>>(`/api/v1/pitches/${pitchId}/pitch-equipments/${equipmentId}`);
+export const clientGetPitchEquipments = (pitchId: number) =>
+    instance.get<IBackendRes<IPitchEquipment[]>>(`/api/v1/client/public/pitches/${pitchId}/pitch-equipments`);
 
 /* api permission */
 export const getAllPermissions = (query: string) => instance.get<IBackendRes<IModelPaginate<IPermission>>>(`/api/v1/permissions?${query}`);
