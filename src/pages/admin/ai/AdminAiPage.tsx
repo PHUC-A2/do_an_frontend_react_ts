@@ -155,7 +155,7 @@ const AdminAiPage = () => {
     ];
 
     return (
-        <div style={{ padding: '24px', maxWidth: 900 }}>
+        <div style={{ padding: '24px' }}>
             <Space align="center" style={{ marginBottom: 24 }}>
                 <RiRobot2Line size={28} color="#faad14" />
                 <Title level={3} style={{ margin: 0 }}>Quản lý AI</Title>
@@ -199,28 +199,33 @@ const AdminAiPage = () => {
                 title={<Space><KeyOutlined /><span>Thêm API Key mới</span></Space>}
                 style={{ marginBottom: 20 }}
             >
-                <Form form={addForm} layout="inline" onFinish={handleAdd} style={{ flexWrap: 'wrap', gap: 8 }}>
-                    <Form.Item name="provider" rules={[{ required: true, message: 'Chọn provider' }]}>
-                        <Select placeholder="Provider" style={{ width: 180 }}>
-                            {(Object.keys(PROVIDER_INFO) as AiProvider[]).map(p => (
-                                <Select.Option key={p} value={p}>
-                                    <Tag color={PROVIDER_INFO[p].color} style={{ margin: 0 }}>{PROVIDER_INFO[p].label}</Tag>
-                                </Select.Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
-                    <Form.Item name="apiKey" rules={[{ required: true, message: 'Nhập API key' }]} style={{ flex: 1, minWidth: 200 }}>
-                        <Input.Password placeholder="API Key / Token" />
-                    </Form.Item>
-                    <Form.Item name="label">
-                        <Input placeholder="Nhãn (tuỳ chọn)" style={{ width: 160 }} />
-                    </Form.Item>
-                    <Form.Item>
-                        <Button type="primary" htmlType="submit" icon={<PlusOutlined />} loading={adding}>
-                            Thêm
-                        </Button>
-                    </Form.Item>
-                </Form>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'flex-start' }}>
+                    <Form form={addForm} layout="inline" onFinish={handleAdd}
+                        style={{ display: 'contents' }}>
+                        <Form.Item name="provider" rules={[{ required: true, message: 'Chọn provider' }]}
+                            style={{ marginBottom: 8, minWidth: 170 }}>
+                            <Select placeholder="Provider" style={{ width: '100%' }}>
+                                {(Object.keys(PROVIDER_INFO) as AiProvider[]).map(p => (
+                                    <Select.Option key={p} value={p}>
+                                        <Tag color={PROVIDER_INFO[p].color} style={{ margin: 0 }}>{PROVIDER_INFO[p].label}</Tag>
+                                    </Select.Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                        <Form.Item name="apiKey" rules={[{ required: true, message: 'Nhập API key' }]}
+                            style={{ marginBottom: 8, flex: '1 1 200px', minWidth: 200 }}>
+                            <Input.Password placeholder="API Key / Token" />
+                        </Form.Item>
+                        <Form.Item name="label" style={{ marginBottom: 8, minWidth: 140 }}>
+                            <Input placeholder="Nhãn (tuỳ chọn)" />
+                        </Form.Item>
+                        <Form.Item style={{ marginBottom: 8 }}>
+                            <Button type="primary" htmlType="submit" icon={<PlusOutlined />} loading={adding}>
+                                Thêm
+                            </Button>
+                        </Form.Item>
+                    </Form>
+                </div>
             </Card>
 
             {/* Danh sách key */}
@@ -233,15 +238,18 @@ const AdminAiPage = () => {
                 }
                 style={{ marginBottom: 20 }}
             >
-                <Table
-                    dataSource={keys}
-                    columns={columns}
-                    rowKey="id"
-                    loading={loadingKeys}
-                    pagination={false}
-                    size="small"
-                    locale={{ emptyText: 'Chưa có key nào. Thêm key ở trên để bắt đầu.' }}
-                />
+                <div style={{ width: '100%', overflowX: 'auto' }}>
+                    <Table
+                        dataSource={keys}
+                        columns={columns}
+                        rowKey="id"
+                        loading={loadingKeys}
+                        pagination={false}
+                        size="small"
+                        scroll={{ x: 'max-content' }}
+                        locale={{ emptyText: 'Chưa có key nào. Thêm key ở trên để bắt đầu.' }}
+                    />
+                </div>
             </Card>
 
             {/* Test chat */}
