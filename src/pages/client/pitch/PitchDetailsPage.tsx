@@ -11,7 +11,6 @@ import {
     Divider,
     Space,
     Card,
-    List,
     Collapse,
 } from "antd";
 import { motion, type Variants } from "framer-motion";
@@ -260,38 +259,33 @@ const PitchDetailsPage: React.FC = () => {
                                                 </Space>
                                             ),
                                             children: pitchEquipments.length > 0 ? (
-                                                <List
-                                                    dataSource={pitchEquipments}
-                                                    renderItem={(item) => (
-                                                        <List.Item className="pitch-equipment-item">
-                                                            <List.Item.Meta
-                                                                avatar={
-                                                                    <Image
-                                                                        width={56}
-                                                                        height={56}
-                                                                        style={{ borderRadius: 8, objectFit: 'cover' }}
-                                                                        src={getEquipmentImageSrc(item.equipmentImageUrl)}
-                                                                        fallback="/placeholder-pitch.jpg"
-                                                                        preview={{ mask: 'Xem' }}
-                                                                    />
-                                                                }
-                                                                title={
-                                                                    <Space size={6} wrap>
-                                                                        <Text strong>{item.equipmentName}</Text>
-                                                                        <Tag color="processing">SL: {item.quantity}</Tag>
-                                                                    </Space>
-                                                                }
-                                                                description={
-                                                                    <Space orientation="vertical" size={2}>
-                                                                        <Text type="secondary">Mã thiết bị: {item.equipmentId}</Text>
-                                                                        <Text>{item.specification ? `Thông số: ${item.specification}` : 'Thông số: chưa cập nhật'}</Text>
-                                                                        <Text>{item.note ? `Ghi chú: ${item.note}` : 'Ghi chú: chưa cập nhật'}</Text>
-                                                                    </Space>
-                                                                }
+                                                <div className="pitch-equipment-list">
+                                                    {pitchEquipments.map((item) => (
+                                                        <div key={item.id} className="pitch-equipment-item">
+                                                            <Image
+                                                                width={56}
+                                                                height={56}
+                                                                style={{ borderRadius: 8, objectFit: 'cover' }}
+                                                                src={getEquipmentImageSrc(item.equipmentImageUrl)}
+                                                                fallback="/placeholder-pitch.jpg"
+                                                                preview={{ mask: 'Xem' }}
                                                             />
-                                                        </List.Item>
-                                                    )}
-                                                />
+
+                                                            <div className="pitch-equipment-content">
+                                                                <Space size={6} wrap>
+                                                                    <Text strong>{item.equipmentName}</Text>
+                                                                    <Tag color="processing">SL: {item.quantity}</Tag>
+                                                                </Space>
+
+                                                                <Space orientation="vertical" size={2}>
+                                                                    <Text type="secondary">Mã thiết bị: {item.equipmentId}</Text>
+                                                                    <Text>{item.specification ? `Thông số: ${item.specification}` : 'Thông số: chưa cập nhật'}</Text>
+                                                                    <Text>{item.note ? `Ghi chú: ${item.note}` : 'Ghi chú: chưa cập nhật'}</Text>
+                                                                </Space>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             ) : (
                                                 <Text type="secondary">Sân chưa cập nhật thiết bị cố định</Text>
                                             ),

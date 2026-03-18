@@ -1,7 +1,9 @@
-import { Layout, Menu, Breadcrumb, Button, Grid, Drawer, Switch, Tooltip, Typography, Avatar, Popover } from 'antd';
-import { useMemo, useState, type CSSProperties } from 'react';
+import { Layout, Menu, Breadcrumb, Button, Grid, Drawer, Switch, Tooltip, Typography, Avatar, Popover, Badge, Space } from 'antd';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import {
+    BellOutlined,
+    DeleteOutlined,
     UserOutlined,
     SettingOutlined,
     LogoutOutlined,
@@ -13,7 +15,7 @@ import { GiReturnArrow } from 'react-icons/gi';
 import { FaReact, FaUserCircle, FaUserCog } from 'react-icons/fa';
 import ModalAccount from '../../pages/auth/modal/ModalAccount';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
-import { logout } from '../../config/Api';
+import { clientDeleteNotification, clientGetNotifications, clientMarkAllNotificationsRead, logout } from '../../config/Api';
 import { toast } from 'react-toastify';
 import { setLogout } from '../../redux/features/authSlice';
 import { IoMenu, IoSunny, IoChevronBackOutline, IoChevronForwardOutline } from 'react-icons/io5';
@@ -22,11 +24,14 @@ import { PiSoccerBallBold } from 'react-icons/pi';
 import { useRole } from '../../hooks/common/useRole';
 import { usePermission } from '../../hooks/common/usePermission';
 import { TbBrandBooking } from 'react-icons/tb';
+import { useBrowserNotification } from '../../hooks/common/useBrowserNotification';
+import type { INotification } from '../../types/notification';
 import styles from './AdminSidebar.module.scss';
 
 const { Sider, Header, Content } = Layout;
 const { useBreakpoint } = Grid;
 const { Text } = Typography;
+const ADMIN_SOUND_PREF_KEY = 'tub_sport_admin_notification_sound';
 
 interface AdminSidebarProps {
     theme: 'light' | 'dark';
@@ -37,12 +42,23 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const [collapsed, setCollapsed] = useState(false);
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [openModalAccount, setOpenModalAccount] = useState(false);
+    const [notifOpen, setNotifOpen] = useState(false);
+    const [notifications, setNotifications] = useState<INotification[]>([]);
+    const [bellSoundEnabled, setBellSoundEnabled] = useState<boolean>(() => {
+        if (typeof window === 'undefined') return true;
+        return localStorage.getItem(ADMIN_SOUND_PREF_KEY) !== 'off';
+    });
     const location = useLocation();
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const screens = useBreakpoint();
     const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
     const account = useAppSelector(state => state.account.account);
+    const sseRef = useRef<EventSource | null>(null);
+    const reconnectRef = useRef<number | null>(null);
+    const audioCtxRef = useRef<AudioContext | null>(null);
+
+    const { requestPermission, sendBrowserNotif } = useBrowserNotification();
 
     const isDark = theme === 'dark';
     const isViewRole = useRole("VIEW");
@@ -107,6 +123,116 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         const segments = location.pathname.split('/').filter(Boolean);
         return segments.map((segment) => routeLabelMap[segment] ?? segment).join(' / ');
     }, [location.pathname]);
+
+    const unreadCount = notifications.filter(n => !n.isRead).length;
+
+    useEffect(() => {
+        localStorage.setItem(ADMIN_SOUND_PREF_KEY, bellSoundEnabled ? 'on' : 'off');
+    }, [bellSoundEnabled]);
+
+    const playNotificationBell = () => {
+        try {
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            if (!AudioCtx) return;
+
+            if (!audioCtxRef.current) {
+                audioCtxRef.current = new AudioCtx();
+            }
+
+            const ctx = audioCtxRef.current;
+            if (ctx.state === 'suspended') {
+                void ctx.resume();
+            }
+
+            const now = ctx.currentTime;
+
+            const triggerPulse = (startAt: number) => {
+                const carrier = ctx.createOscillator();
+                const harmonics = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                carrier.type = 'square';
+                harmonics.type = 'triangle';
+
+                carrier.frequency.setValueAtTime(1900, startAt);
+                carrier.frequency.exponentialRampToValueAtTime(1150, startAt + 0.14);
+
+                harmonics.frequency.setValueAtTime(2400, startAt);
+                harmonics.frequency.exponentialRampToValueAtTime(1400, startAt + 0.14);
+
+                // Loud and short pulse for high noticeability.
+                gain.gain.setValueAtTime(0.0001, startAt);
+                gain.gain.exponentialRampToValueAtTime(0.32, startAt + 0.015);
+                gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.16);
+
+                carrier.connect(gain);
+                harmonics.connect(gain);
+                gain.connect(ctx.destination);
+
+                carrier.start(startAt);
+                harmonics.start(startAt);
+
+                carrier.stop(startAt + 0.16);
+                harmonics.stop(startAt + 0.16);
+            };
+
+            triggerPulse(now);
+            triggerPulse(now + 0.19);
+        } catch {
+            // ignore audio errors in restricted browsers
+        }
+    };
+
+    const clearReconnectTimer = () => {
+        if (reconnectRef.current !== null) {
+            window.clearTimeout(reconnectRef.current);
+            reconnectRef.current = null;
+        }
+    };
+
+    const connectSse = () => {
+        clearReconnectTimer();
+
+        const token = localStorage.getItem('access_token') ?? '';
+        const es = new EventSource(`/api/v1/client/notifications/subscribe?token=${encodeURIComponent(token)}`);
+        sseRef.current = es;
+
+        es.addEventListener('notification', (e: MessageEvent) => {
+            try {
+                const notif: INotification = JSON.parse(e.data);
+                setNotifications(prev => [notif, ...prev]);
+
+                const titleMap: Record<string, string> = {
+                    BOOKING_CREATED: '🏟️ Đặt sân thành công',
+                    BOOKING_PENDING_CONFIRMATION: '📝 Booking chờ duyệt',
+                    BOOKING_APPROVED: '✅ Booking đã được xác nhận',
+                    BOOKING_REJECTED: '❌ Booking đã bị từ chối',
+                    PAYMENT_CONFIRMED: '💳 Thanh toán xác nhận',
+                    MATCH_REMINDER: '⏰ Sắp đến giờ đá!',
+                };
+
+                if (bellSoundEnabled) {
+                    playNotificationBell();
+                }
+                sendBrowserNotif(titleMap[notif.type] ?? 'TUB Sport', notif.message);
+
+                if (notif.type === 'BOOKING_PENDING_CONFIRMATION') {
+                    toast.info(notif.message, { autoClose: 6000 });
+                }
+            } catch {
+                // ignore malformed SSE payload
+            }
+        });
+
+        es.onerror = () => {
+            es.close();
+            if (isAuthenticated) {
+                reconnectRef.current = window.setTimeout(() => {
+                    connectSse();
+                }, 3000);
+            }
+        };
+    };
 
     const menuItems = [
         {
@@ -206,6 +332,100 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         },
     ];
 
+    useEffect(() => {
+        if (!isAuthenticated) {
+            clearReconnectTimer();
+            if (sseRef.current) {
+                sseRef.current.close();
+                sseRef.current = null;
+            }
+            setNotifications([]);
+            return;
+        }
+
+        requestPermission();
+
+        clientGetNotifications()
+            .then(res => {
+                if (res.data.statusCode === 200) {
+                    setNotifications(res.data.data ?? []);
+                }
+            })
+            .catch(() => { /* ignore */ });
+
+        connectSse();
+
+        return () => {
+            clearReconnectTimer();
+            if (sseRef.current) {
+                sseRef.current.close();
+            }
+            sseRef.current = null;
+        };
+    }, [isAuthenticated, requestPermission, sendBrowserNotif, bellSoundEnabled]);
+
+    const handleMarkAllRead = async () => {
+        try {
+            await clientMarkAllNotificationsRead();
+            setNotifications(prev => prev.map(item => ({ ...item, isRead: true })));
+        } catch {
+            toast.error('Không thể đánh dấu đã đọc');
+        }
+    };
+
+    const handleDeleteNotif = async (id: number) => {
+        try {
+            await clientDeleteNotification(id);
+            setNotifications(prev => prev.filter(item => item.id !== id));
+        } catch {
+            toast.error('Không thể xóa thông báo');
+        }
+    };
+
+    const notifContent = (
+        <div className={styles.notifCard}>
+            <div className={styles.notifHeader}>
+                <span className={styles.notifTitle}>Thông báo quản trị</span>
+                <Space size={10} className={styles.notifActions}>
+                    <span className={styles.notifSoundLabel}>Âm</span>
+                    <Switch
+                        size="small"
+                        checked={bellSoundEnabled}
+                        onChange={setBellSoundEnabled}
+                    />
+                    {unreadCount > 0 && (
+                        <button className={styles.notifMarkAll} onClick={handleMarkAllRead}>
+                            Đánh dấu đã đọc
+                        </button>
+                    )}
+                </Space>
+            </div>
+            <div className={styles.notifList}>
+                {notifications.length === 0 ? (
+                    <span className={styles.notifEmpty}>Chưa có thông báo nào</span>
+                ) : (
+                    notifications.slice(0, 10).map((notif) => (
+                        <div key={notif.id} className={`${styles.notifItem} ${!notif.isRead ? styles.notifItemUnread : ''}`}>
+                            <BellOutlined className={styles.notifItemIcon} />
+                            <div className={styles.notifItemBody}>
+                                <span className={styles.notifItemMsg}>{notif.message}</span>
+                                <span className={styles.notifItemTime}>
+                                    {new Date(notif.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
+                                </span>
+                            </div>
+                            <div className={styles.notifItemActions}>
+                                {!notif.isRead && <span className={styles.notifDot} />}
+                                <button className={styles.notifDeleteBtn} onClick={() => handleDeleteNotif(notif.id)}>
+                                    <DeleteOutlined />
+                                </button>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+
     return (
         <Layout className={styles.adminShell} style={cssVars}>
             {screens.md && (
@@ -301,6 +521,48 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                     </div>
 
                     <div className={styles.headerRight}>
+                        {screens.md ? (
+                            <Popover
+                                open={notifOpen}
+                                onOpenChange={setNotifOpen}
+                                placement="bottomRight"
+                                trigger="click"
+                                rootClassName={styles.notifPopover}
+                                content={notifContent}
+                            >
+                                <Badge count={unreadCount} size="small" offset={[-2, 2]}>
+                                    <Button
+                                        type="text"
+                                        className={styles.headerUtilityButton}
+                                        icon={<BellOutlined />}
+                                    />
+                                </Badge>
+                            </Popover>
+                        ) : (
+                            <>
+                                <Badge count={unreadCount} size="small" offset={[-2, 2]}>
+                                    <Button
+                                        type="text"
+                                        className={styles.headerUtilityButton}
+                                        icon={<BellOutlined />}
+                                        onClick={() => setNotifOpen(true)}
+                                    />
+                                </Badge>
+
+                                <Drawer
+                                    title="Thông báo quản trị"
+                                    placement="right"
+                                    open={notifOpen}
+                                    onClose={() => setNotifOpen(false)}
+                                    size="default"
+                                    rootClassName={styles.mobileNotifDrawer}
+                                    styles={{ body: { padding: 0 } }}
+                                >
+                                    {notifContent}
+                                </Drawer>
+                            </>
+                        )}
+
                         <Tooltip placement="topLeft" title={isDark ? 'Giao diện sáng' : 'Giao diện tối'}>
                             <Switch
                                 size='small'

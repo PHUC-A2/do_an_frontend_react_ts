@@ -92,6 +92,7 @@ const getHeaderHeight = (compact: boolean) => {
 };
 
 const DEFAULT_PITCH_PAGE_SIZE = 12;
+const CLIENT_SOUND_PREF_KEY = 'tub_sport_client_notification_sound';
 
 const buildPitchSearchPath = (keyword: string) => {
     const params = new URLSearchParams();
@@ -118,11 +119,16 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const [openModalForget, setOpenModalForget] = useState(false);
     const [openModalBookingHistory, setOpenModalBookingHistory] = useState(false);
     const [notifications, setNotifications] = useState<INotification[]>([]);
+    const [bellSoundEnabled, setBellSoundEnabled] = useState<boolean>(() => {
+        if (typeof window === 'undefined') return true;
+        return localStorage.getItem(CLIENT_SOUND_PREF_KEY) !== 'off';
+    });
     const [notifOpen, setNotifOpen] = useState(false);
     const [drawerNotifOpen, setDrawerNotifOpen] = useState(false);
     const notifRef = useRef<HTMLDivElement | null>(null);
     const notifCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const sseRef = useRef<EventSource | null>(null);
+    const audioCtxRef = useRef<AudioContext | null>(null);
 
     const { requestPermission, sendBrowserNotif } = useBrowserNotification();
 
@@ -142,6 +148,63 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const accountMenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
+
+    useEffect(() => {
+        localStorage.setItem(CLIENT_SOUND_PREF_KEY, bellSoundEnabled ? 'on' : 'off');
+    }, [bellSoundEnabled]);
+
+    const playNotificationBell = () => {
+        try {
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            if (!AudioCtx) return;
+
+            if (!audioCtxRef.current) {
+                audioCtxRef.current = new AudioCtx();
+            }
+
+            const ctx = audioCtxRef.current;
+            if (ctx.state === 'suspended') {
+                void ctx.resume();
+            }
+
+            const now = ctx.currentTime;
+
+            const triggerPulse = (startAt: number) => {
+                const carrier = ctx.createOscillator();
+                const harmonics = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                carrier.type = 'square';
+                harmonics.type = 'triangle';
+
+                carrier.frequency.setValueAtTime(1850, startAt);
+                carrier.frequency.exponentialRampToValueAtTime(1100, startAt + 0.14);
+
+                harmonics.frequency.setValueAtTime(2300, startAt);
+                harmonics.frequency.exponentialRampToValueAtTime(1350, startAt + 0.14);
+
+                // Loud and short pulse for high noticeability.
+                gain.gain.setValueAtTime(0.0001, startAt);
+                gain.gain.exponentialRampToValueAtTime(0.32, startAt + 0.015);
+                gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.16);
+
+                carrier.connect(gain);
+                harmonics.connect(gain);
+                gain.connect(ctx.destination);
+
+                carrier.start(startAt);
+                harmonics.start(startAt);
+
+                carrier.stop(startAt + 0.16);
+                harmonics.stop(startAt + 0.16);
+            };
+
+            triggerPulse(now);
+            triggerPulse(now + 0.19);
+        } catch {
+            // ignore audio errors in restricted browsers
+        }
+    };
 
     const handleNotifMouseEnter = () => {
         if (notifCloseTimerRef.current) {
@@ -310,10 +373,17 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                 // Tiêu đề theo loại thông báo
                 const titleMap: Record<string, string> = {
                     BOOKING_CREATED: '🏟️ Đặt sân thành công',
+                    BOOKING_PENDING_CONFIRMATION: '📝 Yêu cầu đặt sân mới',
+                    BOOKING_APPROVED: '✅ Booking đã được xác nhận',
+                    BOOKING_REJECTED: '❌ Booking đã bị từ chối',
                     PAYMENT_CONFIRMED: '💳 Thanh toán xác nhận',
                     MATCH_REMINDER: '⏰ Sắp đến giờ đá!',
                 };
                 const title = titleMap[notif.type] ?? 'UTB Sport';
+
+                if (bellSoundEnabled) {
+                    playNotificationBell();
+                }
 
                 // Browser notification (hiện popup hệ thống)
                 sendBrowserNotif(title, notif.message);
@@ -328,7 +398,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
 
         return () => { es.close(); sseRef.current = null; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isAuthenticated]);
+    }, [isAuthenticated, bellSoundEnabled]);
 
     useOutsideClick(notifRef, () => setNotifOpen(false), notifOpen);
 
@@ -539,11 +609,15 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                             <Flex vertical className={`${styles.notifMenu}${notifOpen ? ` ${styles.notifMenuOpen}` : ''}`}>
                                 <Flex className={styles.notifHeader}>
                                     <Text className={styles.notifTitle}>Thông báo</Text>
-                                    {unreadCount > 0 && (
-                                        <Button type="text" className={styles.notifMarkAll} onClick={handleMarkAllRead}>
-                                            Đánh dấu tất cả đã đọc
-                                        </Button>
-                                    )}
+                                    <Flex align="center" gap={8} className={styles.notifActions}>
+                                        <Text className={styles.notifSoundLabel}>Âm</Text>
+                                        <Switch size="small" checked={bellSoundEnabled} onChange={setBellSoundEnabled} />
+                                        {unreadCount > 0 && (
+                                            <Button type="text" className={styles.notifMarkAll} onClick={handleMarkAllRead}>
+                                                Đánh dấu đã đọc
+                                            </Button>
+                                        )}
+                                    </Flex>
                                 </Flex>
                                 <Flex vertical className={styles.notifList}>
                                     {notifications.length === 0 ? (
@@ -789,11 +863,15 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                     <Flex vertical className={styles.drawerNotifPanel}>
                         <Flex className={styles.notifHeader}>
                             <Text className={styles.notifTitle}>Thông báo</Text>
-                            {unreadCount > 0 && (
-                                <Button type="text" className={styles.notifMarkAll} onClick={handleMarkAllRead}>
-                                    Đánh dấu tất cả đã đọc
-                                </Button>
-                            )}
+                            <Flex align="center" gap={8} className={styles.notifActions}>
+                                <Text className={styles.notifSoundLabel}>Âm</Text>
+                                <Switch size="small" checked={bellSoundEnabled} onChange={setBellSoundEnabled} />
+                                {unreadCount > 0 && (
+                                    <Button type="text" className={styles.notifMarkAll} onClick={handleMarkAllRead}>
+                                        Đánh dấu đã đọc
+                                    </Button>
+                                )}
+                            </Flex>
                         </Flex>
                         <Flex vertical className={styles.drawerNotifList}>
                             {notifications.length === 0 ? (

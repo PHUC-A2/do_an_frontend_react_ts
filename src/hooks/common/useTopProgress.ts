@@ -10,6 +10,8 @@ type ProgressSnapshot = {
 type ProgressListener = (snapshot: ProgressSnapshot) => void;
 
 class TopProgressController {
+    private static readonly MAX_LOADING_MS = 12000;
+
     private activeCount = 0;
     private progress = 0;
     private visible = false;
@@ -22,6 +24,7 @@ class TopProgressController {
     private fadeTimer: ReturnType<typeof setTimeout> | null = null;
     private resetTimer: ReturnType<typeof setTimeout> | null = null;
     private errorTimer: ReturnType<typeof setTimeout> | null = null;
+    private watchdogTimer: ReturnType<typeof setTimeout> | null = null;
 
     subscribe(listener: ProgressListener) {
         this.listeners.add(listener);
@@ -42,6 +45,7 @@ class TopProgressController {
         this.status = "loading";
         this.visible = true;
         this.opacity = 1;
+        this.ensureWatchdog();
 
         if (this.progress === 0) {
             this.progress = 8;
@@ -108,6 +112,7 @@ class TopProgressController {
         this.clearTimer("trickleTimer");
         this.clearTimer("fadeTimer");
         this.clearTimer("resetTimer");
+        this.clearWatchdog();
 
         this.visible = true;
         this.opacity = 1;
@@ -136,6 +141,27 @@ class TopProgressController {
                 this.emit();
             }, 400);
         }, 120);
+    }
+
+    private ensureWatchdog() {
+        if (this.watchdogTimer) {
+            return;
+        }
+
+        this.watchdogTimer = setTimeout(() => {
+            // Safety net: avoid visual stuck bar when a request never settles.
+            this.activeCount = 0;
+            this.finish();
+        }, TopProgressController.MAX_LOADING_MS);
+    }
+
+    private clearWatchdog() {
+        if (!this.watchdogTimer) {
+            return;
+        }
+
+        clearTimeout(this.watchdogTimer);
+        this.watchdogTimer = null;
     }
 
     private scheduleTrickle() {

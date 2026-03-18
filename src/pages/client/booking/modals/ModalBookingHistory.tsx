@@ -178,12 +178,13 @@ const ModalBookingHistory = (props: IProps) => {
 
 
             const isEnded = dayjs(booking.endDateTime).isBefore(dayjs());
+            const isPending = booking.status === "PENDING";
             const isPaid = booking.status === "PAID";
             const isCancelled = booking.status === "CANCELLED";
 
             const canPay = booking.status === "ACTIVE" && !isEnded && !isPaid;
-            const canUpdate = booking.status === "ACTIVE" && !isEnded && !isPaid;
-            const canCancel = booking.status === "ACTIVE" && !isEnded && !isPaid;
+            const canUpdate = (booking.status === "ACTIVE" || isPending) && !isEnded && !isPaid;
+            const canCancel = (booking.status === "ACTIVE" || isPending) && !isEnded && !isPaid;
             const canDelete = isPaid || isCancelled || isEnded;
 
             return {
@@ -307,6 +308,12 @@ const ModalBookingHistory = (props: IProps) => {
                                         {isPaid && (
                                             <Text type="success" style={{ fontSize: 12 }}>
                                                 ✅ Đã thanh toán
+                                            </Text>
+                                        )}
+
+                                        {isPending && (
+                                            <Text type="warning" style={{ fontSize: 12 }}>
+                                                ⏳ Đang chờ admin xác nhận
                                             </Text>
                                         )}
 

@@ -40,6 +40,10 @@ const meta = getShirtOptionMeta(booking.shirtOption);
  */
 
 export const BOOKING_STATUS_META = {
+    PENDING: {
+        label: "Chờ xác nhận",
+        color: "gold",
+    },
     ACTIVE: {
         label: "Đang hoạt động",
         color: "processing", // đang diễn ra

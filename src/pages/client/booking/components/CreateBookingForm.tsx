@@ -115,7 +115,7 @@ const CreateBookingForm = ({ pitchIdNumber, pitch, pitchLoading, bookingDate, is
                         tasks.push(clientBorrowEquipment({ bookingId: newBookingId, equipmentId: shirtEq.id, quantity: shirtQty }).catch(() => { }));
                     if (tasks.length > 0) await Promise.all(tasks);
                 }
-                toast.success("Đặt sân thành công!");
+                toast.success("Yêu cầu đặt sân đã được gửi, đang chờ admin xác nhận!");
                 dispatch(fetchBookingsClient(""));
                 form.resetFields();
                 setTouched(false);

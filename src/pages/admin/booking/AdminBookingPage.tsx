@@ -1,4 +1,4 @@
-import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Empty, Button } from 'antd';
+import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Empty, Button, Badge, Tabs, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useEffect, useState } from 'react';
 import RBButton from 'react-bootstrap/Button';
@@ -6,12 +6,12 @@ import { IoIosAddCircle } from 'react-icons/io';
 import { useAppDispatch, useAppSelector } from '../../../redux/hooks';
 import { CiEdit } from 'react-icons/ci';
 import { FaArrowsToEye } from 'react-icons/fa6';
-import { MdDelete } from 'react-icons/md';
+import { MdCheckCircle, MdClose, MdDelete } from 'react-icons/md';
 import { fetchBookings, selectBookingLoading, selectBookingMeta, selectBookings } from '../../../redux/features/bookingSlice';
 import type { IBooking } from '../../../types/booking';
 import { BOOKING_STATUS_META, SHIRT_OPTION_META } from '../../../utils/constants/booking.constants';
 import ModalAddBooking from './modals/ModalAddBooking';
-import { deleteBooking, getBookingById } from '../../../config/Api';
+import { approveBooking, deleteBooking, getAllBookings, getBookingById, rejectBooking } from '../../../config/Api';
 import { toast } from 'react-toastify';
 import ModalBookingDetails from './modals/ModalBookingDetails';
 import { formatDateTimeRange, toUnix } from '../../../utils/format/localdatetime';
@@ -27,7 +27,11 @@ const AdminBookingPage = () => {
     const meta = useAppSelector(selectBookingMeta);
     const loading = useAppSelector(selectBookingLoading);
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [processingId, setProcessingId] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [activeTab, setActiveTab] = useState<'all' | 'pending'>('all');
+    const [allCount, setAllCount] = useState(0);
+    const [pendingCount, setPendingCount] = useState(0);
 
     const [openModalAddBooking, setOpenModalAddBooking] = useState<boolean>(false);
     const [openModalUpdateBooking, setOpenModalUpdateBooking] = useState<boolean>(false);
@@ -35,6 +39,34 @@ const AdminBookingPage = () => {
     const [booking, setBooking] = useState<IBooking | null>(null);
     const [bookingEdit, setBookingEdit] = useState<IBooking | null>(null);
     const canViewBookings = usePermission("BOOKING_VIEW_LIST");
+
+    const buildBookingQuery = (page: number, pageSize: number, tab: 'all' | 'pending') => {
+        const params = new URLSearchParams({
+            page: String(page),
+            pageSize: String(pageSize),
+        });
+
+        if (tab === 'pending') {
+            params.set('filter', "status : 'PENDING'");
+        }
+
+        return params.toString();
+    };
+
+    const loadTabCounts = async () => {
+        try {
+            const [allRes, pendingRes] = await Promise.all([
+                getAllBookings('page=1&pageSize=1'),
+                getAllBookings(buildBookingQuery(1, 1, 'pending')),
+            ]);
+
+            setAllCount(allRes.data.data?.meta?.total ?? 0);
+            setPendingCount(pendingRes.data.data?.meta?.total ?? 0);
+        } catch {
+            setAllCount(0);
+            setPendingCount(0);
+        }
+    };
 
     const handleView = async (id: number) => {
         setBooking(null);
@@ -72,7 +104,8 @@ const AdminBookingPage = () => {
             setDeletingId(id);
             const res = await deleteBooking(id);
             if (res.data.statusCode === 200) {
-                await dispatch(fetchBookings(""));
+                await dispatch(fetchBookings(buildBookingQuery(1, meta.pageSize, activeTab)));
+                await loadTabCounts();
                 toast.success('Xóa thành công');
             }
         } catch (error: any) {
@@ -85,6 +118,34 @@ const AdminBookingPage = () => {
             )
         } finally {
             setDeletingId(null);
+        }
+    };
+
+    const handleApprove = async (id: number) => {
+        try {
+            setProcessingId(id);
+            await approveBooking(id);
+            await dispatch(fetchBookings(buildBookingQuery(1, meta.pageSize, activeTab)));
+            await loadTabCounts();
+            toast.success('Đã xác nhận booking');
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message ?? 'Xác nhận booking thất bại');
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const handleReject = async (id: number) => {
+        try {
+            setProcessingId(id);
+            await rejectBooking(id);
+            await dispatch(fetchBookings(buildBookingQuery(1, meta.pageSize, activeTab)));
+            await loadTabCounts();
+            toast.success('Đã từ chối booking');
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message ?? 'Từ chối booking thất bại');
+        } finally {
+            setProcessingId(null);
         }
     };
 
@@ -190,23 +251,62 @@ const AdminBookingPage = () => {
                 <Space align="center" style={{ justifyContent: "center", width: "100%" }}>
 
                     <PermissionWrapper required={"BOOKING_VIEW_DETAIL"}>
-                        <RBButton variant="outline-info" size='sm'
-                            onClick={() => handleView(record.id)}
-                        >
-                            <FaArrowsToEye />
-                        </RBButton>
+                        <Tooltip title="Xem chi tiết booking">
+                            <RBButton variant="outline-info" size='sm'
+                                onClick={() => handleView(record.id)}
+                            >
+                                <FaArrowsToEye />
+                            </RBButton>
+                        </Tooltip>
                     </PermissionWrapper>
 
                     <PermissionWrapper required={"BOOKING_UPDATE"}>
-                        <RBButton
-                            variant="outline-warning"
-                            size='sm'
-                            disabled={record.status === "CANCELLED"}
-                            onClick={() => handleEdit(record)}
+                        <Tooltip
+                            title={record.status === "CANCELLED" || record.status === "PAID"
+                                ? "Không thể sửa booking đã hủy hoặc đã thanh toán"
+                                : "Chỉnh sửa booking"}
                         >
-                            <CiEdit />
-                        </RBButton>
+                            <RBButton
+                                variant="outline-warning"
+                                size='sm'
+                                disabled={record.status === "CANCELLED" || record.status === "PAID"}
+                                onClick={() => handleEdit(record)}
+                            >
+                                <CiEdit />
+                            </RBButton>
+                        </Tooltip>
                     </PermissionWrapper>
+
+                    {record.status === "PENDING" && (
+                        <PermissionWrapper required={"BOOKING_UPDATE"}>
+                            <>
+                                <RBButton
+                                    variant="outline-success"
+                                    size='sm'
+                                    disabled={processingId === record.id}
+                                    onClick={() => handleApprove(record.id)}
+                                >
+                                    <Tooltip title="Xác nhận booking chờ duyệt">
+                                        <span style={{ display: 'inline-flex' }}>
+                                            <MdCheckCircle />
+                                        </span>
+                                    </Tooltip>
+                                </RBButton>
+                                <RBButton
+                                    variant="outline-secondary"
+                                    size='sm'
+                                    disabled={processingId === record.id}
+                                    onClick={() => handleReject(record.id)}
+                                >
+                                    <Tooltip title="Từ chối booking chờ duyệt">
+                                        <span style={{ display: 'inline-flex' }}>
+                                            <MdClose />
+                                        </span>
+                                    </Tooltip>
+                                </RBButton>
+                            </>
+                        </PermissionWrapper>
+                    )}
 
                     <PermissionWrapper required={"BOOKING_DELETE"}>
                         <Popconfirm
@@ -221,13 +321,15 @@ const AdminBookingPage = () => {
                                 loading: deletingId === record.id
                             }}
                         >
-                            <RBButton
-                                size='sm'
-                                variant="outline-danger"
-                                disabled={deletingId === record.id}
-                            >
-                                <MdDelete />
-                            </RBButton>
+                            <Tooltip title="Xóa booking">
+                                <RBButton
+                                    size='sm'
+                                    variant="outline-danger"
+                                    disabled={deletingId === record.id}
+                                >
+                                    <MdDelete />
+                                </RBButton>
+                            </Tooltip>
                         </Popconfirm>
                     </PermissionWrapper>
                 </Space>
@@ -239,8 +341,9 @@ const AdminBookingPage = () => {
     useEffect(() => {
         if (!canViewBookings) return;
 
-        dispatch(fetchBookings(""));
-    }, [canViewBookings, dispatch]);
+        dispatch(fetchBookings(buildBookingQuery(1, meta.pageSize, activeTab)));
+        void loadTabCounts();
+    }, [activeTab, canViewBookings, dispatch]);
 
     return (
         <>
@@ -252,24 +355,28 @@ const AdminBookingPage = () => {
                         <Space align='center' >
 
                             <PermissionWrapper required={"BOOKING_CREATE"}>
-                                <RBButton variant="outline-primary"
-                                    size='sm'
-                                    style={{ display: "flex", alignItems: "center", gap: 3 }}
-                                    onClick={() => setOpenModalAddBooking(true)}
-                                >
-                                    <IoIosAddCircle />
-                                    Thêm mới
-                                </RBButton>
+                                <Tooltip title="Tạo lịch đặt sân mới">
+                                    <RBButton variant="outline-primary"
+                                        size='sm'
+                                        style={{ display: "flex", alignItems: "center", gap: 3 }}
+                                        onClick={() => setOpenModalAddBooking(true)}
+                                    >
+                                        <IoIosAddCircle />
+                                        Thêm mới
+                                    </RBButton>
+                                </Tooltip>
                             </PermissionWrapper>
-                            
-                            <Button
-                                icon={<FaDownload />}
-                                onClick={() =>
-                                    exportTableToExcel(columns, listBookings, 'bookings')
-                                }
-                            >
-                                Xuất Excel
-                            </Button>
+
+                            <Tooltip title="Xuất danh sách booking ra file Excel">
+                                <Button
+                                    icon={<FaDownload />}
+                                    onClick={() =>
+                                        exportTableToExcel(columns, listBookings, 'bookings')
+                                    }
+                                >
+                                    Xuất Excel
+                                </Button>
+                            </Tooltip>
                         </Space>
                     }
                     hoverable={false}
@@ -278,6 +385,20 @@ const AdminBookingPage = () => {
                     <PermissionWrapper required={"BOOKING_VIEW_LIST"}
                         fallback={<Empty description="Bạn không có quyền xem danh sách lịch đặt" />}
                     >
+                        <Tabs
+                            activeKey={activeTab}
+                            onChange={(key) => setActiveTab(key as 'all' | 'pending')}
+                            items={[
+                                {
+                                    key: 'all',
+                                    label: <Space size={8}><span>Tất cả booking</span><Badge count={allCount} color="#1677ff" /></Space>,
+                                },
+                                {
+                                    key: 'pending',
+                                    label: <Space size={8}><span>Chờ duyệt</span><Badge count={pendingCount} color="#faad14" /></Space>,
+                                },
+                            ]}
+                        />
                         <Table<IBooking>
                             columns={columns}
                             dataSource={listBookings}
@@ -290,7 +411,7 @@ const AdminBookingPage = () => {
                                 total: meta.total,
                                 showSizeChanger: true,
                                 onChange: (page, pageSize) => {
-                                    dispatch(fetchBookings(`page=${page}&pageSize=${pageSize}`));
+                                    dispatch(fetchBookings(buildBookingQuery(page, pageSize, activeTab)));
                                 },
                             }}
                             bordered

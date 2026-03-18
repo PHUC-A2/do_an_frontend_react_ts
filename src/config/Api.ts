@@ -105,6 +105,8 @@ export const createBooking = (data: ICreateBookingReq) => instance.post<IBackend
 export const updateBooking = (id: number, data: IUpdateBookingReq) => instance.put<IBackendRes<IBooking>>(`/api/v1/bookings/${id}`, data);
 export const getBookingById = (id: number) => instance.get<IBackendRes<IBooking>>(`/api/v1/bookings/${id}`);
 export const deleteBooking = (id: number) => instance.delete<IBackendRes<IBooking>>(`/api/v1/bookings/${id}`);
+export const approveBooking = (id: number) => instance.patch<IBackendRes<void>>(`/api/v1/bookings/${id}/approve`);
+export const rejectBooking = (id: number) => instance.patch<IBackendRes<void>>(`/api/v1/bookings/${id}/reject`);
 
 /* api payment */
 export const getAllPayments = (query: string) => instance.get<IBackendRes<IModelPaginate<IPayment>>>(`/api/v1/payments?${query}`);

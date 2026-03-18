@@ -118,6 +118,11 @@ const UpdateBookingForm = ({
                     setBlocked(true);
                     return;
                 }
+                if (b.status === "PAID") {
+                    toast.error("Booking đã thanh toán, không thể cập nhật");
+                    setBlocked(true);
+                    return;
+                }
                 if (b.deletedByUser) {
                     toast.error("Booking đã bị xoá khỏi lịch sử");
                     setBlocked(true);
