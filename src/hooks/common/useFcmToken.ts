@@ -6,6 +6,7 @@ import { useEffect, useRef } from 'react';
 import { getToken, onMessage } from 'firebase/messaging';
 import { getFirebaseMessaging } from '../../config/firebase';
 import { registerFcmToken } from '../../config/Api';
+import { playBell } from '../../utils/sound';
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY as string;
 
@@ -42,15 +43,19 @@ export const useFcmToken = (isLoggedIn: boolean) => {
         if (!msg) return;
 
         const unsubscribe = onMessage(msg, (payload) => {
+            // Khi tab đang mở và đã có SSE, tránh duplicate popup hệ thống.
+            if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+                return;
+            }
+
             const title = payload.notification?.title ?? 'TBU Sport';
             const body = payload.notification?.body ?? '';
             if (Notification.permission === 'granted') {
+                playBell();
                 const n = new Notification(title, {
                     body,
                     icon: '/logo192.png',
                     badge: '/logo192.png',
-                    tag: 'tbu-sport-fcm',
-                    renotify: true,
                 } as NotificationOptions);
                 setTimeout(() => n.close(), 6000);
             }

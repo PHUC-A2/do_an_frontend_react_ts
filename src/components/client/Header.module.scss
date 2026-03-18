@@ -490,6 +490,10 @@ $bp-md: 768px;
     }
 }
 
+.notifItemClickable {
+    cursor: pointer;
+}
+
 .notifItemUnread {
     background: rgba(250, 173, 20, 0.06);
 }

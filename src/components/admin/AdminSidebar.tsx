@@ -1,5 +1,5 @@
 import { Layout, Menu, Breadcrumb, Button, Grid, Drawer, Switch, Tooltip, Typography, Avatar, Popover, Badge, Space } from 'antd';
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type TouchEvent } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import {
     BellOutlined,
@@ -9,11 +9,13 @@ import {
     LogoutOutlined,
     LoginOutlined,
 } from '@ant-design/icons';
+import { LockOutlined } from '@ant-design/icons';
 import { MdFeaturedPlayList, MdOutlineSecurity, MdPayments, MdSportsHandball, MdOutlineSupportAgent } from 'react-icons/md';
 import { RiRobot2Line } from 'react-icons/ri';
 import { GiReturnArrow } from 'react-icons/gi';
 import { FaReact, FaUserCircle, FaUserCog } from 'react-icons/fa';
 import ModalAccount from '../../pages/auth/modal/ModalAccount';
+import ModalForget from '../../pages/auth/modal/ModalForget';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { clientDeleteNotification, clientGetNotifications, clientMarkAllNotificationsRead, logout } from '../../config/Api';
 import { toast } from 'react-toastify';
@@ -42,6 +44,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const [collapsed, setCollapsed] = useState(false);
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [openModalAccount, setOpenModalAccount] = useState(false);
+    const [openModalForget, setOpenModalForget] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
     const [notifications, setNotifications] = useState<INotification[]>([]);
     const [bellSoundEnabled, setBellSoundEnabled] = useState<boolean>(() => {
@@ -57,6 +60,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const sseRef = useRef<EventSource | null>(null);
     const reconnectRef = useRef<number | null>(null);
     const audioCtxRef = useRef<AudioContext | null>(null);
+    const notifTouchRef = useRef<{ id: number | null; x: number; y: number }>({ id: null, x: 0, y: 0 });
+    const swipedDeleteRef = useRef<{ id: number | null; at: number }>({ id: null, at: 0 });
 
     const { requestPermission, sendBrowserNotif } = useBrowserNotification();
 
@@ -207,6 +212,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                     BOOKING_PENDING_CONFIRMATION: '📝 Booking chờ duyệt',
                     BOOKING_APPROVED: '✅ Booking đã được xác nhận',
                     BOOKING_REJECTED: '❌ Booking đã bị từ chối',
+                    EQUIPMENT_BORROWED: '🎽 Mượn thiết bị',
+                    EQUIPMENT_RETURNED: '📦 Trả thiết bị',
+                    EQUIPMENT_LOST: '⚠️ Báo mất thiết bị',
+                    EQUIPMENT_DAMAGED: '🛠️ Thiết bị bị hỏng',
+                    PAYMENT_REQUESTED: '💸 Yêu cầu thanh toán QR',
+                    PAYMENT_PROOF_UPLOADED: '🧾 Đã tải minh chứng thanh toán',
                     PAYMENT_CONFIRMED: '💳 Thanh toán xác nhận',
                     MATCH_REMINDER: '⏰ Sắp đến giờ đá!',
                 };
@@ -382,6 +393,58 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         }
     };
 
+    const extractBookingId = (message: string): string | null => {
+        const match = message.match(/Booking\s*#(\d+)/i);
+        return match?.[1] ?? null;
+    };
+
+    const handleNotificationDetail = (notif: INotification) => {
+        if (Date.now() - swipedDeleteRef.current.at < 350 && swipedDeleteRef.current.id === notif.id) {
+            return;
+        }
+
+        const bookingId = extractBookingId(notif.message);
+
+        if (notif.type === 'PAYMENT_CONFIRMED' || notif.type === 'PAYMENT_REQUESTED' || notif.type === 'PAYMENT_PROOF_UPLOADED') {
+            navigate('/admin/payment');
+            setNotifOpen(false);
+            return;
+        }
+
+        if (notif.type === 'EQUIPMENT_BORROWED' || notif.type === 'EQUIPMENT_RETURNED' || notif.type === 'EQUIPMENT_LOST' || notif.type === 'EQUIPMENT_DAMAGED') {
+            navigate('/admin/booking-equipment');
+            setNotifOpen(false);
+            return;
+        }
+
+        if (bookingId) {
+            navigate(`/admin/booking?bookingId=${bookingId}`);
+        } else {
+            navigate('/admin/booking');
+        }
+        setNotifOpen(false);
+    };
+
+    const handleNotifTouchStart = (id: number, e: TouchEvent<HTMLDivElement>) => {
+        if (window.innerWidth > 768) return;
+        const touch = e.changedTouches[0];
+        notifTouchRef.current = { id, x: touch.clientX, y: touch.clientY };
+    };
+
+    const handleNotifTouchEnd = (id: number, e: TouchEvent<HTMLDivElement>) => {
+        if (window.innerWidth > 768) return;
+        if (notifTouchRef.current.id !== id) return;
+
+        const touch = e.changedTouches[0];
+        const deltaX = touch.clientX - notifTouchRef.current.x;
+        const deltaY = touch.clientY - notifTouchRef.current.y;
+
+        if (deltaX < -70 && Math.abs(deltaY) < 40) {
+            swipedDeleteRef.current = { id, at: Date.now() };
+            void handleDeleteNotif(id);
+        }
+    };
+
     const notifContent = (
         <div className={styles.notifCard}>
             <div className={styles.notifHeader}>
@@ -405,7 +468,22 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                     <span className={styles.notifEmpty}>Chưa có thông báo nào</span>
                 ) : (
                     notifications.slice(0, 10).map((notif) => (
-                        <div key={notif.id} className={`${styles.notifItem} ${!notif.isRead ? styles.notifItemUnread : ''}`}>
+                        <div
+                            key={notif.id}
+                            className={`${styles.notifItem} ${!notif.isRead ? styles.notifItemUnread : ''} ${styles.notifItemClickable}`}
+                            onClick={() => handleNotificationDetail(notif)}
+                            onTouchStart={(e) => handleNotifTouchStart(notif.id, e)}
+                            onTouchEnd={(e) => handleNotifTouchEnd(notif.id, e)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    handleNotificationDetail(notif);
+                                }
+                            }}
+                            title="Nhấn để xem chi tiết"
+                        >
                             <BellOutlined className={styles.notifItemIcon} />
                             <div className={styles.notifItemBody}>
                                 <span className={styles.notifItemMsg}>{notif.message}</span>
@@ -415,7 +493,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                             </div>
                             <div className={styles.notifItemActions}>
                                 {!notif.isRead && <span className={styles.notifDot} />}
-                                <button className={styles.notifDeleteBtn} onClick={() => handleDeleteNotif(notif.id)}>
+                                <button
+                                    className={styles.notifDeleteBtn}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        void handleDeleteNotif(notif.id);
+                                    }}
+                                >
                                     <DeleteOutlined />
                                 </button>
                             </div>
@@ -599,6 +683,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                                         <button className={styles.profileCardAction} onClick={() => { setOpenModalAccount(true); }}>
                                             <FaUserCircle size={14} /> Thông tin cá nhân
                                         </button>
+                                        <button className={styles.profileCardAction} onClick={() => { setOpenModalForget(true); }}>
+                                            <LockOutlined /> Đổi mật khẩu
+                                        </button>
                                         <button className={styles.profileCardAction} onClick={handleLogout}>
                                             <LogoutOutlined /> Đăng xuất
                                         </button>
@@ -631,6 +718,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                 openModalAccount={openModalAccount}
                 setOpenModalAccount={setOpenModalAccount}
             />
+            <ModalForget open={openModalForget} setOpen={setOpenModalForget} />
         </Layout>
     );
 };

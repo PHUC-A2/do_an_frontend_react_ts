@@ -1,5 +1,5 @@
-import { Avatar, Badge, Button, Flex, Input, Layout, Popconfirm, Switch, Tooltip, Typography, type InputRef } from 'antd';
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { Avatar, Badge, Button, Flex, Input, Layout, Switch, Tooltip, Typography, type InputRef } from 'antd';
+import { useEffect, useRef, useState, type CSSProperties, type TouchEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import {
     FiBell,
@@ -129,6 +129,8 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const notifCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const sseRef = useRef<EventSource | null>(null);
     const audioCtxRef = useRef<AudioContext | null>(null);
+    const notifTouchRef = useRef<{ id: number | null; x: number; y: number }>({ id: null, x: 0, y: 0 });
+    const swipedDeleteRef = useRef<{ id: number | null; at: number }>({ id: null, at: 0 });
 
     const { requestPermission, sendBrowserNotif } = useBrowserNotification();
 
@@ -376,6 +378,12 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                     BOOKING_PENDING_CONFIRMATION: '📝 Yêu cầu đặt sân mới',
                     BOOKING_APPROVED: '✅ Booking đã được xác nhận',
                     BOOKING_REJECTED: '❌ Booking đã bị từ chối',
+                    EQUIPMENT_BORROWED: '🎽 Mượn thiết bị',
+                    EQUIPMENT_RETURNED: '📦 Trả thiết bị',
+                    EQUIPMENT_LOST: '⚠️ Báo mất thiết bị',
+                    EQUIPMENT_DAMAGED: '🛠️ Thiết bị bị hỏng',
+                    PAYMENT_REQUESTED: '💸 Yêu cầu thanh toán QR',
+                    PAYMENT_PROOF_UPLOADED: '🧾 Đã tải minh chứng thanh toán',
                     PAYMENT_CONFIRMED: '💳 Thanh toán xác nhận',
                     MATCH_REMINDER: '⏰ Sắp đến giờ đá!',
                 };
@@ -494,6 +502,38 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
             await clientDeleteNotification(id);
             setNotifications(prev => prev.filter(n => n.id !== id));
         } catch { /* ignore */ }
+    };
+
+    const handleNotificationDetail = (n: INotification) => {
+        if (Date.now() - swipedDeleteRef.current.at < 350 && swipedDeleteRef.current.id === n.id) return;
+        closeAllPanels();
+        if (
+            n.type === 'BOOKING_CREATED' || n.type === 'BOOKING_APPROVED' ||
+            n.type === 'BOOKING_REJECTED' || n.type === 'BOOKING_PENDING_CONFIRMATION' ||
+            n.type === 'MATCH_REMINDER' || n.type === 'PAYMENT_CONFIRMED' ||
+            n.type === 'EQUIPMENT_BORROWED' || n.type === 'EQUIPMENT_RETURNED' ||
+            n.type === 'EQUIPMENT_LOST' || n.type === 'EQUIPMENT_DAMAGED'
+        ) {
+            setOpenModalBookingHistory(true);
+            return;
+        }
+        setOpenModalBookingHistory(true);
+    };
+
+    const handleNotifTouchStart = (id: number, e: TouchEvent<HTMLElement>) => {
+        const touch = e.changedTouches[0];
+        notifTouchRef.current = { id, x: touch.clientX, y: touch.clientY };
+    };
+
+    const handleNotifTouchEnd = (id: number, e: TouchEvent<HTMLElement>) => {
+        if (notifTouchRef.current.id !== id) return;
+        const touch = e.changedTouches[0];
+        const deltaX = touch.clientX - notifTouchRef.current.x;
+        const deltaY = touch.clientY - notifTouchRef.current.y;
+        if (deltaX < -70 && Math.abs(deltaY) < 40) {
+            swipedDeleteRef.current = { id, at: Date.now() };
+            void handleDeleteNotif(id);
+        }
     };
 
     const handleBookingShortcut = () => {
@@ -624,7 +664,15 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                                         <Text className={styles.notifEmpty}>Chưa có thông báo nào</Text>
                                     ) : (
                                         notifications.slice(0, 10).map(n => (
-                                            <Flex key={n.id} className={`${styles.notifItem}${!n.isRead ? ` ${styles.notifItemUnread}` : ''}`}>
+                                            <Flex key={n.id}
+                                                className={`${styles.notifItem}${!n.isRead ? ` ${styles.notifItemUnread}` : ''} ${styles.notifItemClickable}`}
+                                                onClick={() => handleNotificationDetail(n)}
+                                                onTouchStart={(e) => handleNotifTouchStart(n.id, e)}
+                                                onTouchEnd={(e) => handleNotifTouchEnd(n.id, e)}
+                                                role="button"
+                                                tabIndex={0}
+                                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNotificationDetail(n); } }}
+                                            >
                                                 <FiBell className={styles.notifItemIcon} />
                                                 <Flex vertical className={styles.notifItemBody}>
                                                     <Text className={styles.notifItemMsg}>{n.message}</Text>
@@ -634,15 +682,8 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                                                 </Flex>
                                                 <Flex align="center" gap={4}>
                                                     {!n.isRead && <span className={styles.notifDot} />}
-                                                    <Popconfirm
-                                                        title="Xóa khỏi lịch sử?"
-                                                        onConfirm={() => handleDeleteNotif(n.id)}
-                                                        okText="Xóa"
-                                                        cancelText="Hủy"
-                                                        placement="left"
-                                                    >
-                                                        <Button type="text" className={styles.notifDeleteBtn} icon={<FiTrash2 />} />
-                                                    </Popconfirm>
+                                                    <Button type="text" className={styles.notifDeleteBtn} icon={<FiTrash2 />}
+                                                        onClick={(e) => { e.stopPropagation(); void handleDeleteNotif(n.id); }} />
                                                 </Flex>
                                             </Flex>
                                         ))
@@ -878,7 +919,15 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                                 <Text className={styles.notifEmpty}>Chưa có thông báo nào</Text>
                             ) : (
                                 notifications.slice(0, 10).map(n => (
-                                    <Flex key={n.id} className={`${styles.notifItem}${!n.isRead ? ` ${styles.notifItemUnread}` : ''}`}>
+                                    <Flex key={n.id}
+                                        className={`${styles.notifItem}${!n.isRead ? ` ${styles.notifItemUnread}` : ''} ${styles.notifItemClickable}`}
+                                        onClick={() => handleNotificationDetail(n)}
+                                        onTouchStart={(e) => handleNotifTouchStart(n.id, e)}
+                                        onTouchEnd={(e) => handleNotifTouchEnd(n.id, e)}
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNotificationDetail(n); } }}
+                                    >
                                         <FiBell className={styles.notifItemIcon} />
                                         <Flex vertical className={styles.notifItemBody}>
                                             <Text className={styles.notifItemMsg}>{n.message}</Text>
@@ -888,15 +937,8 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                                         </Flex>
                                         <Flex align="center" gap={4}>
                                             {!n.isRead && <span className={styles.notifDot} />}
-                                            <Popconfirm
-                                                title="Xóa khỏi lịch sử?"
-                                                onConfirm={() => handleDeleteNotif(n.id)}
-                                                okText="Xóa"
-                                                cancelText="Hủy"
-                                                placement="left"
-                                            >
-                                                <Button type="text" className={styles.notifDeleteBtn} icon={<FiTrash2 />} />
-                                            </Popconfirm>
+                                            <Button type="text" className={styles.notifDeleteBtn} icon={<FiTrash2 />}
+                                                onClick={(e) => { e.stopPropagation(); void handleDeleteNotif(n.id); }} />
                                         </Flex>
                                     </Flex>
                                 ))

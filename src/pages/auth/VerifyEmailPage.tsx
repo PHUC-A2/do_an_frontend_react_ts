@@ -1,5 +1,5 @@
 import { Button, Flex, Form, Input, Typography } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -18,6 +18,8 @@ const VerifyEmailPage = () => {
     const [loadingVerify, setLoadingVerify] = useState(false);
     const [loadingResend, setLoadingResend] = useState(false);
     const [cooldownSeconds, setCooldownSeconds] = useState(0);
+    const [otpExpiry, setOtpExpiry] = useState(300);
+    const otpExpiryStarted = useRef(false);
 
     const fallback = useMemo(() => {
         try {
@@ -67,6 +69,21 @@ const VerifyEmailPage = () => {
 
         return () => window.clearInterval(timer);
     }, [cooldownSeconds]);
+
+    useEffect(() => {
+        if (otpExpiryStarted.current) return;
+        otpExpiryStarted.current = true;
+        const timer = window.setInterval(() => {
+            setOtpExpiry((prev) => {
+                if (prev <= 1) {
+                    window.clearInterval(timer);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => window.clearInterval(timer);
+    }, []);
 
     useEffect(() => {
         if (context) {
@@ -119,6 +136,7 @@ const VerifyEmailPage = () => {
             await resendOtp({ userId: context.userId, email: context.email });
             toast.success('Đã gửi lại OTP xác thực email');
             setCooldownSeconds(60);
+            setOtpExpiry(300);
         } catch (error: any) {
             const message = error?.response?.data?.message ?? 'Không thể gửi lại OTP';
 
@@ -150,6 +168,16 @@ const VerifyEmailPage = () => {
                         <Text className="verify-email-text">
                             Mã OTP đã gửi tới: <strong>{context.email}</strong>
                         </Text>
+
+                        {otpExpiry > 0 ? (
+                            <Text className="verify-email-text" style={{ color: otpExpiry <= 60 ? '#ff4d4f' : '#52c41a', display: 'block', marginBottom: 8 }}>
+                                OTP hết hạn sau: <strong>{String(Math.floor(otpExpiry / 60)).padStart(2, '0')}:{String(otpExpiry % 60).padStart(2, '0')}</strong>
+                            </Text>
+                        ) : (
+                            <Text type="danger" style={{ display: 'block', marginBottom: 8 }}>
+                                OTP đã hết hạn. Vui lòng gửi lại.
+                            </Text>
+                        )}
 
                         <Form
                             form={form}
