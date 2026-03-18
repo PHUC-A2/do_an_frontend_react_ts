@@ -26,7 +26,7 @@ export const useBrowserNotification = () => {
                 badge: ICON,
                 tag: 'utb-sport', // ghi đè thay vì stack nhiều cái
                 renotify: true,
-            });
+            } as NotificationOptions);
             // Tự đóng sau 6 giây
             setTimeout(() => n.close(), 6000);
         } catch { /* Safari private mode có thể throw */ }

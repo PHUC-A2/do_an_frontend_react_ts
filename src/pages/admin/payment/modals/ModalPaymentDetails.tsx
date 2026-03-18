@@ -17,8 +17,6 @@ const METHOD_LABEL: Record<string, string> = {
 };
 
 const ModalPaymentDetails = ({ open, onClose, payment, isLoading = false }: IProps) => {
-    const displayName = payment?.userFullName || payment?.userName || 'N/A';
-
     return (
         <Drawer
             title="Chi tiết thanh toán"

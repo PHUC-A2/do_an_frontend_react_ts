@@ -52,7 +52,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const canViewBookings = usePermission("BOOKING_VIEW_LIST");
     const canViewPayments = usePermission("PAYMENT_VIEW_LIST");
     const canViewEquipments = usePermission("EQUIPMENT_VIEW_LIST");
-    const canViewBookingEquipments = usePermission("BOOKING_EQUIPMENT_VIEW");
+    const canViewBookingEquipments = usePermission("BOOKING_EQUIPMENT_VIEW_LIST");
 
     const routeLabelMap: Record<string, string> = {
         admin: 'Bảng điều khiển',

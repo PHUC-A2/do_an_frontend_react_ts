@@ -51,7 +51,7 @@ export const useFcmToken = (isLoggedIn: boolean) => {
                     badge: '/logo192.png',
                     tag: 'tbu-sport-fcm',
                     renotify: true,
-                });
+                } as NotificationOptions);
                 setTimeout(() => n.close(), 6000);
             }
         });
