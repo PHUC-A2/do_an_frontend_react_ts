@@ -77,6 +77,8 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
     const [pitchLoading, setPitchLoading] = useState(false);
     const [activePitchId, setActivePitchId] = useState(pitchIdNumber);
     const [pitchOpen, setPitchOpen] = useState(true); // accordion on mobile
+    const [formOpen, setFormOpen] = useState(true);     // accordion on mobile
+    const [timelineOpen, setTimelineOpen] = useState(true); // accordion on mobile
 
     const stripRef = useRef<HTMLDivElement>(null);
 
@@ -174,77 +176,101 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                         <motion.div className="bk__panel"
                             initial="hidden" animate="visible" variants={fadeUp} custom={1}>
 
-                            {/* Row: label + nav + pick any date */}
-                            <div className="bk__cal-header">
-                                <span className="bk__panel-label" style={{ margin: 0 }}>
+                            {/* Accordion header */}
+                            <div
+                                className="bk__pitch-accordion"
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => setTimelineOpen(o => !o)}
+                                onKeyDown={e => e.key === 'Enter' && setTimelineOpen(o => !o)}
+                            >
+                                <span className="bk__pitch-accordion__title">
                                     <CalendarOutlined />
                                     Chọn ngày xem lịch
                                 </span>
-
-                                <div className="bk__cal-nav">
-                                    <button className="bk__nav-btn" onClick={goToPrevWeek}
-                                        title="Tuần trước">
-                                        <LeftOutlined />
-                                    </button>
-
-                                    <Tooltip title="Chọn ngày bất kỳ">
-                                        <DatePicker
-                                            className="bk__nav-picker"
-                                            value={bookingDate}
-                                            format="DD/MM/YYYY"
-                                            allowClear={false}
-                                            inputReadOnly
-                                            suffixIcon={<CalendarOutlined />}
-                                            classNames={{ popup: pickerPopupClass }}
-                                            disabledDate={current => !!current && current.startOf("day").isBefore(dayjs().startOf("day"))}
-                                            onChange={handlePickerChange}
-                                        />
-                                    </Tooltip>
-
-                                    <button className="bk__nav-btn" onClick={goToNextWeek}
-                                        title="Tuần sau">
-                                        <RightOutlined />
-                                    </button>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    {/* Nav always visible */}
+                                    <div className="bk__cal-nav" onClick={e => e.stopPropagation()}>
+                                        <button className="bk__nav-btn" onClick={goToPrevWeek} title="Tuần trước">
+                                            <LeftOutlined />
+                                        </button>
+                                        <Tooltip title="Chọn ngày bất kỳ">
+                                            <DatePicker
+                                                className="bk__nav-picker"
+                                                value={bookingDate}
+                                                format="DD/MM/YYYY"
+                                                allowClear={false}
+                                                inputReadOnly
+                                                suffixIcon={<CalendarOutlined />}
+                                                classNames={{ popup: pickerPopupClass }}
+                                                disabledDate={current => !!current && current.startOf("day").isBefore(dayjs().startOf("day"))}
+                                                onChange={handlePickerChange}
+                                            />
+                                        </Tooltip>
+                                        <button className="bk__nav-btn" onClick={goToNextWeek} title="Tuần sau">
+                                            <RightOutlined />
+                                        </button>
+                                    </div>
+                                    <motion.span
+                                        animate={{ rotate: timelineOpen ? 180 : 0 }}
+                                        transition={{ duration: 0.25 }}
+                                        className="bk__pitch-accordion__arrow"
+                                    >
+                                        <DownOutlined />
+                                    </motion.span>
                                 </div>
                             </div>
 
-                            {/* Week label */}
-                            <p className="bk__week-label">
-                                {weekDays[0].format("DD/MM")} – {weekDays[6].format("DD/MM/YYYY")}
-                            </p>
+                            <AnimatePresence initial={false}>
+                                {timelineOpen && (
+                                    <motion.div
+                                        key="timeline-body"
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: "auto", opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                                        style={{ overflow: "hidden" }}
+                                    >
+                                        {/* Week label */}
+                                        <p className="bk__week-label">
+                                            {weekDays[0].format("DD/MM")} – {weekDays[6].format("DD/MM/YYYY")}
+                                        </p>
 
-                            {/* 7-day strip */}
-                            <div className="bk__date-strip" ref={stripRef}>
-                                {weekDays.map(d => {
-                                    const isActive = d.isSame(bookingDate, "day");
-                                    const isToday = d.isSame(dayjs(), "day");
-                                    return (
-                                        <motion.button
-                                            key={d.format("YYYY-MM-DD")}
-                                            type="button"
-                                            className={[
-                                                "bk__date-chip",
-                                                isActive ? "bk__date-chip--active" : "",
-                                                isToday ? "bk__date-chip--today" : "",
-                                            ].filter(Boolean).join(" ")}
-                                            onClick={() => selectDay(d)}
-                                            whileTap={{ scale: 0.9 }}
-                                        >
-                                            <span className="bk__date-chip__dow">{DOW_VN[d.day()]}</span>
-                                            <span className="bk__date-chip__day">{d.format("DD")}</span>
-                                            <span className="bk__date-chip__mon">Th{d.format("M")}</span>
-                                        </motion.button>
-                                    );
-                                })}
-                            </div>
+                                        {/* 7-day strip */}
+                                        <div className="bk__date-strip" ref={stripRef}>
+                                            {weekDays.map(d => {
+                                                const isActive = d.isSame(bookingDate, "day");
+                                                const isToday = d.isSame(dayjs(), "day");
+                                                return (
+                                                    <motion.button
+                                                        key={d.format("YYYY-MM-DD")}
+                                                        type="button"
+                                                        className={[
+                                                            "bk__date-chip",
+                                                            isActive ? "bk__date-chip--active" : "",
+                                                            isToday ? "bk__date-chip--today" : "",
+                                                        ].filter(Boolean).join(" ")}
+                                                        onClick={() => selectDay(d)}
+                                                        whileTap={{ scale: 0.9 }}
+                                                    >
+                                                        <span className="bk__date-chip__dow">{DOW_VN[d.day()]}</span>
+                                                        <span className="bk__date-chip__day">{d.format("DD")}</span>
+                                                        <span className="bk__date-chip__mon">Th{d.format("M")}</span>
+                                                    </motion.button>
+                                                );
+                                            })}
+                                        </div>
 
-                            {/* Slot label */}
-                            <p className="bk__panel-label" style={{ marginBottom: 10 }}>
-                                <IoMdClock size={12} />
-                                {bookingDate.format("dddd, DD/MM/YYYY")}
-                            </p>
+                                        {/* Slot label */}
+                                        <p className="bk__panel-label" style={{ marginBottom: 10 }}>
+                                            <IoMdClock size={12} />
+                                            {bookingDate.format("dddd, DD/MM/YYYY")}
+                                        </p>
 
-                            <BookingTime timelineLoading={timelineLoading} timeline={timeline} />
+                                        <BookingTime timelineLoading={timelineLoading} timeline={timeline} />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </motion.div>
 
                         {/* ── RIGHT column ── */}
@@ -366,34 +392,61 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                             {/* Booking form */}
                             <motion.div className="bk__panel bk__form-panel"
                                 initial="hidden" animate="visible" variants={fadeUp} custom={3}>
-                                <p className="bk__panel-label">
-                                    <TbSoccerField size={12} />
-                                    {mode === "CREATE" ? "Thông tin đặt sân" : "Cập nhật thông tin"}
-                                </p>
 
-                                {mode === "CREATE" && (
-                                    <CreateBookingForm
-                                        pitchIdNumber={pitchIdNumber}
-                                        pitch={pitch}
-                                        pitchLoading={pitchLoading}
-                                        bookingDate={bookingDate}
-                                        isDark={isDark}
-                                        onSuccess={reloadTimeline}
-                                    />
-                                )}
+                                {/* Accordion header */}
+                                <button
+                                    className="bk__pitch-accordion"
+                                    onClick={() => setFormOpen(o => !o)}
+                                >
+                                    <span className="bk__pitch-accordion__title">
+                                        <TbSoccerField size={15} />
+                                        {mode === "CREATE" ? "Thông tin đặt sân" : "Cập nhật thông tin"}
+                                    </span>
+                                    <motion.span
+                                        animate={{ rotate: formOpen ? 180 : 0 }}
+                                        transition={{ duration: 0.25 }}
+                                        className="bk__pitch-accordion__arrow"
+                                    >
+                                        <DownOutlined />
+                                    </motion.span>
+                                </button>
 
-                                {mode === "UPDATE" && bookingId && (
-                                    <UpdateBookingForm
-                                        bookingId={bookingId}
-                                        pitchIdNumber={pitchIdNumber}
-                                        pitch={pitch}
-                                        pitchLoading={pitchLoading}
-                                        bookingDate={bookingDate}
-                                        isDark={isDark}
-                                        onSuccess={reloadTimeline}
-                                        onPitchChange={setActivePitchId}
-                                    />
-                                )}
+                                <AnimatePresence initial={false}>
+                                    {formOpen && (
+                                        <motion.div
+                                            key="form-body"
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                                            style={{ overflow: "hidden" }}
+                                        >
+                                            {mode === "CREATE" && (
+                                                <CreateBookingForm
+                                                    pitchIdNumber={pitchIdNumber}
+                                                    pitch={pitch}
+                                                    pitchLoading={pitchLoading}
+                                                    bookingDate={bookingDate}
+                                                    isDark={isDark}
+                                                    onSuccess={reloadTimeline}
+                                                />
+                                            )}
+
+                                            {mode === "UPDATE" && bookingId && (
+                                                <UpdateBookingForm
+                                                    bookingId={bookingId}
+                                                    pitchIdNumber={pitchIdNumber}
+                                                    pitch={pitch}
+                                                    pitchLoading={pitchLoading}
+                                                    bookingDate={bookingDate}
+                                                    isDark={isDark}
+                                                    onSuccess={reloadTimeline}
+                                                    onPitchChange={setActivePitchId}
+                                                />
+                                            )}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </motion.div>
                         </div>
                     </div>

@@ -1,4 +1,4 @@
-import { Layout, Menu, Breadcrumb, Button, Grid, Drawer, Switch, Tooltip, Typography } from 'antd';
+import { Layout, Menu, Breadcrumb, Button, Grid, Drawer, Switch, Tooltip, Typography, Avatar, Popover } from 'antd';
 import { useMemo, useState, type CSSProperties } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import {
@@ -7,7 +7,7 @@ import {
     LogoutOutlined,
     LoginOutlined,
 } from '@ant-design/icons';
-import { MdFeaturedPlayList, MdOutlineSecurity, MdPayments, MdSportsHandball } from 'react-icons/md';
+import { MdFeaturedPlayList, MdOutlineSecurity, MdPayments, MdSportsHandball, MdOutlineSupportAgent } from 'react-icons/md';
 import { RiRobot2Line } from 'react-icons/ri';
 import { GiReturnArrow } from 'react-icons/gi';
 import { FaReact, FaUserCircle, FaUserCog } from 'react-icons/fa';
@@ -42,6 +42,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const dispatch = useAppDispatch();
     const screens = useBreakpoint();
     const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
+    const account = useAppSelector(state => state.account.account);
 
     const isDark = theme === 'dark';
     const isViewRole = useRole("VIEW");
@@ -64,6 +65,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         payment: 'Thanh toán',
         equipment: 'Thiết bị',
         'booking-equipment': 'Mượn thiết bị',
+        support: 'Hỗ trợ & Bảo trì',
     };
 
     const cssVars = useMemo(() => ({
@@ -92,7 +94,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         }
     };
 
-    const routeMenuKeys = ['/admin', '/admin/user', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/ai'];
+    const routeMenuKeys = ['/admin', '/admin/user', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/ai', '/admin/support'];
 
     const selectedMenuKey = useMemo(() => {
         const currentPath = location.pathname;
@@ -170,6 +172,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                             key: '/admin/ai',
                             label: <Link to="/admin/ai" className={styles.menuLink}>Quản lý AI</Link>,
                             icon: <RiRobot2Line />,
+                        },
+                        {
+                            key: '/admin/support',
+                            label: <Link to="/admin/support" className={styles.menuLink}>Hỗ trợ & Bảo trì</Link>,
+                            icon: <MdOutlineSupportAgent />,
                         },
 
                     ]
@@ -303,6 +310,50 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                                 className={styles.themeSwitch}
                             />
                         </Tooltip>
+
+                        <Popover
+                            placement="bottomRight"
+                            trigger="click"
+                            rootClassName={`${styles.profilePopover} ${!screens.md ? styles.profilePopoverMobile : ''}`}
+                            content={
+                                <div className={styles.profileCard}>
+                                    <div className={styles.profileCardTop}>
+                                        {account?.avatarUrl ? (
+                                            <img src={account.avatarUrl} className={styles.profileCardAvatar} alt="avatar" />
+                                        ) : (
+                                            <Avatar size={64} icon={<UserOutlined />} className={styles.profileCardAvatarFallback} />
+                                        )}
+                                        <div className={styles.profileCardInfo}>
+                                            <span className={styles.profileCardName}>{account?.fullName || account?.name || 'Admin'}</span>
+                                            <span className={styles.profileCardEmail}>{account?.email}</span>
+                                            <span className={styles.profileCardRole}>
+                                                {account?.roles?.map(r => r.name).join(', ') || 'Admin'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className={styles.profileCardDivider} />
+                                    <div className={styles.profileCardActions}>
+                                        <button className={styles.profileCardAction} onClick={() => { setOpenModalAccount(true); }}>
+                                            <FaUserCircle size={14} /> Thông tin cá nhân
+                                        </button>
+                                        <button className={styles.profileCardAction} onClick={handleLogout}>
+                                            <LogoutOutlined /> Đăng xuất
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        >
+                            <button className={styles.headerAvatarBtn} aria-label="Profile">
+                                {account?.avatarUrl ? (
+                                    <img src={account.avatarUrl} className={styles.headerAvatarImg} alt="avatar" />
+                                ) : (
+                                    <Avatar size={32} icon={<UserOutlined />} className={styles.headerAvatarFallback} />
+                                )}
+                                {screens.md && (
+                                    <span className={styles.headerAvatarName}>{account?.fullName || account?.name || 'Admin'}</span>
+                                )}
+                            </button>
+                        </Popover>
                     </div>
                 </Header>
 

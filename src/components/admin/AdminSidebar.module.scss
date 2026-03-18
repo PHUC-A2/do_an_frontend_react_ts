@@ -204,10 +204,12 @@
 }
 
 .headerLeft {
-    display    : flex;
+    display  : flex;
     align-items: center;
-    gap        : 12px;
-    min-width  : 0;
+    gap      : 12px;
+    min-width: 0;
+    flex     : 1;
+    overflow : hidden;
 }
 
 .mobileMenuButton {
@@ -232,10 +234,18 @@
 }
 
 .welcomeTitle {
-    font-size  : 1.02rem;
-    font-weight: 700;
-    color      : var(--admin-text);
-    line-height: 1.2;
+    font-size    : 1.02rem;
+    font-weight  : 700;
+    color        : var(--admin-text);
+    line-height  : 1.2;
+    white-space  : nowrap;
+    overflow     : hidden;
+    text-overflow: ellipsis;
+    display      : block;
+
+    @media (max-width: 768px) {
+        font-size: 0.82rem;
+    }
 }
 
 .breadcrumb {
@@ -251,6 +261,7 @@
     display    : flex;
     align-items: center;
     gap        : 8px;
+    flex-shrink: 0;
 }
 
 .themeSwitch {
@@ -264,6 +275,204 @@
     transition: background 0.25s ease;
 }
 
+
+/* ===== HEADER AVATAR BUTTON ===== */
+
+.headerAvatarBtn {
+    display        : flex;
+    align-items    : center;
+    gap            : 6px;
+    background     : none;
+    border         : 1px solid var(--admin-border);
+    border-radius  : 20px;
+    padding        : 0 10px 0 0;
+    height         : 34px;
+    cursor         : pointer;
+    transition     : background 0.2s ease, border-color 0.2s ease;
+    color          : var(--admin-text);
+    outline        : none;
+    line-height    : 1;
+
+    &:hover {
+        background  : color-mix(in srgb, var(--admin-accent) 12%, transparent);
+        border-color: rgba(250, 173, 20, 0.45);
+    }
+
+    @media (max-width: 768px) {
+        border  : none;
+        padding : 0;
+        height  : 32px;
+        width   : 32px;
+        border-radius: 50%;
+        justify-content: center;
+
+        &:hover {
+            background: color-mix(in srgb, var(--admin-accent) 14%, transparent);
+        }
+    }
+}
+
+.headerAvatarImg {
+    width        : 28px;
+    height       : 28px;
+    border-radius: 50%;
+    object-fit   : cover;
+    flex-shrink  : 0;
+    margin-left  : 3px;
+
+    @media (max-width: 768px) {
+        width      : 30px;
+        height     : 30px;
+        margin-left: 0;
+    }
+}
+
+.headerAvatarFallback {
+    flex-shrink : 0 !important;
+    width       : 28px !important;
+    height      : 28px !important;
+    min-width   : 28px !important;
+    font-size   : 13px !important;
+    margin-left : 3px;
+    background  : color-mix(in srgb, var(--admin-accent) 18%, transparent) !important;
+    color       : var(--admin-accent) !important;
+
+    @media (max-width: 768px) {
+        width      : 30px !important;
+        height     : 30px !important;
+        min-width  : 30px !important;
+        margin-left: 0 !important;
+    }
+}
+
+.headerAvatarName {
+    font-size    : 13px;
+    font-weight  : 600;
+    color        : var(--admin-text);
+    max-width    : 100px;
+    white-space  : nowrap;
+    overflow     : hidden;
+    text-overflow: ellipsis;
+    line-height  : 1;
+}
+
+/* ===== PROFILE POPOVER ===== */
+
+.profilePopover {
+    :global(.ant-popover-inner) {
+        padding      : 0 !important;
+        border-radius: 14px !important;
+        background   : var(--admin-panel) !important;
+        border       : 1px solid var(--admin-border);
+        box-shadow   : 0 16px 48px rgba(0, 0, 0, 0.35);
+        overflow     : hidden;
+    }
+
+    :global(.ant-popover-arrow) {
+        display: none;
+    }
+}
+
+.profileCard {
+    width: 260px;
+}
+
+.profileCardTop {
+    display    : flex;
+    align-items: center;
+    gap        : 12px;
+    padding    : 16px 16px 14px;
+    background : linear-gradient(135deg, rgba(250, 173, 20, 0.1) 0%, rgba(255, 122, 0, 0.06) 100%);
+}
+
+.profileCardAvatar {
+    width        : 52px;
+    height       : 52px;
+    border-radius: 50%;
+    object-fit   : cover;
+    flex-shrink  : 0;
+    border       : 2px solid rgba(250, 173, 20, 0.4);
+}
+
+.profileCardAvatarFallback {
+    flex-shrink : 0 !important;
+    width       : 52px !important;
+    height      : 52px !important;
+    background  : color-mix(in srgb, var(--admin-accent) 18%, transparent) !important;
+    color       : var(--admin-accent) !important;
+    border      : 2px solid rgba(250, 173, 20, 0.4) !important;
+}
+
+.profileCardInfo {
+    display       : flex;
+    flex-direction: column;
+    gap           : 2px;
+    min-width     : 0;
+}
+
+.profileCardName {
+    font-size    : 14px;
+    font-weight  : 700;
+    color        : var(--admin-text);
+    white-space  : nowrap;
+    overflow     : hidden;
+    text-overflow: ellipsis;
+}
+
+.profileCardEmail {
+    font-size    : 11px;
+    color        : var(--admin-muted);
+    white-space  : nowrap;
+    overflow     : hidden;
+    text-overflow: ellipsis;
+}
+
+.profileCardRole {
+    font-size  : 10px;
+    font-weight: 600;
+    color      : var(--admin-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top : 2px;
+}
+
+.profileCardDivider {
+    height    : 1px;
+    background: var(--admin-border);
+}
+
+.profileCardActions {
+    display       : flex;
+    flex-direction: column;
+    padding       : 6px;
+}
+
+.profileCardAction {
+    display        : flex;
+    align-items    : center;
+    gap            : 8px;
+    background     : none;
+    border         : none;
+    color          : var(--admin-text);
+    font-size      : 13px;
+    font-weight    : 500;
+    cursor         : pointer;
+    padding        : 9px 12px;
+    border-radius  : 8px;
+    text-align     : left;
+    width          : 100%;
+    transition     : background 0.18s ease, color 0.18s ease;
+
+    &:hover {
+        background: color-mix(in srgb, var(--admin-accent) 12%, transparent);
+        color     : var(--admin-accent);
+    }
+
+    &:last-child:hover {
+        background: rgba(255, 77, 79, 0.1);
+        color     : #ff4d4f;
+    }
+}
 
 @media (max-width: 992px) {
     .adminHeader {

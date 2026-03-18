@@ -1,256 +1,231 @@
-import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Tooltip, Empty, Button } from 'antd';
+import {
+    Avatar, Badge, Button, Card, Drawer, Empty, Popconfirm, Space,
+    Spin, Switch, Table, Tag, Tooltip, Typography,
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useEffect, useState } from 'react';
 import RBButton from 'react-bootstrap/Button';
 import { IoIosAddCircle } from 'react-icons/io';
-import { useAppDispatch, useAppSelector } from '../../../redux/hooks';
-import { fetchUsers, selectUserLoading, selectUserMeta, selectUsers } from '../../../redux/features/userSlice';
-import type { IUser } from '../../../types/user';
+import { FaDownload } from 'react-icons/fa';
 import { CiEdit } from 'react-icons/ci';
 import { FaArrowsToEye } from 'react-icons/fa6';
-import { MdDelete, MdSecurity } from 'react-icons/md';
-import ModalAddUser from './modals/ModalAddUser';
-import { deleteUser, getUserById } from '../../../config/Api';
+import { MdDelete, MdSecurity, MdBlock } from 'react-icons/md';
+import { useAppDispatch, useAppSelector } from '../../../redux/hooks';
+import { fetchUsers, selectUserLoading, selectUserMeta, selectUsers } from '../../../redux/features/userSlice';
+import { fetchRoles, selectRoles } from '../../../redux/features/roleSlice';
+import type { IUser } from '../../../types/user';
+import { assignRole, deleteUser, getUserById } from '../../../config/Api';
 import { toast } from 'react-toastify';
+import { USER_STATUS_META } from '../../../utils/constants/user.constants';
+import ModalAddUser from './modals/ModalAddUser';
 import ModalUserDetails from './modals/ModalUserDetails';
 import ModalUpdateUser from './modals/ModalUpdateUser';
-import { USER_STATUS_META } from '../../../utils/constants/user.constants';
-import AdminModalAssignRole from './modals/AdminModalAssignRole';
 import ModalBanUser from './modals/ModalBanUser';
-import { MdBlock } from 'react-icons/md';
-import { fetchRoles } from '../../../redux/features/roleSlice';
 import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
-import { usePermission } from '../../../hooks/common/usePermission';
 import AdminWrapper from '../../../components/wrapper/AdminWrapper';
-import { FaDownload } from 'react-icons/fa';
+import { usePermission } from '../../../hooks/common/usePermission';
 import { exportTableToExcel } from '../../../utils/export/exportExcelFromTable';
+import { UserOutlined, SafetyOutlined, TeamOutlined } from '@ant-design/icons';
+
+const { Text } = Typography;
 
 const AdminUserPage = () => {
     const dispatch = useAppDispatch();
     const listUsers = useAppSelector(selectUsers);
     const meta = useAppSelector(selectUserMeta);
     const loading = useAppSelector(selectUserLoading);
-    const [deletingId, setDeletingId] = useState<number | null>(null);
-    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const allRoles = useAppSelector(selectRoles);
 
-    const [openModalAddUser, setOpenModalAddUser] = useState<boolean>(false);
-    const [openModalUpdateUser, setOpenModalUpdateUser] = useState<boolean>(false);
-    const [openModalUserDetails, setOpenModalUserDetails] = useState<boolean>(false);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Modals
+    const [openModalAddUser, setOpenModalAddUser] = useState(false);
+    const [openModalUpdateUser, setOpenModalUpdateUser] = useState(false);
+    const [openModalUserDetails, setOpenModalUserDetails] = useState(false);
     const [user, setUser] = useState<IUser | null>(null);
     const [userEdit, setUserEdit] = useState<IUser | null>(null);
-    const [userAssignRole, setUserAssignRole] = useState<IUser | null>(null);
-    const [openModalAssignRole, setOpenModalAssignRole] = useState<boolean>(false);
     const [userBan, setUserBan] = useState<IUser | null>(null);
-    const [openModalBanUser, setOpenModalBanUser] = useState<boolean>(false);
-    const canViewUsers = usePermission("USER_VIEW_LIST");
+    const [openModalBanUser, setOpenModalBanUser] = useState(false);
 
-    // assign role
-    const handleAssignRole = async (data: IUser) => {
-        setUserAssignRole(data);
-        setOpenModalAssignRole(true);
-        await dispatch(fetchRoles("")).unwrap();
-    }
+    // Assign role drawer
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [drawerUser, setDrawerUser] = useState<IUser | null>(null);
+    const [enabledRoleIds, setEnabledRoleIds] = useState<Set<number>>(new Set());
+    const [loadingDrawer, setLoadingDrawer] = useState(false);
+    const [savingRoles, setSavingRoles] = useState(false);
 
-    // ban/unban user
-    const handleBanUser = (data: IUser) => {
-        setUserBan(data);
-        setOpenModalBanUser(true);
-    }
+    const canViewUsers = usePermission('USER_VIEW_LIST');
 
-    const handleBanSuccess = () => {
-        dispatch(fetchUsers(""));
-    }
+    useEffect(() => {
+        if (!canViewUsers) return;
+        dispatch(fetchUsers(''));
+        dispatch(fetchRoles(''));
+    }, [canViewUsers, dispatch]);
 
+    // ── View details ──
     const handleView = async (id: number) => {
         setUser(null);
         setIsLoading(true);
         setOpenModalUserDetails(true);
-
         try {
             const res = await getUserById(id);
-
-            if (Number(res.data.statusCode) === 200) {
-                setUser(res.data.data ?? null);
-            } else {
-                setUser(null);
-            }
-        } catch (error: any) {
-            const m = error?.response?.data?.message ?? "Không xác định";
-            toast.error(
-                <div>
-                    <div>Có lỗi xảy ra khi tải chi tiết người dùng</div>
-                    <div>{m}</div>
-                </div>
-            );
+            setUser(res.data.data ?? null);
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message ?? 'Không tải được thông tin người dùng');
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleEdit = (data: IUser) => {
-        setOpenModalUpdateUser(true);
-        setUserEdit(data);
-    }
-
+    // ── Delete ──
     const handleDelete = async (id: number) => {
         try {
             setDeletingId(id);
-            const res = await deleteUser(id);
-            if (res.data.statusCode === 200) {
-                await dispatch(fetchUsers(""));
-                toast.success('Xóa thành công');
-            }
-        } catch (error: any) {
-            const m = error?.response?.data?.message ?? "Không xác định";
-            toast.error(
-                <div>
-                    <div>Có lỗi xảy ra khi xóa user</div>
-                    <div>{m}</div>
-                </div>
-            )
+            await deleteUser(id);
+            toast.success('Đã xóa người dùng');
+            dispatch(fetchUsers(''));
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message ?? 'Xóa thất bại');
         } finally {
             setDeletingId(null);
         }
     };
 
-
-    const cancel: PopconfirmProps['onCancel'] = () => {
-        toast.error('Đã bỏ chọn');
+    // ── Assign role drawer ──
+    const openAssignRole = async (u: IUser) => {
+        setDrawerUser(u);
+        setDrawerOpen(true);
+        setLoadingDrawer(true);
+        try {
+            await dispatch(fetchRoles('')).unwrap();
+            const res = await getUserById(u.id);
+            const current: number[] = (res.data.data?.roles ?? []).map((r: any) => r.id);
+            setEnabledRoleIds(new Set(current));
+        } catch {
+            toast.error('Không tải được thông tin vai trò');
+        } finally {
+            setLoadingDrawer(false);
+        }
     };
+
+    const handleToggleRole = (id: number, checked: boolean) => {
+        setEnabledRoleIds(prev => {
+            const next = new Set(prev);
+            checked ? next.add(id) : next.delete(id);
+            return next;
+        });
+    };
+
+    const handleSaveRoles = async () => {
+        if (!drawerUser) return;
+        setSavingRoles(true);
+        try {
+            await assignRole(drawerUser.id, { roleIds: Array.from(enabledRoleIds) });
+            toast.success('Đã cập nhật vai trò cho người dùng');
+            dispatch(fetchUsers(''));
+            setDrawerOpen(false);
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message ?? 'Lưu thất bại');
+        } finally {
+            setSavingRoles(false);
+        }
+    };
+
     const columns: ColumnsType<IUser> = [
         {
-            title: 'STT',
-            key: 'stt',
-            render: (_: any, __: IUser, index: number) =>
-                (meta.page - 1) * meta.pageSize + index + 1,
+            title: 'STT', width: 55,
+            render: (_: any, __: IUser, i: number) => (meta.page - 1) * meta.pageSize + i + 1,
+        },
+        { title: 'ID', dataIndex: 'id', width: 60, sorter: (a, b) => a.id - b.id },
+        {
+            title: 'Người dùng', width: 200,
+            render: (_: any, r: IUser) => (
+                <Space size={8}>
+                    <Avatar
+                        size={32}
+                        src={r.avatarUrl || undefined}
+                        icon={!r.avatarUrl && <UserOutlined />}
+                        style={{ background: '#2C3E50', flexShrink: 0 }}
+                    />
+                    <div>
+                        <Text strong style={{ fontSize: 13, display: 'block', lineHeight: '1.2' }}>
+                            {r.name || r.fullName || '—'}
+                        </Text>
+                        <Text type="secondary" style={{ fontSize: 11 }}>{r.email}</Text>
+                    </div>
+                </Space>
+            ),
         },
         {
-            title: 'ID',
-            dataIndex: 'id',
-            key: 'id',
-            sorter: (a, b) => a.id - b.id,
+            title: 'SĐT', dataIndex: 'phoneNumber', width: 120,
+            render: (t) => t || <Text type="secondary">—</Text>,
         },
         {
-            title: 'Tên',
-            dataIndex: 'name',
-            key: 'name',
-            sorter: (a, b) =>
-                (a.name ?? '').localeCompare(b.name ?? ''),
-            render: (text?: string | null) => text || '-',
-        },
-        {
-            title: 'Email',
-            dataIndex: 'email',
-            key: 'email',
-            sorter: (a, b) => a.email.localeCompare(b.email),
-        },
-        {
-            title: 'SĐT',
-            dataIndex: 'phoneNumber',
-            key: 'phoneNumber',
-            sorter: (a, b) =>
-                (a.phoneNumber ?? '').localeCompare(b.phoneNumber ?? ''),
-            render: (text?: string | null) => text || '-',
-        },
-        {
-            title: 'Trạng thái',
-            dataIndex: 'status',
-            key: 'status',
-            sorter: (a, b) =>
-                (a.status ?? '').localeCompare(b.status ?? ''),
-            // render: (status?: IUser['status']) => (
-            //     <Tag color={status ? statusColors[status] : 'default'}>
-            //         {status ?? 'Không xác định'}
-            //     </Tag>
-            // ),
-            render: (status?: IUser['status']) =>
-                status ? (
-                    <Tag color={USER_STATUS_META[status].color}>
-                        {USER_STATUS_META[status].label}
-                    </Tag>
-                ) : (
-                    <Tag>Không xác định</Tag>
-                ),
-
+            title: 'Trạng thái', dataIndex: 'status', width: 130,
+            sorter: (a, b) => (a.status ?? '').localeCompare(b.status ?? ''),
+            render: (status?: IUser['status']) => status
+                ? <Tag color={USER_STATUS_META[status].color}>{USER_STATUS_META[status].label}</Tag>
+                : <Tag>Không xác định</Tag>,
         },
         {
             title: 'Vai trò',
-            dataIndex: 'roles',
-            key: 'roles',
-            render: (roles?: IUser['roles']) => (
+            render: (_: any, r: IUser) => (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                    {roles?.length
-                        ? roles.map(role => (
-                            <Tag key={role.id} color="blue">
-                                {role.name}
-                            </Tag>
-                        ))
-                        : '-'}
+                    {r.roles?.length
+                        ? r.roles.map(role => <Tag key={role.id} color="blue">{role.name}</Tag>)
+                        : <Text type="secondary">—</Text>}
                 </div>
             ),
         },
         {
-            title: 'Hành động',
-            key: 'actions',
+            title: 'Hành động', width: 180, align: 'center' as const,
             render: (_: any, record: IUser) => (
-                <Space align="center" style={{ justifyContent: "center", width: "100%" }}>
-
-                    <PermissionWrapper required={"USER_VIEW_DETAIL"}>
-                        <RBButton variant="outline-info" size='sm'
-                            onClick={() => handleView(record.id)}
-                        >
-                            <FaArrowsToEye />
-                        </RBButton>
+                <Space size={4}>
+                    <PermissionWrapper required="USER_VIEW_DETAIL">
+                        <Tooltip title="Xem chi tiết">
+                            <RBButton variant="outline-info" size="sm" onClick={() => handleView(record.id)}>
+                                <FaArrowsToEye />
+                            </RBButton>
+                        </Tooltip>
                     </PermissionWrapper>
 
-                    <PermissionWrapper required={"USER_UPDATE"}>
-                        <RBButton
-                            variant="outline-warning"
-                            size='sm'
-                            onClick={() => handleEdit(record)}
-                        >
-                            <CiEdit />
-                        </RBButton>
+                    <PermissionWrapper required="USER_UPDATE">
+                        <Tooltip title="Chỉnh sửa">
+                            <RBButton variant="outline-warning" size="sm" onClick={() => { setUserEdit(record); setOpenModalUpdateUser(true); }}>
+                                <CiEdit />
+                            </RBButton>
+                        </Tooltip>
                     </PermissionWrapper>
 
-                    <PermissionWrapper required={"USER_DELETE"}>
+                    <PermissionWrapper required="USER_DELETE">
                         <Popconfirm
-                            title="Xóa người dùng"
-                            description="Bạn có chắc chắn muốn xóa người dùng này không?"
+                            title={`Xóa người dùng "${record.name ?? record.email}"?`}
+                            description="Hành động này không thể hoàn tác."
                             onConfirm={() => handleDelete(record.id)}
-                            onCancel={cancel}
-                            okText="Có"
-                            cancelText="Không"
-                            placement="topLeft"
-                            okButtonProps={{
-                                loading: deletingId === record.id
-                            }}
+                            okText="Xóa" cancelText="Hủy"
+                            okButtonProps={{ danger: true, loading: deletingId === record.id }}
                         >
-                            <RBButton
-                                size='sm'
-                                variant="outline-danger"
-                                disabled={deletingId === record.id}
-                            >
+                            <RBButton variant="outline-danger" size="sm" disabled={deletingId === record.id}>
                                 <MdDelete />
                             </RBButton>
                         </Popconfirm>
                     </PermissionWrapper>
 
-                    <PermissionWrapper required={"USER_ASSIGN_ROLE"}>
-                        <Tooltip placement="left" title="Gắn quyền">
-                            <RBButton size="sm" variant="outline-secondary"
-                                onClick={() => handleAssignRole(record)}
-                            >
+                    <PermissionWrapper required="USER_ASSIGN_ROLE">
+                        <Tooltip title="Gắn vai trò">
+                            <RBButton variant="outline-secondary" size="sm" onClick={() => openAssignRole(record)}>
                                 <MdSecurity />
                             </RBButton>
                         </Tooltip>
                     </PermissionWrapper>
 
-                    <PermissionWrapper required={"USER_UPDATE"}>
-                        <Tooltip placement="left" title={record.status === 'BANNED' ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}>
-                            <RBButton size="sm"
+                    <PermissionWrapper required="USER_UPDATE">
+                        <Tooltip title={record.status === 'BANNED' ? 'Mở khóa' : 'Khóa tài khoản'}>
+                            <RBButton
+                                size="sm"
                                 variant={record.status === 'BANNED' ? 'outline-success' : 'outline-danger'}
-                                onClick={() => handleBanUser(record)}
+                                onClick={() => { setUserBan(record); setOpenModalBanUser(true); }}
                             >
                                 <MdBlock />
                             </RBButton>
@@ -261,103 +236,158 @@ const AdminUserPage = () => {
         },
     ];
 
-    // fetch list users
-    // useEffect(() => {
-    //     dispatch(fetchUsers(""));
-    // }, [dispatch]);
-    useEffect(() => {
-        if (!canViewUsers) return;
-
-        dispatch(fetchUsers(""));
-    }, [canViewUsers, dispatch]);
-
     return (
-        <>
-            <AdminWrapper>
-                <Card
-                    size='small'
-                    title="Quản lý người dùng (User)"
-                    extra={
-                        <Space align='center'>
-                            <PermissionWrapper required={"USER_CREATE"}>
-                                <RBButton variant="outline-primary"
-                                    size='sm'
-                                    style={{ display: "flex", alignItems: "center", gap: 3 }}
-                                    onClick={() => setOpenModalAddUser(true)}
-                                >
-                                    <IoIosAddCircle />
-                                    Thêm mới
-                                </RBButton>
-                            </PermissionWrapper>
-
-                            <Button
-                                icon={<FaDownload />}
-                                onClick={() =>
-                                    exportTableToExcel(columns, listUsers, 'users')
-                                }
+        <AdminWrapper>
+            <Card
+                style={{ borderRadius: 10, boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}
+                styles={{ body: { padding: '0 24px 24px' } }}
+                title={
+                    <Space>
+                        <TeamOutlined style={{ color: '#faad14' }} />
+                        <Typography.Title level={4} style={{ margin: 0 }}>Quản lý người dùng</Typography.Title>
+                    </Space>
+                }
+                extra={
+                    <Space>
+                        <PermissionWrapper required="USER_CREATE">
+                            <RBButton
+                                variant="outline-primary" size="sm"
+                                style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+                                onClick={() => setOpenModalAddUser(true)}
                             >
-                                Xuất Excel
-                            </Button>
-                        </Space>
-                    }
-                    hoverable={false}
-                    style={{ width: '100%', overflowX: 'auto', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+                                <IoIosAddCircle /> Thêm mới
+                            </RBButton>
+                        </PermissionWrapper>
+                        <Button
+                            icon={<FaDownload />} size="small"
+                            onClick={() => exportTableToExcel(columns, listUsers, 'users')}
+                        >
+                            Xuất Excel
+                        </Button>
+                    </Space>
+                }
+            >
+                <PermissionWrapper
+                    required="USER_VIEW_LIST"
+                    fallback={<Empty description="Bạn không có quyền xem danh sách người dùng" />}
                 >
-                    <PermissionWrapper required={"USER_VIEW_LIST"}
-                        fallback={<Empty description="Bạn không có quyền xem danh sách người dùng" />}
-                    >
-                        <Table<IUser>
-                            columns={columns}
-                            dataSource={listUsers}
-                            rowKey="id"
-                            loading={loading}
-                            size='small'
-                            pagination={{
-                                current: meta.page,
-                                pageSize: meta.pageSize,
-                                total: meta.total,
-                                showSizeChanger: true,
-                                onChange: (page, pageSize) => {
-                                    dispatch(fetchUsers(`page=${page}&pageSize=${pageSize}`));
-                                },
-                            }}
-                            bordered
-                            scroll={{ x: 'max-content' }} // scroll ngang nếu table quá rộng
-                        />
-                    </PermissionWrapper>
-                </Card>
-                <ModalAddUser
-                    openModalAddUser={openModalAddUser}
-                    setOpenModalAddUser={setOpenModalAddUser}
-                />
+                    <Table<IUser>
+                        columns={columns} dataSource={listUsers} rowKey="id"
+                        loading={loading} size="small" bordered
+                        scroll={{ x: 'max-content' }}
+                        pagination={{
+                            current: meta.page, pageSize: meta.pageSize, total: meta.total,
+                            showSizeChanger: true,
+                            onChange: (page, pageSize) =>
+                                dispatch(fetchUsers(`page=${page}&pageSize=${pageSize}`)),
+                        }}
+                    />
+                </PermissionWrapper>
+            </Card>
 
-                <ModalUserDetails
-                    setOpenModalUserDetails={setOpenModalUserDetails}
-                    openModalUserDetails={openModalUserDetails}
-                    user={user}
-                    isLoading={isLoading}
-                />
+            {/* Assign role drawer */}
+            <Drawer
+                open={drawerOpen}
+                onClose={() => setDrawerOpen(false)}
+                title={
+                    <Space>
+                        <SafetyOutlined />
+                        <span>
+                            Gắn vai trò:{' '}
+                            <Tag color="blue">{drawerUser?.name ?? drawerUser?.email}</Tag>
+                        </span>
+                    </Space>
+                }
+                styles={{ body: { padding: '16px 20px' }, wrapper: { width: 480 } }}
+                extra={
+                    <Button type="primary" loading={savingRoles} onClick={handleSaveRoles}>
+                        Lưu
+                    </Button>
+                }
+            >
+                <Spin spinning={loadingDrawer}>
+                    <div style={{ marginBottom: 12 }}>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                            Bật/tắt từng vai trò để phân quyền cho người dùng này.
+                        </Text>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {allRoles.map(role => {
+                            const on = enabledRoleIds.has(role.id);
+                            return (
+                                <div
+                                    key={role.id}
+                                    style={{
+                                        display: 'flex', alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        padding: '10px 14px',
+                                        borderRadius: 10,
+                                        background: on ? 'rgba(82,196,26,0.06)' : 'rgba(0,0,0,0.02)',
+                                        border: `1px solid ${on ? 'rgba(82,196,26,0.3)' : 'rgba(0,0,0,0.06)'}`,
+                                        transition: 'all 0.18s',
+                                        cursor: 'pointer',
+                                    }}
+                                    onClick={() => handleToggleRole(role.id, !on)}
+                                >
+                                    <Space size={10}>
+                                        <Badge
+                                            dot
+                                            color={on ? '#52c41a' : '#d9d9d9'}
+                                            style={{ marginTop: 2 }}
+                                        />
+                                        <div>
+                                            <Text strong style={{ fontSize: 13, display: 'block', lineHeight: '1.2' }}>
+                                                <Tag color={role.name === 'ADMIN' ? 'warning' : 'blue'} style={{ margin: 0 }}>
+                                                    {role.name}
+                                                </Tag>
+                                            </Text>
+                                            {role.description && (
+                                                <Text type="secondary" style={{ fontSize: 11 }}>
+                                                    {role.description}
+                                                </Text>
+                                            )}
+                                        </div>
+                                    </Space>
+                                    <Switch
+                                        size="small"
+                                        checked={on}
+                                        onChange={(checked, e) => {
+                                            e.stopPropagation();
+                                            handleToggleRole(role.id, checked);
+                                        }}
+                                    />
+                                </div>
+                            );
+                        })}
+                        {allRoles.length === 0 && !loadingDrawer && (
+                            <Empty description="Chưa có vai trò nào" />
+                        )}
+                    </div>
+                </Spin>
+            </Drawer>
 
-                <ModalUpdateUser
-                    openModalUpdateUser={openModalUpdateUser}
-                    setOpenModalUpdateUser={setOpenModalUpdateUser}
-                    userEdit={userEdit}
-                />
-
-                <AdminModalAssignRole
-                    openModalAssignRole={openModalAssignRole}
-                    setOpenModalAssignRole={setOpenModalAssignRole}
-                    userAssignRole={userAssignRole}
-                />
-
-                <ModalBanUser
-                    open={openModalBanUser}
-                    onCancel={() => setOpenModalBanUser(false)}
-                    user={userBan}
-                    onSuccess={handleBanSuccess}
-                />
-            </AdminWrapper>
-        </>
+            <ModalAddUser
+                openModalAddUser={openModalAddUser}
+                setOpenModalAddUser={setOpenModalAddUser}
+            />
+            <ModalUserDetails
+                openModalUserDetails={openModalUserDetails}
+                setOpenModalUserDetails={setOpenModalUserDetails}
+                user={user}
+                isLoading={isLoading}
+            />
+            <ModalUpdateUser
+                openModalUpdateUser={openModalUpdateUser}
+                setOpenModalUpdateUser={setOpenModalUpdateUser}
+                userEdit={userEdit}
+            />
+            <ModalBanUser
+                open={openModalBanUser}
+                onCancel={() => setOpenModalBanUser(false)}
+                user={userBan}
+                onSuccess={() => dispatch(fetchUsers(''))}
+            />
+        </AdminWrapper>
     );
 };
 

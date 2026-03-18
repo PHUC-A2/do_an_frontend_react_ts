@@ -97,8 +97,8 @@ const ChatBot = () => {
                 >
                     <motion.span
                         className={styles.chatBtnGlow}
-                        animate={{ opacity: [0.4, 0.9, 0.4], scale: [0.9, 1.2, 0.9] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                        animate={{ opacity: [0.42, 0.88, 0.42], scale: [0.88, 1.18, 0.88] }}
+                        transition={{ duration: 1.05, repeat: Infinity, ease: 'easeInOut' }}
                     />
                     <RiRobot2Line size={22} />
                 </motion.button>

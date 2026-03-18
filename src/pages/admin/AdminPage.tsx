@@ -40,6 +40,17 @@ const { Title } = Typography;
 const { useBreakpoint } = Grid;
 
 const AdminPage = () => {
+    // Detect dark: App.tsx sets document.body.className = theme ('dark' | 'light')
+    const isDark = document.body.classList.contains('dark');
+    const axisTextColor = isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)';
+    const axisLineColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)';
+    const splitLineColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)';
+    const legendTextColor = isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.65)';
+    const labelColor = isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.7)';
+    const tooltipBg = isDark ? 'rgba(15,15,30,0.92)' : 'rgba(255,255,255,0.97)';
+    const tooltipText = isDark ? '#fff' : '#1a1a2e';
+    const tooltipBorder = isDark ? 'rgba(250,173,20,0.3)' : 'rgba(250,173,20,0.5)';
+
     const screens = useBreakpoint();
     const isMobile = !screens.md;
 
@@ -181,18 +192,35 @@ const AdminPage = () => {
         },
     ];
 
-    const chartHeight = isMobile ? 300 : 400;
+    const chartHeight = isMobile ? 280 : 360;
 
     /* ================= CHART COLORS ================= */
 
     const chartColors = [
+        "#faad14",
         "#1677ff",
         "#52c41a",
-        "#faad14",
         "#722ed1",
         "#13c2c2",
         "#eb2f96",
+        "#fa541c",
+        "#a0d911",
     ];
+
+    const darkAxisStyle = {
+        axisLine: { lineStyle: { color: axisLineColor } },
+        splitLine: { lineStyle: { color: splitLineColor } },
+        axisLabel: { color: axisTextColor, fontSize: 11 },
+        axisTick: { show: false },
+    };
+
+    const tooltipStyle = {
+        backgroundColor: tooltipBg,
+        borderColor: tooltipBorder,
+        borderWidth: 1,
+        textStyle: { color: tooltipText, fontSize: 12 },
+        extraCssText: "border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.3)",
+    };
 
 
     return (
@@ -292,37 +320,51 @@ const AdminPage = () => {
                             <Card title="Doanh thu theo ngày" size="small" variant="borderless">
                                 <ReactECharts
                                     option={{
-                                        color: ["#1677ff"],
+                                        color: ["#faad14"],
+                                        backgroundColor: "transparent",
                                         tooltip: {
                                             trigger: "axis",
+                                            ...tooltipStyle,
                                             formatter: (params: any) => {
                                                 const p = params[0];
-                                                return `${p.axisValue}<br/>${formatVND(p.data)}`;
+                                                return `<b>${p.axisValue}</b><br/>💰 ${formatVND(p.data)}`;
                                             },
                                         },
+                                        grid: { left: 16, right: 24, top: 16, bottom: 32, containLabel: true },
                                         xAxis: {
                                             type: "category",
                                             data: data.revenueByDate.map(i => formatLocalDate(i.label)),
+                                            boundaryGap: false,
+                                            ...darkAxisStyle,
                                         },
                                         yAxis: {
                                             type: "value",
+                                            ...darkAxisStyle,
                                             axisLabel: {
-                                                formatter: (v: number) => formatVND(v),
+                                                ...darkAxisStyle.axisLabel,
+                                                formatter: (v: number) => {
+                                                    if (v >= 1_000_000) return `${v / 1_000_000}M`;
+                                                    if (v >= 1_000) return `${v / 1_000}K`;
+                                                    return `${v}`;
+                                                },
                                             },
                                         },
                                         series: [
                                             {
+                                                name: "Doanh thu",
                                                 data: data.revenueByDate.map(i => i.revenue),
                                                 type: "line",
                                                 smooth: true,
                                                 showSymbol: false,
+                                                symbolSize: 6,
                                                 areaStyle: {
                                                     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                                        { offset: 0, color: "rgba(22,119,255,0.4)" },
-                                                        { offset: 1, color: "rgba(22,119,255,0.05)" },
+                                                        { offset: 0, color: "rgba(250,173,20,0.35)" },
+                                                        { offset: 1, color: "rgba(250,173,20,0.02)" },
                                                     ]),
                                                 },
-                                                lineStyle: { width: 3 },
+                                                lineStyle: { width: 2.5, color: "#faad14" },
+                                                itemStyle: { color: "#faad14" },
                                             },
                                         ],
                                     }}
@@ -336,33 +378,60 @@ const AdminPage = () => {
                             <Card title="Doanh thu theo sân" size="small" variant="borderless">
                                 <ReactECharts
                                     option={{
-                                        color: ["#52c41a"],
+                                        backgroundColor: "transparent",
                                         tooltip: {
                                             trigger: "axis",
+                                            ...tooltipStyle,
                                             formatter: (params: any) => {
                                                 const p = params[0];
-                                                return `${p.name}<br/>${formatVND(p.value)}`;
+                                                return `<b>${p.name}</b><br/>💰 ${formatVND(p.value)}`;
                                             },
                                         },
+                                        grid: { left: 16, right: 80, top: 12, bottom: 12, containLabel: true },
                                         xAxis: {
                                             type: "value",
+                                            ...darkAxisStyle,
+                                            axisLabel: {
+                                                ...darkAxisStyle.axisLabel,
+                                                formatter: (v: number) => {
+                                                    if (v >= 1_000_000) return `${v / 1_000_000}M`;
+                                                    if (v >= 1_000) return `${v / 1_000}K`;
+                                                    return `${v}`;
+                                                },
+                                            },
                                         },
                                         yAxis: {
                                             type: "category",
                                             data: groupedPitchRevenue.map((i: any) => i.pitchName),
+                                            ...darkAxisStyle,
+                                            axisLabel: { ...darkAxisStyle.axisLabel, width: 90, overflow: "truncate" },
                                         },
                                         series: [
                                             {
-                                                data: groupedPitchRevenue.map((i: any) => i.revenue),
+                                                data: groupedPitchRevenue.map((i: any) => ({
+                                                    value: i.revenue,
+                                                    itemStyle: {
+                                                        color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
+                                                            { offset: 0, color: "#faad14" },
+                                                            { offset: 1, color: "#ff7a00" },
+                                                        ]),
+                                                    },
+                                                })),
                                                 type: "bar",
+                                                barMaxWidth: 22,
                                                 label: {
                                                     show: true,
                                                     position: "right",
-                                                    formatter: (p: any) => formatVND(p.value),
+                                                    color: axisTextColor,
+                                                    fontSize: 11,
+                                                    formatter: (p: any) => {
+                                                        const v = p.value;
+                                                        if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+                                                        if (v >= 1_000) return `${(v / 1_000).toFixed(0)}K`;
+                                                        return `${v}`;
+                                                    },
                                                 },
-                                                itemStyle: {
-                                                    borderRadius: [0, 8, 8, 0],
-                                                },
+                                                itemStyle: { borderRadius: [0, 6, 6, 0] },
                                             },
                                         ],
                                     }}
@@ -373,21 +442,43 @@ const AdminPage = () => {
 
                         {/* PIE REVENUE */}
                         <Col xs={24} md={12}>
-                            <Card title="Tỷ trọng doanh thu" size="small" variant="borderless">
+                            <Card title="Tỷ trọng doanh thu theo sân" size="small" variant="borderless">
                                 <ReactECharts
                                     option={{
                                         color: chartColors,
+                                        backgroundColor: "transparent",
                                         tooltip: {
                                             trigger: "item",
+                                            ...tooltipStyle,
                                             formatter: (p: any) =>
-                                                `${p.name}<br/>${formatVND(p.value)} (${p.percent}%)`,
+                                                `<b>${p.name}</b><br/>💰 ${formatVND(p.value)}<br/>📊 ${p.percent}%`,
+                                        },
+                                        legend: isMobile ? {
+                                            orient: "horizontal",
+                                            bottom: 4,
+                                            left: "center",
+                                            textStyle: { color: legendTextColor, fontSize: 10 },
+                                            itemWidth: 8,
+                                            itemHeight: 8,
+                                        } : {
+                                            orient: "vertical",
+                                            right: 8,
+                                            top: "center",
+                                            textStyle: { color: legendTextColor, fontSize: 11 },
+                                            itemWidth: 10,
+                                            itemHeight: 10,
                                         },
                                         series: [
                                             {
                                                 type: "pie",
-                                                radius: ["45%", "70%"],
-                                                label: {
-                                                    formatter: "{b}\n{d}%",
+                                                radius: ["40%", "65%"],
+                                                center: isMobile ? ["50%", "44%"] : ["38%", "50%"],
+                                                label: { show: false },
+                                                labelLine: { show: false },
+                                                emphasis: {
+                                                    itemStyle: { shadowBlur: 12, shadowColor: "rgba(0,0,0,0.4)" },
+                                                    scale: true,
+                                                    scaleSize: 6,
                                                 },
                                                 data: groupedPitchRevenue.map((i: any) => ({
                                                     value: i.revenue,
@@ -396,7 +487,7 @@ const AdminPage = () => {
                                             },
                                         ],
                                     }}
-                                    style={{ height: chartHeight }}
+                                    style={{ height: isMobile ? 260 : chartHeight }}
                                 />
                             </Card>
                         </Col>
@@ -406,23 +497,48 @@ const AdminPage = () => {
                             <Card title="Tình trạng Booking" size="small" variant="borderless">
                                 <ReactECharts
                                     option={{
-                                        color: ["#52c41a", "#ff4d4f"],
-                                        tooltip: { trigger: "item" },
+                                        color: ["#52c41a", "#ff4d4f", "#faad14"],
+                                        backgroundColor: "transparent",
+                                        tooltip: {
+                                            trigger: "item",
+                                            ...tooltipStyle,
+                                            formatter: (p: any) =>
+                                                `<b>${p.name}</b><br/>📦 ${p.value} booking (${p.percent}%)`,
+                                        },
+                                        legend: {
+                                            bottom: 4,
+                                            left: "center",
+                                            textStyle: { color: legendTextColor, fontSize: isMobile ? 10 : 11 },
+                                            itemWidth: isMobile ? 8 : 10,
+                                            itemHeight: isMobile ? 8 : 10,
+                                        },
                                         series: [
                                             {
                                                 type: "pie",
-                                                radius: "65%",
+                                                radius: ["38%", "62%"],
+                                                center: ["50%", isMobile ? "42%" : "44%"],
                                                 label: {
-                                                    formatter: "{b}\n{d}%",
+                                                    show: true,
+                                                    formatter: "{d}%",
+                                                    color: labelColor,
+                                                    fontSize: isMobile ? 11 : 12,
+                                                    fontWeight: 600,
+                                                },
+                                                labelLine: { lineStyle: { color: axisLineColor } },
+                                                emphasis: {
+                                                    itemStyle: { shadowBlur: 12, shadowColor: "rgba(0,0,0,0.4)" },
+                                                    scale: true,
+                                                    scaleSize: 6,
                                                 },
                                                 data: [
                                                     { value: data.paidBookings, name: "Đã thanh toán" },
                                                     { value: data.cancelledBookings, name: "Đã hủy" },
-                                                ],
+                                                    { value: Math.max(0, data.totalBookings - data.paidBookings - data.cancelledBookings), name: "Chờ xử lý" },
+                                                ].filter(d => d.value > 0),
                                             },
                                         ],
                                     }}
-                                    style={{ height: chartHeight }}
+                                    style={{ height: isMobile ? 260 : chartHeight }}
                                 />
                             </Card>
                         </Col>

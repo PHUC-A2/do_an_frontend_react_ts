@@ -1,4 +1,4 @@
-import { DatePicker, Form, Input, Popconfirm, Select, Spin, type PopconfirmProps } from "antd";
+import { DatePicker, Form, Input, Popconfirm, Radio, Select, Spin, type PopconfirmProps } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import dayjs, { type Dayjs } from "dayjs";
@@ -218,7 +218,13 @@ const CreateBookingForm = ({ pitchIdNumber, pitch, pitchLoading, bookingDate, is
             </AnimatePresence>
 
             <Form.Item label="Áo pitch" name="shirtOption" style={{ marginBottom: 12 }}>
-                <Select className="bk__select-wrap" options={SHIRT_OPTION_OPTIONS} placeholder="Chọn tuỳ chọn áo" />
+                <Radio.Group className="bk__shirt-radio" buttonStyle="solid" style={{ width: '100%', display: 'flex' }}>
+                    {SHIRT_OPTION_OPTIONS.map(opt => (
+                        <Radio.Button key={opt.value} value={opt.value} style={{ flex: 1, textAlign: 'center' }}>
+                            {opt.label}
+                        </Radio.Button>
+                    ))}
+                </Radio.Group>
             </Form.Item>
 
             <Form.Item label="Số điện thoại liên hệ" name="contactPhone" style={{ marginBottom: 16 }}>
