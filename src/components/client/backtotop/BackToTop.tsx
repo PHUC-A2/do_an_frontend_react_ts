@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Tooltip } from "antd";
 import { UpOutlined } from "@ant-design/icons";
+import { useAppSelector } from "../../../redux/hooks";
 
 interface BackToTopProps {
     theme: "light" | "dark";
@@ -9,6 +10,8 @@ interface BackToTopProps {
 
 const BackToTop: React.FC<BackToTopProps> = ({ theme }) => {
     const [visible, setVisible] = useState<boolean>(false);
+    const adminChatOpen = useAppSelector(state => state.messengerButtonUi.adminChatOpen);
+    const clientChatOpen = useAppSelector(state => state.messengerButtonUi.clientChatOpen);
     const isDark = theme === "dark";
 
     useEffect(() => {
@@ -27,7 +30,7 @@ const BackToTop: React.FC<BackToTopProps> = ({ theme }) => {
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    if (!visible) return null;
+    if (!visible || adminChatOpen || clientChatOpen) return null;
 
     return (
         <Tooltip title="Cuộn lên đầu trang" placement="left">
@@ -45,7 +48,7 @@ const BackToTop: React.FC<BackToTopProps> = ({ theme }) => {
 
                 style={{
                     position: "fixed",
-                    bottom: 64,
+                    bottom: 108,
                     right: 18,
                     width: 32,
                     height: 32,

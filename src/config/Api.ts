@@ -224,3 +224,36 @@ export const uploadImagePayment = async (file: File) => {
 
     return data;
 };
+
+// AI Chat
+export const clientAiChat = (data: { message: string; history?: { role: string; content: string }[] }) =>
+    instance.post<IBackendRes<{ reply: string; provider: string; offTopic: boolean; remainingMessages: number }>>(
+        '/api/v1/client/ai/chat',
+        data
+    );
+
+export const adminAiChat = (data: { message: string; history?: { role: string; content: string }[] }) =>
+    instance.post<IBackendRes<{ reply: string; provider: string; offTopic: boolean; remainingMessages: number }>>(
+        '/api/v1/admin/ai/chat',
+        data
+    );
+
+// AI Key Management
+export type AiProvider = 'GROQ' | 'GEMINI' | 'CLOUDFLARE';
+export interface IAiKey {
+    id: number;
+    provider: AiProvider;
+    label: string | null;
+    apiKeyMasked: string;
+    active: boolean;
+    usageCount: number;
+    lastUsedAt: string | null;
+    createdAt: string | null;
+}
+export const adminGetAiKeys = () => instance.get<IBackendRes<IAiKey[]>>('/api/v1/admin/ai/keys');
+export const adminAddAiKey = (data: { provider: AiProvider; apiKey: string; label?: string }) =>
+    instance.post<IBackendRes<IAiKey>>('/api/v1/admin/ai/keys', data);
+export const adminToggleAiKey = (id: number) =>
+    instance.patch<IBackendRes<IAiKey>>(`/api/v1/admin/ai/keys/${id}/toggle`);
+export const adminDeleteAiKey = (id: number) =>
+    instance.delete<IBackendRes<void>>(`/api/v1/admin/ai/keys/${id}`);

@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react';
 import Header from '../components/client/Header';
 import Footer from '../components/client/Footer';
 import MessageButton from '../components/client/chat/MessageButton';
+import ChatBot from '../components/client/chat/ChatBot';
 
 interface ClientLayoutProps {
     theme: 'light' | 'dark';
@@ -36,6 +37,7 @@ const ClientLayout = ({ theme, toggleTheme }: ClientLayoutProps) => {
         >
             <Layout style={layoutStyle}>
                 <MessageButton />
+                <ChatBot />
                 <Header theme={theme} toggleTheme={toggleTheme} />
                 <Content style={contentStyle}>
                     <Outlet />

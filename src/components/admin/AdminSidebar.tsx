@@ -8,6 +8,7 @@ import {
     LoginOutlined,
 } from '@ant-design/icons';
 import { MdFeaturedPlayList, MdOutlineSecurity, MdPayments, MdSportsHandball } from 'react-icons/md';
+import { RiRobot2Line } from 'react-icons/ri';
 import { GiReturnArrow } from 'react-icons/gi';
 import { FaReact, FaUserCircle, FaUserCog } from 'react-icons/fa';
 import ModalAccount from '../../pages/auth/modal/ModalAccount';
@@ -91,7 +92,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         }
     };
 
-    const routeMenuKeys = ['/admin', '/admin/user', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment'];
+    const routeMenuKeys = ['/admin', '/admin/user', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/ai'];
 
     const selectedMenuKey = useMemo(() => {
         const currentPath = location.pathname;
@@ -164,6 +165,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                             label: <Link to="/admin/booking-equipment" className={styles.menuLink}>Mượn thiết bị</Link>,
                             icon: <GiReturnArrow />,
                         }] : []),
+
+                        {
+                            key: '/admin/ai',
+                            label: <Link to="/admin/ai" className={styles.menuLink}>Quản lý AI</Link>,
+                            icon: <RiRobot2Line />,
+                        },
 
                     ]
                     : []),

@@ -1,5 +1,6 @@
 import { Layout, ConfigProvider, theme as antdTheme } from 'antd';
 import AdminSidebar from '../components/admin/AdminSidebar';
+import AdminChatBot from '../components/admin/chat/AdminChatBot';
 import '../styles/AdminLayout.scss'
 
 interface AdminLayoutProps {
@@ -19,6 +20,7 @@ const AdminLayout = ({ theme, toggleTheme }: AdminLayoutProps) => {
         >
             <Layout style={{ minHeight: '100vh' }}>
                 <AdminSidebar theme={theme} toggleTheme={toggleTheme} />
+                <AdminChatBot />
             </Layout>
         </ConfigProvider>
     );

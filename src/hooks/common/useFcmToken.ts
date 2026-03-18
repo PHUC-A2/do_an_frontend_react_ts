@@ -4,7 +4,7 @@
  */
 import { useEffect, useRef } from 'react';
 import { getToken, onMessage } from 'firebase/messaging';
-import { messaging } from '../../config/firebase';
+import { getFirebaseMessaging } from '../../config/firebase';
 import { registerFcmToken } from '../../config/Api';
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY as string;
@@ -17,10 +17,13 @@ export const useFcmToken = (isLoggedIn: boolean) => {
 
         const register = async () => {
             try {
+                const msg = getFirebaseMessaging();
+                if (!msg) return;
+
                 const permission = await Notification.requestPermission();
                 if (permission !== 'granted') return;
 
-                const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+                const token = await getToken(msg, { vapidKey: VAPID_KEY });
                 if (!token) return;
 
                 await registerFcmToken(token);
@@ -35,7 +38,10 @@ export const useFcmToken = (isLoggedIn: boolean) => {
 
     // Lắng nghe foreground message (app đang mở)
     useEffect(() => {
-        const unsubscribe = onMessage(messaging, (payload) => {
+        const msg = getFirebaseMessaging();
+        if (!msg) return;
+
+        const unsubscribe = onMessage(msg, (payload) => {
             const title = payload.notification?.title ?? 'TBU Sport';
             const body = payload.notification?.body ?? '';
             if (Notification.permission === 'granted') {

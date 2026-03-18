@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getMessaging } from 'firebase/messaging';
+import { getMessaging, isSupported, type Messaging } from 'firebase/messaging';
 
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -11,4 +11,11 @@ const firebaseConfig = {
 };
 
 export const firebaseApp = initializeApp(firebaseConfig);
-export const messaging = getMessaging(firebaseApp);
+
+// messaging có thể null nếu browser không hỗ trợ (Firefox, Safari cũ, SSR...)
+let _messaging: Messaging | null = null;
+isSupported().then(supported => {
+    if (supported) _messaging = getMessaging(firebaseApp);
+}).catch(() => {});
+
+export const getFirebaseMessaging = () => _messaging;
