@@ -474,6 +474,13 @@ $bp-lg  : 1024px;
     &--cal {
         font-size: 0.82rem;
     }
+
+    @media (max-width: 340px) {
+        width        : 26px;
+        height       : 26px;
+        border-radius: 6px;
+        font-size    : 0.65rem;
+    }
 }
 
 .bk__nav-picker.ant-picker {
@@ -489,8 +496,8 @@ $bp-lg  : 1024px;
     background     : var(--bg-card2) !important;
 
     .ant-picker-input {
-        width  : 0;
-        height : 0;
+        width   : 0;
+        height  : 0;
         overflow: hidden;
 
         input {
@@ -521,6 +528,12 @@ $bp-lg  : 1024px;
             color: $gold !important;
         }
     }
+
+    @media (max-width: 340px) {
+        width    : 30px;
+        min-width: 30px;
+        height   : 26px;
+    }
 }
 
 .bk__week-label {
@@ -533,10 +546,10 @@ $bp-lg  : 1024px;
     text-overflow: ellipsis;
 }
 
-// Date strip — 7 chip luôn chia đều, không scroll ngang
+// Date strip — 7 chip luôn chia đều, scroll ngang trên iPhone 5
 .bk__date-strip {
     display      : flex;
-    gap          : 4px; // gap nhỏ hơn
+    gap          : 4px;
     margin-bottom: 16px;
 
     @media (max-width: $bp-md) {
@@ -545,6 +558,18 @@ $bp-lg  : 1024px;
 
     @media (max-width: $bp-xxs) {
         gap: 3px;
+    }
+
+    // iPhone 5 (≤340px): scroll ngang ẩn thay vì ép 7 chip vào ~39px
+    @media (max-width: 340px) {
+        overflow-x                : auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width           : none;
+        padding-bottom            : 2px;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
     }
 }
 
@@ -561,6 +586,13 @@ $bp-lg  : 1024px;
     cursor        : pointer;
     transition    : all .2s ease;
     overflow      : hidden;
+
+    // Khi strip scroll (≤340px): chip có kích thước cố định để không bị co
+    @media (max-width: 340px) {
+        flex         : 0 0 40px;
+        padding      : 5px 1px;
+        border-radius: 8px;
+    }
 
     &__dow {
         font-size     : 0.52rem;
@@ -801,7 +833,15 @@ $bp-lg  : 1024px;
     border         : none;
     cursor         : pointer;
     text-align     : left;
-    gap            : 8px;
+    gap            : 6px;
+
+    @media (max-width: $bp-xxs) {
+        padding: 10px 10px;
+    }
+
+    @media (max-width: 320px) {
+        padding: 8px 8px;
+    }
 
     &__title {
         display      : flex;
@@ -1169,7 +1209,7 @@ $bp-lg  : 1024px;
 
         .ant-picker-header-view button {
             vertical-align: middle;
-            line-height: 1;
+            line-height   : 1;
         }
 
         .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
@@ -1246,11 +1286,11 @@ $bp-lg  : 1024px;
 
 // ── Equipment section ─────────────────────────────────────────
 .bk__equipment-section {
-    margin-bottom  : 16px;
-    padding        : 12px 14px;
-    border-radius  : 10px;
-    border         : 1px solid var(--border);
-    background     : var(--bg-card2);
+    margin-bottom: 16px;
+    padding      : 12px 14px;
+    border-radius: 10px;
+    border       : 1px solid var(--border);
+    background   : var(--bg-card2);
 
     .bk__section-title {
         font-weight  : 600;
@@ -1261,45 +1301,56 @@ $bp-lg  : 1024px;
 }
 
 .bk__equip-row {
-    display    : flex;
-    align-items: center;
-    gap        : 10px;
+    display      : flex;
+    align-items  : center;
+    flex-wrap    : wrap;
+    gap          : 8px;
     margin-bottom: 8px;
 
-    &:last-child { margin-bottom: 0; }
+    &:last-child {
+        margin-bottom: 0;
+    }
 
     .bk__equip-label {
-        font-size : 0.83rem;
-        color     : var(--text);
-        min-width : 120px;
+        font-size  : 0.83rem;
+        color      : var(--text);
+        min-width  : 110px;
+        flex-shrink: 0;
+
+        @media (max-width: $bp-xxs) {
+            min-width: 0;
+            flex     : 1 0 auto;
+            font-size: 0.8rem;
+        }
     }
 
     .bk__equip-avail {
-        font-size : 0.75rem;
-        color     : var(--text-muted);
+        font-size: 0.75rem;
+        color    : var(--text-muted);
     }
 
     .bk__equip-unavail {
-        font-size : 0.75rem;
-        color     : #ff4d4f;
+        font-size: 0.75rem;
+        color    : #ff4d4f;
     }
 
     .bk__equip-qty {
-        width: 80px;
+        width      : 72px;
+        flex-shrink: 0;
     }
 }
 
 // ── Shirt option radio group ───────────────────────────────────
 .bk__shirt-radio {
     .ant-radio-button-wrapper {
-        height         : 38px;
-        line-height    : 36px;
-        border-color   : rgba(250, 173, 20, 0.45) !important;
-        background     : linear-gradient(135deg, rgba(250, 173, 20, 0.1), rgba(250, 173, 20, 0.04));
-        color          : var(--text) !important;
-        font-weight    : 600;
-        font-size      : 0.84rem;
-        transition     : all .2s ease;
+        height      : 38px;
+        line-height : 36px;
+        border-color: rgba(250, 173, 20, 0.45) !important;
+        background  : linear-gradient(135deg, rgba(250, 173, 20, 0.1), rgba(250, 173, 20, 0.04));
+        color       : var(--text) !important;
+        font-weight : 600;
+        font-size   : 0.84rem;
+        transition  : all .2s ease;
 
         &:first-child {
             border-radius: 11px 0 0 11px !important;
@@ -1319,6 +1370,16 @@ $bp-lg  : 1024px;
             border-color: $gold !important;
             color       : $gold !important;
             box-shadow  : -1px 0 0 0 $gold !important;
+        }
+    }
+
+    // Giảm cỡ chữ trên mobile nhỏ để tránh wrap text trong radio button
+    @media (max-width: $bp-xxs) {
+        .ant-radio-button-wrapper {
+            font-size  : 0.72rem !important;
+            height     : 34px !important;
+            line-height: 32px !important;
+            padding    : 0 6px !important;
         }
     }
 }

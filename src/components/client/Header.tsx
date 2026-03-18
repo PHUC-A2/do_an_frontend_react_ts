@@ -35,7 +35,6 @@ import ModalUpdateAccount from '../../pages/auth/modal/ModalUpdateAccount';
 import ModalBookingHistory from '../../pages/client/booking/modals/ModalBookingHistory';
 import { setLogout } from '../../redux/features/authSlice';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
-import { hasRole } from '../../utils/role';
 import styles from './Header.module.scss';
 import LogoGlow from '../logo-glow/LogoGlow';
 
@@ -172,7 +171,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
 
     const isDark = theme === 'dark';
     const displayName = account?.fullName || account?.name || 'Tài khoản của bạn';
-    const canOpenAdmin = hasRole(account, 'ADMIN');
+    const canOpenAdmin = Boolean(account?.roles?.some((role) => role.name !== 'VIEW'));
     const initials = (displayName.trim()[0] || 'U').toUpperCase();
 
     useOutsideClick(accountMenuRef, () => setAccountMenuOpen(false), accountMenuOpen);
@@ -328,7 +327,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
         es.onerror = () => { es.close(); };
 
         return () => { es.close(); sseRef.current = null; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAuthenticated]);
 
     useOutsideClick(notifRef, () => setNotifOpen(false), notifOpen);

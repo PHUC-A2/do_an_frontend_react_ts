@@ -22,8 +22,6 @@ const AdminChatBot = () => {
     const canChat = usePermission('AI_CHAT_ADMIN');
     const [open, setOpen] = useState(false);
 
-    if (!canChat) return null;
-
     const toggleOpen = (val: boolean) => {
         setOpen(val);
         dispatch(setAdminChatOpen(val));
@@ -42,6 +40,15 @@ const AdminChatBot = () => {
             messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
     }, [open, messages]);
+
+    useEffect(() => {
+        if (!canChat && open) {
+            setOpen(false);
+            dispatch(setAdminChatOpen(false));
+        }
+    }, [canChat, open, dispatch]);
+
+    if (!canChat) return null;
 
     const sendMessage = async () => {
         const text = input.trim();

@@ -9,6 +9,6 @@ export const useAdminAccess = () => {
     if (!account || !account.roles?.length)
         return { loading: false, canAccess: false };
 
-    const canAccess = !account.roles.some(r => r.name === "VIEW");
+    const canAccess = account.roles.some(r => r.name !== "VIEW");
     return { loading: false, canAccess };
 };

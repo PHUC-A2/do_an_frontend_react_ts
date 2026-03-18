@@ -5,6 +5,7 @@ import {
     Col,
     Statistic,
     Spin,
+    Empty,
     Typography,
     Grid,
     DatePicker,
@@ -24,17 +25,18 @@ import ReactECharts from "echarts-for-react";
 import * as echarts from "echarts";
 import { motion } from "framer-motion";
 import RoleWrapper from "../../components/wrapper/AdminWrapper";
+import PermissionWrapper from "../../components/wrapper/PermissionWrapper";
 import { getRevenue } from "../../config/Api";
 import type { IRevenueRes } from "../../types/revenue";
 import { formatVND } from "../../utils/format/price";
 import { formatLocalDate } from "../../utils/format/localdatetime";
 import type { Dayjs } from "dayjs";
 import { toast } from "react-toastify";
-import PermissionWrapper from "../../components/wrapper/PermissionWrapper";
 import Forbidden from "../error/Forbbiden";
 import { FaDownload } from "react-icons/fa";
 import { exportRevenueReport } from "../../utils/export/exportRevenueReport";
 import { useAppSelector } from "../../redux/hooks";
+import { usePermission } from "../../hooks/common/usePermission";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -56,15 +58,27 @@ const AdminPage = () => {
 
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<IRevenueRes | null>(null);
+    const [hasFetched, setHasFetched] = useState(false);
+    const [forbiddenByApi, setForbiddenByApi] = useState(false);
 
     const [range, setRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
     const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
+    const canViewRevenue = usePermission(["REVENUE_VIEW_DETAIL"]);
 
     useEffect(() => {
         const fetchRevenue = async () => {
-            if (!isAuthenticated) return; // chưa logn thì ko gọ api
+            if (!isAuthenticated || !canViewRevenue) {
+                setLoading(false);
+                setHasFetched(false);
+                setForbiddenByApi(false);
+                setData(null);
+                return;
+            }
+
             try {
                 setLoading(true);
+                setHasFetched(false);
+                setForbiddenByApi(false);
 
                 const from = range?.[0]?.format("YYYY-MM-DD");
                 const to = range?.[1]?.format("YYYY-MM-DD");
@@ -73,8 +87,18 @@ const AdminPage = () => {
 
                 if (res.data.statusCode === 200) {
                     setData(res.data.data ?? null);
+                } else {
+                    setData(null);
                 }
             } catch (error: any) {
+                const status = error?.response?.status;
+
+                if (status === 401 || status === 403) {
+                    setForbiddenByApi(true);
+                    setData(null);
+                    return;
+                }
+
                 const m = error?.response?.data?.message ?? "Không xác định";
                 toast.error(
                     <div>
@@ -84,11 +108,12 @@ const AdminPage = () => {
                 );
             } finally {
                 setLoading(false);
+                setHasFetched(true);
             }
         };
 
         fetchRevenue();
-    }, [isAuthenticated, range]);
+    }, [canViewRevenue, isAuthenticated, range]);
 
     /* ================= GROUP PITCH ================= */
 
@@ -114,10 +139,36 @@ const AdminPage = () => {
         return data.totalRevenue / data.paidBookings;
     }, [data]);
 
-    if (loading || !data) {
+    if (forbiddenByApi) {
+        return <Forbidden />;
+    }
+
+    if (loading) {
         return (
-            <RoleWrapper>
-                <Spin size="large" style={{ marginTop: 100 }} />
+            <RoleWrapper fallback={<Forbidden />}>
+                <PermissionWrapper required={"REVENUE_VIEW_DETAIL"} fallback={<Forbidden />}>
+                    <Spin size="large" style={{ marginTop: 100 }} />
+                </PermissionWrapper>
+            </RoleWrapper>
+        );
+    }
+
+    if (hasFetched && !data) {
+        return (
+            <RoleWrapper fallback={<Forbidden />}>
+                <PermissionWrapper required={"REVENUE_VIEW_DETAIL"} fallback={<Forbidden />}>
+                    <Empty description="Không có dữ liệu doanh thu" style={{ marginTop: 100 }} />
+                </PermissionWrapper>
+            </RoleWrapper>
+        );
+    }
+
+    if (!data) {
+        return (
+            <RoleWrapper fallback={<Forbidden />}>
+                <PermissionWrapper required={["REVENUE_VIEW_DETAIL"]} fallback={<Forbidden />}>
+                    <Spin size="large" style={{ marginTop: 100 }} />
+                </PermissionWrapper>
             </RoleWrapper>
         );
     }
@@ -224,10 +275,8 @@ const AdminPage = () => {
 
 
     return (
-        <RoleWrapper>
-            <PermissionWrapper required={"REVENUE_VIEW_DETAIL"}
-                fallback={<Forbidden />}
-            >
+        <RoleWrapper fallback={<Forbidden />}>
+            <PermissionWrapper required={["REVENUE_VIEW_DETAIL"]} fallback={<Forbidden />}>
                 <div style={{ padding: "0 16px", overflowX: "hidden" }}>
                     {/* <Row justify="space-between" align="middle" style={{ marginBottom: 24, gap: 10 }}>
                         <Col>

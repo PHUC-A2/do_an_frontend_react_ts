@@ -1,6 +1,6 @@
 import {
-    Avatar, Badge, Button, Card, Drawer, Empty, Popconfirm, Space,
-    Spin, Switch, Table, Tag, Tooltip, Typography,
+    Avatar, Button, Card, Empty, Popconfirm, Space,
+    Table, Tag, Tooltip, Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useEffect, useState } from 'react';
@@ -12,20 +12,20 @@ import { FaArrowsToEye } from 'react-icons/fa6';
 import { MdDelete, MdSecurity, MdBlock } from 'react-icons/md';
 import { useAppDispatch, useAppSelector } from '../../../redux/hooks';
 import { fetchUsers, selectUserLoading, selectUserMeta, selectUsers } from '../../../redux/features/userSlice';
-import { fetchRoles, selectRoles } from '../../../redux/features/roleSlice';
 import type { IUser } from '../../../types/user';
-import { assignRole, deleteUser, getUserById } from '../../../config/Api';
+import { deleteUser, getUserById } from '../../../config/Api';
 import { toast } from 'react-toastify';
 import { USER_STATUS_META } from '../../../utils/constants/user.constants';
 import ModalAddUser from './modals/ModalAddUser';
 import ModalUserDetails from './modals/ModalUserDetails';
 import ModalUpdateUser from './modals/ModalUpdateUser';
 import ModalBanUser from './modals/ModalBanUser';
+import AdminModalAssignRole from './modals/AdminModalAssignRole';
 import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
 import AdminWrapper from '../../../components/wrapper/AdminWrapper';
 import { usePermission } from '../../../hooks/common/usePermission';
 import { exportTableToExcel } from '../../../utils/export/exportExcelFromTable';
-import { UserOutlined, SafetyOutlined, TeamOutlined } from '@ant-design/icons';
+import { UserOutlined, TeamOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
@@ -34,8 +34,6 @@ const AdminUserPage = () => {
     const listUsers = useAppSelector(selectUsers);
     const meta = useAppSelector(selectUserMeta);
     const loading = useAppSelector(selectUserLoading);
-    const allRoles = useAppSelector(selectRoles);
-
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -51,16 +49,13 @@ const AdminUserPage = () => {
     // Assign role drawer
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [drawerUser, setDrawerUser] = useState<IUser | null>(null);
-    const [enabledRoleIds, setEnabledRoleIds] = useState<Set<number>>(new Set());
-    const [loadingDrawer, setLoadingDrawer] = useState(false);
-    const [savingRoles, setSavingRoles] = useState(false);
 
     const canViewUsers = usePermission('USER_VIEW_LIST');
 
     useEffect(() => {
         if (!canViewUsers) return;
         dispatch(fetchUsers(''));
-        dispatch(fetchRoles(''));
+        // dispatch(fetchRoles(''));
     }, [canViewUsers, dispatch]);
 
     // ── View details ──
@@ -89,46 +84,6 @@ const AdminUserPage = () => {
             toast.error(err?.response?.data?.message ?? 'Xóa thất bại');
         } finally {
             setDeletingId(null);
-        }
-    };
-
-    // ── Assign role drawer ──
-    const openAssignRole = async (u: IUser) => {
-        setDrawerUser(u);
-        setDrawerOpen(true);
-        setLoadingDrawer(true);
-        try {
-            await dispatch(fetchRoles('')).unwrap();
-            const res = await getUserById(u.id);
-            const current: number[] = (res.data.data?.roles ?? []).map((r: any) => r.id);
-            setEnabledRoleIds(new Set(current));
-        } catch {
-            toast.error('Không tải được thông tin vai trò');
-        } finally {
-            setLoadingDrawer(false);
-        }
-    };
-
-    const handleToggleRole = (id: number, checked: boolean) => {
-        setEnabledRoleIds(prev => {
-            const next = new Set(prev);
-            checked ? next.add(id) : next.delete(id);
-            return next;
-        });
-    };
-
-    const handleSaveRoles = async () => {
-        if (!drawerUser) return;
-        setSavingRoles(true);
-        try {
-            await assignRole(drawerUser.id, { roleIds: Array.from(enabledRoleIds) });
-            toast.success('Đã cập nhật vai trò cho người dùng');
-            dispatch(fetchUsers(''));
-            setDrawerOpen(false);
-        } catch (err: any) {
-            toast.error(err?.response?.data?.message ?? 'Lưu thất bại');
-        } finally {
-            setSavingRoles(false);
         }
     };
 
@@ -214,7 +169,7 @@ const AdminUserPage = () => {
 
                     <PermissionWrapper required="USER_ASSIGN_ROLE">
                         <Tooltip title="Gắn vai trò">
-                            <RBButton variant="outline-secondary" size="sm" onClick={() => openAssignRole(record)}>
+                            <RBButton variant="outline-secondary" size="sm" onClick={() => { setDrawerUser(record); setDrawerOpen(true); }}>
                                 <MdSecurity />
                             </RBButton>
                         </Tooltip>
@@ -285,86 +240,11 @@ const AdminUserPage = () => {
                 </PermissionWrapper>
             </Card>
 
-            {/* Assign role drawer */}
-            <Drawer
-                open={drawerOpen}
-                onClose={() => setDrawerOpen(false)}
-                title={
-                    <Space>
-                        <SafetyOutlined />
-                        <span>
-                            Gắn vai trò:{' '}
-                            <Tag color="blue">{drawerUser?.name ?? drawerUser?.email}</Tag>
-                        </span>
-                    </Space>
-                }
-                styles={{ body: { padding: '16px 20px' }, wrapper: { width: 480 } }}
-                extra={
-                    <Button type="primary" loading={savingRoles} onClick={handleSaveRoles}>
-                        Lưu
-                    </Button>
-                }
-            >
-                <Spin spinning={loadingDrawer}>
-                    <div style={{ marginBottom: 12 }}>
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                            Bật/tắt từng vai trò để phân quyền cho người dùng này.
-                        </Text>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        {allRoles.map(role => {
-                            const on = enabledRoleIds.has(role.id);
-                            return (
-                                <div
-                                    key={role.id}
-                                    style={{
-                                        display: 'flex', alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        padding: '10px 14px',
-                                        borderRadius: 10,
-                                        background: on ? 'rgba(82,196,26,0.06)' : 'rgba(0,0,0,0.02)',
-                                        border: `1px solid ${on ? 'rgba(82,196,26,0.3)' : 'rgba(0,0,0,0.06)'}`,
-                                        transition: 'all 0.18s',
-                                        cursor: 'pointer',
-                                    }}
-                                    onClick={() => handleToggleRole(role.id, !on)}
-                                >
-                                    <Space size={10}>
-                                        <Badge
-                                            dot
-                                            color={on ? '#52c41a' : '#d9d9d9'}
-                                            style={{ marginTop: 2 }}
-                                        />
-                                        <div>
-                                            <Text strong style={{ fontSize: 13, display: 'block', lineHeight: '1.2' }}>
-                                                <Tag color={role.name === 'ADMIN' ? 'warning' : 'blue'} style={{ margin: 0 }}>
-                                                    {role.name}
-                                                </Tag>
-                                            </Text>
-                                            {role.description && (
-                                                <Text type="secondary" style={{ fontSize: 11 }}>
-                                                    {role.description}
-                                                </Text>
-                                            )}
-                                        </div>
-                                    </Space>
-                                    <Switch
-                                        size="small"
-                                        checked={on}
-                                        onChange={(checked, e) => {
-                                            e.stopPropagation();
-                                            handleToggleRole(role.id, checked);
-                                        }}
-                                    />
-                                </div>
-                            );
-                        })}
-                        {allRoles.length === 0 && !loadingDrawer && (
-                            <Empty description="Chưa có vai trò nào" />
-                        )}
-                    </div>
-                </Spin>
-            </Drawer>
+            <AdminModalAssignRole
+                openModalAssignRole={drawerOpen}
+                setOpenModalAssignRole={setDrawerOpen}
+                userAssignRole={drawerUser}
+            />
 
             <ModalAddUser
                 openModalAddUser={openModalAddUser}

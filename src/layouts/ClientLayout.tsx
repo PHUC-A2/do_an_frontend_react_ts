@@ -17,10 +17,14 @@ const layoutStyle = {
     minHeight: '100vh',
 } as CSSProperties;
 
-const contentStyle = {
-    padding: 'var(--header-height, 70px) 24px 24px',
+const contentStyle: CSSProperties = {
+    paddingTop: 'var(--header-height, 70px)',
+    // clamp: 6px trên iPhone 5 (320px) → 24px trên desktop (800px+)
+    paddingLeft: 'clamp(6px, 3vw, 24px)',
+    paddingRight: 'clamp(6px, 3vw, 24px)',
+    paddingBottom: '24px',
     background: 'transparent',
-} as CSSProperties;
+};
 
 const ClientLayout = ({ theme, toggleTheme }: ClientLayoutProps) => {
     const isDark = theme === 'dark';
