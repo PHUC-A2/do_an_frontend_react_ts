@@ -128,6 +128,10 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     const notifRef = useRef<HTMLDivElement | null>(null);
     const notifCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const sseRef = useRef<EventSource | null>(null);
+    const sseReconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const notificationPollingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const sseFailureCountRef = useRef(0);
+    const pollingNoticeShownRef = useRef(false);
     const audioCtxRef = useRef<AudioContext | null>(null);
     const notifTouchRef = useRef<{ id: number | null; x: number; y: number }>({ id: null, x: 0, y: 0 });
     const swipedDeleteRef = useRef<{ id: number | null; at: number }>({ id: null, at: 0 });
@@ -351,6 +355,16 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                 sseRef.current.close();
                 sseRef.current = null;
             }
+            if (sseReconnectTimerRef.current) {
+                clearTimeout(sseReconnectTimerRef.current);
+                sseReconnectTimerRef.current = null;
+            }
+            if (notificationPollingTimerRef.current) {
+                clearInterval(notificationPollingTimerRef.current);
+                notificationPollingTimerRef.current = null;
+            }
+            sseFailureCountRef.current = 0;
+            pollingNoticeShownRef.current = false;
             setNotifications([]);
             return;
         }
@@ -358,53 +372,132 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
         // Xin quyền browser notification ngay khi đăng nhập
         requestPermission();
 
-        // fetch existing notifications
-        clientGetNotifications()
-            .then(res => { if (res.data.statusCode === 200) setNotifications(res.data.data ?? []); })
-            .catch(() => { /* ignore */ });
+        let cancelled = false;
 
-        // connect SSE — pass token as query param (EventSource cannot set headers)
-        const token = localStorage.getItem('access_token') ?? '';
-        const es = new EventSource(`/api/v1/client/notifications/subscribe?token=${encodeURIComponent(token)}`);
-        sseRef.current = es;
-        es.addEventListener('notification', (e: MessageEvent) => {
+        const fetchNotifications = async () => {
             try {
-                const notif: INotification = JSON.parse(e.data);
-                setNotifications(prev => [notif, ...prev]);
+                const res = await clientGetNotifications();
+                if (res.data.statusCode === 200) {
+                    setNotifications(res.data.data ?? []);
+                }
+            } catch {
+                // ignore fetch error
+            }
+        };
 
-                // Tiêu đề theo loại thông báo
-                const titleMap: Record<string, string> = {
-                    BOOKING_CREATED: '🏟️ Đặt sân thành công',
-                    BOOKING_PENDING_CONFIRMATION: '📝 Yêu cầu đặt sân mới',
-                    BOOKING_APPROVED: '✅ Booking đã được xác nhận',
-                    BOOKING_REJECTED: '❌ Booking đã bị từ chối',
-                    EQUIPMENT_BORROWED: '🎽 Mượn thiết bị',
-                    EQUIPMENT_RETURNED: '📦 Trả thiết bị',
-                    EQUIPMENT_LOST: '⚠️ Báo mất thiết bị',
-                    EQUIPMENT_DAMAGED: '🛠️ Thiết bị bị hỏng',
-                    PAYMENT_REQUESTED: '💸 Yêu cầu thanh toán QR',
-                    PAYMENT_PROOF_UPLOADED: '🧾 Đã tải minh chứng thanh toán',
-                    PAYMENT_CONFIRMED: '💳 Thanh toán xác nhận',
-                    MATCH_REMINDER: '⏰ Sắp đến giờ đá!',
-                };
-                const title = titleMap[notif.type] ?? 'UTB Sport';
+        const stopPollingFallback = () => {
+            if (notificationPollingTimerRef.current) {
+                clearInterval(notificationPollingTimerRef.current);
+                notificationPollingTimerRef.current = null;
+            }
+            pollingNoticeShownRef.current = false;
+        };
 
-                if (bellSoundEnabled) {
-                    playNotificationBell();
+        const startPollingFallback = () => {
+            if (notificationPollingTimerRef.current) {
+                return;
+            }
+
+            if (!pollingNoticeShownRef.current) {
+                toast.warn('Kết nối thông báo thời gian thực không ổn định, hệ thống chuyển sang chế độ đồng bộ định kỳ.');
+                pollingNoticeShownRef.current = true;
+            }
+
+            notificationPollingTimerRef.current = setInterval(() => {
+                void fetchNotifications();
+            }, 10000);
+        };
+
+        const connectSse = () => {
+            if (cancelled) {
+                return;
+            }
+
+            const token = localStorage.getItem('access_token') ?? '';
+            const es = new EventSource(`/api/v1/client/notifications/subscribe?token=${encodeURIComponent(token)}`);
+            sseRef.current = es;
+
+            es.addEventListener('open', () => {
+                sseFailureCountRef.current = 0;
+                stopPollingFallback();
+            });
+
+            es.addEventListener('notification', (e: MessageEvent) => {
+                try {
+                    const notif: INotification = JSON.parse(e.data);
+                    setNotifications(prev => [notif, ...prev]);
+
+                    // Tiêu đề theo loại thông báo
+                    const titleMap: Record<string, string> = {
+                        BOOKING_CREATED: '🏟️ Đặt sân thành công',
+                        BOOKING_PENDING_CONFIRMATION: '📝 Yêu cầu đặt sân mới',
+                        BOOKING_APPROVED: '✅ Booking đã được xác nhận',
+                        BOOKING_REJECTED: '❌ Booking đã bị từ chối',
+                        EQUIPMENT_BORROWED: '🎽 Mượn thiết bị',
+                        EQUIPMENT_RETURNED: '📦 Trả thiết bị',
+                        EQUIPMENT_LOST: '⚠️ Báo mất thiết bị',
+                        EQUIPMENT_DAMAGED: '🛠️ Thiết bị bị hỏng',
+                        PAYMENT_REQUESTED: '💸 Yêu cầu thanh toán QR',
+                        PAYMENT_PROOF_UPLOADED: '🧾 Đã tải minh chứng thanh toán',
+                        PAYMENT_CONFIRMED: '💳 Thanh toán xác nhận',
+                        MATCH_REMINDER: '⏰ Sắp đến giờ đá!',
+                    };
+                    const title = titleMap[notif.type] ?? 'UTB Sport';
+
+                    if (bellSoundEnabled) {
+                        playNotificationBell();
+                    }
+
+                    // Browser notification (hiện popup hệ thống)
+                    sendBrowserNotif(title, notif.message);
+
+                    // Toast chỉ cho MATCH_REMINDER (các loại khác form đã toast)
+                    if (notif.type === 'MATCH_REMINDER') {
+                        toast.info(notif.message, { autoClose: 6000 });
+                    }
+                } catch {
+                    // ignore parse error
+                }
+            });
+
+            es.onerror = () => {
+                if (cancelled) {
+                    return;
                 }
 
-                // Browser notification (hiện popup hệ thống)
-                sendBrowserNotif(title, notif.message);
-
-                // Toast chỉ cho MATCH_REMINDER (các loại khác form đã toast)
-                if (notif.type === 'MATCH_REMINDER') {
-                    toast.info(notif.message, { autoClose: 6000 });
+                if (sseRef.current === es) {
+                    es.close();
+                    sseRef.current = null;
                 }
-            } catch { /* ignore */ }
-        });
-        es.onerror = () => { es.close(); };
 
-        return () => { es.close(); sseRef.current = null; };
+                sseFailureCountRef.current += 1;
+                if (sseFailureCountRef.current >= 4) {
+                    startPollingFallback();
+                }
+
+                const retryDelay = Math.min(30000, 1000 * Math.pow(2, Math.min(sseFailureCountRef.current, 5)));
+                if (sseReconnectTimerRef.current) {
+                    clearTimeout(sseReconnectTimerRef.current);
+                }
+                sseReconnectTimerRef.current = setTimeout(connectSse, retryDelay);
+            };
+        };
+
+        void fetchNotifications();
+        connectSse();
+
+        return () => {
+            cancelled = true;
+            if (sseRef.current) {
+                sseRef.current.close();
+                sseRef.current = null;
+            }
+            if (sseReconnectTimerRef.current) {
+                clearTimeout(sseReconnectTimerRef.current);
+                sseReconnectTimerRef.current = null;
+            }
+            stopPollingFallback();
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAuthenticated, bellSoundEnabled]);
 
