@@ -235,6 +235,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
             }
         });
 
+        es.addEventListener('ring', () => {
+            if (bellSoundEnabled) {
+                playNotificationBell();
+            }
+        });
+
         es.onerror = () => {
             es.close();
             if (isAuthenticated) {

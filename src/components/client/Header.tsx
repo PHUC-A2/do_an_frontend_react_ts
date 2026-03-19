@@ -460,6 +460,12 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                 }
             });
 
+            es.addEventListener('ring', () => {
+                if (bellSoundEnabled) {
+                    playNotificationBell();
+                }
+            });
+
             es.onerror = () => {
                 if (cancelled) {
                     return;
