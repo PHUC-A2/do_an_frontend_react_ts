@@ -3,7 +3,7 @@
 import type { IUpdateAccountReq, IUpdateAccountRes } from "../types/account";
 import type { IRegister, IResendOtpReq, IVerifyEmailReq } from "../types/auth";
 import type { IBooking, ICreateBookingClientReq, ICreateBookingReq, IUpdateBookingClientReq, IUpdateBookingReq } from "../types/booking";
-import type { IBookingEquipment, ICreateBookingEquipmentReq, IUpdateBookingEquipmentStatusReq } from "../types/bookingEquipment";
+import type { IBookingEquipment, ICreateBookingEquipmentReq, IEquipmentBorrowLog, IEquipmentUsageStats, IUpdateBookingEquipmentStatusReq } from "../types/bookingEquipment";
 import type { IBackendRes, IModelPaginate } from "../types/common";
 import type { IEquipment, ICreateEquipmentReq, IUpdateEquipmentReq } from "../types/equipment";
 import type { ICreatePaymentReq, IPayment, IPaymentRes } from "../types/payment";
@@ -75,8 +75,12 @@ export const adminUpsertPitchEquipment = (pitchId: number, data: IUpsertPitchEqu
     instance.put<IBackendRes<IPitchEquipment>>(`/api/v1/pitches/${pitchId}/pitch-equipments`, data);
 export const adminDeletePitchEquipment = (pitchId: number, equipmentId: number) =>
     instance.delete<IBackendRes<void>>(`/api/v1/pitches/${pitchId}/pitch-equipments/${equipmentId}`);
+/** Toàn bộ thiết bị gắn sân (cố định + cho mượn) — trang chi tiết / mô tả sân. */
 export const clientGetPitchEquipments = (pitchId: number) =>
     instance.get<IBackendRes<IPitchEquipment[]>>(`/api/v1/client/public/pitches/${pitchId}/pitch-equipments`);
+/** Chỉ thiết bị lưu động, ACTIVE, còn hàng — form đặt sân / mượn kèm. */
+export const clientGetPitchEquipmentsBorrowable = (pitchId: number) =>
+    instance.get<IBackendRes<IPitchEquipment[]>>(`/api/v1/client/public/pitches/${pitchId}/pitch-equipments/borrowable`);
 
 /* api permission */
 export const getAllPermissions = (query: string) => instance.get<IBackendRes<IModelPaginate<IPermission>>>(`/api/v1/permissions?${query}`);
@@ -204,6 +208,10 @@ export const deleteEquipment = (id: number) => instance.delete<IBackendRes<IEqui
 export const getAllBookingEquipments = () => instance.get<IBackendRes<IBookingEquipment[]>>(`/api/v1/booking-equipments`);
 export const getBookingEquipmentsByBookingId = (bookingId: number) => instance.get<IBackendRes<IBookingEquipment[]>>(`/api/v1/booking-equipments/booking/${bookingId}`);
 export const updateBookingEquipmentStatus = (id: number, data: IUpdateBookingEquipmentStatusReq) => instance.patch<IBackendRes<IBookingEquipment>>(`/api/v1/booking-equipments/${id}/status`, data);
+export const adminGetEquipmentBorrowLogs = () =>
+    instance.get<IBackendRes<IEquipmentBorrowLog[]>>(`/api/v1/equipment-borrow-logs`);
+export const adminGetEquipmentUsageStats = () =>
+    instance.get<IBackendRes<IEquipmentUsageStats>>(`/api/v1/equipment-usage-stats`);
 
 /* api booking equipment — client */
 export const clientBorrowEquipment = (data: ICreateBookingEquipmentReq) => instance.post<IBackendRes<IBookingEquipment>>(`/api/v1/client/booking-equipments`, data);

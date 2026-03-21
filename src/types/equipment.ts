@@ -1,4 +1,4 @@
-export type EquipmentStatusEnum = "ACTIVE" | "MAINTENANCE" | "INACTIVE";
+export type EquipmentStatusEnum = "ACTIVE" | "MAINTENANCE" | "INACTIVE" | "BROKEN" | "LOST";
 
 export interface IEquipment {
     id: number;
@@ -9,6 +9,7 @@ export interface IEquipment {
     price: number;
     imageUrl?: string | null;
     status: EquipmentStatusEnum;
+    conditionNote?: string | null;
     createdAt: string;
     updatedAt: string | null;
     createdBy: string;
@@ -22,6 +23,7 @@ export interface ICreateEquipmentReq {
     price: number;
     imageUrl?: string | null;
     status?: EquipmentStatusEnum;
+    conditionNote?: string | null;
 }
 
 export interface IUpdateEquipmentReq {
@@ -31,4 +33,5 @@ export interface IUpdateEquipmentReq {
     price: number;
     imageUrl?: string | null;
     status: EquipmentStatusEnum;
+    conditionNote?: string | null;
 }

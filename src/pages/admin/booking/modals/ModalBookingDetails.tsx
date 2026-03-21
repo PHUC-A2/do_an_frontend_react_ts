@@ -1,6 +1,6 @@
 import { Descriptions, Drawer, Spin, Tag } from "antd";
 import type { IBooking } from "../../../../types/booking";
-import { BOOKING_STATUS_META, SHIRT_OPTION_META } from "../../../../utils/constants/booking.constants";
+import { BOOKING_STATUS_META } from "../../../../utils/constants/booking.constants";
 import {formatDateTimeRange, formatInstant } from "../../../../utils/format/localdatetime";
 import { formatVND } from "../../../../utils/format/price";
 interface IProps {
@@ -42,16 +42,8 @@ const ModalBookingDetails = (props: IProps) => {
                         )}
                     </Descriptions.Item>
 
-                    <Descriptions.Item label="Áo pitch">
-                        {
-                            booking?.shirtOption ? (
-                                <Tag color={SHIRT_OPTION_META[booking?.shirtOption].color}>
-                                    {SHIRT_OPTION_META[booking?.shirtOption].label}
-                                </Tag>
-                            ) : (
-                                <Tag>N/A</Tag>
-                            )
-                        }
+                    <Descriptions.Item label="Thiết bị mượn">
+                        <Tag>Xem danh sách mượn thiết bị theo booking (menu quản lý thiết bị mượn)</Tag>
                     </Descriptions.Item>
 
                     <Descriptions.Item label="Thời lượng">

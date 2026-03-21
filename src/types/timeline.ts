@@ -1,4 +1,3 @@
-// timeline.ts
 export interface IPitchTimeline {
     openTime: string;
     closeTime: string;
@@ -10,4 +9,4 @@ export interface IPitchTimeline {
     }[];
 }
 
-export type SlotStatus = "FREE" | "BUSY";
+export type SlotStatus = "PAST" | "FREE" | "BUSY";

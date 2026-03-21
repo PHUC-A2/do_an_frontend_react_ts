@@ -1,11 +1,10 @@
-import { DatePicker, InputNumber, Modal, Select} from 'antd';
+import { DatePicker, InputNumber, Modal } from 'antd';
 import { Form, Input } from 'antd';
 import { updateBooking } from '../../../../config/Api';
 import { useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useAppDispatch } from '../../../../redux/hooks';
-import type { IBooking, IUpdateBookingReq, ShirtOptionEnum } from '../../../../types/booking';
-import { SHIRT_OPTION_OPTIONS } from '../../../../utils/constants/booking.constants';
+import type { IBooking, IUpdateBookingReq } from '../../../../types/booking';
 import dayjs, { Dayjs } from 'dayjs';
 import { fetchBookings } from '../../../../redux/features/bookingSlice';
 
@@ -17,7 +16,6 @@ interface IProps {
 
 type BookingFormValues = {
     pitchId: number;
-    shirtOption: ShirtOptionEnum;
     contactPhone?: string;
     dateTimeRange: [Dayjs, Dayjs];
 };
@@ -38,7 +36,6 @@ const ModalUpdateBooking = (props: IProps) => {
 
             const payload: IUpdateBookingReq = {
                 pitchId: values.pitchId,
-                shirtOption: values.shirtOption,
                 contactPhone: values.contactPhone,
                 startDateTime: start.format("YYYY-MM-DDTHH:mm:ss"),
                 endDateTime: end.format("YYYY-MM-DDTHH:mm:ss"),
@@ -77,11 +74,10 @@ const ModalUpdateBooking = (props: IProps) => {
                 dayjs(bookingEdit.startDateTime),
                 dayjs(bookingEdit.endDateTime),
             ],
-            shirtOption: bookingEdit.shirtOption,
             contactPhone: bookingEdit.contactPhone,
 
         });
-    }, [bookingEdit]);
+    }, [bookingEdit, form]);
 
     return (
         <>
@@ -126,18 +122,6 @@ const ModalUpdateBooking = (props: IProps) => {
                                 format="YYYY-MM-DD HH:mm"
                                 style={{ width: '100%' }}
                                 placeholder={["Thời gian bắt đầu", "Thời gian kết thúc"]}
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="Áo pitch"
-                            name="shirtOption"
-                            rules={[{ required: true, message: 'Vui lòng chọn loại áo!' }]}
-                        >
-                            <Select
-                                placeholder="Chọn loại áo"
-                                options={SHIRT_OPTION_OPTIONS}
-                                allowClear
                             />
                         </Form.Item>
 

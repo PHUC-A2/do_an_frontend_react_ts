@@ -1,111 +1,208 @@
-import { InputNumber, Spin, Switch } from "antd";
-import { useEffect, useState } from "react";
-import { getPublicEquipments } from "../../../../config/Api";
-import type { IEquipment } from "../../../../types/equipment";
-import type { ShirtOptionEnum } from "../../../../types/booking";
+import { InputNumber, Spin, Input, Typography, Switch } from "antd";
+import { useCallback, useEffect, useState } from "react";
+import { clientGetPitchEquipmentsBorrowable } from "../../../../config/Api";
+import type { EquipmentMobilityEnum, IPitchEquipment } from "../../../../types/pitchEquipment";
+
+const { Text } = Typography;
+
+export type IBorrowLinePayload = {
+    equipmentId: number;
+    equipmentMobility: EquipmentMobilityEnum;
+    quantity: number;
+};
 
 interface IProps {
+    pitchId: number;
     isAuthenticated: boolean;
-    shirtOption: ShirtOptionEnum | undefined;
-    ballQty: number;
-    setBallQty: (v: number) => void;
-    borrowShirt: boolean;
-    setBorrowShirt: (v: boolean) => void;
-    shirtQty: number;
-    setShirtQty: (v: number) => void;
-    /** Nếu truyền vào thì dùng luôn, không fetch lại */
-    equipments?: IEquipment[];
+    onPlanChange?: (lines: IBorrowLinePayload[], borrowNote: string) => void;
+    onBorrowInteraction?: () => void;
+    /** Đổi khi đổi booking / sân để reset form trong section. */
+    sessionKey?: string;
+    /** Tăng khi đã tải xong dữ liệu mượn cũ (để hydrate lại). */
+    initialVersion?: number;
+    /** Số lượng đang mượn (theo equipmentId) — preload khi sửa lịch. */
+    initialQtyByEquipmentId?: Record<number, number>;
+    initialBorrowNote?: string;
 }
 
 const EquipmentBorrowSection = ({
+    pitchId,
     isAuthenticated,
-    shirtOption,
-    ballQty,
-    setBallQty,
-    borrowShirt,
-    setBorrowShirt,
-    shirtQty,
-    setShirtQty,
-    equipments: equipmentsProp,
+    onPlanChange,
+    onBorrowInteraction,
+    sessionKey = "default",
+    initialVersion = 0,
+    initialQtyByEquipmentId,
+    initialBorrowNote = "",
 }: IProps) => {
-    const [fetchedEquipments, setFetchedEquipments] = useState<IEquipment[]>([]);
+    const [items, setItems] = useState<IPitchEquipment[]>([]);
     const [equipLoading, setEquipLoading] = useState(false);
+    const [quantities, setQuantities] = useState<Record<number, number>>({});
+    const [rowOn, setRowOn] = useState<Record<number, boolean>>({});
+    const [borrowNote, setBorrowNote] = useState("");
+    const [hydrated, setHydrated] = useState(false);
+
+    const reload = useCallback(() => {
+        if (!pitchId) return;
+        setEquipLoading(true);
+        clientGetPitchEquipmentsBorrowable(pitchId)
+            .then(res => {
+                if (res.data.statusCode === 200) setItems(res.data.data ?? []);
+            })
+            .catch(() => setItems([]))
+            .finally(() => setEquipLoading(false));
+    }, [pitchId]);
 
     useEffect(() => {
-        if (equipmentsProp !== undefined) return; // dùng prop, không fetch
-        if (!isAuthenticated) return;
-        setEquipLoading(true);
-        getPublicEquipments()
-            .then(res => { if (res.data.statusCode === 200) setFetchedEquipments(res.data.data ?? []); })
-            .catch(() => { })
-            .finally(() => setEquipLoading(false));
-    }, [isAuthenticated, equipmentsProp]);
+        if (!isAuthenticated || !pitchId) {
+            setItems([]);
+            setQuantities({});
+            setRowOn({});
+            setHydrated(false);
+            return;
+        }
+        reload();
+    }, [isAuthenticated, pitchId, reload]);
 
-    const equipments = equipmentsProp ?? fetchedEquipments;
+    useEffect(() => {
+        setHydrated(false);
+    }, [sessionKey, pitchId, initialVersion]);
 
-    const ballEquipment = equipments.find(e =>
-        e.name.toLowerCase().includes("bóng") || e.name.toLowerCase().includes("ball")
-    );
-    const shirtEquipment = equipments.find(e =>
-        e.name.toLowerCase().includes("áo") || e.name.toLowerCase().includes("shirt")
-    );
+    useEffect(() => {
+        if (equipLoading || items.length === 0 || hydrated) return;
+
+        const q: Record<number, number> = {};
+        const on: Record<number, boolean> = {};
+        for (const pe of items) {
+            const maxQty = Math.min(pe.quantity ?? 0, pe.equipmentAvailableQuantity ?? 0);
+            const init = initialQtyByEquipmentId?.[pe.equipmentId] ?? 0;
+            const clamped = Math.min(Math.max(init, 0), maxQty);
+            if (clamped > 0) {
+                q[pe.id] = clamped;
+                on[pe.id] = true;
+            } else {
+                q[pe.id] = 0;
+                on[pe.id] = false;
+            }
+        }
+        setQuantities(q);
+        setRowOn(on);
+        setBorrowNote(initialBorrowNote ?? "");
+        setHydrated(true);
+    }, [equipLoading, items, hydrated, initialQtyByEquipmentId, initialBorrowNote]);
+
+    useEffect(() => {
+        if (!onPlanChange) return;
+        const lines: IBorrowLinePayload[] = [];
+        for (const pe of items) {
+            if (!rowOn[pe.id]) continue;
+            const q = quantities[pe.id] ?? 0;
+            if (q > 0) {
+                lines.push({
+                    equipmentId: pe.equipmentId,
+                    equipmentMobility: pe.equipmentMobility,
+                    quantity: q,
+                });
+            }
+        }
+        onPlanChange(lines, borrowNote);
+    }, [items, quantities, borrowNote, rowOn, onPlanChange]);
 
     if (!isAuthenticated) return null;
 
+    const renderBorrowRows = (list: IPitchEquipment[]) => (
+        <>
+            {list.length === 0 ? (
+                <div style={{ fontSize: 12, opacity: 0.75, marginTop: 4 }}>
+                    Chưa có thiết bị <strong>cho mượn</strong> nào trên sân (hoặc đang hết hàng / không hoạt động). Thiết bị cố định
+                    (đèn, lưới, khung thành…) xem ở mô tả sân.
+                </div>
+            ) : (
+                list.map(pe => {
+                    const maxQty = Math.min(pe.quantity ?? 0, pe.equipmentAvailableQuantity ?? 0);
+                    const disabled = maxQty <= 0;
+                    const isOn = !!rowOn[pe.id];
+                    return (
+                        <div key={pe.id} className="bk__equip-row">
+                            <div className="bk__equip-row__head">
+                                <span className="bk__equip-label">
+                                    {pe.equipmentName}
+                                    <span className="bk__equip-avail"> (tối đa {maxQty} / sân)</span>
+                                </span>
+                                <Switch
+                                    className="bk__equip-switch"
+                                    checked={isOn}
+                                    disabled={disabled}
+                                    checkedChildren="Mượn"
+                                    unCheckedChildren="Không"
+                                    onChange={checked => {
+                                        setRowOn(prev => ({ ...prev, [pe.id]: checked }));
+                                        setQuantities(prev => ({
+                                            ...prev,
+                                            [pe.id]: checked ? Math.max(1, Math.min(prev[pe.id] || 1, maxQty)) : 0,
+                                        }));
+                                        onBorrowInteraction?.();
+                                    }}
+                                />
+                            </div>
+                            {isOn && !disabled && (
+                                <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                                    <Text type="secondary" style={{ fontSize: 12 }}>Số lượng</Text>
+                                    <InputNumber
+                                        className="bk__equip-qty"
+                                        min={1}
+                                        max={maxQty}
+                                        value={quantities[pe.id] ?? 1}
+                                        onChange={val => {
+                                            const v = val ?? 1;
+                                            setQuantities(prev => ({ ...prev, [pe.id]: v }));
+                                            onBorrowInteraction?.();
+                                        }}
+                                    />
+                                </div>
+                            )}
+                            {disabled && <span className="bk__equip-unavail">Hết hàng</span>}
+                            {pe.equipmentConditionNote ? (
+                                <div style={{ fontSize: 11, opacity: 0.8, width: "100%", marginTop: 4 }}>
+                                    Ghi chú tình trạng: {pe.equipmentConditionNote}
+                                </div>
+                            ) : null}
+                        </div>
+                    );
+                })
+            )}
+        </>
+    );
+
     return (
         <div className="bk__equipment-section">
-            <p className="bk__section-title">⚽ Thiết bị mượn</p>
+            <p className="bk__section-title">Thiết bị mượn thêm (lưu động)</p>
+            <p style={{ fontSize: 12, opacity: 0.85, marginBottom: 8 }}>
+                Bật <strong>Mượn</strong> từng loại thiết bị rồi nhập số lượng. Tắt nếu không mượn loại đó (ví dụ chỉ mượn bóng, không mượn
+                áo).
+            </p>
 
             {equipLoading ? (
                 <div style={{ textAlign: "center", padding: "8px 0" }}><Spin size="small" /></div>
             ) : (
                 <>
-                    {/* Bóng — luôn hiện, mặc định 1 */}
-                    <div className="bk__equip-row">
-                        <span className="bk__equip-label">
-                            ⚽ Bóng
-                            {ballEquipment && (
-                                <span className="bk__equip-avail"> (còn {ballEquipment.availableQuantity})</span>
-                            )}
-                        </span>
-                        <InputNumber
-                            className="bk__equip-qty"
-                            min={1}
-                            max={ballEquipment?.availableQuantity ?? 99}
-                            value={ballQty}
-                            onChange={val => setBallQty(val ?? 1)}
-                            disabled={!ballEquipment}
-                        />
-                        {!ballEquipment && <span className="bk__equip-unavail">Hết hàng</span>}
+                    <div style={{ marginBottom: 12 }}>
+                        <Text strong>Chọn thiết bị mượn kèm booking</Text>
+                        {renderBorrowRows(items)}
                     </div>
-
-                    {/* Áo — chỉ hiện khi chọn "Có lấy áo" */}
-                    {shirtOption === "WITH_PITCH_SHIRT" && (
-                        <div className="bk__equip-row">
-                            <span className="bk__equip-label">
-                                👕 Mượn áo
-                                {shirtEquipment && (
-                                    <span className="bk__equip-avail"> (còn {shirtEquipment.availableQuantity})</span>
-                                )}
-                            </span>
-                            <Switch
-                                size="small"
-                                checked={borrowShirt}
-                                onChange={v => setBorrowShirt(v)}
-                                disabled={!shirtEquipment}
-                            />
-                            {borrowShirt && shirtEquipment && (
-                                <InputNumber
-                                    className="bk__equip-qty"
-                                    min={1}
-                                    max={shirtEquipment.availableQuantity}
-                                    value={shirtQty}
-                                    onChange={val => setShirtQty(val ?? 1)}
-                                />
-                            )}
-                            {!shirtEquipment && <span className="bk__equip-unavail">Hết hàng</span>}
-                        </div>
-                    )}
+                    <div style={{ marginTop: 8 }}>
+                        <Text type="secondary" style={{ fontSize: 12 }}>Ghi chú biên bản lúc mượn (tùy chọn)</Text>
+                        <Input.TextArea
+                            rows={2}
+                            value={borrowNote}
+                            onChange={e => {
+                                setBorrowNote(e.target.value);
+                                onBorrowInteraction?.();
+                            }}
+                            placeholder="Tình trạng khi giao, số seri, vết trầy..."
+                            style={{ marginTop: 4 }}
+                        />
+                    </div>
                 </>
             )}
         </div>
@@ -113,29 +210,3 @@ const EquipmentBorrowSection = ({
 };
 
 export default EquipmentBorrowSection;
-
-// Helper để build danh sách borrow tasks sau khi booking/update thành công
-export const buildBorrowTasks = async (
-    bookingId: number,
-    equipments: IEquipment[],
-    ballQty: number,
-    borrowShirt: boolean,
-    shirtQty: number,
-    borrowFn: (data: { bookingId: number; equipmentId: number; quantity: number }) => Promise<any>
-) => {
-    const ballEquipment = equipments.find(e =>
-        e.name.toLowerCase().includes("bóng") || e.name.toLowerCase().includes("ball")
-    );
-    const shirtEquipment = equipments.find(e =>
-        e.name.toLowerCase().includes("áo") || e.name.toLowerCase().includes("shirt")
-    );
-
-    const tasks: Promise<any>[] = [];
-    if (ballEquipment && ballQty > 0) {
-        tasks.push(borrowFn({ bookingId, equipmentId: ballEquipment.id, quantity: ballQty }).catch(() => { }));
-    }
-    if (borrowShirt && shirtEquipment && shirtQty > 0) {
-        tasks.push(borrowFn({ bookingId, equipmentId: shirtEquipment.id, quantity: shirtQty }).catch(() => { }));
-    }
-    if (tasks.length > 0) await Promise.all(tasks);
-};

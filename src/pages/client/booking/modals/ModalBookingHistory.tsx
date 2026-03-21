@@ -14,15 +14,20 @@ import {
     Divider,
     theme,
     Table,
+    Modal,
+    Input,
+    InputNumber,
+    Checkbox,
     type CollapseProps,
     type PopconfirmProps
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 import { fetchBookingsClient, selectBookingsClient } from "../../../../redux/features/bookingClientSlice";
-import { useEffect, useState, useMemo } from "react";
-import { SHIRT_OPTION_META } from "../../../../utils/constants/booking.constants";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { BOOKING_EQUIPMENT_STATUS_META } from "../../../../utils/constants/bookingEquipment.constants";
+import { openBookingEquipmentHandoverPrint } from "../../../../utils/bookingEquipmentHandoverPrint";
+import { normalizeBookingEquipmentFromApi, normalizeBookingEquipmentListFromApi } from "../../../../utils/bookingEquipmentNormalize";
 import { formatVND } from "../../../../utils/format/price";
 import { formatDateTimeRange, formatInstant } from "../../../../utils/format/localdatetime";
 import {
@@ -33,10 +38,10 @@ import {
     ClockCircleOutlined,
     EnvironmentOutlined,
     PhoneOutlined,
-    SkinOutlined,
     UserOutlined,
     DollarCircleOutlined,
-    ToolOutlined
+    ToolOutlined,
+    PrinterOutlined
 } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router";
@@ -44,7 +49,7 @@ import { cancelBookingClient, deleteBookingClient, clientGetAllMyEquipments, cli
 import dayjs from "dayjs";
 import { motion } from "framer-motion";
 import type { IBooking } from "../../../../types/booking";
-import type { IBookingEquipment } from "../../../../types/bookingEquipment";
+import type { IBookingEquipment, IUpdateBookingEquipmentStatusReq } from "../../../../types/bookingEquipment";
 import { notifyBookingChanged } from "../../../../redux/features/bookingUiSlice";
 import PaymentDrawer from "./PaymentDrawer";
 
@@ -67,6 +72,22 @@ const ModalBookingHistory = (props: IProps) => {
 
     const [deletingId, setDeletingId] = useState<number | null>(null);
 
+    const [allMyEquips, setAllMyEquips] = useState<IBookingEquipment[]>([]);
+    const [returnModal, setReturnModal] = useState<{ booking: IBooking; record: IBookingEquipment } | null>(null);
+    const [returnNote, setReturnNote] = useState("");
+    const [printAfterReturn, setPrintAfterReturn] = useState(false);
+    const [returnQtyGood, setReturnQtyGood] = useState(0);
+    const [returnQtyLost, setReturnQtyLost] = useState(0);
+    const [returnQtyDamaged, setReturnQtyDamaged] = useState(0);
+    const [borrowerSign, setBorrowerSign] = useState("");
+    const [staffSign, setStaffSign] = useState("");
+
+    const refreshMyEquips = useCallback(() => {
+        clientGetAllMyEquipments()
+            .then(res => setAllMyEquips(normalizeBookingEquipmentListFromApi(res.data.data ?? [])))
+            .catch(() => { });
+    }, []);
+
     // --- Equipment borrow history ---
     const [equipList, setEquipList] = useState<IBookingEquipment[]>([]);
     const [equipLoading, setEquipLoading] = useState(false);
@@ -77,35 +98,124 @@ const ModalBookingHistory = (props: IProps) => {
     useEffect(() => {
         if (isAuthenticated && openModalBookingHistory) {
             dispatch(fetchBookingsClient(""));
+            refreshMyEquips();
         }
-    }, [dispatch, isAuthenticated, openModalBookingHistory]);
+    }, [dispatch, isAuthenticated, openModalBookingHistory, refreshMyEquips]);
 
     // Load toàn bộ lịch sử mượn thiết bị của user khi mở tab 3
     useEffect(() => {
         if (activeTab !== "3" || !isAuthenticated || !openModalBookingHistory) return;
         setEquipLoading(true);
         clientGetAllMyEquipments()
-            .then(res => setEquipList(res.data.data ?? []))
+            .then(res => {
+                const data = normalizeBookingEquipmentListFromApi(res.data.data ?? []);
+                setEquipList(data);
+                setAllMyEquips(data);
+            })
             .catch(() => toast.error("Không tải được danh sách thiết bị"))
             .finally(() => setEquipLoading(false));
     }, [activeTab, isAuthenticated, openModalBookingHistory]);
 
-    const handleUpdateEquipStatus = async (id: number, status: string) => {
+    const handleUpdateEquipStatus = async (id: number, body: IUpdateBookingEquipmentStatusReq): Promise<IBookingEquipment | null> => {
         setUpdatingEquipId(id);
         try {
-            const res = await clientUpdateBookingEquipmentStatus(id, { status: status as any });
-            if (res.data.statusCode === 200) {
-                const updated = res.data.data;
+            const res = await clientUpdateBookingEquipmentStatus(id, body);
+            if (Number(res.data.statusCode) === 200) {
+                const updated = res.data.data != null ? normalizeBookingEquipmentFromApi(res.data.data) : null;
                 toast.success("Cập nhật trạng thái thành công");
-                setEquipList(prev => prev.map(e =>
-                    e.id === id ? { ...e, status: status as any, penaltyAmount: updated?.penaltyAmount ?? 0 } : e
-                ));
+                const patch = (e: IBookingEquipment) =>
+                    e.id === id && updated ? { ...e, ...updated } : e;
+                setEquipList(prev => prev.map(patch));
+                setAllMyEquips(prev => prev.map(patch));
+                return updated ?? null;
             }
+            return null;
         } catch (error: any) {
             toast.error(error?.response?.data?.message ?? "Lỗi cập nhật");
+            return null;
         } finally {
             setUpdatingEquipId(null);
         }
+    };
+
+    const openClientReturnModal = (
+        booking: IBooking,
+        record: IBookingEquipment,
+        preset: "full" | "lost" | "damaged"
+    ) => {
+        const q = record.quantity;
+        setReturnNote("");
+        setPrintAfterReturn(false);
+        if (preset === "full") {
+            setReturnQtyGood(q);
+            setReturnQtyLost(0);
+            setReturnQtyDamaged(0);
+        } else if (preset === "lost") {
+            setReturnQtyGood(0);
+            setReturnQtyLost(q);
+            setReturnQtyDamaged(0);
+        } else {
+            setReturnQtyGood(0);
+            setReturnQtyLost(0);
+            setReturnQtyDamaged(q);
+        }
+        setBorrowerSign("");
+        setStaffSign("");
+        setReturnModal({ booking, record });
+    };
+
+    const submitClientReturn = async () => {
+        if (!returnModal) return;
+        const { booking, record } = returnModal;
+        const note = returnNote.trim();
+        const q = record.quantity;
+        const g = returnQtyGood;
+        const l = returnQtyLost;
+        const d = returnQtyDamaged;
+        if (g + l + d !== q) {
+            toast.error(`Tổng (trả tốt + mất + hỏng) phải bằng ${q}.`);
+            return Promise.reject(new Error("keep-open"));
+        }
+        if (l + d > 0 && (!borrowerSign.trim() || !staffSign.trim())) {
+            toast.error("Khi có mất hoặc hỏng, vui lòng nhập họ tên người mượn và nhân viên ký xác nhận.");
+            return Promise.reject(new Error("keep-open"));
+        }
+        const updated = await handleUpdateEquipStatus(record.id, {
+            status: "RETURNED",
+            returnConditionNote: note || null,
+            quantityReturnedGood: g,
+            quantityLost: l,
+            quantityDamaged: d,
+            borrowerSignName: l + d > 0 ? borrowerSign.trim() : null,
+            staffSignName: l + d > 0 ? staffSign.trim() : null,
+        });
+        if (!updated) {
+            return Promise.reject(new Error("keep-open"));
+        }
+        if (printAfterReturn) {
+            const bSign = l + d > 0 ? borrowerSign.trim() : "";
+            const sSign = l + d > 0 ? staffSign.trim() : "";
+            const lineForPrint: IBookingEquipment = {
+                ...record,
+                ...updated,
+                quantityReturnedGood: updated.quantityReturnedGood ?? g,
+                quantityLost: updated.quantityLost ?? l,
+                quantityDamaged: updated.quantityDamaged ?? d,
+                borrowerSignName: updated.borrowerSignName ?? (bSign || null),
+                staffSignName: updated.staffSignName ?? (sSign || null),
+                returnConditionNote: note || updated.returnConditionNote || null,
+                status: updated.status,
+                penaltyAmount: updated.penaltyAmount,
+            };
+            const list = allMyEquips
+                .filter(e => e.bookingId === booking.id && !e.deletedByClient)
+                .map(e => (e.id === record.id ? lineForPrint : e));
+            openBookingEquipmentHandoverPrint(booking, list);
+        }
+        setReturnModal(null);
+        setReturnNote("");
+        setPrintAfterReturn(false);
+        dispatch(fetchBookingsClient(""));
     };
 
     const cancel: PopconfirmProps['onCancel'] = () => {
@@ -169,13 +279,21 @@ const ModalBookingHistory = (props: IProps) => {
         return { upcomingBookings: upcoming, historyBookings: history };
     }, [listBookingsClient]);
 
+    const equipsByBookingId = useMemo(() => {
+        const m = new Map<number, IBookingEquipment[]>();
+        for (const e of allMyEquips) {
+            if (e.deletedByClient) continue;
+            const arr = m.get(e.bookingId) ?? [];
+            arr.push(e);
+            m.set(e.bookingId, arr);
+        }
+        return m;
+    }, [allMyEquips]);
+
     // --- Render Items cho Collapse ---
     const renderCollapseItems = (bookings: any[]): CollapseProps["items"] => {
         return bookings.map((booking: IBooking) => {
-            const shirtMeta = booking?.shirtOption
-                ? SHIRT_OPTION_META[booking.shirtOption as keyof typeof SHIRT_OPTION_META]
-                : null;
-
+            const bookingEquips = equipsByBookingId.get(booking.id) ?? [];
 
             const isEnded = dayjs(booking.endDateTime).isBefore(dayjs());
             const isPending = booking.status === "PENDING";
@@ -221,9 +339,52 @@ const ModalBookingHistory = (props: IProps) => {
                                         <Text type="secondary"><ClockCircleOutlined /> Thời lượng:</Text>
                                         <Text>{booking.durationMinutes} phút</Text>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <Text type="secondary"><SkinOutlined /> Áo Pitch:</Text>
-                                        {shirtMeta ? <Tag color={shirtMeta.color} style={{ margin: 0 }}>{shirtMeta.label}</Tag> : <Text>Không</Text>}
+                                    <div style={{ width: '100%' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                            <Text type="secondary"><ToolOutlined /> Thiết bị mượn (kèm booking)</Text>
+                                            {bookingEquips.length > 0 && (
+                                                <Button
+                                                    type="link"
+                                                    size="small"
+                                                    icon={<PrinterOutlined />}
+                                                    onClick={() => openBookingEquipmentHandoverPrint(booking, bookingEquips)}
+                                                    style={{ padding: 0, height: 'auto' }}
+                                                >
+                                                    In
+                                                </Button>
+                                            )}
+                                        </div>
+                                        {bookingEquips.length === 0 ? (
+                                            <Text type="secondary" style={{ fontSize: 12 }}>Không có thiết bị mượn qua hệ thống</Text>
+                                        ) : (
+                                            <Space orientation="vertical" size={6} style={{ width: '100%' }}>
+                                                {bookingEquips.map(eq => (
+                                                    <div
+                                                        key={eq.id}
+                                                        style={{
+                                                            fontSize: 12,
+                                                            padding: '6px 8px',
+                                                            borderRadius: 6,
+                                                            background: 'rgba(0,0,0,0.04)',
+                                                        }}
+                                                    >
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                                                            <Text strong style={{ fontSize: 12 }}>{eq.equipmentName}</Text>
+                                                            <Tag color={BOOKING_EQUIPMENT_STATUS_META[eq.status].color} style={{ margin: 0, fontSize: 11 }}>
+                                                                {BOOKING_EQUIPMENT_STATUS_META[eq.status].label}
+                                                            </Tag>
+                                                        </div>
+                                                        <Text type="secondary" style={{ fontSize: 11 }}>SL: {eq.quantity}</Text>
+                                                        {eq.borrowConditionNote ? (
+                                                            <div style={{ fontSize: 11 }}>Mượn: {eq.borrowConditionNote}</div>
+                                                        ) : null}
+                                                        {eq.returnConditionNote ? (
+                                                            <div style={{ fontSize: 11 }}>Trả: {eq.returnConditionNote}</div>
+                                                        ) : null}
+                                                    </div>
+                                                ))}
+                                            </Space>
+                                        )}
                                     </div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <Text type="secondary"><PhoneOutlined /> Liên hệ:</Text>
@@ -344,6 +505,7 @@ const ModalBookingHistory = (props: IProps) => {
             await clientSoftDeleteBookingEquipment(id);
             toast.success("Đã xóa khỏi danh sách");
             setEquipList(prev => prev.filter(e => e.id !== id));
+            setAllMyEquips(prev => prev.filter(e => e.id !== id));
         } catch (error: any) {
             toast.error(error?.response?.data?.message ?? "Lỗi xóa");
         } finally {
@@ -374,6 +536,27 @@ const ModalBookingHistory = (props: IProps) => {
         },
         { title: "SL", dataIndex: "quantity", key: "quantity", width: 50 },
         {
+            title: "Trả tốt",
+            key: "qtyG",
+            width: 52,
+            render: (_: unknown, r: IBookingEquipment) =>
+                r.status === "BORROWED" ? <Text type="secondary">—</Text> : (r.quantityReturnedGood ?? 0),
+        },
+        {
+            title: "Mất",
+            key: "qtyL",
+            width: 44,
+            render: (_: unknown, r: IBookingEquipment) =>
+                r.status === "BORROWED" ? <Text type="secondary">—</Text> : (r.quantityLost ?? 0),
+        },
+        {
+            title: "Hỏng",
+            key: "qtyD",
+            width: 44,
+            render: (_: unknown, r: IBookingEquipment) =>
+                r.status === "BORROWED" ? <Text type="secondary">—</Text> : (r.quantityDamaged ?? 0),
+        },
+        {
             title: "Trạng thái",
             dataIndex: "status",
             key: "status",
@@ -397,51 +580,53 @@ const ModalBookingHistory = (props: IProps) => {
                 record.status === "BORROWED" ? (
                     <Space size={4}>
                         {/* Trả bình thường */}
-                        <Popconfirm
-                            title="Xác nhận đã trả thiết bị?"
-                            okText="Đã trả"
-                            cancelText="Huỷ"
-                            onConfirm={() => handleUpdateEquipStatus(record.id, "RETURNED")}
+                        <Button
+                            size="small"
+                            type="primary"
+                            loading={updatingEquipId === record.id}
+                            onClick={() => {
+                                const b = listBookingsClient.find(x => x.id === record.bookingId);
+                                if (!b) {
+                                    toast.error("Không tìm thấy booking");
+                                    return;
+                                }
+                                openClientReturnModal(b, record, "full");
+                            }}
                         >
-                            <Button size="small" type="primary" loading={updatingEquipId === record.id}>
-                                Trả
-                            </Button>
-                        </Popconfirm>
+                            Trả
+                        </Button>
 
-                        {/* Báo hỏng */}
-                        <Popconfirm
-                            title="Báo thiết bị bị hỏng?"
-                            description="Thiết bị sẽ bị loại khỏi kho."
-                            okText="Xác nhận"
-                            cancelText="Huỷ"
-                            okButtonProps={{ danger: true }}
-                            onConfirm={() => handleUpdateEquipStatus(record.id, "DAMAGED")}
+                        <Button
+                            size="small"
+                            danger
+                            loading={updatingEquipId === record.id}
+                            onClick={() => {
+                                const b = listBookingsClient.find(x => x.id === record.bookingId);
+                                if (!b) {
+                                    toast.error("Không tìm thấy booking");
+                                    return;
+                                }
+                                openClientReturnModal(b, record, "damaged");
+                            }}
                         >
-                            <Button size="small" danger loading={updatingEquipId === record.id}>
-                                Hỏng
-                            </Button>
-                        </Popconfirm>
+                            Hỏng
+                        </Button>
 
-                        {/* Báo mất — hiện tiền đền trước khi confirm */}
-                        <Popconfirm
-                            title="Báo thiết bị bị mất?"
-                            description={
-                                <span>
-                                    Tiền đền: <strong style={{ color: "#ff4d4f" }}>
-                                        {formatVND(record.quantity * record.equipmentPrice)}
-                                    </strong>
-                                    <br />Khoản này sẽ được tính vào booking.
-                                </span>
-                            }
-                            okText="Xác nhận mất"
-                            cancelText="Huỷ"
-                            okButtonProps={{ danger: true }}
-                            onConfirm={() => handleUpdateEquipStatus(record.id, "LOST")}
+                        <Button
+                            size="small"
+                            danger
+                            loading={updatingEquipId === record.id}
+                            onClick={() => {
+                                const b = listBookingsClient.find(x => x.id === record.bookingId);
+                                if (!b) {
+                                    toast.error("Không tìm thấy booking");
+                                    return;
+                                }
+                                openClientReturnModal(b, record, "lost");
+                            }}
                         >
-                            <Button size="small" danger loading={updatingEquipId === record.id}>
-                                Mất
-                            </Button>
-                        </Popconfirm>
+                            Mất
+                        </Button>
                     </Space>
                 ) : (
                     <Popconfirm
@@ -555,6 +740,98 @@ const ModalBookingHistory = (props: IProps) => {
                     setPayBookingId(null);
                 }}
             />
+
+            <Modal
+                title="Trả thiết bị & biên bản"
+                width={520}
+                open={!!returnModal}
+                onCancel={() => {
+                    setReturnModal(null);
+                    setReturnNote("");
+                    setPrintAfterReturn(false);
+                }}
+                onOk={submitClientReturn}
+                okText="Xác Nhận"
+                cancelText="Hủy"
+                confirmLoading={returnModal != null && updatingEquipId === returnModal.record.id}
+            >
+                {returnModal && (
+                    <>
+                        <p style={{ marginBottom: 8 }}>
+                            <strong>{returnModal.record.equipmentName}</strong> × {returnModal.record.quantity}
+                        </p>
+                        <Text type="secondary">Kiểm đếm (tổng phải bằng {returnModal.record.quantity})</Text>
+                        <div
+                            style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(3, 1fr)",
+                                gap: 10,
+                                marginTop: 8,
+                                marginBottom: 12,
+                            }}
+                        >
+                            <div>
+                                <div style={{ fontSize: 12, marginBottom: 4 }}>Trả tốt</div>
+                                <InputNumber
+                                    min={0}
+                                    max={returnModal.record.quantity}
+                                    style={{ width: "100%" }}
+                                    value={returnQtyGood}
+                                    onChange={v => setReturnQtyGood(v ?? 0)}
+                                />
+                            </div>
+                            <div>
+                                <div style={{ fontSize: 12, marginBottom: 4 }}>Mất</div>
+                                <InputNumber
+                                    min={0}
+                                    max={returnModal.record.quantity}
+                                    style={{ width: "100%" }}
+                                    value={returnQtyLost}
+                                    onChange={v => setReturnQtyLost(v ?? 0)}
+                                />
+                            </div>
+                            <div>
+                                <div style={{ fontSize: 12, marginBottom: 4 }}>Hỏng</div>
+                                <InputNumber
+                                    min={0}
+                                    max={returnModal.record.quantity}
+                                    style={{ width: "100%" }}
+                                    value={returnQtyDamaged}
+                                    onChange={v => setReturnQtyDamaged(v ?? 0)}
+                                />
+                            </div>
+                        </div>
+                        {returnQtyLost + returnQtyDamaged > 0 && (
+                            <>
+                                <Text type="secondary">Ký xác nhận khi có mất / hỏng (hiện trên biên bản in)</Text>
+                                <Input
+                                    placeholder="Họ tên người mượn"
+                                    value={borrowerSign}
+                                    onChange={e => setBorrowerSign(e.target.value)}
+                                    style={{ marginTop: 6, marginBottom: 8 }}
+                                />
+                                <Input
+                                    placeholder="Họ tên nhân viên / bên giao nhận"
+                                    value={staffSign}
+                                    onChange={e => setStaffSign(e.target.value)}
+                                    style={{ marginBottom: 12 }}
+                                />
+                            </>
+                        )}
+                        <Text type="secondary">Ghi chú biên bản khi trả (tình trạng nhận lại)</Text>
+                        <Input.TextArea
+                            rows={3}
+                            value={returnNote}
+                            onChange={e => setReturnNote(e.target.value)}
+                            placeholder="VD: đủ phụ kiện, có trầy nhẹ…"
+                            style={{ marginTop: 8, marginBottom: 12 }}
+                        />
+                        <Checkbox checked={printAfterReturn} onChange={e => setPrintAfterReturn(e.target.checked)}>
+                            In biên bản sau khi trả (tùy chọn)
+                        </Checkbox>
+                    </>
+                )}
+            </Modal>
 
         </Drawer>
     );

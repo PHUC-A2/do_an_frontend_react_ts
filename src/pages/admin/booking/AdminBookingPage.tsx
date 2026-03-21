@@ -9,7 +9,7 @@ import { FaArrowsToEye } from 'react-icons/fa6';
 import { MdCheckCircle, MdClose, MdDelete } from 'react-icons/md';
 import { fetchBookings, selectBookingLoading, selectBookingMeta, selectBookings } from '../../../redux/features/bookingSlice';
 import type { IBooking } from '../../../types/booking';
-import { BOOKING_STATUS_META, SHIRT_OPTION_META } from '../../../utils/constants/booking.constants';
+import { BOOKING_STATUS_META } from '../../../utils/constants/booking.constants';
 import ModalAddBooking from './modals/ModalAddBooking';
 import { approveBooking, deleteBooking, getAllBookings, getBookingById, rejectBooking } from '../../../config/Api';
 import { toast } from 'react-toastify';
@@ -206,21 +206,6 @@ const AdminBookingPage = () => {
                 ),
         },
 
-        {
-            title: 'Áo pitch',
-            dataIndex: 'shirtOption',
-            key: 'shirtOption',
-            sorter: (a, b) =>
-                (a.shirtOption ?? '').localeCompare(b.shirtOption ?? ''),
-            render: (shirtOption?: IBooking['shirtOption']) =>
-                shirtOption ? (
-                    <Tag color={SHIRT_OPTION_META[shirtOption].color}>
-                        {SHIRT_OPTION_META[shirtOption].label}
-                    </Tag>
-                ) : (
-                    <Tag>Không xác định</Tag>
-                ),
-        },
         {
             title: 'Số điện thoại',
             dataIndex: 'contactPhone',

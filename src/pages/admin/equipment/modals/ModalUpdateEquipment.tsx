@@ -43,6 +43,7 @@ const ModalUpdateEquipment = ({ open, setOpen, equipmentEdit }: IProps) => {
                 price: equipmentEdit.price,
                 imageUrl: equipmentEdit.imageUrl,
                 status: equipmentEdit.status,
+                conditionNote: equipmentEdit.conditionNote ?? '',
             });
             if (equipmentEdit.imageUrl) {
                 setFileList([{
@@ -148,6 +149,10 @@ const ModalUpdateEquipment = ({ open, setOpen, equipmentEdit }: IProps) => {
                     rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
                 >
                     <Select options={EQUIPMENT_STATUS_OPTIONS} />
+                </Form.Item>
+
+                <Form.Item label="Ghi chú tình trạng thiết bị" name="conditionNote">
+                    <Input.TextArea rows={2} placeholder="Mô tả tình trạng hiện tại của thiết bị trong kho" />
                 </Form.Item>
 
                 <Form.Item label="Ảnh thiết bị">

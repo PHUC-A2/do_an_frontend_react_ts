@@ -1,4 +1,3 @@
-export type ShirtOptionEnum = "WITH_PITCH_SHIRT" | "WITHOUT_PITCH_SHIRT";
 export type BookingStatusEnum = "PENDING" | "ACTIVE" | "PAID" | "CANCELLED";
 export interface IBooking {
     id: number;
@@ -8,7 +7,6 @@ export interface IBooking {
     pitchName: string;
     startDateTime: string;
     endDateTime: string;
-    shirtOption: ShirtOptionEnum;
     contactPhone: string;
     durationMinutes: number;
     totalPrice: number;
@@ -25,7 +23,6 @@ export interface ICreateBookingReq {
     pitchId: number;
     startDateTime: string;
     endDateTime: string;
-    shirtOption: ShirtOptionEnum;
     contactPhone?: string;
 }
 
@@ -33,13 +30,11 @@ export interface IUpdateBookingReq {
     pitchId: number;
     startDateTime: string;
     endDateTime: string;
-    shirtOption: ShirtOptionEnum;
     contactPhone?: string;
 }
 
 export interface ICreateBookingClientReq {
     pitchId: number;
-    shirtOption: ShirtOptionEnum;
     contactPhone?: string;
     startDateTime: string;
     endDateTime: string;
@@ -47,7 +42,6 @@ export interface ICreateBookingClientReq {
 
 export interface IUpdateBookingClientReq {
     pitchId: number;
-    shirtOption: ShirtOptionEnum;
     contactPhone?: string;
     startDateTime: string;
     endDateTime: string;

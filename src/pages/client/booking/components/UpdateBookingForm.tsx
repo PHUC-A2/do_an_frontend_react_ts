@@ -1,17 +1,14 @@
-import { DatePicker, Form, Input, Popconfirm, Radio, Select, Spin, Switch, type PopconfirmProps } from "antd";
+import { DatePicker, Form, Input, Popconfirm, Select, Spin, Switch, type PopconfirmProps } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import dayjs, { type Dayjs } from "dayjs";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 
-import { SHIRT_OPTION_OPTIONS } from "../../../../utils/constants/booking.constants";
-import type { ShirtOptionEnum } from "../../../../types/booking";
-import { getBookingById, updateBookingClient, getPublicEquipments, clientBorrowEquipment } from "../../../../config/Api";
-import type { IEquipment } from "../../../../types/equipment";
+import { getBookingById, updateBookingClient, clientBorrowEquipment, clientGetBookingEquipments } from "../../../../config/Api";
 import type { IPitch } from "../../../../types/pitch";
 import { formatVND } from "../../../../utils/format/price";
-import EquipmentBorrowSection from "./EquipmentBorrowSection";
+import EquipmentBorrowSection, { type IBorrowLinePayload } from "./EquipmentBorrowSection";
 import {
     fetchPitches,
     selectPitches,
@@ -33,7 +30,6 @@ interface IProps {
 }
 
 type FormValues = {
-    shirtOption: ShirtOptionEnum;
     contactPhone?: string;
     pitchId?: number;
 };
@@ -55,7 +51,6 @@ const UpdateBookingForm = ({
     onPitchChange,
 }: IProps) => {
     const [form] = Form.useForm<FormValues>();
-    const shirtOption = Form.useWatch("shirtOption", form);
     const selectedPitchId = Form.useWatch("pitchId", form);
 
     const dispatch = useAppDispatch();
@@ -74,26 +69,17 @@ const UpdateBookingForm = ({
     const [endDate, setEndDate] = useState(bookingDate.format("YYYY-MM-DD"));
     const [endTime, setEndTime] = useState("08:00");
 
-    // Equipment state
-    const [equipments, setEquipments] = useState<IEquipment[]>([]);
-    const [ballQty, setBallQty] = useState<number>(1);
-    const [borrowShirt, setBorrowShirt] = useState(false);
-    const [shirtQty, setShirtQty] = useState<number>(1);
-    // Chỉ borrow khi user chủ động thay đổi — không borrow mặc định
+    const [borrowLines, setBorrowLines] = useState<IBorrowLinePayload[]>([]);
+    const [borrowNote, setBorrowNote] = useState("");
     const [equipmentTouched, setEquipmentTouched] = useState(false);
+    const [initialQtyByEquipmentId, setInitialQtyByEquipmentId] = useState<Record<number, number>>({});
+    const [initialBorrowNoteSeed, setInitialBorrowNoteSeed] = useState("");
+    const [borrowInitialVersion, setBorrowInitialVersion] = useState(0);
 
-    // Fetch equipments
-    useEffect(() => {
-        if (!isAuthenticated) return;
-        getPublicEquipments()
-            .then(res => { if (res.data.statusCode === 200) setEquipments(res.data.data ?? []); })
-            .catch(() => { });
-    }, [isAuthenticated]);
-
-    // Reset mượn áo khi bỏ chọn "Có lấy áo"
-    useEffect(() => {
-        if (shirtOption !== "WITH_PITCH_SHIRT") setBorrowShirt(false);
-    }, [shirtOption]);
+    const handleBorrowPlanChange = useCallback((lines: IBorrowLinePayload[], note: string) => {
+        setBorrowLines(lines);
+        setBorrowNote(note);
+    }, []);
 
     // Sync pitch change
     useEffect(() => {
@@ -105,12 +91,12 @@ const UpdateBookingForm = ({
         if (pitches.length === 0) dispatch(fetchPitches("page=1&pageSize=100"));
     }, [dispatch, pitches.length]);
 
-    // Load booking
+    // Load booking + thiết bị đang mượn (để preload số lượng trên form)
     useEffect(() => {
         setInitLoading(true);
-        getBookingById(bookingId)
-            .then(res => {
-                const b = res.data.data;
+        Promise.all([getBookingById(bookingId), clientGetBookingEquipments(bookingId)])
+            .then(([bookingRes, equipRes]) => {
+                const b = bookingRes.data.data;
                 if (!b) return;
 
                 if (b.status === "CANCELLED") {
@@ -132,18 +118,6 @@ const UpdateBookingForm = ({
                 const start = dayjs(b.startDateTime);
                 const end = dayjs(b.endDateTime);
 
-                setStartDate(start.format("YYYY-MM-DD"));
-                setStartTime(start.format("HH:mm").slice(0, 5).replace(/:\d+$/, m => m.replace(/\d+/, v => {
-                    const n = parseInt(v);
-                    return String(n < 30 ? 0 : 30).padStart(2, "0");
-                })));
-                setEndDate(end.format("YYYY-MM-DD"));
-                setEndTime(end.format("HH:mm").slice(0, 5).replace(/:\d+$/, m => m.replace(/\d+/, v => {
-                    const n = parseInt(v);
-                    return String(n < 30 ? 0 : 30).padStart(2, "0");
-                })));
-
-                // round to nearest 30-min option
                 const roundTime = (dj: Dayjs) => {
                     const m = dj.minute() < 30 ? "00" : "30";
                     return `${String(dj.hour()).padStart(2, "0")}:${m}`;
@@ -154,9 +128,20 @@ const UpdateBookingForm = ({
                 setEndDate(end.format("YYYY-MM-DD"));
 
                 form.setFieldsValue({
-                    shirtOption: b.shirtOption,
                     contactPhone: b.contactPhone,
+                    pitchId: b.pitchId,
                 });
+
+                const eqList = equipRes.data.data ?? [];
+                const activeBorrow = eqList.filter(e => !e.deletedByClient && e.status === "BORROWED");
+                const qtyMap: Record<number, number> = {};
+                for (const e of activeBorrow) {
+                    qtyMap[e.equipmentId] = (qtyMap[e.equipmentId] ?? 0) + e.quantity;
+                }
+                setInitialQtyByEquipmentId(qtyMap);
+                const note = activeBorrow.find(e => e.borrowConditionNote?.trim())?.borrowConditionNote ?? "";
+                setInitialBorrowNoteSeed(note);
+                setBorrowInitialVersion(v => v + 1);
             })
             .finally(() => setInitLoading(false));
     }, [bookingId, form]);
@@ -172,6 +157,8 @@ const UpdateBookingForm = ({
         if (!changePitch) return pitch ?? null;
         return pitches.find(p => p.id === selectedPitchId) ?? null;
     }, [changePitch, pitch, pitches, selectedPitchId]);
+
+    const effectivePitchId = changePitch && selectedPitchId ? selectedPitchId : pitchIdNumber;
 
     const startDj = useMemo(() => dayjs(`${startDate}T${startTime}`), [startDate, startTime]);
     const endDj = useMemo(() => dayjs(`${endDate}T${endTime}`), [endDate, endTime]);
@@ -199,7 +186,6 @@ const UpdateBookingForm = ({
         try {
             await updateBookingClient(bookingId, {
                 pitchId: changePitch ? values.pitchId! : pitchIdNumber,
-                shirtOption: values.shirtOption,
                 contactPhone: values.contactPhone,
                 startDateTime: startDj.format("YYYY-MM-DDTHH:mm:ss"),
                 endDateTime: endDj.format("YYYY-MM-DDTHH:mm:ss"),
@@ -207,15 +193,17 @@ const UpdateBookingForm = ({
             toast.success("Cập nhật lịch đặt thành công!");
 
             // Chỉ borrow khi user chủ động thay đổi equipment
-            if (equipmentTouched) {
-                const ballEq = equipments.find(e => e.name.toLowerCase().includes("bóng") || e.name.toLowerCase().includes("ball"));
-                const shirtEq = equipments.find(e => e.name.toLowerCase().includes("áo") || e.name.toLowerCase().includes("shirt"));
-                const tasks: Promise<any>[] = [];
-                if (ballEq && ballQty > 0)
-                    tasks.push(clientBorrowEquipment({ bookingId, equipmentId: ballEq.id, quantity: ballQty }).catch(() => { }));
-                if (borrowShirt && shirtEq && shirtQty > 0)
-                    tasks.push(clientBorrowEquipment({ bookingId, equipmentId: shirtEq.id, quantity: shirtQty }).catch(() => { }));
-                if (tasks.length > 0) await Promise.all(tasks);
+            if (equipmentTouched && borrowLines.length > 0) {
+                const tasks = borrowLines.map(line =>
+                    clientBorrowEquipment({
+                        bookingId,
+                        equipmentId: line.equipmentId,
+                        quantity: line.quantity,
+                        equipmentMobility: line.equipmentMobility,
+                        borrowConditionNote: borrowNote.trim() || undefined,
+                    }).catch(() => { })
+                );
+                await Promise.all(tasks);
             }
 
             dispatch(fetchBookingsClient(""));
@@ -247,6 +235,9 @@ const UpdateBookingForm = ({
 
     return (
         <Form form={form} layout="vertical" onFinish={handleUpdate}>
+
+            <div className="bk__form-layout">
+            <div className="bk__form-layout__primary">
 
             {/* Switch đổi sân */}
             <Form.Item label="Đổi sân thi đấu" style={{ marginBottom: 12 }}>
@@ -365,69 +356,59 @@ const UpdateBookingForm = ({
                 )}
             </AnimatePresence>
 
-            {/* Shirt */}
-            <Form.Item
-                label="Áo pitch"
-                name="shirtOption"
-                rules={[{ required: true, message: "Vui lòng chọn" }]}
-                style={{ marginBottom: 12 }}
-            >
-                <Radio.Group className="bk__shirt-radio" buttonStyle="solid" style={{ width: '100%', display: 'flex' }}>
-                    {SHIRT_OPTION_OPTIONS.map(opt => (
-                        <Radio.Button key={opt.value} value={opt.value} style={{ flex: 1, textAlign: 'center' }}>
-                            {opt.label}
-                        </Radio.Button>
-                    ))}
-                </Radio.Group>
-            </Form.Item>
-
             {/* Phone */}
             <Form.Item
                 label="Số điện thoại liên hệ"
                 name="contactPhone"
-                style={{ marginBottom: 16 }}
+                style={{ marginBottom: 0 }}
             >
                 <Input className="bk__input-wrap" placeholder="0912 345 678" />
             </Form.Item>
 
-            <EquipmentBorrowSection
-                isAuthenticated={isAuthenticated}
-                shirtOption={shirtOption}
-                equipments={equipments}
-                ballQty={ballQty}
-                setBallQty={v => { setBallQty(v); setEquipmentTouched(true); }}
-                borrowShirt={borrowShirt}
-                setBorrowShirt={v => { setBorrowShirt(v); setEquipmentTouched(true); }}
-                shirtQty={shirtQty}
-                setShirtQty={v => { setShirtQty(v); setEquipmentTouched(true); }}
-            />
-
-            {/* Submit */}
-            <Popconfirm
-                title="Xác nhận cập nhật"
-                description={
-                    <span>
-                        {startDj.format("HH:mm DD/MM")} → {endDj.format("HH:mm DD/MM")}
-                        {preview > 0 && ` · ${formatVND(preview)}`}
-                    </span>
-                }
-                okText="Xác nhận"
-                cancelText="Huỷ"
-                placement="topLeft"
-                onCancel={cancel}
-                onConfirm={handleConfirmSubmit}
-                disabled={!canSubmit}
-            >
-                <button
-                    className="bk__submit-btn"
-                    type="button"
+            <div className="bk__form-submit-inline">
+                <Popconfirm
+                    title="Xác nhận cập nhật"
+                    description={
+                        <span>
+                            {startDj.format("HH:mm DD/MM")} → {endDj.format("HH:mm DD/MM")}
+                            {preview > 0 && ` · ${formatVND(preview)}`}
+                        </span>
+                    }
+                    okText="Xác nhận"
+                    cancelText="Huỷ"
+                    placement="topLeft"
+                    onCancel={cancel}
+                    onConfirm={handleConfirmSubmit}
                     disabled={!canSubmit}
                 >
-                    {loading
-                        ? <><Spin size="small" /> Đang cập nhật...</>
-                        : <><TbSoccerField size={16} /> Cập nhật lịch đặt</>}
-                </button>
-            </Popconfirm>
+                    <button
+                        className="bk__submit-btn"
+                        type="button"
+                        disabled={!canSubmit}
+                    >
+                        {loading
+                            ? <><Spin size="small" /> Đang cập nhật...</>
+                            : <><TbSoccerField size={16} /> Cập nhật lịch đặt</>}
+                    </button>
+                </Popconfirm>
+            </div>
+
+            </div>
+
+            <div className="bk__form-layout__aside">
+            <EquipmentBorrowSection
+                pitchId={effectivePitchId}
+                sessionKey={`${bookingId}-${effectivePitchId}`}
+                initialVersion={borrowInitialVersion}
+                initialQtyByEquipmentId={initialQtyByEquipmentId}
+                initialBorrowNote={initialBorrowNoteSeed}
+                isAuthenticated={isAuthenticated}
+                onPlanChange={handleBorrowPlanChange}
+                onBorrowInteraction={() => setEquipmentTouched(true)}
+            />
+            </div>
+
+            </div>
 
         </Form>
     );

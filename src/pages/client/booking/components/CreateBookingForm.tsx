@@ -1,19 +1,17 @@
-import { DatePicker, Form, Input, Popconfirm, Radio, Select, Spin, type PopconfirmProps } from "antd";
+import { DatePicker, Form, Input, Popconfirm, Select, Spin, type PopconfirmProps } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import dayjs, { type Dayjs } from "dayjs";
 import { toast } from "react-toastify";
 
-import { SHIRT_OPTION_OPTIONS } from "../../../../utils/constants/booking.constants";
-import type { ICreateBookingClientReq, ShirtOptionEnum } from "../../../../types/booking";
-import { createBookingClient, clientBorrowEquipment, getPublicEquipments } from "../../../../config/Api";
+import type { ICreateBookingClientReq } from "../../../../types/booking";
+import { createBookingClient, clientBorrowEquipment } from "../../../../config/Api";
 import type { IPitch } from "../../../../types/pitch";
-import type { IEquipment } from "../../../../types/equipment";
 import { formatVND } from "../../../../utils/format/price";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 import { fetchBookingsClient } from "../../../../redux/features/bookingClientSlice";
 import { TbSoccerField } from "react-icons/tb";
-import EquipmentBorrowSection from "./EquipmentBorrowSection";
+import EquipmentBorrowSection, { type IBorrowLinePayload } from "./EquipmentBorrowSection";
 
 interface IProps {
     pitchIdNumber: number;
@@ -25,7 +23,6 @@ interface IProps {
 }
 
 type FormValues = {
-    shirtOption: ShirtOptionEnum;
     contactPhone?: string;
 };
 
@@ -37,7 +34,6 @@ const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
 
 const CreateBookingForm = ({ pitchIdNumber, pitch, pitchLoading, bookingDate, isDark, onSuccess }: IProps) => {
     const [form] = Form.useForm<FormValues>();
-    const shirtOption = Form.useWatch("shirtOption", form);
     const dispatch = useAppDispatch();
     const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
 
@@ -48,22 +44,14 @@ const CreateBookingForm = ({ pitchIdNumber, pitch, pitchLoading, bookingDate, is
     const [touched, setTouched] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    // Equipment state — lifted here, passed to EquipmentBorrowSection
-    const [equipments, setEquipments] = useState<IEquipment[]>([]);
-    const [ballQty, setBallQty] = useState<number>(1);
-    const [borrowShirt, setBorrowShirt] = useState(false);
-    const [shirtQty, setShirtQty] = useState<number>(1);
+    const [borrowLines, setBorrowLines] = useState<IBorrowLinePayload[]>([]);
+    const [borrowNote, setBorrowNote] = useState("");
+    const [borrowSectionKey, setBorrowSectionKey] = useState(0);
 
-    useEffect(() => {
-        if (!isAuthenticated) return;
-        getPublicEquipments()
-            .then(res => { if (res.data.statusCode === 200) setEquipments(res.data.data ?? []); })
-            .catch(() => { });
-    }, [isAuthenticated]);
-
-    useEffect(() => {
-        if (shirtOption !== "WITH_PITCH_SHIRT") setBorrowShirt(false);
-    }, [shirtOption]);
+    const handleBorrowPlanChange = useCallback((lines: IBorrowLinePayload[], note: string) => {
+        setBorrowLines(lines);
+        setBorrowNote(note);
+    }, []);
 
     useEffect(() => {
         const lastBookingDate = dayjs(startDate);
@@ -95,7 +83,6 @@ const CreateBookingForm = ({ pitchIdNumber, pitch, pitchLoading, bookingDate, is
         setLoading(true);
         const payload: ICreateBookingClientReq = {
             pitchId: pitchIdNumber,
-            shirtOption: values.shirtOption,
             contactPhone: values.contactPhone,
             startDateTime: startDj.format("YYYY-MM-DDTHH:mm:ss"),
             endDateTime: endDj.format("YYYY-MM-DDTHH:mm:ss"),
@@ -105,23 +92,23 @@ const CreateBookingForm = ({ pitchIdNumber, pitch, pitchLoading, bookingDate, is
             const res = await createBookingClient(payload);
             if (res.data.statusCode === 201) {
                 const newBookingId = res.data.data?.id;
-                if (newBookingId) {
-                    const ballEq = equipments.find(e => e.name.toLowerCase().includes("bóng") || e.name.toLowerCase().includes("ball"));
-                    const shirtEq = equipments.find(e => e.name.toLowerCase().includes("áo") || e.name.toLowerCase().includes("shirt"));
-                    const tasks: Promise<any>[] = [];
-                    if (ballEq && ballQty > 0)
-                        tasks.push(clientBorrowEquipment({ bookingId: newBookingId, equipmentId: ballEq.id, quantity: ballQty }).catch(() => { }));
-                    if (borrowShirt && shirtEq && shirtQty > 0)
-                        tasks.push(clientBorrowEquipment({ bookingId: newBookingId, equipmentId: shirtEq.id, quantity: shirtQty }).catch(() => { }));
-                    if (tasks.length > 0) await Promise.all(tasks);
+                if (newBookingId && borrowLines.length > 0) {
+                    const tasks = borrowLines.map(line =>
+                        clientBorrowEquipment({
+                            bookingId: newBookingId,
+                            equipmentId: line.equipmentId,
+                            quantity: line.quantity,
+                            equipmentMobility: line.equipmentMobility,
+                            borrowConditionNote: borrowNote.trim() || undefined,
+                        }).catch(() => { })
+                    );
+                    await Promise.all(tasks);
                 }
                 toast.success("Yêu cầu đặt sân đã được gửi, đang chờ admin xác nhận!");
                 dispatch(fetchBookingsClient(""));
                 form.resetFields();
                 setTouched(false);
-                setBallQty(1);
-                setBorrowShirt(false);
-                setShirtQty(1);
+                setBorrowSectionKey(k => k + 1);
                 onSuccess?.();
             }
         } catch (e: any) {
@@ -147,6 +134,9 @@ const CreateBookingForm = ({ pitchIdNumber, pitch, pitchLoading, bookingDate, is
 
     return (
         <Form form={form} layout="vertical" onFinish={handleBooking}>
+
+            <div className="bk__form-layout">
+            <div className="bk__form-layout__primary">
 
             <div className="bk__dt-group">
                 <div className="bk__dt-block">
@@ -225,44 +215,41 @@ const CreateBookingForm = ({ pitchIdNumber, pitch, pitchLoading, bookingDate, is
                 )}
             </AnimatePresence>
 
-            <Form.Item label="Áo pitch" name="shirtOption" style={{ marginBottom: 12 }}>
-                <Radio.Group className="bk__shirt-radio" buttonStyle="solid" style={{ width: '100%', display: 'flex' }}>
-                    {SHIRT_OPTION_OPTIONS.map(opt => (
-                        <Radio.Button key={opt.value} value={opt.value} style={{ flex: 1, textAlign: 'center' }}>
-                            {opt.label}
-                        </Radio.Button>
-                    ))}
-                </Radio.Group>
-            </Form.Item>
-
-            <Form.Item label="Số điện thoại liên hệ" name="contactPhone" style={{ marginBottom: 16 }}>
+            <Form.Item label="Số điện thoại liên hệ" name="contactPhone" style={{ marginBottom: 0 }}>
                 <Input className="bk__input-wrap" placeholder="0912 345 678" />
             </Form.Item>
 
-            <EquipmentBorrowSection
-                isAuthenticated={isAuthenticated}
-                shirtOption={shirtOption}
-                ballQty={ballQty} setBallQty={setBallQty}
-                borrowShirt={borrowShirt} setBorrowShirt={setBorrowShirt}
-                shirtQty={shirtQty} setShirtQty={setShirtQty}
-                equipments={equipments}
-            />
+            <div className="bk__form-submit-inline">
+                <Popconfirm
+                    title="Xác nhận đặt sân"
+                    description={
+                        <span>
+                            {startDj.format("HH:mm DD/MM")} → {endDj.format("HH:mm DD/MM")}
+                            {preview > 0 && ` · ${formatVND(preview)}`}
+                        </span>
+                    }
+                    okText="Đặt ngay" cancelText="Huỷ" placement="topLeft"
+                    onCancel={cancel} onConfirm={handleConfirmSubmit} disabled={!canSubmit}
+                >
+                    <button className="bk__submit-btn" type="button" disabled={!canSubmit}>
+                        {loading ? <><Spin size="small" /> Đang đặt sân...</> : <><TbSoccerField size={16} /> Đặt sân ngay</>}
+                    </button>
+                </Popconfirm>
+            </div>
 
-            <Popconfirm
-                title="Xác nhận đặt sân"
-                description={
-                    <span>
-                        {startDj.format("HH:mm DD/MM")} → {endDj.format("HH:mm DD/MM")}
-                        {preview > 0 && ` · ${formatVND(preview)}`}
-                    </span>
-                }
-                okText="Đặt ngay" cancelText="Huỷ" placement="topLeft"
-                onCancel={cancel} onConfirm={handleConfirmSubmit} disabled={!canSubmit}
-            >
-                <button className="bk__submit-btn" type="button" disabled={!canSubmit}>
-                    {loading ? <><Spin size="small" /> Đang đặt sân...</> : <><TbSoccerField size={16} /> Đặt sân ngay</>}
-                </button>
-            </Popconfirm>
+            </div>
+
+            <div className="bk__form-layout__aside">
+            <EquipmentBorrowSection
+                key={borrowSectionKey}
+                pitchId={pitchIdNumber}
+                sessionKey={`create-${pitchIdNumber}-${borrowSectionKey}`}
+                isAuthenticated={isAuthenticated}
+                onPlanChange={handleBorrowPlanChange}
+            />
+            </div>
+
+            </div>
 
         </Form>
     );

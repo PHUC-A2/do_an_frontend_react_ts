@@ -175,6 +175,11 @@ const ModalPitchDetails = (props: IProps) => {
                                                         <>
                                                             <Text type="secondary">Equipment ID: {item.equipmentId}</Text>
                                                             <br />
+                                                            <Text>
+                                                                Loại:{' '}
+                                                                {item.equipmentMobility === 'MOVABLE' ? 'Lưu động' : 'Cố định trên sân'}
+                                                            </Text>
+                                                            <br />
                                                             <Text>{item.specification ? `Thông số: ${item.specification}` : 'Thông số: chưa cập nhật'}</Text>
                                                             <br />
                                                             <Text>{item.note ? `Ghi chú: ${item.note}` : 'Ghi chú: chưa cập nhật'}</Text>

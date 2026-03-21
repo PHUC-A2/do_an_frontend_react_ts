@@ -11,6 +11,9 @@ import {
     Button,
     Popconfirm,
     Space,
+    Alert,
+    Radio,
+    Tag,
     type GetProp,
     type UploadFile,
     type UploadProps,
@@ -34,7 +37,7 @@ import { fetchPitches } from '../../../../redux/features/pitchSlice';
 
 import type { IPitch, IUpdatePitchReq } from '../../../../types/pitch';
 import type { IEquipment } from '../../../../types/equipment';
-import type { IPitchEquipment } from '../../../../types/pitchEquipment';
+import type { EquipmentMobilityEnum, IPitchEquipment } from '../../../../types/pitchEquipment';
 import {
     PITCH_STATUS_OPTIONS,
     PITCH_TYPE_OPTIONS,
@@ -76,6 +79,7 @@ const ModalUpdatePitch = (props: IProps) => {
     const [peQuantity, setPeQuantity] = useState<number>(1);
     const [peSpecification, setPeSpecification] = useState<string>('');
     const [peNote, setPeNote] = useState<string>('');
+    const [peMobility, setPeMobility] = useState<EquipmentMobilityEnum>('FIXED');
     const [loadingPitchEquipments, setLoadingPitchEquipments] = useState(false);
     const [savingPitchEquipment, setSavingPitchEquipment] = useState(false);
     const [deletingEquipmentId, setDeletingEquipmentId] = useState<number | null>(null);
@@ -198,6 +202,28 @@ const ModalUpdatePitch = (props: IProps) => {
         }
     };
 
+    useEffect(() => {
+        if (!selectedEquipmentId) {
+            setPeQuantity(1);
+            setPeSpecification('');
+            setPeNote('');
+            setPeMobility('FIXED');
+            return;
+        }
+        const existing = pitchEquipments.find((pe) => pe.equipmentId === selectedEquipmentId);
+        if (existing) {
+            setPeQuantity(existing.quantity);
+            setPeSpecification(existing.specification ?? '');
+            setPeNote(existing.note ?? '');
+            setPeMobility(existing.equipmentMobility ?? 'FIXED');
+        } else {
+            setPeQuantity(1);
+            setPeSpecification('');
+            setPeNote('');
+            setPeMobility('FIXED');
+        }
+    }, [selectedEquipmentId, pitchEquipments]);
+
     const handleAddOrUpdatePitchEquipment = async () => {
         if (!pitchEdit?.id) return;
         if (!selectedEquipmentId) {
@@ -212,6 +238,7 @@ const ModalUpdatePitch = (props: IProps) => {
                 quantity: peQuantity,
                 specification: peSpecification || null,
                 note: peNote || null,
+                equipmentMobility: peMobility,
             });
 
             if (res.data.statusCode === 200) {
@@ -221,6 +248,7 @@ const ModalUpdatePitch = (props: IProps) => {
                 setPeQuantity(1);
                 setPeSpecification('');
                 setPeNote('');
+                setPeMobility('FIXED');
             }
         } catch (error: any) {
             toast.error(error?.response?.data?.message ?? 'Không thể cập nhật thiết bị sân');
@@ -445,9 +473,28 @@ const ModalUpdatePitch = (props: IProps) => {
 
                 <Divider>Thiết bị gắn theo sân</Divider>
 
+                <Alert
+                    type="info"
+                    showIcon
+                    style={{ marginBottom: 12 }}
+                    message="Phân loại trước khi nhập thông số"
+                    description={
+                        <ul style={{ margin: '8px 0 0', paddingLeft: 18, marginBottom: 0 }}>
+                            <li>
+                                <strong>Cố định trên sân</strong>: đèn chiếu sáng, lưới quây, khung thành (gỗ/sắt, kích thước…) — chỉ mô tả
+                                cho khách, <strong>không</strong> mượn qua đặt sân.
+                            </li>
+                            <li>
+                                <strong>Cho mượn (lưu động)</strong>: bóng, áo… — khách chọn SL khi đặt; hệ thống xử lý mượn/trả. Giá, trạng
+                                thái &quot;hoạt động tốt&quot;, ghi chú tình trạng cần cấu hình ở <strong>Danh mục thiết bị</strong>.
+                            </li>
+                        </ul>
+                    }
+                />
+
                 <Space orientation="vertical" style={{ width: '100%' }} size={10}>
                     <Select
-                        placeholder="Chọn thiết bị để gắn vào sân"
+                        placeholder="Chọn thiết bị từ kho để gắn vào sân"
                         value={selectedEquipmentId}
                         onChange={setSelectedEquipmentId}
                         options={allEquipments.map((e) => ({
@@ -463,19 +510,61 @@ const ModalUpdatePitch = (props: IProps) => {
                         min={1}
                         value={peQuantity}
                         onChange={(v) => setPeQuantity(v ?? 1)}
-                        placeholder="Số lượng"
+                        placeholder={
+                            peMobility === 'MOVABLE'
+                                ? 'Số lượng tối đa cho mượn mỗi lượt (theo cấu hình sân)'
+                                : 'Số lượng / bộ lắp đặt trên sân (mô tả)'
+                        }
                     />
 
-                    <Input
+                    <div>
+                        <div style={{ marginBottom: 6, fontWeight: 600 }}>Loại gắn với sân</div>
+                        <Radio.Group
+                            style={{ width: '100%' }}
+                            value={peMobility}
+                            onChange={(e) => setPeMobility(e.target.value as EquipmentMobilityEnum)}
+                        >
+                            <Space orientation="vertical" size={10} style={{ width: '100%' }}>
+                                <Radio value="FIXED" style={{ alignItems: 'flex-start' }}>
+                                    <div>
+                                        <div>Cố định / trang bị sân</div>
+                                        <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 400 }}>
+                                            Đèn, lưới, khung thành… — hiển thị thông số, không luồng mượn booking.
+                                        </div>
+                                    </div>
+                                </Radio>
+                                <Radio value="MOVABLE" style={{ alignItems: 'flex-start' }}>
+                                    <div>
+                                        <div>Cho mượn khi đặt sân (lưu động)</div>
+                                        <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 400 }}>
+                                            Bóng, áo… — có mượn/trả, trừ kho khi mượn.
+                                        </div>
+                                    </div>
+                                </Radio>
+                            </Space>
+                        </Radio.Group>
+                    </div>
+
+                    <Input.TextArea
+                        rows={2}
                         value={peSpecification}
                         onChange={(e) => setPeSpecification(e.target.value)}
-                        placeholder="Thông số kỹ thuật (ví dụ: lưới 7m x 2.5m, đèn LED 400W)"
+                        placeholder={
+                            peMobility === 'MOVABLE'
+                                ? 'VD: Bóng số 5, hãng Adidas, mức giá tham khảo… (chi tiết giá & tình trạng kho xem ở danh mục thiết bị)'
+                                : 'VD: 4 bộ đèn LED 400W; lưới 7m×2,5m khung thép; khung thành sắt cao 2,44m, sơn chống gỉ…'
+                        }
                     />
 
-                    <Input
+                    <Input.TextArea
+                        rows={2}
                         value={peNote}
                         onChange={(e) => setPeNote(e.target.value)}
-                        placeholder="Ghi chú hiển thị cho người dùng"
+                        placeholder={
+                            peMobility === 'MOVABLE'
+                                ? 'Ghi chú hiển thị khách (VD: mượn tối đa 2 quả / trận, giữ bóng nguyên vẹn…)'
+                                : 'Ghi chú hiển thị khách (VD: đèn bật tự động 18h–22h, lưới mới thay 2025…)'
+                        }
                     />
 
                     <Button
@@ -512,12 +601,19 @@ const ModalUpdatePitch = (props: IProps) => {
                                 ]}
                             >
                                 <List.Item.Meta
-                                    title={`${item.equipmentName} x ${item.quantity}`}
+                                    title={
+                                        <Space wrap size={6}>
+                                            <span>{`${item.equipmentName} × ${item.quantity}`}</span>
+                                            <Tag color={item.equipmentMobility === 'MOVABLE' ? 'blue' : 'default'}>
+                                                {item.equipmentMobility === 'MOVABLE' ? 'Cho mượn' : 'Cố định sân'}
+                                            </Tag>
+                                        </Space>
+                                    }
                                     description={
                                         <>
                                             {item.specification ? `Thông số: ${item.specification}` : 'Không có thông số'}
                                             <br />
-                                            {item.note ? `Ghi chú: ${item.note}` : 'Không có ghi chú'}
+                                            {item.note ? `Ghi chú hiển thị: ${item.note}` : 'Không có ghi chú'}
                                         </>
                                     }
                                 />

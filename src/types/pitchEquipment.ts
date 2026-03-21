@@ -1,3 +1,5 @@
+export type EquipmentMobilityEnum = "FIXED" | "MOVABLE";
+
 export interface IPitchEquipment {
     id: number;
     pitchId: number;
@@ -7,6 +9,10 @@ export interface IPitchEquipment {
     quantity: number;
     specification?: string | null;
     note?: string | null;
+    equipmentMobility: EquipmentMobilityEnum;
+    equipmentAvailableQuantity?: number | null;
+    equipmentStatus?: string | null;
+    equipmentConditionNote?: string | null;
 }
 
 export interface IUpsertPitchEquipmentReq {
@@ -14,4 +20,5 @@ export interface IUpsertPitchEquipmentReq {
     quantity: number;
     specification?: string | null;
     note?: string | null;
+    equipmentMobility?: EquipmentMobilityEnum;
 }

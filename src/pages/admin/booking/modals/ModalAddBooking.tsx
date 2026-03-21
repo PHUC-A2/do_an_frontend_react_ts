@@ -1,12 +1,11 @@
-import { DatePicker, InputNumber, Modal, Select } from 'antd';
+import { DatePicker, InputNumber, Modal } from 'antd';
 import { Form, Input } from 'antd';
 import { createBooking } from '../../../../config/Api';
 import { toast } from 'react-toastify';
 import { useAppDispatch } from '../../../../redux/hooks';
-import type { ICreateBookingReq, ShirtOptionEnum } from '../../../../types/booking';
+import type { ICreateBookingReq } from '../../../../types/booking';
 import { fetchBookings } from '../../../../redux/features/bookingSlice';
 import type { Dayjs } from 'dayjs';
-import { SHIRT_OPTION_OPTIONS } from '../../../../utils/constants/booking.constants';
 
 interface IProps {
     openModalAddBooking: boolean;
@@ -16,7 +15,6 @@ interface IProps {
 type BookingFormValues = {
     userId: number;
     pitchId: number;
-    shirtOption: ShirtOptionEnum;
     contactPhone?: string;
     dateTimeRange: [Dayjs, Dayjs];
 };
@@ -33,7 +31,6 @@ const ModalAddBooking = (props: IProps) => {
         const payload: ICreateBookingReq = {
             userId: values.userId,
             pitchId: values.pitchId,
-            shirtOption: values.shirtOption,
             contactPhone: values.contactPhone,
             startDateTime: start.format('YYYY-MM-DDTHH:mm:ss'),
             endDateTime: end.format('YYYY-MM-DDTHH:mm:ss'),
@@ -112,18 +109,6 @@ const ModalAddBooking = (props: IProps) => {
                                 format="YYYY-MM-DD HH:mm"
                                 style={{ width: '100%' }}
                                 placeholder={["Thời gian bắt đầu", "Thời gian kết thúc"]}
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="Áo pitch"
-                            name="shirtOption"
-                            rules={[{ required: true, message: 'Vui lòng chọn loại áo!' }]}
-                        >
-                            <Select
-                                placeholder="Chọn loại áo"
-                                options={SHIRT_OPTION_OPTIONS}
-                                allowClear
                             />
                         </Form.Item>
 

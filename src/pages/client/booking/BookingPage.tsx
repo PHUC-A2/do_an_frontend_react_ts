@@ -181,7 +181,8 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                 <section className="bk__main">
                     <div className="bk__container bk__main-inner">
 
-                        {/* ── LEFT: calendar nav + timeline ── */}
+                        {/* ── Row 1 (desktop full width): calendar + timeline ── */}
+                        <div className="bk__main-timeline">
                         <motion.div className="bk__panel"
                             initial="hidden" animate="visible" variants={fadeUp} custom={1}>
 
@@ -234,11 +235,10 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                                 {timelineOpen && (
                                     <motion.div
                                         key="timeline-body"
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: "auto", opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                                        style={{ overflow: "hidden" }}
+                                        initial={{ opacity: 0, y: -8 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -8 }}
+                                        transition={{ duration: 0.25, ease: "easeOut" }}
                                     >
                                         {/* Week label */}
                                         <p className="bk__week-label">
@@ -281,11 +281,13 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                                 )}
                             </AnimatePresence>
                         </motion.div>
+                        </div>
 
-                        {/* ── RIGHT column ── */}
-                        <div className="bk__right">
-
-                            {/* Pitch info — collapsible on mobile */}
+                        {/* ── Row 2 (desktop): thẻ sân | form — 50/50 ── */}
+                        <div className="bk__main-cards">
+                            <div className="bk__main-cards__slot bk__main-cards__slot--pitch">
+                            <div className="bk__main-cards__panel-stretch">
+                            {/* Pitch info */}
                             <AnimatePresence mode="wait">
                                 {pitchLoading ? (
                                     <motion.div key="spin"
@@ -320,11 +322,10 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                                             {pitchOpen && (
                                                 <motion.div
                                                     key="pitch-body"
-                                                    initial={{ height: 0, opacity: 0 }}
-                                                    animate={{ height: "auto", opacity: 1 }}
-                                                    exit={{ height: 0, opacity: 0 }}
-                                                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                                                    style={{ overflow: "hidden" }}
+                                                    initial={{ opacity: 0, y: -6 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -6 }}
+                                                    transition={{ duration: 0.25, ease: "easeOut" }}
                                                 >
                                                     <div className="bk__pitch-img-wrap">
                                                         <Image
@@ -350,46 +351,50 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                                                         <div className="bk__pitch-meta">
                                                             <div className="bk__pitch-meta-row">
                                                                 <EnvironmentOutlined />
-                                                                <span>Địa chỉ:</span>
-                                                                <span>{pitch.address}</span>
+                                                                <span className="bk__pitch-meta-label">Địa chỉ:</span>
+                                                                <span className="bk__pitch-meta-value">{pitch.address}</span>
                                                             </div>
                                                             <div className="bk__pitch-meta-row">
                                                                 <GiSloth />
-                                                                <span>Slot:</span>
-                                                                <span>{timeline?.slotMinutes ?? "—"} phút</span>
+                                                                <span className="bk__pitch-meta-label">Slot:</span>
+                                                                <span className="bk__pitch-meta-value">{timeline?.slotMinutes ?? "—"} phút</span>
                                                             </div>
                                                             <div className="bk__pitch-meta-row">
                                                                 <ClockCircleOutlined />
-                                                                <span>Giờ mở cửa:</span>
-                                                                <span>
+                                                                <span className="bk__pitch-meta-label">Giờ mở cửa:</span>
+                                                                <span className="bk__pitch-meta-value">
                                                                     {pitch.open24h
                                                                         ? "Mở cửa 24/7"
                                                                         : `${pitch.openTime} – ${pitch.closeTime}`}
                                                                 </span>
                                                             </div>
                                                             <div className="bk__pitch-meta-row">
-                                                                <span>📐</span>
-                                                                <span>Kích thước:</span>
-                                                                <span>
+                                                                <span className="bk__pitch-meta-icon" aria-hidden>📐</span>
+                                                                <span className="bk__pitch-meta-label">Kích thước:</span>
+                                                                <span className="bk__pitch-meta-value">
                                                                     {pitch.length ?? '--'}m x {pitch.width ?? '--'}m x {pitch.height ?? '--'}m
                                                                 </span>
                                                             </div>
                                                             <div className="bk__pitch-meta-row">
-                                                                <span>📏</span>
-                                                                <span>Diện tích:</span>
-                                                                <span>
+                                                                <span className="bk__pitch-meta-icon" aria-hidden>📏</span>
+                                                                <span className="bk__pitch-meta-label">Diện tích:</span>
+                                                                <span className="bk__pitch-meta-value">
                                                                     {pitch.length != null && pitch.width != null
                                                                         ? `${Number((pitch.length * pitch.width).toFixed(2)).toLocaleString('vi-VN')} m2`
                                                                         : 'Chưa cập nhật'}
                                                                 </span>
                                                             </div>
                                                             <div className="bk__pitch-meta-row">
-                                                                <span>🧰</span>
-                                                                <span>Thiết bị sân:</span>
-                                                                <span>
+                                                                <span className="bk__pitch-meta-icon" aria-hidden>🧰</span>
+                                                                <span className="bk__pitch-meta-label">Thiết bị sân:</span>
+                                                                <span className="bk__pitch-meta-value">
                                                                     {pitchEquipments.length > 0
                                                                         ? pitchEquipments
-                                                                            .map((item) => `${item.equipmentName} x${item.quantity}${item.specification ? ` (${item.specification})` : ''}`)
+                                                                            .map((item) => {
+                                                                                const role = item.equipmentMobility === 'MOVABLE' ? 'Mượn được' : 'Cố định';
+                                                                                const spec = item.specification ? ` — ${item.specification}` : '';
+                                                                                return `${item.equipmentName} (${role}) x${item.quantity}${spec}`;
+                                                                            })
                                                                             .join('; ')
                                                                         : 'Chưa cập nhật'}
                                                                 </span>
@@ -424,8 +429,11 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                                     </motion.div>
                                 ) : null}
                             </AnimatePresence>
+                            </div>
+                            </div>
 
-                            {/* Booking form */}
+                            <div className="bk__main-cards__slot bk__main-cards__slot--booking">
+                            <div className="bk__main-cards__panel-stretch">
                             <motion.div className="bk__panel bk__form-panel"
                                 initial="hidden" animate="visible" variants={fadeUp} custom={3}>
 
@@ -451,11 +459,11 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                                     {formOpen && (
                                         <motion.div
                                             key="form-body"
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: "auto", opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            transition={{ duration: 0.3, ease: "easeInOut" }}
-                                            style={{ overflow: "hidden" }}
+                                            className="bk__form-panel__body"
+                                            initial={{ opacity: 0, y: -6 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -6 }}
+                                            transition={{ duration: 0.25, ease: "easeOut" }}
                                         >
                                             {mode === "CREATE" && (
                                                 <CreateBookingForm
@@ -484,6 +492,8 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                                     )}
                                 </AnimatePresence>
                             </motion.div>
+                            </div>
+                            </div>
                         </div>
                     </div>
                 </section>

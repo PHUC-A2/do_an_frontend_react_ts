@@ -65,6 +65,7 @@ const ModalAddEquipment = ({ open, setOpen }: IProps) => {
             price: values.price,
             imageUrl: values.imageUrl,
             status: values.status ?? 'ACTIVE',
+            conditionNote: values.conditionNote?.trim() || null,
         };
 
         try {
@@ -122,6 +123,10 @@ const ModalAddEquipment = ({ open, setOpen }: IProps) => {
 
                 <Form.Item label="Trạng thái" name="status" initialValue="ACTIVE">
                     <Select options={EQUIPMENT_STATUS_OPTIONS} />
+                </Form.Item>
+
+                <Form.Item label="Ghi chú tình trạng thiết bị" name="conditionNote">
+                    <Input.TextArea rows={2} placeholder="Ví dụ: mới 100%, cần bảo trì định kỳ..." />
                 </Form.Item>
 
                 <Form.Item label="Ảnh thiết bị">

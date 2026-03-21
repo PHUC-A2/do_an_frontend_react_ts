@@ -274,20 +274,26 @@ const PitchDetailsPage: React.FC = () => {
                                                             <div className="pitch-equipment-content">
                                                                 <Space size={6} wrap>
                                                                     <Text strong>{item.equipmentName}</Text>
-                                                                    <Tag color="processing">SL: {item.quantity}</Tag>
+                                                                    <Tag color="processing">SL trên sân: {item.quantity}</Tag>
+                                                                    <Tag color={item.equipmentMobility === 'MOVABLE' ? 'blue' : 'default'}>
+                                                                        {item.equipmentMobility === 'MOVABLE' ? 'Cho mượn khi đặt sân' : 'Cố định trên sân'}
+                                                                    </Tag>
                                                                 </Space>
 
                                                                 <Space orientation="vertical" size={2}>
-                                                                    <Text type="secondary">Mã thiết bị: {item.equipmentId}</Text>
-                                                                    <Text>{item.specification ? `Thông số: ${item.specification}` : 'Thông số: chưa cập nhật'}</Text>
-                                                                    <Text>{item.note ? `Ghi chú: ${item.note}` : 'Ghi chú: chưa cập nhật'}</Text>
+                                                                    <Text type="secondary">Mã thiết bị (kho): {item.equipmentId}</Text>
+                                                                    <Text>{item.specification ? `Thông số / mô tả: ${item.specification}` : 'Thông số: chưa cập nhật'}</Text>
+                                                                    <Text>{item.note ? `Ghi chú sân: ${item.note}` : 'Ghi chú sân: chưa cập nhật'}</Text>
+                                                                    {item.equipmentConditionNote ? (
+                                                                        <Text type="secondary">Tình trạng kho: {item.equipmentConditionNote}</Text>
+                                                                    ) : null}
                                                                 </Space>
                                                             </div>
                                                         </div>
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <Text type="secondary">Sân chưa cập nhật thiết bị cố định</Text>
+                                                <Text type="secondary">Sân chưa cập nhật danh sách thiết bị</Text>
                                             ),
                                         },
                                     ]}

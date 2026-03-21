@@ -372,20 +372,83 @@ $bp-lg  : 1024px;
     }
 }
 
+// Mobile/tablet: timeline → thẻ sân → form (xếp dọc). Desktop: hàng 1 timeline full; hàng 2 thẻ sân 1 : khối form 2 (trong form: nhập liệu 1 | thiết bị mượn 1).
 .bk__main-inner {
-    display              : grid;
-    grid-template-columns: 1fr 340px;
-    gap                  : 20px;
-    align-items          : start;
+    display       : flex;
+    flex-direction: column;
+    gap           : 12px;
+    width         : 100%;
+    max-width     : 100%;
+    min-width     : 0;
+    align-items   : stretch;
 
-    @media (max-width: $bp-lg) {
-        grid-template-columns: 1fr 300px;
-        gap                  : 16px;
+    @media (min-width: $bp-lg) {
+        gap: 20px 24px;
     }
 
-    @media (max-width: $bp-md) {
-        grid-template-columns: 1fr;
-        gap                  : 12px;
+    > * {
+        min-width: 0;
+        max-width: 100%;
+    }
+}
+
+.bk__main-timeline {
+    width    : 100%;
+    min-width: 0;
+}
+
+.bk__main-cards {
+    display       : flex;
+    flex-direction: column;
+    gap           : 12px;
+    min-width     : 0;
+    width         : 100%;
+
+    @media (min-width: $bp-lg) {
+        display              : grid;
+        // Thẻ sân | khối form+thiết bị — 1 : 2; stretch để hai card cùng chiều cao
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+        gap                  : 18px 24px;
+        align-items          : stretch;
+    }
+
+    &__slot {
+        min-width : 0;
+        max-width : 100%;
+        display   : flex;
+        flex-direction: column;
+        gap       : 0;
+
+        @media (min-width: $bp-lg) {
+            align-self: stretch;
+            min-height: 0;
+        }
+
+        > .bk__main-cards__panel-stretch {
+            width: 100%;
+        }
+    }
+
+    &__panel-stretch {
+        min-width: 0;
+
+        @media (min-width: $bp-lg) {
+            flex      : 1 1 auto;
+            display   : flex;
+            flex-direction: column;
+            min-width : 0;
+            min-height: 0;
+            width     : 100%;
+
+            // AnimatePresence không tạo node — .bk__panel là con trực tiếp
+            > .bk__panel {
+                flex      : 1 1 auto;
+                display   : flex;
+                flex-direction: column;
+                min-height: 0;
+                width     : 100%;
+            }
+        }
     }
 }
 
@@ -546,39 +609,32 @@ $bp-lg  : 1024px;
     text-overflow: ellipsis;
 }
 
-// Date strip — 7 chip luôn chia đều, scroll ngang trên iPhone 5
+// Date strip — 7 chip chia đều trong hàng; mobile: gap/padding/chữ nhỏ để không tràn (kể cả ~320px)
 .bk__date-strip {
     display      : flex;
     gap          : 4px;
     margin-bottom: 16px;
+    min-width    : 0;
+    width        : 100%;
 
     @media (max-width: $bp-md) {
-        gap: 5px;
-    }
-
-    @media (max-width: $bp-xxs) {
         gap: 3px;
     }
 
-    // iPhone 5 (≤340px): scroll ngang ẩn thay vì ép 7 chip vào ~39px
-    @media (max-width: 340px) {
-        overflow-x                : auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width           : none;
-        padding-bottom            : 2px;
-
-        &::-webkit-scrollbar {
-            display: none;
-        }
+    @media (max-width: $bp-xxs) {
+        gap: 2px;
     }
 }
 
 .bk__date-chip {
+    box-sizing    : border-box;
     display       : flex;
     flex-direction: column;
     align-items   : center;
-    flex          : 1 1 0; // chia đều 7 chip
-    min-width     : 0; // cho phép co lại dưới min-width mặc định
+    justify-content: center;
+    flex          : 1 1 0;
+    min-width     : 0;
+    max-width     : 100%;
     padding       : 7px 2px;
     border-radius : 10px;
     border        : 1px solid var(--border);
@@ -587,11 +643,19 @@ $bp-lg  : 1024px;
     transition    : all .2s ease;
     overflow      : hidden;
 
-    // Khi strip scroll (≤340px): chip có kích thước cố định để không bị co
-    @media (max-width: 340px) {
-        flex         : 0 0 40px;
+    @media (max-width: $bp-md) {
+        padding      : 6px 1px;
+        border-radius: 9px;
+    }
+
+    @media (max-width: $bp-xxs) {
         padding      : 5px 1px;
         border-radius: 8px;
+    }
+
+    @media (max-width: 320px) {
+        padding      : 4px 0;
+        border-radius: 7px;
     }
 
     &__dow {
@@ -601,19 +665,44 @@ $bp-lg  : 1024px;
         text-transform: uppercase;
         letter-spacing: 0.04em;
         line-height   : 1;
+
+        @media (max-width: $bp-xxs) {
+            font-size: 0.48rem;
+        }
+
+        @media (max-width: 320px) {
+            font-size     : 0.44rem;
+            letter-spacing: 0.02em;
+        }
     }
 
     &__day {
-        font-size  : clamp(0.8rem, 3vw, 1rem);
+        font-size  : clamp(0.72rem, 2.6vw, 1rem);
         font-weight: 700;
         color      : var(--text) !important;
-        line-height: 1.3;
+        line-height: 1.2;
+
+        @media (max-width: $bp-xxs) {
+            font-size: clamp(0.62rem, 2.4vw, 0.88rem);
+        }
+
+        @media (max-width: 320px) {
+            font-size: 0.6rem;
+        }
     }
 
     &__mon {
         font-size  : 0.5rem;
         color      : var(--text-muted) !important;
         line-height: 1;
+
+        @media (max-width: $bp-xxs) {
+            font-size: 0.45rem;
+        }
+
+        @media (max-width: 320px) {
+            font-size: 0.4rem;
+        }
     }
 
     &--active {
@@ -783,6 +872,32 @@ $bp-lg  : 1024px;
             box-shadow: none;
         }
     }
+
+    &--past {
+        opacity: 0.42;
+        cursor : not-allowed;
+
+        &::before {
+            background: linear-gradient(180deg, transparent, rgba(148, 163, 184, 0.55), rgba(100, 116, 139, 0.75), transparent);
+        }
+
+        &::after {
+            background: rgba(7, 14, 28, 0.72);
+        }
+
+        .bk__slot__time {
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .bk__slot__label {
+            color: #94a3b8;
+        }
+
+        &:hover {
+            transform : none;
+            box-shadow: none;
+        }
+    }
 }
 
 @keyframes bkSlotSpin {
@@ -796,7 +911,8 @@ $bp-lg  : 1024px;
 }
 
 .bk--light .bk__slot--free::after,
-.bk--light .bk__slot--booked::after {
+.bk--light .bk__slot--booked::after,
+.bk--light .bk__slot--past::after {
     background: rgba(240, 246, 255, 0.90);
 }
 
@@ -808,13 +924,12 @@ $bp-lg  : 1024px;
     color: #3a0a0a;
 }
 
-// ══════════════════════════════════════════════════════════════
-// RIGHT column
-// ══════════════════════════════════════════════════════════════
-.bk__right {
-    display       : flex;
-    flex-direction: column;
-    gap           : 12px;
+.bk--light .bk__slot--past .bk__slot__time {
+    color: #475569;
+}
+
+.bk--light .bk__slot--past .bk__slot__label {
+    color: #64748b;
 }
 
 // ── Pitch card ────────────────────────────────────────────────
@@ -913,18 +1028,35 @@ $bp-lg  : 1024px;
     display    : flex;
     align-items: flex-start;
     gap        : 5px;
-    font-size  : 0.75rem;
+    font-size  : 0.7rem;
+    line-height: 1.4;
     color      : var(--text-muted) !important;
 
     svg {
         color      : var(--gold);
         flex-shrink: 0;
-        margin-top : 2px;
+        margin-top : 1px;
+        font-size  : 0.75em;
     }
 
-    span:last-child {
+    .bk__pitch-meta-icon {
+        flex-shrink: 0;
+        line-height: 1.2;
+        margin-top : 1px;
+    }
+
+    .bk__pitch-meta-label {
+        flex-shrink : 0;
+        color       : var(--text-muted) !important;
+        font-weight : 400;
+        white-space : nowrap;
+    }
+
+    .bk__pitch-meta-value {
+        flex       : 1 1 0;
+        min-width  : 0;
         color      : var(--text) !important;
-        font-weight: 500;
+        font-weight: 400;
         word-break : break-word;
     }
 }
@@ -975,7 +1107,27 @@ $bp-lg  : 1024px;
 }
 
 // ── Form panel ────────────────────────────────────────────────
+// Cùng cách với .bk__pitch-panel: padding 0 để tiêu đề accordion thẳng hàng; nội dung bọc trong __body
 .bk__form-panel {
+    padding : 0;
+    overflow: hidden;
+
+    &__body {
+        padding: 0 20px 20px;
+
+        @media (max-width: $bp-md) {
+            padding: 0 12px 14px;
+        }
+
+        @media (max-width: $bp-xxs) {
+            padding: 0 10px 12px;
+        }
+
+        @media (max-width: 320px) {
+            padding: 0 8px 10px;
+        }
+    }
+
     .ant-form-item-label>label {
         font-size  : 0.78rem !important;
         font-weight: 500 !important;
@@ -986,6 +1138,36 @@ $bp-lg  : 1024px;
     .ant-form-item {
         margin-bottom: 12px;
     }
+}
+
+// Trong khối đặt sân (2/3 hàng dưới): desktop — nhập liệu | thiết bị mượn 1:1; mobile — xếp dọc
+.bk__form-layout {
+    display       : flex;
+    flex-direction: column;
+    gap           : 0;
+
+    @media (min-width: $bp-lg) {
+        display              : grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap                  : 12px 16px;
+        align-items          : start;
+    }
+
+    &__primary {
+        min-width: 0;
+    }
+
+    &__aside {
+        min-width : 0;
+        max-width : 100%;
+        overflow-x: hidden;
+    }
+}
+
+// Nút đặt/cập nhật trong cột form, ngay dưới SĐT — không trôi theo cột thiết bị
+.bk__form-submit-inline {
+    margin-top: 14px;
+    width     : 100%;
 }
 
 // ── Datetime inputs — 2×2 grid, full 1 col trên xs ──────────
@@ -1301,27 +1483,41 @@ $bp-lg  : 1024px;
 }
 
 .bk__equip-row {
-    display      : flex;
-    align-items  : center;
-    flex-wrap    : wrap;
-    gap          : 8px;
-    margin-bottom: 8px;
+    display       : flex;
+    flex-direction: column;
+    align-items   : stretch;
+    gap           : 4px;
+    width         : 100%;
+    margin-top    : 10px;
 
-    &:last-child {
-        margin-bottom: 0;
+    &:first-of-type {
+        margin-top: 0;
+    }
+
+    &__head {
+        display        : flex;
+        align-items    : center;
+        justify-content: space-between;
+        gap            : 10px;
+        width          : 100%;
+        min-width      : 0;
+        flex-wrap      : nowrap;
     }
 
     .bk__equip-label {
+        flex       : 1 1 auto;
+        min-width  : 0;
         font-size  : 0.83rem;
         color      : var(--text);
-        min-width  : 110px;
-        flex-shrink: 0;
+        line-height: 1.35;
 
         @media (max-width: $bp-xxs) {
-            min-width: 0;
-            flex     : 1 0 auto;
             font-size: 0.8rem;
         }
+    }
+
+    .bk__equip-switch {
+        flex-shrink: 0;
     }
 
     .bk__equip-avail {
