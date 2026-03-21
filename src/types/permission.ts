@@ -53,7 +53,13 @@ export type PermissionKey =
     | "AI_UPDATE"
     | "AI_DELETE"
     // AI chat
-    | "AI_CHAT_ADMIN";
+    | "AI_CHAT_ADMIN"
+    // Phòng tin học (REST /api/v2)
+    | "ROOM_CREATE"
+    | "ROOM_VIEW_LIST"
+    | "ROOM_VIEW_DETAIL"
+    | "ROOM_UPDATE"
+    | "ROOM_DELETE";
 
 export interface IPermission {
     id: number;

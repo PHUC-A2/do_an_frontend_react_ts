@@ -17,6 +17,7 @@ import type { IPitchTimeline } from "../types/timeline";
 import type { IGetUploadResponse } from "../types/upload";
 import type { IAssignRoleReq, ICreateUserReq, IUpdateUserReq, IUser, IUpdateUserStatusReq, IUpdateUserStatusRes } from "../types/user";
 import instance from "./customAxios";
+import type { IRoom, ICreateRoomRequest, IUpdateRoomRequest, IRoomStatus } from "../types/v2/room";
 
 export const register = (data: IRegister) => instance.post("/api/v1/auth/register", data);
 export const login = (username: string, password: string) => instance.post("/api/v1/auth/login", { username, password });
@@ -177,6 +178,21 @@ export const uploadImagePitch = async (file: File) => {
     return data;
 };
 
+// upload room image (folder riêng; endpoint upload file vẫn /api/v1 như pitch)
+export const uploadImageRoom = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", "room");
+
+    const { data } = await instance.post<IGetUploadResponse>(
+        "/api/v1/files/upload",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+    );
+
+    return data;
+};
+
 /* api equipment */
 export const getAllEquipments = (query: string) => instance.get<IBackendRes<IModelPaginate<IEquipment>>>(`/api/v1/equipments?${query}`);
 export const createEquipment = (data: ICreateEquipmentReq) => instance.post<IBackendRes<IEquipment>>(`/api/v1/equipments`, data);
@@ -268,3 +284,17 @@ export const adminToggleAiKey = (id: number) =>
     instance.patch<IBackendRes<IAiKey>>(`/api/v1/admin/ai/keys/${id}/toggle`);
 export const adminDeleteAiKey = (id: number) =>
     instance.delete<IBackendRes<void>>(`/api/v1/admin/ai/keys/${id}`);
+
+/* api phòng tin (/api/v2/admin/rooms) */
+export const getAllRooms = (query: string) =>
+    instance.get<IBackendRes<IModelPaginate<IRoom>>>(`/api/v2/admin/rooms?${query}`);
+export const createRoom = (data: ICreateRoomRequest) =>
+    instance.post<IBackendRes<IRoom>>(`/api/v2/admin/rooms`, data);
+export const getRoomById = (id: number) =>
+    instance.get<IBackendRes<IRoom>>(`/api/v2/admin/rooms/${id}`);
+export const updateRoom = (id: number, data: IUpdateRoomRequest) =>
+    instance.put<IBackendRes<IRoom>>(`/api/v2/admin/rooms/${id}`, data);
+export const patchRoomStatus = (id: number, status: IRoomStatus) =>
+    instance.patch<IBackendRes<IRoom>>(`/api/v2/admin/rooms/${id}/status`, { status });
+export const deleteRoom = (id: number) =>
+    instance.delete<IBackendRes<void>>(`/api/v2/admin/rooms/${id}`);

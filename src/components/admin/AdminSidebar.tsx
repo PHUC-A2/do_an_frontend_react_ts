@@ -8,6 +8,7 @@ import {
     SettingOutlined,
     LogoutOutlined,
     LoginOutlined,
+    HomeOutlined,
 } from '@ant-design/icons';
 import { LockOutlined } from '@ant-design/icons';
 import { MdFeaturedPlayList, MdOutlineSecurity, MdPayments, MdSportsHandball, MdOutlineSupportAgent } from 'react-icons/md';
@@ -71,6 +72,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const canViewRoles = usePermission("ROLE_VIEW_LIST");
     const canViewPermissions = usePermission("PERMISSION_VIEW_LIST");
     const canViewPitches = usePermission("PITCH_VIEW_LIST");
+    const canViewRooms = usePermission("ROOM_VIEW_LIST");
     const canViewBookings = usePermission("BOOKING_VIEW_LIST");
     const canViewPayments = usePermission("PAYMENT_VIEW_LIST");
     const canViewEquipments = usePermission("EQUIPMENT_VIEW_LIST");
@@ -83,6 +85,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         role: 'Vai trò',
         permission: 'Quyền hạn',
         pitch: 'Sân bóng',
+        v2: 'Phòng tin học',
+        rooms: 'Phòng tin học',
         booking: 'Lịch đặt',
         payment: 'Thanh toán',
         equipment: 'Thiết bị',
@@ -116,7 +120,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         }
     };
 
-    const routeMenuKeys = ['/admin', '/admin/user', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/ai', '/admin/support'];
+    const routeMenuKeys = ['/admin', '/admin/user', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/ai', '/admin/support', '/admin/v2/rooms'];
 
     const selectedMenuKey = useMemo(() => {
         const currentPath = location.pathname;
@@ -266,43 +270,49 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                     ? [
                         ...(canViewUsers ? [{
                             key: '/admin/user',
-                            label: <Link to="/admin/user" className={styles.menuLink}>QL Người dùng</Link>,
+                            label: <Link to="/admin/user" className={styles.menuLink}>Người dùng</Link>,
                             icon: <UserOutlined />,
                         }] : []),
 
                         ...(canViewRoles ? [{
                             key: '/admin/role',
-                            label: <Link to="/admin/role" className={styles.menuLink}>QL Vai trò</Link>,
+                            label: <Link to="/admin/role" className={styles.menuLink}>Vai trò</Link>,
                             icon: <FaUserCog />,
                         }] : []),
 
                         ...(canViewPermissions ? [{
                             key: '/admin/permission',
-                            label: <Link to="/admin/permission" className={styles.menuLink}>QL Quyền hạn</Link>,
+                            label: <Link to="/admin/permission" className={styles.menuLink}>Quyền hạn</Link>,
                             icon: <MdOutlineSecurity />,
                         }] : []),
 
                         ...(canViewPitches ? [{
                             key: '/admin/pitch',
-                            label: <Link to="/admin/pitch" className={styles.menuLink}>QL Sân</Link>,
+                            label: <Link to="/admin/pitch" className={styles.menuLink}>Sân bóng</Link>,
                             icon: <PiSoccerBallBold />,
+                        }] : []),
+
+                        ...(canViewRooms ? [{
+                            key: '/admin/v2/rooms',
+                            label: <Link to="/admin/v2/rooms" className={styles.menuLink}>Phòng tin học</Link>,
+                            icon: <HomeOutlined />,
                         }] : []),
 
                         ...(canViewBookings ? [{
                             key: '/admin/booking',
-                            label: <Link to="/admin/booking" className={styles.menuLink}>QL Lịch đặt</Link>,
+                            label: <Link to="/admin/booking" className={styles.menuLink}>Lịch đặt</Link>,
                             icon: <TbBrandBooking />,
                         }] : []),
 
                         ...(canViewPayments ? [{
                             key: '/admin/payment',
-                            label: <Link to="/admin/payment" className={styles.menuLink}>QL thanh toán</Link>,
+                            label: <Link to="/admin/payment" className={styles.menuLink}>Thanh toán</Link>,
                             icon: <MdPayments />,
                         }] : []),
 
                         ...(canViewEquipments ? [{
                             key: '/admin/equipment',
-                            label: <Link to="/admin/equipment" className={styles.menuLink}>QL thiết bị</Link>,
+                            label: <Link to="/admin/equipment" className={styles.menuLink}>Thiết bị</Link>,
                             icon: <MdSportsHandball />,
                         }] : []),
 
@@ -314,7 +324,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
 
                         ...(canManageAi ? [{
                             key: '/admin/ai',
-                            label: <Link to="/admin/ai" className={styles.menuLink}>Quản lý AI</Link>,
+                            label: <Link to="/admin/ai" className={styles.menuLink}>AI</Link>,
                             icon: <RiRobot2Line />,
                         }] : []),
                         {

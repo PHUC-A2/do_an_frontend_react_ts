@@ -22,6 +22,7 @@ import AdminEquipmentPage from '../pages/admin/equipment/AdminEquipmentPage';
 import AdminBookingEquipmentPage from '../pages/admin/bookingequipment/AdminBookingEquipmentPage';
 import AdminAiPage from '../pages/admin/ai/AdminAiPage';
 import AdminSupportPage from '../pages/admin/support/AdminSupportPage';
+import AdminRoomPage from '../pages/admin/v2/room/AdminRoomPage';
 import TermsOfService from '../pages/client/terms-of-service/TermsOfService';
 import { useTopProgress } from '../hooks/common/useTopProgress';
 
@@ -115,6 +116,7 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
                         { path: "/admin/booking-equipment", element: <AdminBookingEquipmentPage /> },
                         { path: "/admin/ai", element: <AdminAiPage /> },
                         { path: "/admin/support", element: <AdminSupportPage /> },
+                        { path: "/admin/v2/rooms", element: <AdminRoomPage /> },
                     ]
                 },
                 { path: "/login", element: <LoginPage /> },
