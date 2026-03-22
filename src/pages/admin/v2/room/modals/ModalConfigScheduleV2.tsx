@@ -1,4 +1,16 @@
-import { Button, Divider, Form, InputNumber, Modal, Space, Switch, Table, TimePicker, Typography } from "antd";
+import {
+    Button,
+    Collapse,
+    Divider,
+    Form,
+    InputNumber,
+    Modal,
+    Space,
+    Switch,
+    Table,
+    TimePicker,
+    Typography,
+} from "antd";
 import type { FormInstance } from "antd/es/form";
 import type { ColumnsType } from "antd/es/table";
 import dayjs, { type Dayjs } from "dayjs";
@@ -22,7 +34,12 @@ import type { IRoom } from "../../../../../types/v2/room";
 import {
     calculateSlotsPreview,
     countGapInputsUniform,
+    splitMorningAfternoonSlotCounts,
 } from "../../../../../utils/v2/roomScheduleSlots";
+import {
+    buildUtbDhOfficialFormValues,
+    UTB_DH_REFERENCE_PERIODS,
+} from "../../../../../utils/v2/utbDhSchedulePreset";
 import axios from "axios";
 
 dayjs.extend(customParseFormat);
@@ -131,33 +148,11 @@ function scheduleToFormDefaults(s: IRoomScheduleV2): FormValues {
     };
 }
 
-const DEFAULT_FORM: FormValues = {
-    useFlexibleBreaks: false,
-    totalSlots: 10,
-    slotDuration: 50,
-    breakDuration: 10,
-    morningStart: dayjs("07:00", "HH:mm"),
-    morningEnd: dayjs("11:50", "HH:mm"),
-    afternoonStart: dayjs("13:00", "HH:mm"),
-    afternoonEnd: dayjs("17:50", "HH:mm"),
-    morningGapBreaks: [],
-    afternoonGapBreaks: [],
-};
+/** Mặc định khi phòng chưa có cấu hình: khớp lịch ĐH 10 tiết (ảnh tham chiếu). */
+const DEFAULT_FORM: FormValues = buildUtbDhOfficialFormValues();
 
-/** Gần giống lịch tiết đại học phổ biến (50 phút/tiết, nghỉ 5 hoặc 10 phút). */
-function applyUniversitySample(form: FormInstance<FormValues>) {
-    form.setFieldsValue({
-        useFlexibleBreaks: true,
-        totalSlots: 10,
-        slotDuration: 50,
-        breakDuration: 5,
-        morningStart: dayjs("07:00", "HH:mm"),
-        morningEnd: dayjs("12:00", "HH:mm"),
-        afternoonStart: dayjs("13:00", "HH:mm"),
-        afternoonEnd: dayjs("18:00", "HH:mm"),
-        morningGapBreaks: [5, 10, 5, 5],
-        afternoonGapBreaks: [5, 10, 5, 5],
-    });
+function applyUtbDhOfficialPreset(form: FormInstance<FormValues>) {
+    form.setFieldsValue(buildUtbDhOfficialFormValues());
 }
 
 interface ModalConfigScheduleV2Props {
@@ -201,6 +196,35 @@ const ModalConfigScheduleV2 = ({ open, onClose, room }: ModalConfigScheduleV2Pro
             return { morning: 0, afternoon: 0 };
         }
     }, [open, watched]);
+
+    const slotSplit = useMemo(() => {
+        if (!open || !watched?.morningStart) {
+            return { morning: 0, afternoon: 0 };
+        }
+        try {
+            const w = watched as Partial<FormValues>;
+            if (!w.morningStart || !w.morningEnd || !w.afternoonStart || !w.afternoonEnd) {
+                return { morning: 0, afternoon: 0 };
+            }
+            return splitMorningAfternoonSlotCounts(formValuesToRequest(w as FormValues));
+        } catch {
+            return { morning: 0, afternoon: 0 };
+        }
+    }, [open, watched]);
+
+    const referenceColumns = useMemo(
+        () => [
+            { title: "Tiết", dataIndex: "slotNumber", key: "slotNumber", width: 72 },
+            { title: "Buổi", dataIndex: "session", key: "session", width: 88 },
+            {
+                title: "Giờ",
+                key: "range",
+                render: (_: unknown, row: (typeof UTB_DH_REFERENCE_PERIODS)[number]) =>
+                    `${row.start} → ${row.end}`,
+            },
+        ],
+        []
+    );
 
     useEffect(() => {
         const fv = watched as FormValues | undefined;
@@ -332,7 +356,22 @@ const ModalConfigScheduleV2 = ({ open, onClose, room }: ModalConfigScheduleV2Pro
             title: "Tiết",
             dataIndex: "slotNumber",
             key: "slotNumber",
-            width: 80,
+            width: 64,
+        },
+        {
+            title: "Buổi",
+            key: "session",
+            width: 88,
+            render: (_: unknown, row: ISlotPreviewV2) => {
+                const m = slotSplit.morning;
+                if (!previewRows.length) {
+                    return "";
+                }
+                if (!m) {
+                    return "—";
+                }
+                return row.slotNumber <= m ? "Sáng" : "Chiều";
+            },
         },
         {
             title: "Bắt đầu",
@@ -345,9 +384,10 @@ const ModalConfigScheduleV2 = ({ open, onClose, room }: ModalConfigScheduleV2Pro
             key: "endTime",
         },
         {
-            title: "Xem nhanh",
+            title: "Tóm tắt",
             key: "label",
-            render: (_: unknown, row) => `Tiết ${row.slotNumber}: ${row.startTime}-${row.endTime}`,
+            render: (_: unknown, row: ISlotPreviewV2) =>
+                `Tiết ${row.slotNumber}: ${row.startTime} → ${row.endTime}`,
         },
     ];
 
@@ -360,13 +400,34 @@ const ModalConfigScheduleV2 = ({ open, onClose, room }: ModalConfigScheduleV2Pro
             okText="Lưu Cấu Hình"
             cancelText="Hủy"
             confirmLoading={submitting}
-            width={760}
+            width={820}
             destroyOnHidden
             forceRender
         >
             <Typography.Paragraph type="secondary" style={{ marginBottom: 12 }}>
-                Thiết lập tiết học trong ngày: buổi sáng trước, buổi chiều sau; xem trước cập nhật theo thời gian thực.
+                Buổi sáng xếp trước, buổi chiều sau. Mỗi tiết 50 phút; nghỉ giữa tiết có thể 5 hoặc 10 phút (bật{" "}
+                <strong>nghỉ linh hoạt</strong>). Mặc định khớp lịch ĐH 10 tiết; bạn có thể đổi khung giờ, số tiết hoặc
+                từng khoảng nghỉ.
             </Typography.Paragraph>
+
+            <Collapse
+                style={{ marginBottom: 16 }}
+                items={[
+                    {
+                        key: "utb-ref",
+                        label: "Bảng tham chiếu lịch ĐH (10 tiết — Sáng / Chiều)",
+                        children: (
+                            <Table
+                                size="small"
+                                pagination={false}
+                                rowKey="slotNumber"
+                                dataSource={[...UTB_DH_REFERENCE_PERIODS]}
+                                columns={referenceColumns}
+                            />
+                        ),
+                    },
+                ]}
+            />
 
             <Form<FormValues>
                 form={form}
@@ -411,7 +472,7 @@ const ModalConfigScheduleV2 = ({ open, onClose, room }: ModalConfigScheduleV2Pro
                 </Form.Item>
 
                 <Form.Item
-                    label="Giờ kết thúc buổi sáng"
+                    label="Giờ kết thúc buổi sáng (biên trên — ≥ giờ kết thúc tiết cuối sáng)"
                     name="morningEnd"
                     dependencies={["morningStart"]}
                     rules={[
@@ -429,6 +490,7 @@ const ModalConfigScheduleV2 = ({ open, onClose, room }: ModalConfigScheduleV2Pro
                             },
                         }),
                     ]}
+                    extra="Ví dụ lịch chuẩn: tiết 5 sáng kết thúc 11:35 — chọn ít nhất 11:35 (thường để 11:35–12:00)."
                 >
                     <TimePicker format="HH:mm" needConfirm={false} style={{ width: "100%" }} />
                 </Form.Item>
@@ -442,7 +504,7 @@ const ModalConfigScheduleV2 = ({ open, onClose, room }: ModalConfigScheduleV2Pro
                 </Form.Item>
 
                 <Form.Item
-                    label="Giờ kết thúc buổi chiều"
+                    label="Giờ kết thúc buổi chiều (biên trên — ≥ giờ kết thúc tiết cuối chiều)"
                     name="afternoonEnd"
                     dependencies={["afternoonStart"]}
                     rules={[
@@ -460,6 +522,7 @@ const ModalConfigScheduleV2 = ({ open, onClose, room }: ModalConfigScheduleV2Pro
                             },
                         }),
                     ]}
+                    extra="Ví dụ lịch chuẩn: tiết 10 kết thúc 17:35 — chọn ít nhất 17:35."
                 >
                     <TimePicker format="HH:mm" needConfirm={false} style={{ width: "100%" }} />
                 </Form.Item>
@@ -479,9 +542,9 @@ const ModalConfigScheduleV2 = ({ open, onClose, room }: ModalConfigScheduleV2Pro
                     />
                 </Form.Item>
 
-                <Space style={{ marginBottom: 8 }}>
-                    <Button type="link" onClick={() => applyUniversitySample(form)} disabled={loadingSchedule}>
-                        Mẫu lịch ĐH (10 tiết, 50 phút/tiết, nghỉ 5–10 phút)
+                <Space style={{ marginBottom: 8 }} wrap>
+                    <Button type="link" onClick={() => applyUtbDhOfficialPreset(form)} disabled={loadingSchedule}>
+                        Áp lịch ĐH chuẩn (như bảng tham chiếu)
                     </Button>
                 </Space>
 
@@ -491,7 +554,7 @@ const ModalConfigScheduleV2 = ({ open, onClose, room }: ModalConfigScheduleV2Pro
                         {Array.from({ length: gapLens.morning }).map((_, i) => (
                             <Form.Item
                                 key={`mg-${i}`}
-                                label={`Sau tiết ${i + 1} (sáng)`}
+                                label={`Nghỉ sau tiết ${i + 1} (sáng)`}
                                 name={["morningGapBreaks", i]}
                                 rules={[{ required: true, message: "Nhập phút nghỉ" }]}
                             >
@@ -507,7 +570,9 @@ const ModalConfigScheduleV2 = ({ open, onClose, room }: ModalConfigScheduleV2Pro
                         {Array.from({ length: gapLens.afternoon }).map((_, i) => (
                             <Form.Item
                                 key={`ag-${i}`}
-                                label={`Sau tiết ${i + 1} (chiều)`}
+                                label={`Nghỉ sau tiết ${
+                                    slotSplit.morning > 0 ? slotSplit.morning + i + 1 : i + 1
+                                } (chiều)`}
                                 name={["afternoonGapBreaks", i]}
                                 rules={[{ required: true, message: "Nhập phút nghỉ" }]}
                             >

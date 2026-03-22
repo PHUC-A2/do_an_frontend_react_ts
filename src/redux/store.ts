@@ -13,6 +13,7 @@ import paymentReducer from './features/paymentSlice'
 import equipmentReducer from './features/equipmentSlice'
 import roomReducer from './features/v2/roomSlice'
 import roomScheduleV2Reducer from './features/v2/roomScheduleSlice'
+import deviceCatalogReducer from './features/v2/deviceCatalogSlice'
 
 export const store = configureStore({
     reducer: {
@@ -30,6 +31,7 @@ export const store = configureStore({
         equipment: equipmentReducer,
         room: roomReducer,
         roomScheduleV2: roomScheduleV2Reducer,
+        deviceCatalog: deviceCatalogReducer,
     }
 })
 

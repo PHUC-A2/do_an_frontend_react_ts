@@ -18,6 +18,7 @@ import type { IGetUploadResponse } from "../types/upload";
 import type { IAssignRoleReq, ICreateUserReq, IUpdateUserReq, IUser, IUpdateUserStatusReq, IUpdateUserStatusRes } from "../types/user";
 import instance from "./customAxios";
 import type { IRoom, ICreateRoomRequest, IUpdateRoomRequest, IRoomStatus } from "../types/v2/room";
+import type { IDeviceCatalog, ICreateDeviceCatalogRequest } from "../types/v2/deviceCatalog";
 import type {
     IRoomScheduleV2,
     ICreateScheduleRequestV2,
@@ -202,6 +203,21 @@ export const uploadImageRoom = async (file: File) => {
     return data;
 };
 
+/** Ảnh danh mục thiết bị phòng (folder riêng; endpoint giống pitch/room). */
+export const uploadImageDeviceCatalog = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", "device-catalog");
+
+    const { data } = await instance.post<IGetUploadResponse>(
+        "/api/v1/files/upload",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+    );
+
+    return data;
+};
+
 /* api equipment */
 export const getAllEquipments = (query: string) => instance.get<IBackendRes<IModelPaginate<IEquipment>>>(`/api/v1/equipments?${query}`);
 export const createEquipment = (data: ICreateEquipmentReq) => instance.post<IBackendRes<IEquipment>>(`/api/v1/equipments`, data);
@@ -329,3 +345,15 @@ export const updateRoomScheduleV2 = (roomId: number, scheduleId: number, data: I
     instance.put<IBackendRes<IRoomScheduleV2>>(`/api/v2/admin/rooms/${roomId}/schedules/${scheduleId}`, data);
 export const deleteRoomScheduleV2 = (roomId: number, scheduleId: number) =>
     instance.delete<IBackendRes<void>>(`/api/v2/admin/rooms/${roomId}/schedules/${scheduleId}`);
+
+/* danh mục thiết bị phòng (/api/v2/admin/device-catalog) */
+export const getAllDeviceCatalogs = (query: string) =>
+    instance.get<IBackendRes<IModelPaginate<IDeviceCatalog>>>(`/api/v2/admin/device-catalog?${query}`);
+export const createDeviceCatalog = (data: ICreateDeviceCatalogRequest) =>
+    instance.post<IBackendRes<IDeviceCatalog>>(`/api/v2/admin/device-catalog`, data);
+export const getDeviceCatalogById = (id: number) =>
+    instance.get<IBackendRes<IDeviceCatalog>>(`/api/v2/admin/device-catalog/${id}`);
+export const updateDeviceCatalog = (id: number, data: ICreateDeviceCatalogRequest) =>
+    instance.put<IBackendRes<IDeviceCatalog>>(`/api/v2/admin/device-catalog/${id}`, data);
+export const deleteDeviceCatalog = (id: number) =>
+    instance.delete<IBackendRes<void>>(`/api/v2/admin/device-catalog/${id}`);

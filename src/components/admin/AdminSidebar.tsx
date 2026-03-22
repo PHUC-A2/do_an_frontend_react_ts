@@ -2,6 +2,7 @@ import { Layout, Menu, Breadcrumb, Button, Grid, Drawer, Switch, Tooltip, Typogr
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type TouchEvent } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import {
+    AppstoreOutlined,
     BellOutlined,
     CloseOutlined,
     DeleteOutlined,
@@ -12,7 +13,7 @@ import {
     HomeOutlined,
 } from '@ant-design/icons';
 import { LockOutlined } from '@ant-design/icons';
-import { MdFeaturedPlayList, MdOutlineSecurity, MdPayments, MdSportsHandball, MdOutlineSupportAgent } from 'react-icons/md';
+import { MdFeaturedPlayList, MdOutlineSecurity, MdPayments, MdSportsHandball, MdOutlineSupportAgent, MdOutlineDeviceHub } from 'react-icons/md';
 import { RiRobot2Line } from 'react-icons/ri';
 import { GiReturnArrow } from 'react-icons/gi';
 import { FaReact, FaUserCircle, FaUserCog } from 'react-icons/fa';
@@ -85,6 +86,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const canViewPayments = usePermission("PAYMENT_VIEW_LIST");
     const canViewEquipments = usePermission("EQUIPMENT_VIEW_LIST");
     const canViewBookingEquipments = usePermission("BOOKING_EQUIPMENT_VIEW");
+    const canViewDeviceCatalog = usePermission("DEVICE_CATALOG_VIEW_LIST");
     const canManageAi = usePermission(["AI_VIEW_LIST", "AI_CREATE", "AI_UPDATE", "AI_DELETE", "AI_CHAT_ADMIN"]);
 
     const routeLabelMap: Record<string, string> = {
@@ -95,6 +97,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         pitch: 'Sân bóng',
         v2: 'Phòng tin học',
         rooms: 'Phòng tin học',
+        'device-catalog': 'Danh mục thiết bị phòng',
         booking: 'Lịch đặt',
         payment: 'Thanh toán',
         equipment: 'Thiết bị',
@@ -147,12 +150,30 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         }
     };
 
-    const routeMenuKeys = ['/admin', '/admin/user', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/ai', '/admin/support', '/admin/v2/rooms'];
+    const routeMenuKeys = ['/admin', '/admin/user', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/ai', '/admin/support', '/admin/v2/rooms', '/admin/v2/device-catalog'];
+
+    const PITCH_GROUP_PATHS = ['/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment'] as const;
+    const ROOM_GROUP_PATHS = ['/admin/v2/rooms', '/admin/v2/device-catalog'] as const;
+
+    const [menuOpenKeys, setMenuOpenKeys] = useState<string[]>(() => ['features', 'settings']);
 
     const selectedMenuKey = useMemo(() => {
         const currentPath = location.pathname;
         const directMatch = routeMenuKeys.find((path) => currentPath === path || currentPath.startsWith(`${path}/`));
         return directMatch || '';
+    }, [location.pathname]);
+
+    useEffect(() => {
+        const onPitch = PITCH_GROUP_PATHS.some((p) => location.pathname === p || location.pathname.startsWith(`${p}/`));
+        const onRoom = ROOM_GROUP_PATHS.some((p) => location.pathname === p || location.pathname.startsWith(`${p}/`));
+        setMenuOpenKeys((prev) => {
+            const next = new Set(prev);
+            next.add('features');
+            next.add('settings');
+            if (onPitch) next.add('QlSan');
+            if (onRoom) next.add('QlPhong');
+            return [...next];
+        });
     }, [location.pathname]);
 
     const breadcrumbText = useMemo(() => {
@@ -282,6 +303,47 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         };
     };
 
+    const qlSanChildren = [
+        ...(canViewPitches ? [{
+            key: '/admin/pitch',
+            label: <Link to="/admin/pitch" className={styles.menuLink}>Sân bóng</Link>,
+            icon: <PiSoccerBallBold />,
+        }] : []),
+        ...(canViewBookings ? [{
+            key: '/admin/booking',
+            label: <Link to="/admin/booking" className={styles.menuLink}>Lịch đặt</Link>,
+            icon: <TbBrandBooking />,
+        }] : []),
+        ...(canViewPayments ? [{
+            key: '/admin/payment',
+            label: <Link to="/admin/payment" className={styles.menuLink}>Thanh toán</Link>,
+            icon: <MdPayments />,
+        }] : []),
+        ...(canViewEquipments ? [{
+            key: '/admin/equipment',
+            label: <Link to="/admin/equipment" className={styles.menuLink}>Thiết bị</Link>,
+            icon: <MdSportsHandball />,
+        }] : []),
+        ...(canViewBookingEquipments ? [{
+            key: '/admin/booking-equipment',
+            label: <Link to="/admin/booking-equipment" className={styles.menuLink}>Mượn thiết bị</Link>,
+            icon: <GiReturnArrow />,
+        }] : []),
+    ];
+
+    const qlPhongChildren = [
+        ...(canViewRooms ? [{
+            key: '/admin/v2/rooms',
+            label: <Link to="/admin/v2/rooms" className={styles.menuLink}>Phòng tin</Link>,
+            icon: <HomeOutlined />,
+        }] : []),
+        ...(canViewDeviceCatalog ? [{
+            key: '/admin/v2/device-catalog',
+            label: <Link to="/admin/v2/device-catalog" className={styles.menuLink}>Thiết bị</Link>,
+            icon: <AppstoreOutlined />,
+        }] : []),
+    ];
+
     const menuItems = [
         {
             key: '/admin',
@@ -313,40 +375,18 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                             icon: <MdOutlineSecurity />,
                         }] : []),
 
-                        ...(canViewPitches ? [{
-                            key: '/admin/pitch',
-                            label: <Link to="/admin/pitch" className={styles.menuLink}>Sân bóng</Link>,
-                            icon: <PiSoccerBallBold />,
+                        ...(qlSanChildren.length > 0 ? [{
+                            key: 'QlSan',
+                            label: 'Quản lý sân',
+                            icon: <MdOutlineDeviceHub />,
+                            children: qlSanChildren,
                         }] : []),
 
-                        ...(canViewRooms ? [{
-                            key: '/admin/v2/rooms',
-                            label: <Link to="/admin/v2/rooms" className={styles.menuLink}>Phòng tin học</Link>,
-                            icon: <HomeOutlined />,
-                        }] : []),
-
-                        ...(canViewBookings ? [{
-                            key: '/admin/booking',
-                            label: <Link to="/admin/booking" className={styles.menuLink}>Lịch đặt</Link>,
-                            icon: <TbBrandBooking />,
-                        }] : []),
-
-                        ...(canViewPayments ? [{
-                            key: '/admin/payment',
-                            label: <Link to="/admin/payment" className={styles.menuLink}>Thanh toán</Link>,
-                            icon: <MdPayments />,
-                        }] : []),
-
-                        ...(canViewEquipments ? [{
-                            key: '/admin/equipment',
-                            label: <Link to="/admin/equipment" className={styles.menuLink}>Thiết bị</Link>,
-                            icon: <MdSportsHandball />,
-                        }] : []),
-
-                        ...(canViewBookingEquipments ? [{
-                            key: '/admin/booking-equipment',
-                            label: <Link to="/admin/booking-equipment" className={styles.menuLink}>Mượn thiết bị</Link>,
-                            icon: <GiReturnArrow />,
+                        ...(qlPhongChildren.length > 0 ? [{
+                            key: 'QlPhong',
+                            label: 'Quản lý phòng',
+                            icon: <MdOutlineDeviceHub />,
+                            children: qlPhongChildren,
                         }] : []),
 
                         ...(canManageAi ? [{
@@ -645,7 +685,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                             mode="inline"
                             items={menuItems}
                             selectedKeys={selectedMenuKey ? [selectedMenuKey] : []}
-                            defaultOpenKeys={['features', 'settings']}
+                            openKeys={menuOpenKeys}
+                            onOpenChange={(keys) => setMenuOpenKeys(keys as string[])}
                             className={styles.sidebarMenu}
                             inlineIndent={28}
                             inlineCollapsed={collapsed}
@@ -695,7 +736,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                         theme={isDark ? 'dark' : 'light'}
                         onClick={() => setDrawerVisible(false)}
                         selectedKeys={selectedMenuKey ? [selectedMenuKey] : []}
-                        defaultOpenKeys={['features', 'settings']}
+                        openKeys={menuOpenKeys}
+                        onOpenChange={(keys) => setMenuOpenKeys(keys as string[])}
                         className={styles.sidebarMenu}
                         inlineIndent={28}
                         inlineCollapsed={collapsed}

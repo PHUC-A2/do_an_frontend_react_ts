@@ -124,3 +124,49 @@ export function calculateSlotsPreview(input: ICreateScheduleRequestV2): ISlotPre
     }
     return result;
 }
+
+/**
+ * Số tiết gán buổi sáng / chiều (cùng logic {@link calculateSlotsPreview}).
+ * Dùng để hiển thị nhãn “Sau tiết N” đúng số tiết cả ngày.
+ */
+export function splitMorningAfternoonSlotCounts(
+    input: ICreateScheduleRequestV2
+): { morning: number; afternoon: number } {
+    const {
+        totalSlots,
+        slotDuration,
+        breakDuration,
+        morningStart,
+        morningEnd,
+        afternoonStart,
+        afternoonEnd,
+        morningGapBreaks,
+        afternoonGapBreaks,
+    } = input;
+
+    const ms = parseHm(morningStart);
+    const me = parseHm(morningEnd);
+    const as = parseHm(afternoonStart);
+    const ae = parseHm(afternoonEnd);
+
+    if (!(ms < me) || !(as < ae)) {
+        return { morning: 0, afternoon: 0 };
+    }
+
+    const mGaps = morningGapBreaks && morningGapBreaks.length > 0 ? morningGapBreaks : null;
+    const aGaps = afternoonGapBreaks && afternoonGapBreaks.length > 0 ? afternoonGapBreaks : null;
+
+    const morningSlots = buildSlotsInWindow(ms, me, slotDuration, breakDuration, mGaps);
+    const afternoonSlots = buildSlotsInWindow(as, ae, slotDuration, breakDuration, aGaps);
+
+    const mMax = morningSlots.length;
+    const aMax = afternoonSlots.length;
+    const lo = Math.max(0, totalSlots - aMax);
+    const hi = Math.min(mMax, totalSlots);
+    if (lo > hi) {
+        return { morning: 0, afternoon: 0 };
+    }
+    const morning = hi;
+    const afternoon = totalSlots - morning;
+    return { morning, afternoon };
+}
