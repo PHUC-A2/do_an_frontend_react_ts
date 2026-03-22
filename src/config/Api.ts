@@ -17,13 +17,6 @@ import type { IPitchTimeline } from "../types/timeline";
 import type { IGetUploadResponse } from "../types/upload";
 import type { IAssignRoleReq, ICreateUserReq, IUpdateUserReq, IUser, IUpdateUserStatusReq, IUpdateUserStatusRes } from "../types/user";
 import instance from "./customAxios";
-import type { IRoom, ICreateRoomRequest, IUpdateRoomRequest, IRoomStatus } from "../types/v2/room";
-import type { IDeviceCatalog, ICreateDeviceCatalogRequest } from "../types/v2/deviceCatalog";
-import type {
-    IRoomScheduleV2,
-    ICreateScheduleRequestV2,
-    IUpdateScheduleRequestV2,
-} from "../types/v2/roomSchedule";
 
 export const register = (data: IRegister) => instance.post("/api/v1/auth/register", data);
 export const login = (username: string, password: string) => instance.post("/api/v1/auth/login", { username, password });
@@ -188,36 +181,6 @@ export const uploadImagePitch = async (file: File) => {
     return data;
 };
 
-// upload room image (folder riêng; endpoint upload file vẫn /api/v1 như pitch)
-export const uploadImageRoom = async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("folder", "room");
-
-    const { data } = await instance.post<IGetUploadResponse>(
-        "/api/v1/files/upload",
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-    );
-
-    return data;
-};
-
-/** Ảnh danh mục thiết bị phòng (folder riêng; endpoint giống pitch/room). */
-export const uploadImageDeviceCatalog = async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("folder", "device-catalog");
-
-    const { data } = await instance.post<IGetUploadResponse>(
-        "/api/v1/files/upload",
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-    );
-
-    return data;
-};
-
 /* api equipment */
 export const getAllEquipments = (query: string) => instance.get<IBackendRes<IModelPaginate<IEquipment>>>(`/api/v1/equipments?${query}`);
 export const createEquipment = (data: ICreateEquipmentReq) => instance.post<IBackendRes<IEquipment>>(`/api/v1/equipments`, data);
@@ -318,42 +281,3 @@ export const adminToggleAiKey = (id: number) =>
     instance.patch<IBackendRes<IAiKey>>(`/api/v1/admin/ai/keys/${id}/toggle`);
 export const adminDeleteAiKey = (id: number) =>
     instance.delete<IBackendRes<void>>(`/api/v1/admin/ai/keys/${id}`);
-
-/* api phòng tin (/api/v2/admin/rooms) */
-export const getAllRooms = (query: string) =>
-    instance.get<IBackendRes<IModelPaginate<IRoom>>>(`/api/v2/admin/rooms?${query}`);
-export const createRoom = (data: ICreateRoomRequest) =>
-    instance.post<IBackendRes<IRoom>>(`/api/v2/admin/rooms`, data);
-export const getRoomById = (id: number) =>
-    instance.get<IBackendRes<IRoom>>(`/api/v2/admin/rooms/${id}`);
-export const updateRoom = (id: number, data: IUpdateRoomRequest) =>
-    instance.put<IBackendRes<IRoom>>(`/api/v2/admin/rooms/${id}`, data);
-export const patchRoomStatus = (id: number, status: IRoomStatus) =>
-    instance.patch<IBackendRes<IRoom>>(`/api/v2/admin/rooms/${id}/status`, { status });
-export const deleteRoom = (id: number) =>
-    instance.delete<IBackendRes<void>>(`/api/v2/admin/rooms/${id}`);
-
-/* cấu hình lịch tiết phòng (/api/v2/admin/rooms/{roomId}/schedules) */
-/** 400 + message "Chưa có cấu hình" là trạng thái bình thường khi phòng chưa lưu lịch — không reject để tránh log lỗi console. */
-export const getRoomScheduleV2 = (roomId: number) =>
-    instance.get<IBackendRes<IRoomScheduleV2>>(`/api/v2/admin/rooms/${roomId}/schedules`, {
-        validateStatus: (status) => status === 200 || status === 400,
-    });
-export const createRoomScheduleV2 = (roomId: number, data: ICreateScheduleRequestV2) =>
-    instance.post<IBackendRes<IRoomScheduleV2>>(`/api/v2/admin/rooms/${roomId}/schedules`, data);
-export const updateRoomScheduleV2 = (roomId: number, scheduleId: number, data: IUpdateScheduleRequestV2) =>
-    instance.put<IBackendRes<IRoomScheduleV2>>(`/api/v2/admin/rooms/${roomId}/schedules/${scheduleId}`, data);
-export const deleteRoomScheduleV2 = (roomId: number, scheduleId: number) =>
-    instance.delete<IBackendRes<void>>(`/api/v2/admin/rooms/${roomId}/schedules/${scheduleId}`);
-
-/* danh mục thiết bị phòng (/api/v2/admin/device-catalog) */
-export const getAllDeviceCatalogs = (query: string) =>
-    instance.get<IBackendRes<IModelPaginate<IDeviceCatalog>>>(`/api/v2/admin/device-catalog?${query}`);
-export const createDeviceCatalog = (data: ICreateDeviceCatalogRequest) =>
-    instance.post<IBackendRes<IDeviceCatalog>>(`/api/v2/admin/device-catalog`, data);
-export const getDeviceCatalogById = (id: number) =>
-    instance.get<IBackendRes<IDeviceCatalog>>(`/api/v2/admin/device-catalog/${id}`);
-export const updateDeviceCatalog = (id: number, data: ICreateDeviceCatalogRequest) =>
-    instance.put<IBackendRes<IDeviceCatalog>>(`/api/v2/admin/device-catalog/${id}`, data);
-export const deleteDeviceCatalog = (id: number) =>
-    instance.delete<IBackendRes<void>>(`/api/v2/admin/device-catalog/${id}`);

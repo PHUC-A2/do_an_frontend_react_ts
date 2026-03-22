@@ -15,7 +15,7 @@ export const splitPermission = (
         };
     }
 
-    /** Hậu tố dài trước để {@code DEVICE_CATALOG_VIEW_LIST} → resource DEVICE_CATALOG, không phải DEVICE + CATALOG_VIEW_LIST. */
+    /** So khớp hậu tố theo thứ tự dài trước (ví dụ {@code *_VIEW_DETAIL} trước {@code *_VIEW_LIST}). */
     const suffixes: { suffix: string; action: PermissionAction }[] = [
         { suffix: "_VIEW_DETAIL", action: "VIEW_DETAIL" },
         { suffix: "_VIEW_LIST", action: "VIEW_LIST" },

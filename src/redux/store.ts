@@ -11,9 +11,6 @@ import permissionReducer from './features/permissionSlice'
 import messengerButtonUiReducer from './features/messengerButtonUiSlice'
 import paymentReducer from './features/paymentSlice'
 import equipmentReducer from './features/equipmentSlice'
-import roomReducer from './features/v2/roomSlice'
-import roomScheduleV2Reducer from './features/v2/roomScheduleSlice'
-import deviceCatalogReducer from './features/v2/deviceCatalogSlice'
 
 export const store = configureStore({
     reducer: {
@@ -29,9 +26,6 @@ export const store = configureStore({
         messengerButtonUi: messengerButtonUiReducer,
         payment: paymentReducer,
         equipment: equipmentReducer,
-        room: roomReducer,
-        roomScheduleV2: roomScheduleV2Reducer,
-        deviceCatalog: deviceCatalogReducer,
     }
 })
 

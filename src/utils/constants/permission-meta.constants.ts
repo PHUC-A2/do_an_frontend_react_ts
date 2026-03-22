@@ -76,24 +76,4 @@ export const LIST_PERMISSION: PermissionGroup[] = [
             { name: "REVENUE_VIEW_DETAIL", description: "Lấy thống kê doanh thu" },
         ],
     },
-    {
-        group: "ROOM",
-        items: [
-            { name: "ROOM_CREATE", description: "Tạo phòng tin học" },
-            { name: "ROOM_VIEW_LIST", description: "Xem danh sách phòng tin" },
-            { name: "ROOM_VIEW_DETAIL", description: "Xem chi tiết phòng tin" },
-            { name: "ROOM_UPDATE", description: "Cập nhật phòng tin" },
-            { name: "ROOM_DELETE", description: "Xóa phòng tin" },
-        ],
-    },
-    {
-        group: "DEVICE_CATALOG",
-        items: [
-            { name: "DEVICE_CATALOG_VIEW_LIST", description: "Xem danh sách danh mục thiết bị" },
-            { name: "DEVICE_CATALOG_VIEW_DETAIL", description: "Xem chi tiết danh mục thiết bị" },
-            { name: "DEVICE_CATALOG_CREATE", description: "Tạo danh mục thiết bị" },
-            { name: "DEVICE_CATALOG_UPDATE", description: "Cập nhật danh mục thiết bị" },
-            { name: "DEVICE_CATALOG_DELETE", description: "Xóa danh mục thiết bị" },
-        ],
-    },
 ];
