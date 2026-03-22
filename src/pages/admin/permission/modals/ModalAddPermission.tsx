@@ -3,12 +3,13 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 
 import { createPermission } from "../../../../config/Api";
-import { useAppDispatch } from "../../../../redux/hooks";
+import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 
 import type { PermissionKey } from "../../../../types/permission";
 import type { ICreatePermissionReq } from "../../../../types/permission";
 import { LIST_PERMISSION } from "../../../../utils/constants/permission-meta.constants";
-import { fetchPermissions } from "../../../../redux/features/permissionSlice";
+import { fetchPermissions, selectPermissionLastListQuery } from "../../../../redux/features/permissionSlice";
+import { DEFAULT_ADMIN_LIST_QUERY } from "../../../../utils/pagination/defaultListQuery";
 
 interface IProps {
     openModalAddPermission: boolean;
@@ -21,6 +22,7 @@ const ModalAddPermission = ({
 }: IProps) => {
     const [form] = Form.useForm();
     const dispatch = useAppDispatch();
+    const listQuery = useAppSelector(selectPermissionLastListQuery);
     const [loading, setLoading] = useState<boolean>(false);
 
     // ====================== AUTO FILL DESCRIPTION ======================
@@ -49,7 +51,7 @@ const ModalAddPermission = ({
             console.log(res);
             if (res.data.statusCode === 201) {
                 toast.success("Tạo permission thành công");
-                await dispatch(fetchPermissions(''));
+                await dispatch(fetchPermissions(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 form.resetFields();
                 setOpenModalAddPermission(false);
             }

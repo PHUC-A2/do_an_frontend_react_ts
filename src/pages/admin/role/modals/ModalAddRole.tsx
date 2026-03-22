@@ -1,9 +1,10 @@
 import { Modal, Form, Input } from "antd";
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { useAppDispatch } from "../../../../redux/hooks";
+import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 import type { ICreateRoleReq } from "../../../../types/role";
-import { fetchRoles } from "../../../../redux/features/roleSlice";
+import { fetchRoles, selectRoleLastListQuery } from "../../../../redux/features/roleSlice";
+import { DEFAULT_ADMIN_LIST_QUERY } from "../../../../utils/pagination/defaultListQuery";
 import { createRole } from "../../../../config/Api";
 
 interface IProps {
@@ -17,6 +18,7 @@ const ModalAddRole = ({
 }: IProps) => {
     const [form] = Form.useForm();
     const dispatch = useAppDispatch();
+    const listQuery = useAppSelector(selectRoleLastListQuery);
     const [loading, setLoading] = useState<boolean>(false);
 
     const handleAddRole = async (values: ICreateRoleReq) => {
@@ -26,7 +28,7 @@ const ModalAddRole = ({
             console.log(res);
             if (res.data.statusCode === 201) {
                 toast.success("Tạo role thành công");
-                await dispatch(fetchRoles(''));
+                await dispatch(fetchRoles(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 form.resetFields();
                 setOpenModalAddRole(false);
             }

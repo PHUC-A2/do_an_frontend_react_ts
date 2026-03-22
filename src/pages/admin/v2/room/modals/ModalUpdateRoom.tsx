@@ -13,8 +13,9 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 import { updateRoom, uploadImageRoom } from "../../../../../config/Api";
-import { useAppDispatch } from "../../../../../redux/hooks";
-import { fetchRooms } from "../../../../../redux/features/v2/roomSlice";
+import { useAppDispatch, useAppSelector } from "../../../../../redux/hooks";
+import { fetchRooms, selectRoomLastListQuery } from "../../../../../redux/features/v2/roomSlice";
+import { DEFAULT_ADMIN_LIST_QUERY } from "../../../../../utils/pagination/defaultListQuery";
 import type { IRoom, IUpdateRoomRequest } from "../../../../../types/v2/room";
 import { ROOM_STATUS_OPTIONS } from "../../../../../utils/constants/room.constants";
 
@@ -41,6 +42,7 @@ const ModalUpdateRoom = ({
 }: IProps) => {
     const [form] = Form.useForm<IUpdateRoomRequest>();
     const dispatch = useAppDispatch();
+    const listQuery = useAppSelector(selectRoomLastListQuery);
 
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState("");
@@ -109,7 +111,7 @@ const ModalUpdateRoom = ({
                 toast.success("Cập nhật phòng thành công");
                 form.resetFields();
                 setFileList([]);
-                await dispatch(fetchRooms(""));
+                await dispatch(fetchRooms(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 setOpenModalUpdateRoom(false);
             }
         } catch (error: any) {

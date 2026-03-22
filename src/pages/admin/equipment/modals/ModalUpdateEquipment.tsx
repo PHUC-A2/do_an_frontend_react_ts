@@ -5,8 +5,9 @@ import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { updateEquipment, uploadImageEquipment } from '../../../../config/Api';
-import { useAppDispatch } from '../../../../redux/hooks';
-import { fetchEquipments } from '../../../../redux/features/equipmentSlice';
+import { useAppDispatch, useAppSelector } from '../../../../redux/hooks';
+import { fetchEquipments, selectEquipmentLastListQuery } from '../../../../redux/features/equipmentSlice';
+import { DEFAULT_ADMIN_LIST_QUERY } from '../../../../utils/pagination/defaultListQuery';
 import type { IEquipment, IUpdateEquipmentReq } from '../../../../types/equipment';
 import { EQUIPMENT_STATUS_OPTIONS } from '../../../../utils/constants/equipment.constants';
 
@@ -29,6 +30,7 @@ const getBase64 = (file: FileType): Promise<string> =>
 const ModalUpdateEquipment = ({ open, setOpen, equipmentEdit }: IProps) => {
     const [form] = Form.useForm();
     const dispatch = useAppDispatch();
+    const listQuery = useAppSelector(selectEquipmentLastListQuery);
 
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState('');
@@ -98,7 +100,7 @@ const ModalUpdateEquipment = ({ open, setOpen, equipmentEdit }: IProps) => {
             const res = await updateEquipment(equipmentEdit.id, payload);
             if (res.data.statusCode === 200) {
                 toast.success('Cập nhật thiết bị thành công');
-                await dispatch(fetchEquipments(''));
+                await dispatch(fetchEquipments(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 setOpen(false);
             }
         } catch (error: any) {

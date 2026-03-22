@@ -3,10 +3,11 @@ import { Form, Input } from 'antd';
 import { updateBooking } from '../../../../config/Api';
 import { useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { useAppDispatch } from '../../../../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../../../../redux/hooks';
 import type { IBooking, IUpdateBookingReq } from '../../../../types/booking';
 import dayjs, { Dayjs } from 'dayjs';
-import { fetchBookings } from '../../../../redux/features/bookingSlice';
+import { fetchBookings, selectBookingLastListQuery } from '../../../../redux/features/bookingSlice';
+import { DEFAULT_ADMIN_LIST_QUERY } from '../../../../utils/pagination/defaultListQuery';
 
 interface IProps {
     openModalUpdateBooking: boolean;
@@ -24,6 +25,7 @@ const ModalUpdateBooking = (props: IProps) => {
     const { openModalUpdateBooking, setOpenModalUpdateBooking, bookingEdit } = props;
     const [form] = Form.useForm();
     const dispatch = useAppDispatch();
+    const listQuery = useAppSelector(selectBookingLastListQuery);
 
     const handleEditBooking = async (values: BookingFormValues) => {
         try {
@@ -47,7 +49,7 @@ const ModalUpdateBooking = (props: IProps) => {
             if (res.data.statusCode === 200) {
                 toast.success("Cập nhật người dùng thành công");
                 form.resetFields();
-                await dispatch(fetchBookings(""));
+                await dispatch(fetchBookings(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 setOpenModalUpdateBooking(false);
             }
         } catch (error: any) {

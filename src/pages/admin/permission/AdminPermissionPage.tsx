@@ -1,6 +1,7 @@
-import { Table, Tag, Space, Card, type PopconfirmProps, Popconfirm, Empty, Button } from "antd";
+import { Table, Tag, Space, Card, type PopconfirmProps, Popconfirm, Empty, Button, Input } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useEffect, useState } from "react";
+import type { TableProps } from "antd";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import RBButton from "react-bootstrap/Button";
 import { IoIosAddCircle } from "react-icons/io";
 
@@ -28,6 +29,12 @@ import { usePermission } from "../../../hooks/common/usePermission";
 import AdminWrapper from "../../../components/wrapper/AdminWrapper";
 import { FaDownload } from "react-icons/fa";
 import { exportTableToExcel } from "../../../utils/export/exportExcelFromTable";
+import {
+    buildSpringListQuery,
+    type SpringSortItem,
+} from "../../../utils/pagination/buildSpringPageQuery";
+import { orFieldsInsensitiveLike } from "../../../utils/pagination/springFilterText";
+import { tableSorterToSortItems } from "../../../utils/pagination/tableSorterToSpringSort";
 
 const AdminPermissionPage = () => {
     const dispatch = useAppDispatch();
@@ -44,12 +51,59 @@ const AdminPermissionPage = () => {
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const canViewPermissions = usePermission("PERMISSION_VIEW_LIST");
 
+    const [searchInput, setSearchInput] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [sortItems, setSortItems] = useState<SpringSortItem[]>([]);
+    const sortRef = useRef<SpringSortItem[]>([]);
+    sortRef.current = sortItems;
+
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400);
+        return () => clearTimeout(t);
+    }, [searchInput]);
+
+    const filterStr = useMemo(
+        () => orFieldsInsensitiveLike(["name", "description"], debouncedSearch),
+        [debouncedSearch]
+    );
+
+    const fetchPage = useCallback(
+        (page: number, pageSize: number, sort: SpringSortItem[]) => {
+            dispatch(
+                fetchPermissions(
+                    buildSpringListQuery({ page, pageSize, filter: filterStr, sort })
+                )
+            );
+        },
+        [dispatch, filterStr]
+    );
+
+    useEffect(() => {
+        if (!canViewPermissions) return;
+        fetchPage(1, meta.pageSize, sortRef.current);
+    }, [canViewPermissions, debouncedSearch, fetchPage, meta.pageSize]);
+
+    const handleTableChange: TableProps<IPermission>["onChange"] = (pag, _f, sorter) => {
+        const nextSort = tableSorterToSortItems(sorter);
+        setSortItems(nextSort);
+        fetchPage(pag?.current ?? 1, pag?.pageSize ?? meta.pageSize, nextSort);
+    };
+
     const handleDelete = async (id: number) => {
         try {
             setDeletingId(id);
             const res = await deletePermission(id);
             if (res.data.statusCode === 200) {
-                await dispatch(fetchPermissions(""));
+                await dispatch(
+                    fetchPermissions(
+                        buildSpringListQuery({
+                            page: meta.page,
+                            pageSize: meta.pageSize,
+                            filter: filterStr,
+                            sort: sortItems,
+                        })
+                    )
+                );
                 toast.success('Xóa thành công');
             }
         } catch (error: any) {
@@ -97,12 +151,6 @@ const AdminPermissionPage = () => {
         setOpenModalUpdatePermission(true);
     }
 
-    useEffect(() => {
-        if (!canViewPermissions) return;
-
-        dispatch(fetchPermissions(""));
-    }, [canViewPermissions, dispatch]);
-
     const columns: ColumnsType<IPermission> = [
         {
             title: "STT",
@@ -112,11 +160,14 @@ const AdminPermissionPage = () => {
         {
             title: "ID",
             dataIndex: "id",
-            sorter: (a, b) => a.id - b.id,
+            key: "id",
+            sorter: true,
         },
         {
             title: "Quyền",
             dataIndex: "name",
+            key: "name",
+            sorter: true,
             render: (name: string) => <Tag>{name}</Tag>,
         },
         {
@@ -145,6 +196,8 @@ const AdminPermissionPage = () => {
         {
             title: "Mô tả",
             dataIndex: "description",
+            key: "description",
+            sorter: true,
             render: (text) => text || "-",
         },
         {
@@ -200,7 +253,14 @@ const AdminPermissionPage = () => {
                     size="small"
                     title="Quản lý quyền (Permissions)"
                     extra={
-                      <Space align="center">
+                      <Space align="center" wrap>
+                            <Input.Search
+                                allowClear
+                                placeholder="Tìm tên / mô tả"
+                                style={{ width: 220 }}
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                            />
                             <PermissionWrapper required={"PERMISSION_CREATE"}>
                                 <RBButton
                                     variant="outline-primary"
@@ -243,18 +303,13 @@ const AdminPermissionPage = () => {
                             size="small"
                             bordered
                             scroll={{ x: "max-content" }}
+                            onChange={handleTableChange}
                             pagination={{
                                 current: meta.page,
                                 pageSize: meta.pageSize,
                                 total: meta.total,
                                 showSizeChanger: true,
-                                onChange: (page, pageSize) => {
-                                    dispatch(
-                                        fetchPermissions(
-                                            `page=${page}&pageSize=${pageSize}`
-                                        )
-                                    );
-                                },
+                                showTotal: (t) => `Tổng ${t} bản ghi`,
                             }}
                         />
                     </PermissionWrapper>

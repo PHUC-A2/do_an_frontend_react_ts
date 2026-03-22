@@ -1,6 +1,7 @@
-import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Empty, Button } from "antd";
+import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Empty, Button, Input } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useEffect, useState } from "react";
+import type { TableProps } from "antd";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import RBButton from "react-bootstrap/Button";
 import { IoIosAddCircle } from "react-icons/io";
 import { CiEdit } from "react-icons/ci";
@@ -12,6 +13,7 @@ import { SettingOutlined } from "@ant-design/icons";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 import {
     fetchRooms,
+    selectRoomLastListQuery,
     selectRoomLoading,
     selectRoomMeta,
     selectRooms,
@@ -29,6 +31,22 @@ import { usePermission } from "../../../../hooks/common/usePermission";
 import PermissionWrapper from "../../../../components/wrapper/PermissionWrapper";
 import AdminWrapper from "../../../../components/wrapper/AdminWrapper";
 import { exportTableToExcel } from "../../../../utils/export/exportExcelFromTable";
+import {
+    buildSpringListQuery,
+    type SpringSortItem,
+} from "../../../../utils/pagination/buildSpringPageQuery";
+import { orFieldsInsensitiveLike } from "../../../../utils/pagination/springFilterText";
+import { tableSorterToSortItems } from "../../../../utils/pagination/tableSorterToSpringSort";
+import { DEFAULT_ADMIN_LIST_QUERY } from "../../../../utils/pagination/defaultListQuery";
+
+const ROOM_SEARCH_FIELDS = [
+    "roomName",
+    "building",
+    "contactPerson",
+    "contactPhone",
+    "description",
+    "notes",
+];
 
 const AdminRoomPage = () => {
     const dispatch = useAppDispatch();
@@ -36,6 +54,8 @@ const AdminRoomPage = () => {
     const listRooms = useAppSelector(selectRooms);
     const meta = useAppSelector(selectRoomMeta);
     const loading = useAppSelector(selectRoomLoading);
+    const listQuery = useAppSelector(selectRoomLastListQuery);
+
     const [openModalAddRoom, setOpenModalAddRoom] = useState(false);
     const [openModalRoomDetails, setOpenModalRoomDetails] = useState(false);
     const [openModalUpdateRoom, setOpenModalUpdateRoom] = useState(false);
@@ -47,6 +67,12 @@ const AdminRoomPage = () => {
     const [openScheduleConfig, setOpenScheduleConfig] = useState(false);
     const [roomForSchedule, setRoomForSchedule] = useState<IRoom | null>(null);
     const canViewRooms = usePermission("ROOM_VIEW_LIST");
+
+    const [searchInput, setSearchInput] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [sortItems, setSortItems] = useState<SpringSortItem[]>([]);
+    const sortRef = useRef<SpringSortItem[]>([]);
+    sortRef.current = sortItems;
 
     const handleEdit = (data: IRoom) => {
         setRoomEdit(data);
@@ -81,12 +107,33 @@ const AdminRoomPage = () => {
         }
     };
 
+    const filterStr = useMemo(
+        () => orFieldsInsensitiveLike(ROOM_SEARCH_FIELDS, debouncedSearch),
+        [debouncedSearch]
+    );
+
+    const fetchPage = useCallback(
+        (page: number, pageSize: number, sort: SpringSortItem[]) => {
+            dispatch(
+                fetchRooms(
+                    buildSpringListQuery({
+                        page,
+                        pageSize,
+                        filter: filterStr,
+                        sort,
+                    })
+                )
+            );
+        },
+        [dispatch, filterStr]
+    );
+
     const handleDelete = async (id: number) => {
         try {
             setDeletingId(id);
             const res = await deleteRoom(id);
             if (res.data.statusCode === 200) {
-                await dispatch(fetchRooms(""));
+                await dispatch(fetchRooms(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 toast.success("Xóa thành công");
             }
         } catch (error: any) {
@@ -106,6 +153,22 @@ const AdminRoomPage = () => {
         toast.error("Đã bỏ chọn");
     };
 
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400);
+        return () => clearTimeout(t);
+    }, [searchInput]);
+
+    useEffect(() => {
+        if (!canViewRooms) return;
+        fetchPage(1, meta.pageSize, sortRef.current);
+    }, [canViewRooms, debouncedSearch, fetchPage, meta.pageSize]);
+
+    const handleTableChange: TableProps<IRoom>["onChange"] = (pag, _f, sorter) => {
+        const nextSort = tableSorterToSortItems(sorter);
+        setSortItems(nextSort);
+        fetchPage(pag?.current ?? 1, pag?.pageSize ?? meta.pageSize, nextSort);
+    };
+
     const columns: ColumnsType<IRoom> = [
         {
             title: "STT",
@@ -117,42 +180,43 @@ const AdminRoomPage = () => {
             title: "ID",
             dataIndex: "id",
             key: "id",
-            sorter: (a, b) => a.id - b.id,
+            sorter: true,
         },
         {
             title: "Tên phòng",
             dataIndex: "roomName",
             key: "roomName",
-            sorter: (a, b) => (a.roomName ?? "").localeCompare(b.roomName ?? ""),
+            sorter: true,
         },
         {
             title: "Nhà",
             dataIndex: "building",
             key: "building",
+            sorter: true,
         },
         {
             title: "Tầng",
             dataIndex: "floor",
             key: "floor",
-            sorter: (a, b) => a.floor - b.floor,
+            sorter: true,
         },
         {
             title: "Số Phòng",
             dataIndex: "roomNumber",
             key: "roomNumber",
-            sorter: (a, b) => a.roomNumber - b.roomNumber,
+            sorter: true,
         },
         {
             title: "Sức Chứa",
             dataIndex: "capacity",
             key: "capacity",
-            sorter: (a, b) => a.capacity - b.capacity,
+            sorter: true,
         },
         {
             title: "Trạng Thái",
             dataIndex: "status",
             key: "status",
-            sorter: (a, b) => a.status.localeCompare(b.status),
+            sorter: true,
             render: (status: IRoom["status"]) => (
                 <Tag color={ROOM_STATUS_META[status].color}>{ROOM_STATUS_META[status].label}</Tag>
             ),
@@ -208,11 +272,6 @@ const AdminRoomPage = () => {
         },
     ];
 
-    useEffect(() => {
-        if (!canViewRooms) return;
-        dispatch(fetchRooms(""));
-    }, [canViewRooms, dispatch]);
-
     return (
         <>
             <AdminWrapper>
@@ -220,7 +279,14 @@ const AdminRoomPage = () => {
                     size="small"
                     title="Quản lý phòng tin học"
                     extra={
-                        <Space align="center">
+                        <Space align="center" wrap>
+                            <Input.Search
+                                allowClear
+                                placeholder="Tên phòng, tòa nhà, liên hệ…"
+                                style={{ width: 260 }}
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                            />
                             <PermissionWrapper required={"ROOM_CREATE"}>
                                 <RBButton
                                     variant="outline-primary"
@@ -259,14 +325,13 @@ const AdminRoomPage = () => {
                             rowKey="id"
                             loading={loading}
                             size="small"
+                            onChange={handleTableChange}
                             pagination={{
                                 current: meta.page,
                                 pageSize: meta.pageSize,
                                 total: meta.total,
                                 showSizeChanger: true,
-                                onChange: (page, pageSize) => {
-                                    dispatch(fetchRooms(`page=${page}&pageSize=${pageSize}`));
-                                },
+                                showTotal: (t) => `Tổng ${t} bản ghi`,
                             }}
                             bordered
                             scroll={{ x: "max-content" }}
@@ -274,10 +339,7 @@ const AdminRoomPage = () => {
                     </PermissionWrapper>
                 </Card>
 
-                <ModalAddRoom
-                    openModalAddRoom={openModalAddRoom}
-                    setOpenModalAddRoom={setOpenModalAddRoom}
-                />
+                <ModalAddRoom openModalAddRoom={openModalAddRoom} setOpenModalAddRoom={setOpenModalAddRoom} />
 
                 <ModalViewRoom
                     openModalRoomDetails={openModalRoomDetails}

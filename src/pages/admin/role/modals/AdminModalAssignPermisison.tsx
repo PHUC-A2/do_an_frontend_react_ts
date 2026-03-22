@@ -3,12 +3,13 @@ import type { CollapseProps } from 'antd';
 import { SafetyOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { useAppDispatch } from '../../../../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../../../../redux/hooks';
 import { usePermission } from '../../../../hooks/common/usePermission';
 import type { IRole } from '../../../../types/role';
 import type { IPermission } from '../../../../types/permission';
 import { assignPermission, getAllPermissions, getRoleById } from '../../../../config/Api';
-import { fetchRoles } from '../../../../redux/features/roleSlice';
+import { fetchRoles, selectRoleLastListQuery } from '../../../../redux/features/roleSlice';
+import { DEFAULT_ADMIN_LIST_QUERY } from '../../../../utils/pagination/defaultListQuery';
 import { splitPermission } from '../../../../utils/constants/permission.utils';
 import { PERMISSION_ACTION_COLOR } from '../../../../utils/constants/permission-ui.constants';
 
@@ -24,6 +25,7 @@ interface IProps {
 const AdminModalAssignPermission = (props: IProps) => {
     const { openModalAssignPermisison, setOpenModalAssignPermisison, roleAssignPermission } = props;
     const dispatch = useAppDispatch();
+    const roleListQuery = useAppSelector(selectRoleLastListQuery);
     const canViewPermissions = usePermission('PERMISSION_VIEW_LIST');
     const canAssignPermission = usePermission('ROLE_ASSIGN_PERMISSION');
     const canViewRoleDetail = usePermission('ROLE_VIEW_DETAIL');
@@ -87,7 +89,7 @@ const AdminModalAssignPermission = (props: IProps) => {
         try {
             await assignPermission(roleAssignPermission.id, { permissionIds: Array.from(enabledIds) });
             toast.success('Đã cập nhật quyền cho vai trò');
-            dispatch(fetchRoles(''));
+            dispatch(fetchRoles(roleListQuery || DEFAULT_ADMIN_LIST_QUERY));
             setOpenModalAssignPermisison(false);
         } catch (err: any) {
             toast.error(err?.response?.data?.message ?? 'Lưu thất bại');

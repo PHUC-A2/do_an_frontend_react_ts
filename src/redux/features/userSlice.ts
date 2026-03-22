@@ -2,11 +2,14 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import { getAllUsers } from '../../config/Api';
 import type { IUser } from '../../types/user';
+import { isApiSuccess } from '../../utils/api/isApiSuccess';
+import { normalizePaginationMeta } from '../../utils/pagination/normalizePaginationMeta';
 
 interface UserState {
     loading: boolean;
     error?: string;
     result: IUser[];
+    lastListQuery: string;
     meta: {
         page: number;
         pageSize: number;
@@ -18,6 +21,7 @@ interface UserState {
 const initialState: UserState = {
     result: [],
     loading: false,
+    lastListQuery: "",
     meta: {
         page: 1,
         pageSize: 10,
@@ -36,10 +40,10 @@ export const fetchUsers = createAsyncThunk<
         try {
             const res = await getAllUsers(query);
 
-            if (res.data.statusCode === 200 && res.data.data) {
+            if (isApiSuccess(res.data.statusCode) && res.data.data) {
                 return {
-                    result: res.data.data.result,
-                    meta: res.data.data.meta
+                    result: Array.isArray(res.data.data.result) ? res.data.data.result : [],
+                    meta: normalizePaginationMeta(res.data.data.meta),
                 };
             }
 
@@ -64,10 +68,10 @@ export const userSlice = createSlice({
                 state.error = undefined;
             })
             .addCase(fetchUsers.fulfilled, (state, action) => {
-                // console.log(action.payload);
                 state.loading = false;
                 state.result = action.payload.result;
                 state.meta = action.payload.meta;
+                state.lastListQuery = action.meta.arg;
             })
             .addCase(fetchUsers.rejected, (state, action) => {
                 state.loading = false;
@@ -79,5 +83,6 @@ export const userSlice = createSlice({
 export const selectUsers = (state: RootState) => state.user.result;
 export const selectUserMeta = (state: RootState) => state.user.meta;
 export const selectUserLoading = (state: RootState) => state.user.loading;
+export const selectUserLastListQuery = (state: RootState) => state.user.lastListQuery;
 
 export default userSlice.reducer;

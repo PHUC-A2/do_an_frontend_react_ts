@@ -1,10 +1,17 @@
 // AdminPaymentPage.tsx
-import { Table, Tag, Space, Card, Popconfirm, Empty, Typography, Image, Button } from 'antd';
+import { Table, Tag, Space, Card, Popconfirm, Empty, Typography, Image, Button, Input } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useEffect, useState } from 'react';
+import type { TableProps } from 'antd';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import RBButton from 'react-bootstrap/Button';
 import { useAppDispatch, useAppSelector } from '../../../redux/hooks';
-import { fetchPayments, selectPaymentLoading, selectPaymentMeta, selectPayments } from '../../../redux/features/paymentSlice';
+import {
+    fetchPayments,
+    selectPaymentLastListQuery,
+    selectPaymentLoading,
+    selectPaymentMeta,
+    selectPayments,
+} from '../../../redux/features/paymentSlice';
 import type { IPayment } from '../../../types/payment';
 import { toast } from 'react-toastify';
 import AdminWrapper from '../../../components/wrapper/AdminWrapper';
@@ -17,19 +24,42 @@ import { exportTableToExcel } from '../../../utils/export/exportExcelFromTable';
 import { FaDownload } from 'react-icons/fa';
 import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
 import { usePermission } from '../../../hooks/common/usePermission';
+import {
+    buildSpringListQuery,
+    type SpringSortItem,
+} from '../../../utils/pagination/buildSpringPageQuery';
+import { orFieldsInsensitiveLike } from '../../../utils/pagination/springFilterText';
+import { tableSorterToSortItems } from '../../../utils/pagination/tableSorterToSpringSort';
+import { DEFAULT_ADMIN_LIST_QUERY } from '../../../utils/pagination/defaultListQuery';
 
 const { Text } = Typography;
+
+const PAYMENT_SEARCH_FIELDS = [
+    'paymentCode',
+    'content',
+    'booking.pitch.name',
+    'booking.user.name',
+    'booking.user.email',
+    'booking.user.fullName',
+];
 
 const AdminPaymentPage = () => {
     const dispatch = useAppDispatch();
     const listPayments = useAppSelector(selectPayments);
     const meta = useAppSelector(selectPaymentMeta);
     const loading = useAppSelector(selectPaymentLoading);
-   
+    const listQuery = useAppSelector(selectPaymentLastListQuery);
+
     const [confirmingId, setConfirmingId] = useState<number | null>(null);
     const [selectedPayment, setSelectedPayment] = useState<IPayment | null>(null);
     const [detailOpen, setDetailOpen] = useState(false);
-    const canViewPayments = usePermission("PAYMENT_VIEW_LIST");
+    const canViewPayments = usePermission('PAYMENT_VIEW_LIST');
+
+    const [searchInput, setSearchInput] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [sortItems, setSortItems] = useState<SpringSortItem[]>([]);
+    const sortRef = useRef<SpringSortItem[]>([]);
+    sortRef.current = sortItems;
 
     const handleConfirmPayment = async (id: number) => {
         try {
@@ -38,10 +68,10 @@ const AdminPaymentPage = () => {
 
             if (res.data.statusCode === 200) {
                 toast.success('Xác nhận thanh toán thành công');
-                dispatch(fetchPayments(""));
+                dispatch(fetchPayments(listQuery || DEFAULT_ADMIN_LIST_QUERY));
             }
         } catch (error: any) {
-            const m = error?.response?.data?.message ?? "Không xác định";
+            const m = error?.response?.data?.message ?? 'Không xác định';
             toast.error(
                 <div>
                     <div>Có lỗi xảy ra khi xác nhận thanh toán</div>
@@ -57,25 +87,26 @@ const AdminPaymentPage = () => {
         {
             title: 'STT',
             key: 'stt',
-            render: (_: any, __: IPayment, index: number) =>
+            render: (_: unknown, __: IPayment, index: number) =>
                 (meta.page - 1) * meta.pageSize + index + 1,
         },
         {
             title: 'ID',
             dataIndex: 'id',
             key: 'id',
-            sorter: (a, b) => a.id - b.id,
+            sorter: true,
         },
         {
             title: 'Booking ID',
             dataIndex: 'bookingId',
-            key: 'bookingId',
-            sorter: (a, b) => a.bookingId - b.bookingId,
+            key: 'booking.id',
+            sorter: true,
         },
         {
             title: 'Mã thanh toán',
             dataIndex: 'paymentCode',
             key: 'paymentCode',
+            sorter: true,
             render: (code: string) => (
                 <Text copyable style={{ fontWeight: 500 }}>
                     {code}
@@ -93,10 +124,9 @@ const AdminPaymentPage = () => {
             title: 'Phương thức',
             dataIndex: 'method',
             key: 'method',
+            sorter: true,
             render: (method: IPayment['method']) => (
-                <Tag color={
-                    method === 'BANK_TRANSFER' ? 'blue' : 'gold'
-                }>
+                <Tag color={method === 'BANK_TRANSFER' ? 'blue' : 'gold'}>
                     {method === 'BANK_TRANSFER' ? 'Chuyển khoản' : 'Tiền mặt'}
                 </Tag>
             ),
@@ -105,18 +135,16 @@ const AdminPaymentPage = () => {
             title: 'Số tiền',
             dataIndex: 'amount',
             key: 'amount',
-            sorter: (a, b) => a.amount - b.amount,
-            render: (amount: number) =>
-                amount.toLocaleString('vi-VN') + ' ₫',
+            sorter: true,
+            render: (amount: number) => amount.toLocaleString('vi-VN') + ' ₫',
         },
         {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
+            sorter: true,
             render: (status: IPayment['status']) => (
-                <Tag color={PAYMENT_STATUS_META[status].color}>
-                    {PAYMENT_STATUS_META[status].label}
-                </Tag>
+                <Tag color={PAYMENT_STATUS_META[status].color}>{PAYMENT_STATUS_META[status].label}</Tag>
             ),
         },
         {
@@ -162,33 +190,33 @@ const AdminPaymentPage = () => {
             title: 'Đã thanh toán lúc',
             dataIndex: 'paidAt',
             key: 'paidAt',
-            render: (date?: string | null) =>
-                date ? new Date(date).toLocaleString('vi-VN') : '-',
+            sorter: true,
+            render: (date?: string | null) => (date ? new Date(date).toLocaleString('vi-VN') : '-'),
         },
         {
             title: 'Ngày tạo',
             dataIndex: 'createdAt',
             key: 'createdAt',
-            sorter: (a, b) =>
-                new Date(a.createdAt).getTime() -
-                new Date(b.createdAt).getTime(),
-            render: (date: string) =>
-                new Date(date).toLocaleString('vi-VN'),
+            sorter: true,
+            render: (date: string) => new Date(date).toLocaleString('vi-VN'),
         },
         {
             title: 'Hành động',
             key: 'actions',
-            render: (_: any, record: IPayment) => (
-                <Space align="center" style={{ justifyContent: "center", width: "100%" }}>
+            render: (_: unknown, record: IPayment) => (
+                <Space align="center" style={{ justifyContent: 'center', width: '100%' }}>
                     <RBButton
-                        size='sm'
+                        size="sm"
                         variant="outline-info"
-                        onClick={() => { setSelectedPayment(record); setDetailOpen(true); }}
+                        onClick={() => {
+                            setSelectedPayment(record);
+                            setDetailOpen(true);
+                        }}
                         title="Xem chi tiết"
                     >
                         <FiEye />
                     </RBButton>
-                    <PermissionWrapper required={"PAYMENT_UPDATE"}>
+                    <PermissionWrapper required={'PAYMENT_UPDATE'}>
                         <Popconfirm
                             title="Xác nhận thanh toán"
                             description="Bạn có chắc chắn muốn xác nhận thanh toán này không?"
@@ -197,15 +225,11 @@ const AdminPaymentPage = () => {
                             cancelText="Hủy"
                             placement="topLeft"
                             okButtonProps={{
-                                loading: confirmingId === record.id
+                                loading: confirmingId === record.id,
                             }}
                             disabled={record.status === 'PAID'}
                         >
-                            <RBButton
-                                size='sm'
-                                variant="outline-success"
-                                disabled={record.status === 'PAID'}
-                            >
+                            <RBButton size="sm" variant="outline-success" disabled={record.status === 'PAID'}>
                                 <FaCheck />
                             </RBButton>
                         </Popconfirm>
@@ -216,67 +240,97 @@ const AdminPaymentPage = () => {
     ];
 
     useEffect(() => {
-        if (!canViewPayments) return;
+        const t = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400);
+        return () => clearTimeout(t);
+    }, [searchInput]);
 
-        dispatch(fetchPayments(""));
-    }, [canViewPayments, dispatch]);
+    const filterStr = useMemo(
+        () => orFieldsInsensitiveLike(PAYMENT_SEARCH_FIELDS, debouncedSearch),
+        [debouncedSearch]
+    );
+
+    const fetchPage = useCallback(
+        (page: number, pageSize: number, sort: SpringSortItem[]) => {
+            dispatch(
+                fetchPayments(
+                    buildSpringListQuery({
+                        page,
+                        pageSize,
+                        filter: filterStr,
+                        sort,
+                    })
+                )
+            );
+        },
+        [dispatch, filterStr]
+    );
+
+    useEffect(() => {
+        if (!canViewPayments) return;
+        fetchPage(1, meta.pageSize, sortRef.current);
+    }, [canViewPayments, debouncedSearch, fetchPage, meta.pageSize]);
+
+    const handleTableChange: TableProps<IPayment>['onChange'] = (pag, _f, sorter) => {
+        const nextSort = tableSorterToSortItems(sorter);
+        setSortItems(nextSort);
+        fetchPage(pag?.current ?? 1, pag?.pageSize ?? meta.pageSize, nextSort);
+    };
 
     return (
         <>
-            <ModalPaymentDetails
-                open={detailOpen}
-                onClose={() => setDetailOpen(false)}
-                payment={selectedPayment}
-            />
+            <ModalPaymentDetails open={detailOpen} onClose={() => setDetailOpen(false)} payment={selectedPayment} />
             <AdminWrapper>
                 <Card
-                    size='small'
+                    size="small"
                     title="Quản lý thanh toán (payment)"
                     hoverable={false}
                     extra={
-                        <Button
-                            icon={<FaDownload />}
-                            onClick={() =>
-                                exportTableToExcel(columns, listPayments, 'payments')
-                            }
-                        >
-                            Xuất Excel
-                        </Button>
-
+                        <Space align="center" wrap>
+                            <Input.Search
+                                allowClear
+                                placeholder="Mã GD, nội dung, sân, user…"
+                                style={{ width: 260 }}
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                            />
+                            <Button
+                                icon={<FaDownload />}
+                                onClick={() => exportTableToExcel(columns, listPayments, 'payments')}
+                            >
+                                Xuất Excel
+                            </Button>
+                        </Space>
                     }
                     style={{
                         width: '100%',
                         overflowX: 'auto',
                         borderRadius: 8,
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                     }}
                 >
-                    {listPayments.length === 0 ? (
-                        <Empty description="Không có dữ liệu thanh toán" />
-                    ) : (
-                        <PermissionWrapper required={"PAYMENT_VIEW_LIST"}
-                            fallback={<Empty description="Bạn không có quyền xem danh sách payment chờ xác nhận" />}
-                        >
-                            <Table<IPayment>
-                                columns={columns}
-                                dataSource={listPayments}
-                                rowKey="id"
-                                loading={loading}
-                                size='small'
-                                pagination={{
-                                    current: meta.page,
-                                    pageSize: meta.pageSize,
-                                    total: meta.total,
-                                    showSizeChanger: true,
-                                    onChange: (page, pageSize) => {
-                                        dispatch(fetchPayments(`page=${page}&pageSize=${pageSize}`));
-                                    },
-                                }}
-                                bordered
-                                scroll={{ x: 'max-content' }}
-                            />
-                        </PermissionWrapper>
-                    )}
+                    <PermissionWrapper
+                        required={'PAYMENT_VIEW_LIST'}
+                        fallback={<Empty description="Bạn không có quyền xem danh sách payment chờ xác nhận" />}
+                    >
+                        <Table<IPayment>
+                            columns={columns}
+                            dataSource={listPayments}
+                            rowKey="id"
+                            loading={loading}
+                            size="small"
+                            locale={{ emptyText: 'Không có dữ liệu thanh toán' }}
+                            onChange={handleTableChange}
+                            pagination={{
+                                current: meta.page,
+                                pageSize: meta.pageSize,
+                                total: meta.total,
+                                showSizeChanger: true,
+                                showTotal: (t) => `Tổng ${t} bản ghi`,
+                            }}
+                            bordered
+                            scroll={{ x: 'max-content' }}
+                        />
+                    </PermissionWrapper>
                 </Card>
             </AdminWrapper>
         </>

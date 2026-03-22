@@ -16,8 +16,9 @@ import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
 
 import { createPitch, uploadImagePitch } from '../../../../config/Api';
-import { useAppDispatch } from '../../../../redux/hooks';
-import { fetchPitches } from '../../../../redux/features/pitchSlice';
+import { useAppDispatch, useAppSelector } from '../../../../redux/hooks';
+import { fetchPitches, selectPitchLastListQuery } from '../../../../redux/features/pitchSlice';
+import { DEFAULT_ADMIN_LIST_QUERY } from '../../../../utils/pagination/defaultListQuery';
 
 import type { ICreatePitchReq } from '../../../../types/pitch';
 import {
@@ -42,6 +43,7 @@ const getBase64 = (file: FileType): Promise<string> =>
 const ModalAddPitch = ({ openModalAddPitch, setOpenModalAddPitch }: IProps) => {
     const [form] = Form.useForm();
     const dispatch = useAppDispatch();
+    const pitchListQuery = useAppSelector(selectPitchLastListQuery);
     const open24h = Form.useWatch('open24h', form);
     const openTime = Form.useWatch('openTime', form);
     const closeTime = Form.useWatch('closeTime', form);
@@ -114,7 +116,7 @@ const ModalAddPitch = ({ openModalAddPitch, setOpenModalAddPitch }: IProps) => {
             const res = await createPitch(payload);
             if (res.data.statusCode === 201) {
                 toast.success('Tạo sân mới thành công');
-                await dispatch(fetchPitches(''));
+                await dispatch(fetchPitches(pitchListQuery || DEFAULT_ADMIN_LIST_QUERY));
                 form.resetFields();
                 setFileList([]);
                 setOpenModalAddPitch(false);

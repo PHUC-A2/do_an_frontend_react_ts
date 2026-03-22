@@ -5,8 +5,9 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { createEquipment, uploadImageEquipment } from '../../../../config/Api';
-import { useAppDispatch } from '../../../../redux/hooks';
-import { fetchEquipments } from '../../../../redux/features/equipmentSlice';
+import { useAppDispatch, useAppSelector } from '../../../../redux/hooks';
+import { fetchEquipments, selectEquipmentLastListQuery } from '../../../../redux/features/equipmentSlice';
+import { DEFAULT_ADMIN_LIST_QUERY } from '../../../../utils/pagination/defaultListQuery';
 import type { ICreateEquipmentReq } from '../../../../types/equipment';
 import { EQUIPMENT_STATUS_OPTIONS } from '../../../../utils/constants/equipment.constants';
 
@@ -28,6 +29,7 @@ const getBase64 = (file: FileType): Promise<string> =>
 const ModalAddEquipment = ({ open, setOpen }: IProps) => {
     const [form] = Form.useForm();
     const dispatch = useAppDispatch();
+    const listQuery = useAppSelector(selectEquipmentLastListQuery);
 
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState('');
@@ -72,7 +74,7 @@ const ModalAddEquipment = ({ open, setOpen }: IProps) => {
             const res = await createEquipment(payload);
             if (res.data.statusCode === 201) {
                 toast.success('Tạo thiết bị thành công');
-                await dispatch(fetchEquipments(''));
+                await dispatch(fetchEquipments(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 form.resetFields();
                 setFileList([]);
                 setOpen(false);

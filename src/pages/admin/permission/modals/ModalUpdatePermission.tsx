@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 import { updatePermission } from "../../../../config/Api";
-import { useAppDispatch } from "../../../../redux/hooks";
+import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 
 import type {
     PermissionKey,
@@ -12,7 +12,8 @@ import type {
 } from "../../../../types/permission";
 
 import { LIST_PERMISSION } from "../../../../utils/constants/permission-meta.constants";
-import { fetchPermissions } from "../../../../redux/features/permissionSlice";
+import { fetchPermissions, selectPermissionLastListQuery } from "../../../../redux/features/permissionSlice";
+import { DEFAULT_ADMIN_LIST_QUERY } from "../../../../utils/pagination/defaultListQuery";
 
 interface IProps {
     openModalUpdatePermission: boolean;
@@ -27,6 +28,7 @@ const ModalUpdatePermission = ({
 }: IProps) => {
     const [form] = Form.useForm();
     const dispatch = useAppDispatch();
+    const listQuery = useAppSelector(selectPermissionLastListQuery);
     const [loading, setLoading] = useState<boolean>(false);
 
     // ====================== AUTO FILL DESCRIPTION ======================
@@ -72,7 +74,7 @@ const ModalUpdatePermission = ({
 
             if (res.data.statusCode === 200) {
                 toast.success("Cập nhật permission thành công");
-                await dispatch(fetchPermissions(""));
+                await dispatch(fetchPermissions(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 form.resetFields();
                 setOpenModalUpdatePermission(false);
             }

@@ -2,9 +2,10 @@ import { DatePicker, InputNumber, Modal } from 'antd';
 import { Form, Input } from 'antd';
 import { createBooking } from '../../../../config/Api';
 import { toast } from 'react-toastify';
-import { useAppDispatch } from '../../../../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../../../../redux/hooks';
 import type { ICreateBookingReq } from '../../../../types/booking';
-import { fetchBookings } from '../../../../redux/features/bookingSlice';
+import { fetchBookings, selectBookingLastListQuery } from '../../../../redux/features/bookingSlice';
+import { DEFAULT_ADMIN_LIST_QUERY } from '../../../../utils/pagination/defaultListQuery';
 import type { Dayjs } from 'dayjs';
 
 interface IProps {
@@ -23,6 +24,7 @@ const ModalAddBooking = (props: IProps) => {
     const { openModalAddBooking, setOpenModalAddBooking } = props;
     const [form] = Form.useForm();
     const dispatch = useAppDispatch();
+    const listQuery = useAppSelector(selectBookingLastListQuery);
 
     const handleAddBooking = async (values: BookingFormValues) => {
 
@@ -39,7 +41,7 @@ const ModalAddBooking = (props: IProps) => {
         try {
             const res = await createBooking(payload);
             if (res.data.statusCode === 201) {
-                await dispatch(fetchBookings(""));
+                await dispatch(fetchBookings(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 setOpenModalAddBooking(false);
                 toast.success('Đặt sân thành công')
                 form.resetFields(); // dùng để xóa các giá trị sau khi đã submit

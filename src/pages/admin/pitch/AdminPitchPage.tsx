@@ -1,6 +1,7 @@
-import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Empty, Button } from 'antd';
+import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Empty, Button, Input } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useCallback, useEffect, useState } from 'react';
+import type { TableProps } from 'antd';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import RBButton from 'react-bootstrap/Button';
 import { IoIosAddCircle } from 'react-icons/io';
@@ -31,6 +32,12 @@ import { usePermission } from '../../../hooks/common/usePermission';
 import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
 import AdminWrapper from '../../../components/wrapper/AdminWrapper';
 import { exportTableToExcel } from '../../../utils/export/exportExcelFromTable';
+import {
+    buildSpringListQuery,
+    type SpringSortItem,
+} from '../../../utils/pagination/buildSpringPageQuery';
+import { orFieldsInsensitiveLike } from '../../../utils/pagination/springFilterText';
+import { tableSorterToSortItems } from '../../../utils/pagination/tableSorterToSpringSort';
 
 const AdminPitchPage = () => {
     const dispatch = useAppDispatch();
@@ -47,6 +54,12 @@ const AdminPitchPage = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [pitchEdit, setPitchEdit] = useState<IPitch | null>(null);
     const canViewPitches = usePermission("PITCH_VIEW_LIST");
+
+    const [searchInput, setSearchInput] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [sortItems, setSortItems] = useState<SpringSortItem[]>([]);
+    const sortRef = useRef<SpringSortItem[]>([]);
+    sortRef.current = sortItems;
 
     const [searchParams, setSearchParams] = useSearchParams();
     const openPitchIdParam = searchParams.get('openPitchId');
@@ -106,7 +119,16 @@ const AdminPitchPage = () => {
             setDeletingId(id);
             const res = await deletePitch(id);
             if (res.data.statusCode === 200) {
-                await dispatch(fetchPitches(""));
+                await dispatch(
+                    fetchPitches(
+                        buildSpringListQuery({
+                            page: meta.page,
+                            pageSize: meta.pageSize,
+                            filter: orFieldsInsensitiveLike(["name", "address"], debouncedSearch),
+                            sort: sortItems,
+                        })
+                    )
+                );
                 toast.success('Xóa thành công');
             }
         } catch (error: any) {
@@ -126,6 +148,38 @@ const AdminPitchPage = () => {
         toast.error('Đã bỏ chọn');
     };
 
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400);
+        return () => clearTimeout(t);
+    }, [searchInput]);
+
+    const filterStr = useMemo(
+        () => orFieldsInsensitiveLike(["name", "address"], debouncedSearch),
+        [debouncedSearch]
+    );
+
+    const fetchPage = useCallback(
+        (page: number, pageSize: number, sort: SpringSortItem[]) => {
+            dispatch(
+                fetchPitches(
+                    buildSpringListQuery({ page, pageSize, filter: filterStr, sort })
+                )
+            );
+        },
+        [dispatch, filterStr]
+    );
+
+    useEffect(() => {
+        if (!canViewPitches) return;
+        fetchPage(1, meta.pageSize, sortRef.current);
+    }, [canViewPitches, debouncedSearch, fetchPage, meta.pageSize]);
+
+    const handleTableChange: TableProps<IPitch>["onChange"] = (pag, _f, sorter) => {
+        const nextSort = tableSorterToSortItems(sorter);
+        setSortItems(nextSort);
+        fetchPage(pag?.current ?? 1, pag?.pageSize ?? meta.pageSize, nextSort);
+    };
+
     const columns: ColumnsType<IPitch> = [
         {
             title: 'STT',
@@ -137,28 +191,27 @@ const AdminPitchPage = () => {
             title: 'ID',
             dataIndex: 'id',
             key: 'id',
-            sorter: (a, b) => a.id - b.id,
+            sorter: true,
         },
         {
             title: 'Tên sân',
             dataIndex: 'name',
             key: 'name',
-            sorter: (a, b) =>
-                (a.name ?? '').localeCompare(b.name ?? ''),
+            sorter: true,
             render: (text?: string | null) => text || '-',
         },
         {
             title: 'Loại sân',
             dataIndex: 'pitchType',
             key: 'pitchType',
-            sorter: (a, b) => a.pitchType.localeCompare(b.pitchType),
+            sorter: true,
             render: (type: PitchTypeEnum) => getPitchTypeLabel(type),
         },
         {
             title: 'Giá / giờ',
             dataIndex: 'pricePerHour',
             key: 'pricePerHour',
-            sorter: (a, b) => a.pricePerHour - b.pricePerHour,
+            sorter: true,
             render: (price: number) =>
                 price.toLocaleString('vi-VN') + ' đ',
         },
@@ -166,7 +219,7 @@ const AdminPitchPage = () => {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
-            sorter: (a, b) => a.status.localeCompare(b.status),
+            sorter: true,
             render: (status: IPitch['status']) => (
                 <Tag color={PITCH_STATUS_META[status].color}>
                     {PITCH_STATUS_META[status].label}
@@ -190,7 +243,6 @@ const AdminPitchPage = () => {
         {
             title: 'Diện tích',
             key: 'area',
-            sorter: (a, b) => (a.length ?? 0) * (a.width ?? 0) - (b.length ?? 0) * (b.width ?? 0),
             render: (_: any, record: IPitch) => {
                 if (record.length == null || record.width == null) return '-';
                 const area = Number((record.length * record.width).toFixed(2));
@@ -259,13 +311,6 @@ const AdminPitchPage = () => {
         },
     ];
 
-    // fetch list pitches
-    useEffect(() => {
-        if (!canViewPitches) return;
-
-        dispatch(fetchPitches(""));
-    }, [canViewPitches, dispatch]);
-
     return (
         <>
             <AdminWrapper>
@@ -273,7 +318,14 @@ const AdminPitchPage = () => {
                     size="small"
                     title="Quản lý sân (Pitch)"
                     extra={
-                        <Space align='center'>
+                        <Space align='center' wrap>
+                            <Input.Search
+                                allowClear
+                                placeholder="Tìm tên / địa chỉ"
+                                style={{ width: 240 }}
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                            />
                             <PermissionWrapper required={"PITCH_CREATE"}>
                                 <RBButton
                                     variant="outline-primary"
@@ -313,14 +365,13 @@ const AdminPitchPage = () => {
                             rowKey="id"
                             loading={loading}
                             size="small"
+                            onChange={handleTableChange}
                             pagination={{
                                 current: meta.page,
                                 pageSize: meta.pageSize,
                                 total: meta.total,
                                 showSizeChanger: true,
-                                onChange: (page, pageSize) => {
-                                    dispatch(fetchPitches(`page=${page}&pageSize=${pageSize}`));
-                                },
+                                showTotal: (t) => `Tổng ${t} bản ghi`,
                             }}
                             bordered
                             scroll={{ x: 'max-content' }}

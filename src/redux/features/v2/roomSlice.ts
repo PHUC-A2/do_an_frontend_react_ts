@@ -3,11 +3,14 @@ import type { RootState } from "../../store";
 import { getAllRooms } from "../../../config/Api";
 import type { IRoom } from "../../../types/v2/room";
 import type { IBackendRes, IModelPaginate } from "../../../types/common";
+import { isApiSuccess } from "../../../utils/api/isApiSuccess";
+import { normalizePaginationMeta } from "../../../utils/pagination/normalizePaginationMeta";
 
 interface RoomState {
     loading: boolean;
     error?: string;
     result: IRoom[];
+    lastListQuery: string;
     meta: {
         page: number;
         pageSize: number;
@@ -19,6 +22,7 @@ interface RoomState {
 const initialState: RoomState = {
     result: [],
     loading: false,
+    lastListQuery: "",
     meta: {
         page: 1,
         pageSize: 10,
@@ -36,7 +40,7 @@ export const fetchRooms = createAsyncThunk<
         const res = await getAllRooms(query);
         const apiResponse: IBackendRes<IModelPaginate<IRoom>> = res.data;
 
-        if (apiResponse.statusCode === 200 && !apiResponse.error && apiResponse.data) {
+        if (isApiSuccess(apiResponse.statusCode) && !apiResponse.error && apiResponse.data) {
             return apiResponse.data;
         }
 
@@ -66,8 +70,9 @@ export const roomSlice = createSlice({
             })
             .addCase(fetchRooms.fulfilled, (state, action) => {
                 state.loading = false;
-                state.result = action.payload.result;
-                state.meta = action.payload.meta;
+                state.result = Array.isArray(action.payload.result) ? action.payload.result : [];
+                state.meta = normalizePaginationMeta(action.payload.meta);
+                state.lastListQuery = action.meta.arg;
                 state.error = undefined;
             })
             .addCase(fetchRooms.rejected, (state, action) => {
@@ -82,5 +87,6 @@ export const selectRooms = (state: RootState) => state.room.result;
 export const selectRoomMeta = (state: RootState) => state.room.meta;
 export const selectRoomLoading = (state: RootState) => state.room.loading;
 export const selectRoomError = (state: RootState) => state.room.error;
+export const selectRoomLastListQuery = (state: RootState) => state.room.lastListQuery;
 
 export default roomSlice.reducer;

@@ -5,8 +5,9 @@ import { useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { toast } from 'react-toastify';
 import type { ICreateUserReq } from '../../../../types/user';
-import { useAppDispatch } from '../../../../redux/hooks';
-import { fetchUsers } from '../../../../redux/features/userSlice';
+import { useAppDispatch, useAppSelector } from '../../../../redux/hooks';
+import { fetchUsers, selectUserLastListQuery } from '../../../../redux/features/userSlice';
+import { DEFAULT_ADMIN_LIST_QUERY } from '../../../../utils/pagination/defaultListQuery';
 
 interface IProps {
     openModalAddUser: boolean;
@@ -27,6 +28,7 @@ const ModalAddUser = (props: IProps) => {
     const { openModalAddUser, setOpenModalAddUser } = props;
     const [form] = Form.useForm();
     const dispatch = useAppDispatch();
+    const listQuery = useAppSelector(selectUserLastListQuery);
 
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState('');
@@ -83,7 +85,7 @@ const ModalAddUser = (props: IProps) => {
         try {
             const res = await createUser(data);
             if (res.data.statusCode === 201) {
-                await dispatch(fetchUsers(""));
+                await dispatch(fetchUsers(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 setOpenModalAddUser(false);
                 toast.success('Tạo mới người dùng thành công')
                 form.resetFields(); // dùng để xóa các giá trị sau khi đã submit

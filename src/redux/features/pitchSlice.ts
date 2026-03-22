@@ -3,11 +3,15 @@ import type { RootState } from '../store';
 import { getAllPitches } from '../../config/Api';
 import type { IPitch } from '../../types/pitch';
 import type { IBackendRes, IModelPaginate } from '../../types/common';
+import { isApiSuccess } from '../../utils/api/isApiSuccess';
+import { normalizePaginationMeta } from '../../utils/pagination/normalizePaginationMeta';
 
 interface PitchState {
     loading: boolean;
     error?: string;
     result: IPitch[];
+    /** Query GET gần nhất thành công — modal refetch giữ filter/sort. */
+    lastListQuery: string;
     meta: {
         page: number;
         pageSize: number;
@@ -19,6 +23,7 @@ interface PitchState {
 const initialState: PitchState = {
     result: [],
     loading: false,
+    lastListQuery: "",
     meta: {
         page: 1,
         pageSize: 10,
@@ -39,7 +44,7 @@ export const fetchPitches = createAsyncThunk<
             const apiResponse: IBackendRes<IModelPaginate<IPitch>> = res.data;
 
             // Check for success: statusCode 200 and no error
-            if (apiResponse.statusCode === 200 && !apiResponse.error && apiResponse.data) {
+            if (isApiSuccess(apiResponse.statusCode) && !apiResponse.error && apiResponse.data) {
                 return apiResponse.data;
             }
 
@@ -68,8 +73,9 @@ export const pitchSlice = createSlice({
             })
             .addCase(fetchPitches.fulfilled, (state, action) => {
                 state.loading = false;
-                state.result = action.payload.result;
-                state.meta = action.payload.meta;
+                state.result = Array.isArray(action.payload.result) ? action.payload.result : [];
+                state.meta = normalizePaginationMeta(action.payload.meta);
+                state.lastListQuery = action.meta.arg;
                 state.error = undefined;
             })
             .addCase(fetchPitches.rejected, (state, action) => {
@@ -84,5 +90,6 @@ export const selectPitches = (state: RootState) => state.pitch.result;
 export const selectPitchMeta = (state: RootState) => state.pitch.meta;
 export const selectPitchLoading = (state: RootState) => state.pitch.loading;
 export const selectPitchError = (state: RootState) => state.pitch.error;
+export const selectPitchLastListQuery = (state: RootState) => state.pitch.lastListQuery;
 
 export default pitchSlice.reducer;

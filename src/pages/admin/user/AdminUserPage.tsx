@@ -1,9 +1,10 @@
 import {
     Avatar, Button, Card, Empty, Popconfirm, Space,
-    Table, Tag, Tooltip, Typography,
+    Table, Tag, Tooltip, Typography, Input,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useEffect, useState } from 'react';
+import type { TableProps } from 'antd';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import RBButton from 'react-bootstrap/Button';
 import { IoIosAddCircle } from 'react-icons/io';
 import { FaDownload } from 'react-icons/fa';
@@ -25,6 +26,12 @@ import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
 import AdminWrapper from '../../../components/wrapper/AdminWrapper';
 import { usePermission } from '../../../hooks/common/usePermission';
 import { exportTableToExcel } from '../../../utils/export/exportExcelFromTable';
+import {
+    buildSpringListQuery,
+    type SpringSortItem,
+} from '../../../utils/pagination/buildSpringPageQuery';
+import { orFieldsInsensitiveLike } from '../../../utils/pagination/springFilterText';
+import { tableSorterToSortItems } from '../../../utils/pagination/tableSorterToSpringSort';
 import { UserOutlined, TeamOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
@@ -52,11 +59,52 @@ const AdminUserPage = () => {
 
     const canViewUsers = usePermission('USER_VIEW_LIST');
 
+    const [searchInput, setSearchInput] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [sortItems, setSortItems] = useState<SpringSortItem[]>([]);
+    const sortRef = useRef<SpringSortItem[]>([]);
+    sortRef.current = sortItems;
+
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400);
+        return () => clearTimeout(t);
+    }, [searchInput]);
+
+    const filterStr = useMemo(
+        () => orFieldsInsensitiveLike(['name', 'fullName', 'email', 'phoneNumber'], debouncedSearch),
+        [debouncedSearch]
+    );
+
+    const fetchPage = useCallback(
+        (page: number, pageSize: number, sort: SpringSortItem[]) => {
+            dispatch(fetchUsers(buildSpringListQuery({ page, pageSize, filter: filterStr, sort })));
+        },
+        [dispatch, filterStr]
+    );
+
     useEffect(() => {
         if (!canViewUsers) return;
-        dispatch(fetchUsers(''));
-        // dispatch(fetchRoles(''));
-    }, [canViewUsers, dispatch]);
+        fetchPage(1, meta.pageSize, sortRef.current);
+    }, [canViewUsers, debouncedSearch, fetchPage, meta.pageSize]);
+
+    const handleTableChange: TableProps<IUser>['onChange'] = (pag, _f, sorter) => {
+        const nextSort = tableSorterToSortItems(sorter);
+        setSortItems(nextSort);
+        fetchPage(pag?.current ?? 1, pag?.pageSize ?? meta.pageSize, nextSort);
+    };
+
+    const refreshList = useCallback(() => {
+        dispatch(
+            fetchUsers(
+                buildSpringListQuery({
+                    page: meta.page,
+                    pageSize: meta.pageSize,
+                    filter: filterStr,
+                    sort: sortItems,
+                })
+            )
+        );
+    }, [dispatch, meta.page, meta.pageSize, filterStr, sortItems]);
 
     // ── View details ──
     const handleView = async (id: number) => {
@@ -79,7 +127,16 @@ const AdminUserPage = () => {
             setDeletingId(id);
             await deleteUser(id);
             toast.success('Đã xóa người dùng');
-            dispatch(fetchUsers(''));
+            dispatch(
+                fetchUsers(
+                    buildSpringListQuery({
+                        page: meta.page,
+                        pageSize: meta.pageSize,
+                        filter: filterStr,
+                        sort: sortItems,
+                    })
+                )
+            );
         } catch (err: any) {
             toast.error(err?.response?.data?.message ?? 'Xóa thất bại');
         } finally {
@@ -92,9 +149,11 @@ const AdminUserPage = () => {
             title: 'STT', width: 55,
             render: (_: any, __: IUser, i: number) => (meta.page - 1) * meta.pageSize + i + 1,
         },
-        { title: 'ID', dataIndex: 'id', width: 60, sorter: (a, b) => a.id - b.id },
+        { title: 'ID', dataIndex: 'id', key: 'id', width: 60, sorter: true },
         {
             title: 'Người dùng', width: 200,
+            key: 'name',
+            sorter: true,
             render: (_: any, r: IUser) => (
                 <Space size={8}>
                     <Avatar
@@ -113,12 +172,13 @@ const AdminUserPage = () => {
             ),
         },
         {
-            title: 'SĐT', dataIndex: 'phoneNumber', width: 120,
+            title: 'SĐT', dataIndex: 'phoneNumber', key: 'phoneNumber', width: 120,
+            sorter: true,
             render: (t) => t || <Text type="secondary">—</Text>,
         },
         {
-            title: 'Trạng thái', dataIndex: 'status', width: 130,
-            sorter: (a, b) => (a.status ?? '').localeCompare(b.status ?? ''),
+            title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 130,
+            sorter: true,
             render: (status?: IUser['status']) => status
                 ? <Tag color={USER_STATUS_META[status].color}>{USER_STATUS_META[status].label}</Tag>
                 : <Tag>Không xác định</Tag>,
@@ -203,7 +263,14 @@ const AdminUserPage = () => {
                     </Space>
                 }
                 extra={
-                    <Space>
+                    <Space wrap>
+                        <Input.Search
+                            allowClear
+                            placeholder="Tìm tên / email / SĐT"
+                            style={{ width: 220 }}
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                        />
                         <PermissionWrapper required="USER_CREATE">
                             <RBButton
                                 variant="outline-primary" size="sm"
@@ -230,11 +297,13 @@ const AdminUserPage = () => {
                         columns={columns} dataSource={listUsers} rowKey="id"
                         loading={loading} size="small" bordered
                         scroll={{ x: 'max-content' }}
+                        onChange={handleTableChange}
                         pagination={{
-                            current: meta.page, pageSize: meta.pageSize, total: meta.total,
+                            current: meta.page,
+                            pageSize: meta.pageSize,
+                            total: meta.total,
                             showSizeChanger: true,
-                            onChange: (page, pageSize) =>
-                                dispatch(fetchUsers(`page=${page}&pageSize=${pageSize}`)),
+                            showTotal: (t) => `Tổng ${t} bản ghi`,
                         }}
                     />
                 </PermissionWrapper>
@@ -265,7 +334,7 @@ const AdminUserPage = () => {
                 open={openModalBanUser}
                 onCancel={() => setOpenModalBanUser(false)}
                 user={userBan}
-                onSuccess={() => dispatch(fetchUsers(''))}
+                onSuccess={refreshList}
             />
         </AdminWrapper>
     );

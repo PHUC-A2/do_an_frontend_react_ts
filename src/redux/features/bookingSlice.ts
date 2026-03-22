@@ -2,11 +2,14 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import { getAllBookings } from '../../config/Api';
 import type { IBooking } from '../../types/booking';
+import { isApiSuccess } from '../../utils/api/isApiSuccess';
+import { normalizePaginationMeta } from '../../utils/pagination/normalizePaginationMeta';
 
 interface BookingState {
     loading: boolean;
     error?: string;
     result: IBooking[];
+    lastListQuery: string;
     meta: {
         page: number;
         pageSize: number;
@@ -18,6 +21,7 @@ interface BookingState {
 const initialState: BookingState = {
     result: [],
     loading: false,
+    lastListQuery: "",
     meta: {
         page: 1,
         pageSize: 10,
@@ -36,10 +40,10 @@ export const fetchBookings = createAsyncThunk<
         try {
             const res = await getAllBookings(query);
 
-            if (res.data.statusCode === 200 && res.data.data) {
+            if (isApiSuccess(res.data.statusCode) && res.data.data) {
                 return {
-                    result: res.data.data.result,
-                    meta: res.data.data.meta
+                    result: Array.isArray(res.data.data.result) ? res.data.data.result : [],
+                    meta: normalizePaginationMeta(res.data.data.meta),
                 };
             }
 
@@ -63,10 +67,10 @@ export const bookingSlice = createSlice({
                 state.error = undefined;
             })
             .addCase(fetchBookings.fulfilled, (state, action) => {
-                // console.log(action.payload);
                 state.loading = false;
                 state.result = action.payload.result;
                 state.meta = action.payload.meta;
+                state.lastListQuery = action.meta.arg;
             })
             .addCase(fetchBookings.rejected, (state, action) => {
                 state.loading = false;
@@ -78,5 +82,6 @@ export const bookingSlice = createSlice({
 export const selectBookings = (state: RootState) => state.booking.result;
 export const selectBookingMeta = (state: RootState) => state.booking.meta;
 export const selectBookingLoading = (state: RootState) => state.booking.loading;
+export const selectBookingLastListQuery = (state: RootState) => state.booking.lastListQuery;
 
 export default bookingSlice.reducer;

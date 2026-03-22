@@ -1,6 +1,7 @@
-import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Empty, Button } from 'antd';
+import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Empty, Button, Input } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useEffect, useState } from 'react';
+import type { TableProps } from 'antd';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import RBButton from 'react-bootstrap/Button';
 import { IoIosAddCircle } from 'react-icons/io';
 import { CiEdit } from 'react-icons/ci';
@@ -20,6 +21,12 @@ import type { IEquipment } from '../../../types/equipment';
 import { EQUIPMENT_STATUS_META } from '../../../utils/constants/equipment.constants';
 import { deleteEquipment, getEquipmentById } from '../../../config/Api';
 import { exportTableToExcel } from '../../../utils/export/exportExcelFromTable';
+import {
+    buildSpringListQuery,
+    type SpringSortItem,
+} from '../../../utils/pagination/buildSpringPageQuery';
+import { orFieldsInsensitiveLike } from '../../../utils/pagination/springFilterText';
+import { tableSorterToSortItems } from '../../../utils/pagination/tableSorterToSpringSort';
 import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
 import AdminWrapper from '../../../components/wrapper/AdminWrapper';
 import { usePermission } from '../../../hooks/common/usePermission';
@@ -44,6 +51,12 @@ const AdminEquipmentPage = () => {
 
     const canView = usePermission("EQUIPMENT_VIEW_LIST");
 
+    const [searchInput, setSearchInput] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [sortItems, setSortItems] = useState<SpringSortItem[]>([]);
+    const sortRef = useRef<SpringSortItem[]>([]);
+    sortRef.current = sortItems;
+
     const handleEdit = (data: IEquipment) => {
         setEquipmentEdit(data);
         setOpenModalUpdate(true);
@@ -67,7 +80,16 @@ const AdminEquipmentPage = () => {
         try {
             setDeletingId(id);
             await deleteEquipment(id);
-            await dispatch(fetchEquipments(''));
+            await dispatch(
+                fetchEquipments(
+                    buildSpringListQuery({
+                        page: meta.page,
+                        pageSize: meta.pageSize,
+                        filter: orFieldsInsensitiveLike(["name", "description"], debouncedSearch),
+                        sort: sortItems,
+                    })
+                )
+            );
             toast.success('Xóa thành công');
         } catch (error: any) {
             toast.error(error?.response?.data?.message ?? 'Không xác định');
@@ -78,32 +100,65 @@ const AdminEquipmentPage = () => {
 
     const cancel: PopconfirmProps['onCancel'] = () => toast.error('Đã bỏ chọn');
 
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400);
+        return () => clearTimeout(t);
+    }, [searchInput]);
+
+    const filterStr = useMemo(
+        () => orFieldsInsensitiveLike(["name", "description"], debouncedSearch),
+        [debouncedSearch]
+    );
+
+    const fetchPage = useCallback(
+        (page: number, pageSize: number, sort: SpringSortItem[]) => {
+            dispatch(
+                fetchEquipments(
+                    buildSpringListQuery({ page, pageSize, filter: filterStr, sort })
+                )
+            );
+        },
+        [dispatch, filterStr]
+    );
+
+    useEffect(() => {
+        if (!canView) return;
+        fetchPage(1, meta.pageSize, sortRef.current);
+    }, [canView, debouncedSearch, fetchPage, meta.pageSize]);
+
+    const handleTableChange: TableProps<IEquipment>["onChange"] = (pag, _f, sorter) => {
+        const nextSort = tableSorterToSortItems(sorter);
+        setSortItems(nextSort);
+        fetchPage(pag?.current ?? 1, pag?.pageSize ?? meta.pageSize, nextSort);
+    };
+
     const columns: ColumnsType<IEquipment> = [
         {
             title: 'STT', key: 'stt',
             render: (_: any, __: IEquipment, index: number) =>
                 (meta.page - 1) * meta.pageSize + index + 1,
         },
-        { title: 'ID', dataIndex: 'id', key: 'id', sorter: (a, b) => a.id - b.id },
+        { title: 'ID', dataIndex: 'id', key: 'id', sorter: true },
         {
             title: 'Tên thiết bị', dataIndex: 'name', key: 'name',
-            sorter: (a, b) => a.name.localeCompare(b.name),
+            sorter: true,
         },
         {
             title: 'Tổng SL', dataIndex: 'totalQuantity', key: 'totalQuantity',
-            sorter: (a, b) => a.totalQuantity - b.totalQuantity,
+            sorter: true,
         },
         {
             title: 'Khả dụng', dataIndex: 'availableQuantity', key: 'availableQuantity',
-            sorter: (a, b) => a.availableQuantity - b.availableQuantity,
+            sorter: true,
         },
         {
             title: 'Giá trị', dataIndex: 'price', key: 'price',
-            sorter: (a, b) => a.price - b.price,
+            sorter: true,
             render: (price: number) => price.toLocaleString('vi-VN') + ' đ',
         },
         {
             title: 'Trạng thái', dataIndex: 'status', key: 'status',
+            sorter: true,
             render: (status: IEquipment['status']) => (
                 <Tag color={EQUIPMENT_STATUS_META[status].color}>
                     {EQUIPMENT_STATUS_META[status].label}
@@ -147,18 +202,20 @@ const AdminEquipmentPage = () => {
         },
     ];
 
-    useEffect(() => {
-        if (!canView) return;
-        dispatch(fetchEquipments(''));
-    }, [canView, dispatch]);
-
     return (
         <AdminWrapper>
             <Card
                 size="small"
                 title="Quản lý thiết bị (Equipment)"
                 extra={
-                    <Space align="center">
+                    <Space align="center" wrap>
+                        <Input.Search
+                            allowClear
+                            placeholder="Tìm tên / mô tả"
+                            style={{ width: 220 }}
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                        />
                         <PermissionWrapper required="EQUIPMENT_CREATE">
                             <RBButton
                                 variant="outline-primary"
@@ -190,14 +247,13 @@ const AdminEquipmentPage = () => {
                         rowKey="id"
                         loading={loading}
                         size="small"
+                        onChange={handleTableChange}
                         pagination={{
                             current: meta.page,
                             pageSize: meta.pageSize,
                             total: meta.total,
                             showSizeChanger: true,
-                            onChange: (page, pageSize) => {
-                                dispatch(fetchEquipments(`page=${page}&pageSize=${pageSize}`));
-                            },
+                            showTotal: (t) => `Tổng ${t} bản ghi`,
                         }}
                         bordered
                         scroll={{ x: 'max-content' }}

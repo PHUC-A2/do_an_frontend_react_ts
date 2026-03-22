@@ -3,11 +3,14 @@ import type { RootState } from '../store';
 import { getAllEquipments } from '../../config/Api';
 import type { IEquipment } from '../../types/equipment';
 import type { IBackendRes, IModelPaginate } from '../../types/common';
+import { isApiSuccess } from '../../utils/api/isApiSuccess';
+import { normalizePaginationMeta } from '../../utils/pagination/normalizePaginationMeta';
 
 interface EquipmentState {
     loading: boolean;
     error?: string;
     result: IEquipment[];
+    lastListQuery: string;
     meta: {
         page: number;
         pageSize: number;
@@ -19,6 +22,7 @@ interface EquipmentState {
 const initialState: EquipmentState = {
     result: [],
     loading: false,
+    lastListQuery: "",
     meta: {
         page: 1,
         pageSize: 10,
@@ -38,7 +42,7 @@ export const fetchEquipments = createAsyncThunk<
             const res = await getAllEquipments(query);
             const apiResponse: IBackendRes<IModelPaginate<IEquipment>> = res.data;
 
-            if (apiResponse.statusCode === 200 && !apiResponse.error && apiResponse.data) {
+            if (isApiSuccess(apiResponse.statusCode) && !apiResponse.error && apiResponse.data) {
                 return apiResponse.data;
             }
 
@@ -66,8 +70,9 @@ export const equipmentSlice = createSlice({
             })
             .addCase(fetchEquipments.fulfilled, (state, action) => {
                 state.loading = false;
-                state.result = action.payload.result;
-                state.meta = action.payload.meta;
+                state.result = Array.isArray(action.payload.result) ? action.payload.result : [];
+                state.meta = normalizePaginationMeta(action.payload.meta);
+                state.lastListQuery = action.meta.arg;
                 state.error = undefined;
             })
             .addCase(fetchEquipments.rejected, (state, action) => {
@@ -82,5 +87,6 @@ export const selectEquipments = (state: RootState) => state.equipment.result;
 export const selectEquipmentMeta = (state: RootState) => state.equipment.meta;
 export const selectEquipmentLoading = (state: RootState) => state.equipment.loading;
 export const selectEquipmentError = (state: RootState) => state.equipment.error;
+export const selectEquipmentLastListQuery = (state: RootState) => state.equipment.lastListQuery;
 
 export default equipmentSlice.reducer;

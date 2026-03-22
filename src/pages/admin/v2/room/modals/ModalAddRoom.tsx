@@ -13,8 +13,9 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 import { createRoom, uploadImageRoom } from "../../../../../config/Api";
-import { useAppDispatch } from "../../../../../redux/hooks";
-import { fetchRooms } from "../../../../../redux/features/v2/roomSlice";
+import { useAppDispatch, useAppSelector } from "../../../../../redux/hooks";
+import { fetchRooms, selectRoomLastListQuery } from "../../../../../redux/features/v2/roomSlice";
+import { DEFAULT_ADMIN_LIST_QUERY } from "../../../../../utils/pagination/defaultListQuery";
 import type { ICreateRoomRequest } from "../../../../../types/v2/room";
 import { ROOM_STATUS_OPTIONS } from "../../../../../utils/constants/room.constants";
 
@@ -36,6 +37,7 @@ const getBase64 = (file: FileType): Promise<string> =>
 const ModalAddRoom = ({ openModalAddRoom, setOpenModalAddRoom }: IProps) => {
     const [form] = Form.useForm<ICreateRoomRequest>();
     const dispatch = useAppDispatch();
+    const listQuery = useAppSelector(selectRoomLastListQuery);
 
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState("");
@@ -95,7 +97,7 @@ const ModalAddRoom = ({ openModalAddRoom, setOpenModalAddRoom }: IProps) => {
             const res = await createRoom(payload);
             if (res.data.statusCode === 201) {
                 toast.success("Tạo phòng mới thành công");
-                await dispatch(fetchRooms(""));
+                await dispatch(fetchRooms(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 form.resetFields();
                 setFileList([]);
                 setOpenModalAddRoom(false);

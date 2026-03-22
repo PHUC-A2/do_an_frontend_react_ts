@@ -5,8 +5,9 @@ import { toast } from 'react-toastify';
 import { useAppDispatch, useAppSelector } from '../../../../redux/hooks';
 import type { IUser } from '../../../../types/user';
 import { assignRole, getUserById } from '../../../../config/Api';
-import { fetchRoles, selectRoles } from '../../../../redux/features/roleSlice';
-import { fetchUsers } from '../../../../redux/features/userSlice';
+import { fetchRoles, selectRoles, selectRoleLastListQuery } from '../../../../redux/features/roleSlice';
+import { fetchUsers, selectUserLastListQuery } from '../../../../redux/features/userSlice';
+import { DEFAULT_ADMIN_LIST_QUERY } from '../../../../utils/pagination/defaultListQuery';
 import { usePermission } from '../../../../hooks/common/usePermission';
 
 const { Text } = Typography;
@@ -21,6 +22,8 @@ const AdminModalAssignRole = (props: IProps) => {
     const { openModalAssignRole, setOpenModalAssignRole, userAssignRole } = props;
     const dispatch = useAppDispatch();
     const allRoles = useAppSelector(selectRoles);
+    const userListQuery = useAppSelector(selectUserLastListQuery);
+    const roleListQuery = useAppSelector(selectRoleLastListQuery);
 
     const [enabledRoleIds, setEnabledRoleIds] = useState<Set<number>>(new Set());
     const [loadingDrawer, setLoadingDrawer] = useState(false);
@@ -43,7 +46,7 @@ const AdminModalAssignRole = (props: IProps) => {
                     toast.error('Bạn không có quyền xem chi tiết người dùng');
                     return;
                 }
-                await dispatch(fetchRoles('')).unwrap();
+                await dispatch(fetchRoles(roleListQuery || DEFAULT_ADMIN_LIST_QUERY)).unwrap();
                 const res = await getUserById(userAssignRole.id);
                 const current: number[] = (res.data.data?.roles ?? []).map((r: any) => r.id);
                 setEnabledRoleIds(new Set(current));
@@ -74,7 +77,7 @@ const AdminModalAssignRole = (props: IProps) => {
         try {
             await assignRole(userAssignRole.id, { roleIds: Array.from(enabledRoleIds) });
             toast.success('Đã cập nhật vai trò cho người dùng');
-            dispatch(fetchUsers(''));
+            dispatch(fetchUsers(userListQuery || DEFAULT_ADMIN_LIST_QUERY));
             setOpenModalAssignRole(false);
         } catch (err: any) {
             toast.error(err?.response?.data?.message ?? 'Lưu thất bại');

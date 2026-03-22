@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { Layout, Typography, Row, Col, Card, Image, Tag, Button, Empty, Pagination } from "antd";
+import React, { useEffect, useMemo } from "react";
+import { Layout, Typography, Row, Col, Card, Image, Tag, Button, Empty, Pagination, Select } from "antd";
 import { motion, type Variants } from "framer-motion";
 import {
     EnvironmentOutlined,
@@ -18,6 +18,13 @@ import type { IPitch } from "../../../types/pitch";
 import { getPitchTypeLabel, PITCH_STATUS_META } from "../../../utils/constants/pitch.constants";
 import { formatVND } from "../../../utils/format/price";
 import RBButton from 'react-bootstrap/Button';
+import {
+    buildSpringListQuery,
+    parseSpringSortParam,
+    serializeSpringSortParam,
+    type SpringSortItem,
+} from "../../../utils/pagination/buildSpringPageQuery";
+import { orFieldsInsensitiveLike } from "../../../utils/pagination/springFilterText";
 const { Content } = Layout;
 const { Title, Paragraph, Text } = Typography;
 
@@ -38,22 +45,20 @@ const MotionCard = motion.create(Card);
 
 const DEFAULT_PAGE_SIZE = 12;
 
+/** Sắp xếp mặc định (server). */
+const DEFAULT_PITCH_SORT: SpringSortItem[] = [{ property: "id", direction: "desc" }];
+
+const PITCH_SORT_OPTIONS = [
+    { value: "id,desc", label: "Mới nhất" },
+    { value: "name,asc", label: "Tên A → Z" },
+    { value: "name,desc", label: "Tên Z → A" },
+    { value: "pricePerHour,asc", label: "Giá thấp → cao" },
+    { value: "pricePerHour,desc", label: "Giá cao → thấp" },
+] as const;
+
 const parsePositiveNumber = (value: string | null, fallbackValue: number) => {
     const parsedValue = Number(value);
     return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : fallbackValue;
-};
-
-const buildPitchQuery = (page: number, pageSize: number, keyword: string) => {
-    const params = new URLSearchParams();
-    params.set("page", String(page));
-    params.set("pageSize", String(pageSize));
-
-    const trimmedKeyword = keyword.trim();
-    if (trimmedKeyword) {
-        params.set("keyword", trimmedKeyword);
-    }
-
-    return params.toString();
 };
 
 const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
@@ -70,31 +75,38 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
     const currentKeyword = (searchParams.get("keyword") ?? "").trim();
     const currentPage = parsePositiveNumber(searchParams.get("page"), 1);
     const currentPageSize = parsePositiveNumber(searchParams.get("pageSize"), DEFAULT_PAGE_SIZE);
-    const normalizedKeyword = currentKeyword.toLocaleLowerCase("vi-VN");
-    const visiblePitches = currentKeyword
-        ? pitches.filter((pitch) => {
-            const searchableContent = [
-                pitch.name,
-                pitch.address,
-                getPitchTypeLabel(pitch.pitchType),
-                PITCH_STATUS_META[pitch.status].label,
-            ]
-                .filter(Boolean)
-                .join(" ")
-                .toLocaleLowerCase("vi-VN");
+    const sortFromUrl = parseSpringSortParam(searchParams.get("sort"));
+    const currentSort = sortFromUrl.length ? sortFromUrl : DEFAULT_PITCH_SORT;
+    const sortSelectValue =
+        serializeSpringSortParam(currentSort) ?? "id,desc";
 
-            return searchableContent.includes(normalizedKeyword);
-        })
-        : pitches;
+    const listQuery = useMemo(
+        () =>
+            buildSpringListQuery({
+                page: currentPage,
+                pageSize: currentPageSize,
+                filter: orFieldsInsensitiveLike(["name", "address"], currentKeyword),
+                sort: currentSort,
+            }),
+        [currentPage, currentPageSize, currentKeyword, currentSort]
+    );
 
     useEffect(() => {
-        dispatch(fetchPitches(buildPitchQuery(currentPage, currentPageSize, currentKeyword)));
-    }, [currentKeyword, currentPage, currentPageSize, dispatch]);
+        dispatch(fetchPitches(listQuery));
+    }, [listQuery, dispatch]);
 
     const handlePaginationChange = (page: number, pageSize: number) => {
         const params = new URLSearchParams(searchParams);
         params.set("page", String(page));
         params.set("pageSize", String(pageSize));
+        setSearchParams(params);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    const handleSortChange = (value: string) => {
+        const params = new URLSearchParams(searchParams);
+        params.set("sort", value);
+        params.set("page", "1");
         setSearchParams(params);
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
@@ -147,12 +159,31 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                                     {currentKeyword ? `Kết quả tìm kiếm cho “${currentKeyword}”` : 'Khám phá sân phù hợp'}
                                 </h2>
                             </div>
-                            <div className="pitch-summaryMeta">
-                                {currentKeyword
-                                    ? `${visiblePitches.length} sân khớp trên trang này`
-                                    : meta.total > 0
-                                        ? `${meta.total} sân khả dụng`
-                                        : 'Không có kết quả phù hợp'}
+                            <div
+                                style={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: 12,
+                                    alignItems: "center",
+                                    justifyContent: "flex-end",
+                                }}
+                            >
+                                <div className="pitch-summaryMeta">
+                                    {currentKeyword
+                                        ? `${meta.total} sân khớp (theo tên / địa chỉ)`
+                                        : meta.total > 0
+                                            ? `${meta.total} sân khả dụng`
+                                            : "Không có kết quả phù hợp"}
+                                </div>
+                                <Select
+                                    size="middle"
+                                    className="pitch-sortSelect"
+                                    value={sortSelectValue}
+                                    options={[...PITCH_SORT_OPTIONS]}
+                                    onChange={handleSortChange}
+                                    aria-label="Sắp xếp danh sách sân"
+                                    style={{ minWidth: 200 }}
+                                />
                             </div>
                         </div>
 
@@ -160,14 +191,14 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                             <div className="pitch-emptyState">
                                 <Empty description={error} />
                             </div>
-                        ) : !loading && visiblePitches.length === 0 ? (
+                        ) : !loading && pitches.length === 0 && meta.total === 0 ? (
                             <div className="pitch-emptyState">
                                 <Empty description={currentKeyword ? 'Không tìm thấy sân phù hợp với từ khóa hiện tại' : 'Chưa có sân nào để hiển thị'} />
                             </div>
                         ) : (
                             <>
                                 <Row className="pitch-cardGrid" gutter={[{ xs: 12, sm: 16, md: 24 }, { xs: 12, sm: 16, md: 24 }]}>
-                                    {visiblePitches.map((pitch: IPitch) => (
+                                    {pitches.map((pitch: IPitch) => (
                                         <Col xs={24} sm={12} md={8} lg={6} key={pitch.id}>
                                             <MotionCard
                                                 className="pitch-card"

@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 import { updateRole } from "../../../../config/Api";
-import { useAppDispatch } from "../../../../redux/hooks";
+import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 import type { IRole, IUpdateRoleReq } from "../../../../types/role";
-import { fetchRoles } from "../../../../redux/features/roleSlice";
+import { fetchRoles, selectRoleLastListQuery } from "../../../../redux/features/roleSlice";
+import { DEFAULT_ADMIN_LIST_QUERY } from "../../../../utils/pagination/defaultListQuery";
 interface IProps {
     openModalUpdateRole: boolean;
     setOpenModalUpdateRole: (v: boolean) => void;
@@ -19,6 +20,7 @@ const ModalUpdateRole = ({
 }: IProps) => {
     const [form] = Form.useForm();
     const dispatch = useAppDispatch();
+    const listQuery = useAppSelector(selectRoleLastListQuery);
     const [loading, setLoading] = useState<boolean>(false);
 
     useEffect(() => {
@@ -44,7 +46,7 @@ const ModalUpdateRole = ({
 
             if (res.data.statusCode === 200) {
                 toast.success("Cập nhật role thành công");
-                await dispatch(fetchRoles(""));
+                await dispatch(fetchRoles(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 form.resetFields();
                 setOpenModalUpdateRole(false);
             }

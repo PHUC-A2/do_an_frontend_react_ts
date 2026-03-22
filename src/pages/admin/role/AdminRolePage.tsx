@@ -3,7 +3,8 @@ import {
     Modal, Popconfirm, Space, Spin, Table, Tag, Tooltip, Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useEffect, useState } from 'react';
+import type { TableProps } from 'antd';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../redux/hooks';
 import {
     fetchRoles, selectRoleLoading, selectRoleMeta, selectRoles,
@@ -24,6 +25,12 @@ import PermissionWrapper from '../../../components/wrapper/PermissionWrapper';
 import AdminWrapper from '../../../components/wrapper/AdminWrapper';
 import { usePermission } from '../../../hooks/common/usePermission';
 import { exportTableToExcel } from '../../../utils/export/exportExcelFromTable';
+import {
+    buildSpringListQuery,
+    type SpringSortItem,
+} from '../../../utils/pagination/buildSpringPageQuery';
+import { orFieldsInsensitiveLike } from '../../../utils/pagination/springFilterText';
+import { tableSorterToSortItems } from '../../../utils/pagination/tableSorterToSpringSort';
 import { SafetyOutlined, TeamOutlined, EyeOutlined } from '@ant-design/icons';
 import { IoIosAddCircle } from 'react-icons/io';
 import { FaDownload } from 'react-icons/fa';
@@ -81,10 +88,52 @@ const RolesTab = () => {
 
     const canView = usePermission('ROLE_VIEW_LIST');
 
+    const [searchInput, setSearchInput] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [sortItems, setSortItems] = useState<SpringSortItem[]>([]);
+    const sortRef = useRef<SpringSortItem[]>([]);
+    sortRef.current = sortItems;
+
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400);
+        return () => clearTimeout(t);
+    }, [searchInput]);
+
+    const filterStr = useMemo(
+        () => orFieldsInsensitiveLike(['name', 'description'], debouncedSearch),
+        [debouncedSearch]
+    );
+
+    const fetchPage = useCallback(
+        (page: number, pageSize: number, sort: SpringSortItem[]) => {
+            dispatch(fetchRoles(buildSpringListQuery({ page, pageSize, filter: filterStr, sort })));
+        },
+        [dispatch, filterStr]
+    );
+
     useEffect(() => {
         if (!canView) return;
-        dispatch(fetchRoles(''));
-    }, [canView, dispatch]);
+        fetchPage(1, meta.pageSize, sortRef.current);
+    }, [canView, debouncedSearch, fetchPage, meta.pageSize]);
+
+    const handleTableChange: TableProps<IRole>['onChange'] = (pag, _f, sorter) => {
+        const nextSort = tableSorterToSortItems(sorter);
+        setSortItems(nextSort);
+        fetchPage(pag?.current ?? 1, pag?.pageSize ?? meta.pageSize, nextSort);
+    };
+
+    const refreshRoleList = useCallback(() => {
+        dispatch(
+            fetchRoles(
+                buildSpringListQuery({
+                    page: meta.page,
+                    pageSize: meta.pageSize,
+                    filter: filterStr,
+                    sort: sortItems,
+                })
+            )
+        );
+    }, [dispatch, meta.page, meta.pageSize, filterStr, sortItems]);
 
     // Sau khi roles load, fetch permissions count cho từng role
     useEffect(() => {
@@ -137,7 +186,7 @@ const RolesTab = () => {
                 toast.success('Tạo vai trò thành công');
             }
             setModalOpen(false);
-            dispatch(fetchRoles(''));
+            refreshRoleList();
         } catch (err: any) {
             if (err?.errorFields) return; // form validation
             toast.error(err?.response?.data?.message ?? 'Thao tác thất bại');
@@ -151,7 +200,7 @@ const RolesTab = () => {
             setDeletingId(id);
             await deleteRole(id);
             toast.success('Đã xóa vai trò');
-            dispatch(fetchRoles(''));
+            refreshRoleList();
         } catch (err: any) {
             toast.error(err?.response?.data?.message ?? 'Xóa thất bại');
         } finally {
@@ -170,16 +219,17 @@ const RolesTab = () => {
             title: 'STT', width: 55,
             render: (_: any, __: IRole, i: number) => (meta.page - 1) * meta.pageSize + i + 1,
         },
-        { title: 'ID', dataIndex: 'id', width: 60, sorter: (a, b) => a.id - b.id },
+        { title: 'ID', dataIndex: 'id', key: 'id', width: 60, sorter: true },
         {
-            title: 'Vai trò', dataIndex: 'name',
+            title: 'Vai trò', dataIndex: 'name', key: 'name',
+            sorter: true,
             render: (name: string) => (
                 <Tag color={name === 'ADMIN' ? 'warning' : 'blue'} style={{ fontWeight: 600 }}>
                     {name}
                 </Tag>
             ),
         },
-        { title: 'Mô tả', dataIndex: 'description', render: (t) => t || <Text type="secondary">—</Text> },
+        { title: 'Mô tả', dataIndex: 'description', key: 'description', sorter: true, render: (t) => t || <Text type="secondary">—</Text> },
         {
             title: 'Số quyền', width: 90, align: 'center' as const,
             render: (_: any, r: IRole) => {
@@ -243,7 +293,14 @@ const RolesTab = () => {
                     <TeamOutlined style={{ marginRight: 6 }} />
                     Danh sách vai trò
                 </Text>
-                <Space>
+                <Space wrap>
+                    <Input.Search
+                        allowClear
+                        placeholder="Tìm tên / mô tả"
+                        style={{ width: 200 }}
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                    />
                     <PermissionWrapper required="ROLE_CREATE">
                         <RBButton
                             variant="outline-primary" size="sm"
@@ -270,11 +327,13 @@ const RolesTab = () => {
                     columns={columns} dataSource={roles} rowKey="id"
                     loading={loading} size="small" bordered
                     scroll={{ x: 'max-content' }}
+                    onChange={handleTableChange}
                     pagination={{
-                        current: meta.page, pageSize: meta.pageSize, total: meta.total,
+                        current: meta.page,
+                        pageSize: meta.pageSize,
+                        total: meta.total,
                         showSizeChanger: true,
-                        onChange: (page, pageSize) =>
-                            dispatch(fetchRoles(`page=${page}&pageSize=${pageSize}`)),
+                        showTotal: (t) => `Tổng ${t} bản ghi`,
                     }}
                 />
             </PermissionWrapper>

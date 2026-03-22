@@ -33,8 +33,9 @@ import {
     adminDeletePitchEquipment,
     getAllEquipments,
 } from '../../../../config/Api';
-import { useAppDispatch } from '../../../../redux/hooks';
-import { fetchPitches } from '../../../../redux/features/pitchSlice';
+import { useAppDispatch, useAppSelector } from '../../../../redux/hooks';
+import { fetchPitches, selectPitchLastListQuery } from '../../../../redux/features/pitchSlice';
+import { DEFAULT_ADMIN_LIST_QUERY } from '../../../../utils/pagination/defaultListQuery';
 
 import type { IPitch, IUpdatePitchReq } from '../../../../types/pitch';
 import type { IEquipment } from '../../../../types/equipment';
@@ -70,6 +71,7 @@ const ModalUpdatePitch = (props: IProps) => {
 
     const [form] = Form.useForm<IUpdatePitchForm>();
     const dispatch = useAppDispatch();
+    const pitchListQuery = useAppSelector(selectPitchLastListQuery);
 
     const [previewOpen, setPreviewOpen] = useState<boolean>(false);
     const [previewImage, setPreviewImage] = useState<string>('');
@@ -164,7 +166,7 @@ const ModalUpdatePitch = (props: IProps) => {
                 toast.success('Cập nhật sân thành công');
                 form.resetFields();
                 setFileList([]);
-                await dispatch(fetchPitches(''));
+                await dispatch(fetchPitches(pitchListQuery || DEFAULT_ADMIN_LIST_QUERY));
                 setOpenModalUpdatePitch(false);
             }
         } catch (error: any) {

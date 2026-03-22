@@ -3,11 +3,14 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
 import { getAllPayments } from "../../config/Api";
 import type { IPayment } from "../../types/payment";
+import { isApiSuccess } from "../../utils/api/isApiSuccess";
+import { normalizePaginationMeta } from "../../utils/pagination/normalizePaginationMeta";
 
 interface PaymentState {
     loading: boolean;
     error?: string;
     result: IPayment[];
+    lastListQuery: string;
     meta: {
         page: number;
         pageSize: number;
@@ -19,6 +22,7 @@ interface PaymentState {
 const initialState: PaymentState = {
     result: [],
     loading: false,
+    lastListQuery: "",
     meta: {
         page: 1,
         pageSize: 10,
@@ -40,10 +44,10 @@ export const fetchPayments = createAsyncThunk<
         try {
             const res = await getAllPayments(query);
 
-            if (res.data.statusCode === 200 && res.data.data) {
+            if (isApiSuccess(res.data.statusCode) && res.data.data) {
                 return {
-                    result: res.data.data.result,
-                    meta: res.data.data.meta,
+                    result: Array.isArray(res.data.data.result) ? res.data.data.result : [],
+                    meta: normalizePaginationMeta(res.data.data.meta),
                 };
             }
 
@@ -75,6 +79,7 @@ export const paymentSlice = createSlice({
                 state.loading = false;
                 state.result = action.payload.result;
                 state.meta = action.payload.meta;
+                state.lastListQuery = action.meta.arg;
             })
             .addCase(fetchPayments.rejected, (state, action) => {
                 state.loading = false;
@@ -90,5 +95,6 @@ export const selectPayments = (state: RootState) => state.payment.result;
 export const selectPaymentMeta = (state: RootState) => state.payment.meta;
 export const selectPaymentLoading = (state: RootState) => state.payment.loading;
 export const selectPaymentError = (state: RootState) => state.payment.error;
+export const selectPaymentLastListQuery = (state: RootState) => state.payment.lastListQuery;
 
 export default paymentSlice.reducer;

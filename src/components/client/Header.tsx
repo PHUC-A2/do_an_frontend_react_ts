@@ -106,7 +106,7 @@ const getHeaderHeight = (compact: boolean) => {
 const DEFAULT_PITCH_PAGE_SIZE = 12;
 const CLIENT_SOUND_PREF_KEY = 'tbu_sport_client_notification_sound';
 
-const buildPitchSearchPath = (keyword: string) => {
+const buildPitchSearchPath = (keyword: string, preserveSort?: string | null) => {
     const params = new URLSearchParams();
     const trimmedKeyword = keyword.trim();
 
@@ -115,6 +115,9 @@ const buildPitchSearchPath = (keyword: string) => {
 
     if (trimmedKeyword) {
         params.set('keyword', trimmedKeyword);
+    }
+    if (preserveSort?.trim()) {
+        params.set('sort', preserveSort.trim());
     }
 
     return `/pitch?${params.toString()}`;
@@ -581,9 +584,10 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
         const trimmedKeyword = searchValue.trim();
         const currentPath = `${location.pathname}${location.search}`;
         const isPitchListingPage = location.pathname === '/pitch';
+        const sortParam = isPitchListingPage ? new URLSearchParams(location.search).get('sort') : null;
         const nextPath = trimmedKeyword
-            ? buildPitchSearchPath(trimmedKeyword)
-            : (isPitchListingPage ? buildPitchSearchPath('') : currentPath);
+            ? buildPitchSearchPath(trimmedKeyword, sortParam)
+            : (isPitchListingPage ? buildPitchSearchPath('', sortParam) : currentPath);
 
         if (currentPath === nextPath) {
             onMobileNavOpenChange(false);

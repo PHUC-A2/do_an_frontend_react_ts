@@ -4,8 +4,9 @@ import { updateUser, uploadImageAvatar } from '../../../../config/Api';
 import { useEffect, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { toast } from 'react-toastify';
-import { useAppDispatch } from '../../../../redux/hooks';
-import { fetchUsers } from '../../../../redux/features/userSlice';
+import { useAppDispatch, useAppSelector } from '../../../../redux/hooks';
+import { fetchUsers, selectUserLastListQuery } from '../../../../redux/features/userSlice';
+import { DEFAULT_ADMIN_LIST_QUERY } from '../../../../utils/pagination/defaultListQuery';
 import { type IUpdateUserReq, type IUser } from '../../../../types/user';
 import { USER_STATUS_OPTIONS } from '../../../../utils/constants/user.constants';
 
@@ -29,6 +30,7 @@ const ModalUpdateUser = (props: IProps) => {
     const { openModalUpdateUser, setOpenModalUpdateUser, userEdit } = props;
     const [form] = Form.useForm();
     const dispatch = useAppDispatch();
+    const listQuery = useAppSelector(selectUserLastListQuery);
 
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState('');
@@ -94,7 +96,7 @@ const ModalUpdateUser = (props: IProps) => {
                 toast.success("Cập nhật người dùng thành công");
                 form.resetFields();
                 setFileList([]);
-                await dispatch(fetchUsers(""));
+                await dispatch(fetchUsers(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 setOpenModalUpdateUser(false);
             }
         } catch (error: any) {

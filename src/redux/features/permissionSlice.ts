@@ -2,11 +2,14 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
 import type { IPermission } from "../../types/permission";
 import { getAllPermissions } from "../../config/Api";
+import { isApiSuccess } from "../../utils/api/isApiSuccess";
+import { normalizePaginationMeta } from "../../utils/pagination/normalizePaginationMeta";
 
 interface PermissionState {
     loading: boolean;
     error?: string;
     result: IPermission[];
+    lastListQuery: string;
     meta: {
         page: number;
         pageSize: number;
@@ -18,6 +21,7 @@ interface PermissionState {
 const initialState: PermissionState = {
     result: [],
     loading: false,
+    lastListQuery: "",
     meta: {
         page: 1,
         pageSize: 10,
@@ -35,10 +39,10 @@ export const fetchPermissions = createAsyncThunk<
         try {
             const res = await getAllPermissions(query);
 
-            if (res.data.statusCode === 200 && res.data.data) {
+            if (isApiSuccess(res.data.statusCode) && res.data.data) {
                 return {
-                    result: res.data.data.result,
-                    meta: res.data.data.meta,
+                    result: Array.isArray(res.data.data.result) ? res.data.data.result : [],
+                    meta: normalizePaginationMeta(res.data.data.meta),
                 };
             }
 
@@ -66,6 +70,7 @@ export const permissionSlice = createSlice({
                 state.loading = false;
                 state.result = action.payload.result;
                 state.meta = action.payload.meta;
+                state.lastListQuery = action.meta.arg;
             })
             .addCase(fetchPermissions.rejected, (state, action) => {
                 state.loading = false;
@@ -76,4 +81,5 @@ export const permissionSlice = createSlice({
 export const selectPermissions = (state: RootState) => state.permission.result;
 export const selectPermissionMeta = (state: RootState) => state.permission.meta;
 export const selectPermissionLoading = (state: RootState) => state.permission.loading;
+export const selectPermissionLastListQuery = (state: RootState) => state.permission.lastListQuery;
 export default permissionSlice.reducer;
