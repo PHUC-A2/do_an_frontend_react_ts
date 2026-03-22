@@ -1,0 +1,13 @@
+$bp-md: 768px;
+
+/* Slot đặt menu mobile trong luồng tài liệu (giữa header cố định và Content) — một thanh cuộn trình duyệt */
+.mobileNavSlot {
+    display: block;
+    width  : 100%;
+}
+
+@media (min-width: #{$bp-md + 1px}) {
+    .mobileNavSlot {
+        display: none;
+    }
+}

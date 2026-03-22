@@ -2,11 +2,11 @@ $bp-md: 768px;
 
 @mixin scrollableHiddenScrollbar {
     -ms-overflow-style: none;
-    scrollbar-width: none;
+    scrollbar-width   : none;
 
     &::-webkit-scrollbar {
-        width : 0;
-        height: 0;
+        width  : 0;
+        height : 0;
         display: none;
     }
 }
@@ -487,16 +487,16 @@ $bp-md: 768px;
 }
 
 .notifDetailLink {
-    align-self: flex-start;
-    margin-top: 6px;
-    padding     : 0;
-    border      : none;
-    background  : transparent;
-    cursor      : pointer;
-    font-size   : 0.78rem;
-    font-weight : 600;
-    color       : var(--header-accent);
-    text-decoration: underline;
+    align-self           : flex-start;
+    margin-top           : 6px;
+    padding              : 0;
+    border               : none;
+    background           : transparent;
+    cursor               : pointer;
+    font-size            : 0.78rem;
+    font-weight          : 600;
+    color                : var(--header-accent);
+    text-decoration      : underline;
     text-underline-offset: 2px;
 
     &:hover {
@@ -1023,52 +1023,15 @@ $bp-md: 768px;
     transform: translate(-50%, -50%) rotate(0deg) scale(1);
 }
 
-.mobileOverlay {
-    position      : fixed;
-    inset         : 0;
-    z-index       : 1001;
-    background    : var(--header-overlay);
-    opacity       : 0;
-    pointer-events: none;
-    transition    : opacity 0.24s ease;
-}
-
-.mobileOverlayOpen {
-    opacity       : 1;
-    pointer-events: auto;
-}
-
-.mobileDrawer {
-    position      : relative;
-    z-index       : 920;
-    width         : 100%;
-    margin-top    : 0;
-    max-height    : 0;
-    padding       : 0 20px;
-    border-radius : 0 0 22px 22px;
-    background    : var(--header-surface-soft);
-    box-shadow    : none;
-    opacity       : 0;
-    pointer-events: none;
-    transform     : translateY(-12px);
-    transition    :
-        margin-top 0.28s ease,
-        max-height 0.32s ease,
-        padding 0.28s ease,
-        opacity 0.22s ease,
-        transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-        box-shadow 0.24s ease;
-    overflow: hidden;
-}
-
-.mobileDrawerOpen {
-    margin-top    : var(--header-height, 68px);
-    max-height    : 1200px;
-    padding       : 22px 20px 24px;
-    box-shadow    : 0 16px 34px rgba(2, 6, 23, 0.18);
-    opacity       : 1;
-    pointer-events: auto;
-    transform     : translateY(0);
+/* Mobile kiểu hoidanit.vn: menu trong luồng trang (portal vào slot), một thanh cuộn trình duyệt */
+.mobileNavFlow {
+    box-sizing   : border-box;
+    width        : 100%;
+    margin       : var(--header-height, 68px) 0 0;
+    padding      : 18px 20px calc(22px + env(safe-area-inset-bottom, 0));
+    background   : var(--header-surface-soft);
+    border-bottom: 1px solid var(--header-border);
+    box-shadow   : 0 10px 32px rgba(2, 6, 23, 0.14);
 }
 
 .drawerHeader {
@@ -1323,10 +1286,6 @@ $bp-md: 768px;
 }
 
 @media (max-width: #{$bp-md}) {
-    .mobileOverlay {
-        display: none;
-    }
-
     .headerInner {
         gap    : 14px;
         padding: 0 16px;
@@ -1370,12 +1329,8 @@ $bp-md: 768px;
         display: inline-flex;
     }
 
-    .mobileDrawer {
-        padding: 0 16px;
-    }
-
-    .mobileDrawerOpen {
-        padding: 18px 16px 22px;
+    .mobileNavFlow {
+        padding: 18px 16px calc(20px + env(safe-area-inset-bottom, 0));
     }
 
     .drawerSearchForm {
@@ -1397,10 +1352,6 @@ $bp-md: 768px;
         display: none;
     }
 
-    .mobileOverlay,
-    .mobileDrawer {
-        display: none;
-    }
 }
 
 @media (max-width: 480px) {

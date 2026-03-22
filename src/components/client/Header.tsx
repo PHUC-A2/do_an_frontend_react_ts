@@ -1,4 +1,5 @@
-import { Avatar, Badge, Button, Flex, Input, Layout, Modal, Switch, Tooltip, Typography, type InputRef } from 'antd';
+import { Avatar, Badge, Button, Flex, Grid, Input, Layout, Modal, Switch, Tooltip, Typography, type InputRef } from 'antd';
+import { createPortal } from 'react-dom';
 import { useEffect, useRef, useState, type CSSProperties, type TouchEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import {
@@ -48,9 +49,13 @@ import LogoGlow from '../logo-glow/LogoGlow';
 interface HeaderProps {
     theme: 'light' | 'dark';
     toggleTheme: () => void;
+    mobileNavOpen: boolean;
+    onMobileNavOpenChange: (open: boolean) => void;
+    mobileNavPortalEl: HTMLDivElement | null;
 }
 
 const { Text } = Typography;
+const { useBreakpoint } = Grid;
 const { Header: AntHeader } = Layout;
 
 interface NavItem {
@@ -115,8 +120,9 @@ const buildPitchSearchPath = (keyword: string) => {
     return `/pitch?${params.toString()}`;
 };
 
-const Header = ({ theme, toggleTheme }: HeaderProps) => {
-    const [drawerOpen, setDrawerOpen] = useState(false);
+const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobileNavPortalEl }: HeaderProps) => {
+    const screens = useBreakpoint();
+    const isMobileLayout = screens.md !== true;
     const [accountMenuOpen, setAccountMenuOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchValue, setSearchValue] = useState('');
@@ -298,13 +304,20 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     }, [searchOpen]);
 
     useEffect(() => {
-        if (!drawerOpen) {
-            return;
-        }
+        onMobileNavOpenChange(false);
+        setDrawerNotifOpen(false);
+    }, [location.pathname, onMobileNavOpenChange]);
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, [drawerOpen]);
+    useEffect(() => {
+        const onResize = () => {
+            if (window.innerWidth > 768) {
+                onMobileNavOpenChange(false);
+            }
+        };
 
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, [onMobileNavOpenChange]);
 
     useEffect(() => {
         const updateHeaderHeight = () => {
@@ -517,7 +530,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     useOutsideClick(notifRef, () => setNotifOpen(false), notifOpen);
 
     const closeAllPanels = () => {
-        setDrawerOpen(false);
+        onMobileNavOpenChange(false);
         setDrawerNotifOpen(false);
         setAccountMenuOpen(false);
         setSearchOpen(false);
@@ -554,7 +567,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
     };
 
     const handleMobileSearchAction = () => {
-        setDrawerOpen(false);
+        onMobileNavOpenChange(false);
 
         if (!searchOpen) {
             setSearchOpen(true);
@@ -573,13 +586,13 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
             : (isPitchListingPage ? buildPitchSearchPath('') : currentPath);
 
         if (currentPath === nextPath) {
-            setDrawerOpen(false);
+            onMobileNavOpenChange(false);
             setAccountMenuOpen(false);
             setSearchOpen(false);
             return;
         }
 
-        setDrawerOpen(false);
+        onMobileNavOpenChange(false);
         setAccountMenuOpen(false);
         setSearchOpen(false);
         navigate(nextPath);
@@ -986,13 +999,13 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
 
                         <Button
                             type="text"
-                            className={`${styles.mobileMenuButton}${drawerOpen ? ` ${styles.mobileMenuButtonOpen}` : ''}`}
+                            className={`${styles.mobileMenuButton}${mobileNavOpen ? ` ${styles.mobileMenuButtonOpen}` : ''}`}
                             onClick={() => {
                                 setSearchOpen(false);
-                                setDrawerOpen((current) => !current);
+                                onMobileNavOpenChange(!mobileNavOpen);
                             }}
-                            aria-label={drawerOpen ? 'Đóng menu' : 'Mở menu'}
-                            aria-expanded={drawerOpen}
+                            aria-label={mobileNavOpen ? 'Đóng menu' : 'Mở menu'}
+                            aria-expanded={mobileNavOpen}
                         >
                             <Flex className={styles.mobileMenuIconWrap} aria-hidden="true">
                                 <FiMenu className={styles.mobileMenuIconMenu} />
@@ -1004,166 +1017,165 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
 
             </AntHeader>
 
-            <Flex
-                className={`${styles.mobileOverlay}${drawerOpen ? ` ${styles.mobileOverlayOpen}` : ''}`}
-                onClick={() => setDrawerOpen(false)}
-                aria-hidden="true"
-            />
-
-            <Flex vertical className={`${styles.mobileDrawer}${drawerOpen ? ` ${styles.mobileDrawerOpen}` : ''}`} aria-label="Menu di động">
-                <Flex vertical className={styles.drawerHeader}>
-                    {isAuthenticated ? (
-                        <Flex className={styles.drawerUserBlock}>
-                            <Avatar src={account?.avatarUrl || undefined} size={40}>
-                                {!account?.avatarUrl && initials}
-                            </Avatar>
-                            <Flex vertical>
-                                <Text className={styles.drawerTitle}>{displayName}</Text>
-                                <Text className={styles.drawerEmail}>{account?.email || 'Không có email'}</Text>
-                            </Flex>
-                        </Flex>
-                    ) : (
-                        <Flex vertical className={styles.drawerGuestBlock}>
-                            <Text className={styles.drawerSectionTitle}>Tài khoản</Text>
-                            <Flex vertical className={styles.drawerAuthActions}>
-                                <Button type="text" className={styles.secondaryDrawerButton} onClick={() => { setDrawerOpen(false); navigate('/login'); }}>
-                                    <FiLogIn />
-                                    <Text>Đăng nhập</Text>
-                                </Button>
-                                <Button type="text" className={styles.secondaryDrawerButton} onClick={() => { setDrawerOpen(false); navigate('/register'); }}>
-                                    <FiUserPlus />
-                                    <Text>Đăng ký</Text>
-                                </Button>
-                            </Flex>
-                        </Flex>
-                    )}
-                </Flex>
-
-                <Flex vertical className={styles.drawerNav}>
-                    {NAV_ITEMS.map((item) => (
-                        <Link
-                            key={item.key}
-                            to={item.to}
-                            className={`${styles.drawerNavLink}${isActiveLink(item) ? ` ${styles.drawerNavLinkActive}` : ''}`}
-                            onClick={() => setDrawerOpen(false)}
-                        >
-                            <item.icon className={styles.drawerNavIcon} />
-                            {item.label}
-                        </Link>
-                    ))}
-                </Flex>
-
-                <Flex className={styles.drawerQuickActions}>
-                    <Button type="text" className={`${styles.drawerQuickButton}${drawerNotifOpen ? ` ${styles.actionButtonActive}` : ''}`}
-                        onClick={() => { handleNotifications(); setDrawerNotifOpen(v => !v); }}
-                    >
-                        <Badge count={unreadCount} size="small">
-                            <FiBell />
-                        </Badge>
-                        <Text>Thông báo</Text>
-                    </Button>
-                    <Button type="text" className={styles.drawerQuickButton} onClick={handleBookingShortcut}>
-                        <FiCalendar />
-                        <Text>Lịch đặt</Text>
-                    </Button>
-                </Flex>
-
-                {drawerNotifOpen && isAuthenticated && (
-                    <Flex vertical className={styles.drawerNotifPanel}>
-                        <Flex className={styles.notifHeader}>
-                            <Text className={styles.notifTitle}>Thông báo</Text>
-                            <Flex align="center" gap={8} className={styles.notifActions}>
-                                <Text className={styles.notifSoundLabel}>Âm</Text>
-                                <Switch size="small" checked={bellSoundEnabled} onChange={setBellSoundEnabled} />
-                                {unreadCount > 0 && (
-                                    <Button type="text" className={styles.notifMarkAll} onClick={handleMarkAllRead}>
-                                        Đánh dấu đã đọc
-                                    </Button>
-                                )}
-                                {notifications.length > 0 && (
-                                    <Button type="text" className={styles.notifDeleteAll} onClick={handleDeleteAllNotifications}>
-                                        Xóa tất cả
-                                    </Button>
-                                )}
-                            </Flex>
-                        </Flex>
-                        <Flex vertical className={styles.drawerNotifList}>
-                            {notifications.length === 0 ? (
-                                <Text className={styles.notifEmpty}>Chưa có thông báo nào</Text>
-                            ) : (
-                                notifications.slice(0, 10).map(n => (
-                                    <Flex key={n.id}
-                                        className={`${styles.notifItem}${!n.isRead ? ` ${styles.notifItemUnread}` : ''} ${styles.notifItemClickable}`}
-                                        onClick={() => void handleNotificationRowClick(n)}
-                                        onTouchStart={(e) => handleNotifTouchStart(n.id, e)}
-                                        onTouchEnd={(e) => handleNotifTouchEnd(n.id, e)}
-                                        role="button"
-                                        tabIndex={0}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' || e.key === ' ') {
-                                                e.preventDefault();
-                                                void handleNotificationRowClick(n);
-                                            }
-                                        }}
-                                        title="Nhấn để đánh dấu đã đọc"
-                                    >
-                                        <FiBell className={styles.notifItemIcon} />
-                                        <Flex vertical className={styles.notifItemBody}>
-                                            <Text className={styles.notifItemMsg}>{n.message}</Text>
-                                            <Text className={styles.notifItemTime}>
-                                                {new Date(n.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
-                                            </Text>
-                                            <button
-                                                type="button"
-                                                className={styles.notifDetailLink}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    void handleNotificationOpenDetail(n);
-                                                }}
-                                            >
-                                                Xem chi tiết
-                                            </button>
-                                        </Flex>
-                                        <Flex align="center" gap={4}>
-                                            {!n.isRead && <span className={styles.notifDot} />}
-                                            <Button type="text" className={styles.notifDeleteBtn} icon={<FiTrash2 />}
-                                                onClick={(e) => { e.stopPropagation(); void handleDeleteNotif(n.id); }} />
-                                        </Flex>
+            {isMobileLayout && mobileNavOpen && mobileNavPortalEl
+                ? createPortal(
+                    <nav className={styles.mobileNavFlow} aria-label="Menu di động">
+                        <Flex vertical className={styles.drawerHeader}>
+                            {isAuthenticated ? (
+                                <Flex className={styles.drawerUserBlock}>
+                                    <Avatar src={account?.avatarUrl || undefined} size={40}>
+                                        {!account?.avatarUrl && initials}
+                                    </Avatar>
+                                    <Flex vertical>
+                                        <Text className={styles.drawerTitle}>{displayName}</Text>
+                                        <Text className={styles.drawerEmail}>{account?.email || 'Không có email'}</Text>
                                     </Flex>
-                                ))
+                                </Flex>
+                            ) : (
+                                <Flex vertical className={styles.drawerGuestBlock}>
+                                    <Text className={styles.drawerSectionTitle}>Tài khoản</Text>
+                                    <Flex vertical className={styles.drawerAuthActions}>
+                                        <Button type="text" className={styles.secondaryDrawerButton} onClick={() => { onMobileNavOpenChange(false); navigate('/login'); }}>
+                                            <FiLogIn />
+                                            <Text>Đăng nhập</Text>
+                                        </Button>
+                                        <Button type="text" className={styles.secondaryDrawerButton} onClick={() => { onMobileNavOpenChange(false); navigate('/register'); }}>
+                                            <FiUserPlus />
+                                            <Text>Đăng ký</Text>
+                                        </Button>
+                                    </Flex>
+                                </Flex>
                             )}
                         </Flex>
-                    </Flex>
-                )}
 
-                {isAuthenticated ? (
-                    <Flex vertical className={styles.drawerAccountActions}>
-                        {canOpenAdmin ? (
-                            <Button type="text" className={styles.drawerActionItem} onClick={openAdminPortal}>
-                                <FiShield />
-                                <Text>Trang quản trị</Text>
+                        <Flex vertical className={styles.drawerNav}>
+                            {NAV_ITEMS.map((item) => (
+                                <Link
+                                    key={item.key}
+                                    to={item.to}
+                                    className={`${styles.drawerNavLink}${isActiveLink(item) ? ` ${styles.drawerNavLinkActive}` : ''}`}
+                                    onClick={() => onMobileNavOpenChange(false)}
+                                >
+                                    <item.icon className={styles.drawerNavIcon} />
+                                    {item.label}
+                                </Link>
+                            ))}
+                        </Flex>
+
+                        <Flex className={styles.drawerQuickActions}>
+                            <Button type="text" className={`${styles.drawerQuickButton}${drawerNotifOpen ? ` ${styles.actionButtonActive}` : ''}`}
+                                onClick={() => { handleNotifications(); setDrawerNotifOpen(v => !v); }}
+                            >
+                                <Badge count={unreadCount} size="small">
+                                    <FiBell />
+                                </Badge>
+                                <Text>Thông báo</Text>
                             </Button>
-                        ) : null}
-                        <Button type="text" className={styles.drawerActionItem} onClick={openAccountInfo}>
-                            <FiUser />
-                            <Text>Thông tin tài khoản</Text>
-                        </Button>
-                        <Button type="text" className={styles.drawerActionItem} onClick={openAccountUpdate}>
-                            <FiEdit3 />
-                            <Text>Cập nhật tài khoản</Text>
-                        </Button>
-                        <Button type="text" className={styles.drawerActionItem} onClick={openPasswordReset}>
-                            <FiKey />
-                            <Text>Đổi mật khẩu</Text>
-                        </Button>
-                        <Button type="text" className={`${styles.drawerActionItem} ${styles.logoutAction}`} onClick={handleLogout}>
-                            <FiLogOut />
-                            <Text>Đăng xuất</Text>
-                        </Button>
-                    </Flex>
-                ) : null}
+                            <Button type="text" className={styles.drawerQuickButton} onClick={handleBookingShortcut}>
+                                <FiCalendar />
+                                <Text>Lịch đặt</Text>
+                            </Button>
+                        </Flex>
 
-            </Flex>
+                        {drawerNotifOpen && isAuthenticated && (
+                            <Flex vertical className={styles.drawerNotifPanel}>
+                                <Flex className={styles.notifHeader}>
+                                    <Text className={styles.notifTitle}>Thông báo</Text>
+                                    <Flex align="center" gap={8} className={styles.notifActions}>
+                                        <Text className={styles.notifSoundLabel}>Âm</Text>
+                                        <Switch size="small" checked={bellSoundEnabled} onChange={setBellSoundEnabled} />
+                                        {unreadCount > 0 && (
+                                            <Button type="text" className={styles.notifMarkAll} onClick={handleMarkAllRead}>
+                                                Đánh dấu đã đọc
+                                            </Button>
+                                        )}
+                                        {notifications.length > 0 && (
+                                            <Button type="text" className={styles.notifDeleteAll} onClick={handleDeleteAllNotifications}>
+                                                Xóa tất cả
+                                            </Button>
+                                        )}
+                                    </Flex>
+                                </Flex>
+                                <Flex vertical className={styles.drawerNotifList}>
+                                    {notifications.length === 0 ? (
+                                        <Text className={styles.notifEmpty}>Chưa có thông báo nào</Text>
+                                    ) : (
+                                        notifications.slice(0, 10).map(n => (
+                                            <Flex key={n.id}
+                                                className={`${styles.notifItem}${!n.isRead ? ` ${styles.notifItemUnread}` : ''} ${styles.notifItemClickable}`}
+                                                onClick={() => void handleNotificationRowClick(n)}
+                                                onTouchStart={(e) => handleNotifTouchStart(n.id, e)}
+                                                onTouchEnd={(e) => handleNotifTouchEnd(n.id, e)}
+                                                role="button"
+                                                tabIndex={0}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        e.preventDefault();
+                                                        void handleNotificationRowClick(n);
+                                                    }
+                                                }}
+                                                title="Nhấn để đánh dấu đã đọc"
+                                            >
+                                                <FiBell className={styles.notifItemIcon} />
+                                                <Flex vertical className={styles.notifItemBody}>
+                                                    <Text className={styles.notifItemMsg}>{n.message}</Text>
+                                                    <Text className={styles.notifItemTime}>
+                                                        {new Date(n.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
+                                                    </Text>
+                                                    <button
+                                                        type="button"
+                                                        className={styles.notifDetailLink}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            void handleNotificationOpenDetail(n);
+                                                        }}
+                                                    >
+                                                        Xem chi tiết
+                                                    </button>
+                                                </Flex>
+                                                <Flex align="center" gap={4}>
+                                                    {!n.isRead && <span className={styles.notifDot} />}
+                                                    <Button type="text" className={styles.notifDeleteBtn} icon={<FiTrash2 />}
+                                                        onClick={(e) => { e.stopPropagation(); void handleDeleteNotif(n.id); }} />
+                                                </Flex>
+                                            </Flex>
+                                        ))
+                                    )}
+                                </Flex>
+                            </Flex>
+                        )}
+
+                        {isAuthenticated ? (
+                            <Flex vertical className={styles.drawerAccountActions}>
+                                {canOpenAdmin ? (
+                                    <Button type="text" className={styles.drawerActionItem} onClick={openAdminPortal}>
+                                        <FiShield />
+                                        <Text>Trang quản trị</Text>
+                                    </Button>
+                                ) : null}
+                                <Button type="text" className={styles.drawerActionItem} onClick={openAccountInfo}>
+                                    <FiUser />
+                                    <Text>Thông tin tài khoản</Text>
+                                </Button>
+                                <Button type="text" className={styles.drawerActionItem} onClick={openAccountUpdate}>
+                                    <FiEdit3 />
+                                    <Text>Cập nhật tài khoản</Text>
+                                </Button>
+                                <Button type="text" className={styles.drawerActionItem} onClick={openPasswordReset}>
+                                    <FiKey />
+                                    <Text>Đổi mật khẩu</Text>
+                                </Button>
+                                <Button type="text" className={`${styles.drawerActionItem} ${styles.logoutAction}`} onClick={handleLogout}>
+                                    <FiLogOut />
+                                    <Text>Đăng xuất</Text>
+                                </Button>
+                            </Flex>
+                        ) : null}
+
+                    </nav>,
+                    mobileNavPortalEl,
+                )
+                : null}
 
             <ModalAccount
                 openModalAccount={openModalAccount}
