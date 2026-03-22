@@ -1,0 +1,225 @@
+/* Client: nội dung thường light = đen, dark = trắng; giữ tiêu đề lớn / nhãn vàng / nút */
+
+$copy-light: #0a0a0a;
+$muted-light: rgba(10, 10, 10, 0.74);
+$copy-dark: #ffffff;
+$muted-dark: rgba(255, 255, 255, 0.88);
+
+$title-light: #0f172a;
+$title-dark: #f8fafc;
+
+.client-app[data-client-theme='light'] {
+    .hp--light {
+        --text       : #{$copy-light};
+        --text-muted : #{$muted-light};
+        --float-text : #{$copy-light};
+    }
+
+    .bk--light {
+        --text       : #{$copy-light};
+        --text-muted : #{$muted-light};
+    }
+
+    .pitch-page.light {
+        --text-main: #{$copy-light};
+    }
+
+    .pitch-details-page {
+        color       : $copy-light;
+        --text-page : #{$copy-light};
+    }
+
+    .hp__section-label {
+        color: #faad14 !important;
+    }
+
+    .hp__gold-text {
+        -webkit-text-fill-color: unset;
+    }
+
+    .hp__hero-title,
+    .hp__section-title {
+        color: $title-light !important;
+    }
+
+    .client-main {
+        --ant-color-text             : #{$copy-light};
+        --ant-color-text-secondary   : #{$muted-light};
+        --ant-color-text-tertiary    : #{rgba(10, 10, 10, 0.58)};
+        --ant-color-text-description : #{$muted-light};
+        --ant-color-text-label       : #{$copy-light};
+    }
+
+    .client-main :is(p, li, td, dd, dt, figcaption, blockquote) {
+        color: $copy-light !important;
+    }
+
+    .client-main :is(div, span).ant-typography {
+        color: $copy-light !important;
+    }
+
+    .client-main :is(h1, h2).ant-typography,
+    .client-main h1.hp__hero-title,
+    .client-main h2.hp__section-title {
+        color: $title-light !important;
+    }
+
+    .client-main th {
+        color: $title-light !important;
+    }
+
+    .pitch-page :is(div, span).ant-typography {
+        color: $copy-light !important;
+    }
+
+    .pitch-details-page .ant-typography:not(h1):not(h2):not(h3):not(h4):not(h5) {
+        color: $copy-light !important;
+    }
+
+    .pitch-details-page :is(h3, h4, h5).ant-typography {
+        color: $title-light !important;
+    }
+
+    .ant-btn-primary span,
+    .ant-btn-primary .ant-btn-icon {
+        color: #0a0a0a !important;
+    }
+
+    .ant-btn-link {
+        color: #1677ff !important;
+    }
+
+    .client-main .ant-typography-danger {
+        color: #ff4d4f !important;
+    }
+
+    .client-main .ant-typography-success {
+        color: #52c41a !important;
+    }
+
+    .client-main .ant-typography-warning {
+        color: #faad14 !important;
+    }
+
+    .client-main .ant-collapse-content-box,
+    .client-main .ant-form-item label,
+    .client-main .ant-form-item-explain,
+    .client-main .ant-form-item-extra,
+    .client-main .ant-input,
+    .client-main .ant-input-affix-wrapper,
+    .client-main .ant-select-selection-item,
+    .client-main .ant-select-selection-placeholder {
+        color: $copy-light !important;
+    }
+
+    .client-main .ant-input::placeholder,
+    .client-main .ant-select-selection-placeholder {
+        color: #{rgba(10, 10, 10, 0.45)} !important;
+    }
+}
+
+.client-app[data-client-theme='dark'] {
+    .hp--dark {
+        --text       : #{$copy-dark};
+        --text-muted : #{$muted-dark};
+        --float-text : #{$copy-dark};
+    }
+
+    .bk--dark {
+        --text       : #{$copy-dark};
+        --text-muted : #{$muted-dark};
+    }
+
+    .pitch-page.dark {
+        --text-main: #{$copy-dark};
+    }
+
+    .pitch-details-page {
+        color       : $copy-dark;
+        --text-page : #{$copy-dark};
+    }
+
+    .hp__section-label {
+        color: #faad14 !important;
+    }
+
+    .hp__hero-title,
+    .hp__section-title {
+        color: $title-dark !important;
+    }
+
+    .client-main {
+        --ant-color-text             : #{$copy-dark};
+        --ant-color-text-secondary   : #{$muted-dark};
+        --ant-color-text-tertiary    : #{rgba(255, 255, 255, 0.72)};
+        --ant-color-text-description : #{$muted-dark};
+        --ant-color-text-label       : #{$copy-dark};
+    }
+
+    .client-main :is(p, li, td, dd, dt, figcaption, blockquote) {
+        color: $copy-dark !important;
+    }
+
+    .client-main :is(div, span).ant-typography {
+        color: $copy-dark !important;
+    }
+
+    .client-main :is(h1, h2).ant-typography,
+    .client-main h1.hp__hero-title,
+    .client-main h2.hp__section-title {
+        color: $title-dark !important;
+    }
+
+    .client-main th {
+        color: $title-dark !important;
+    }
+
+    .pitch-page :is(div, span).ant-typography {
+        color: $copy-dark !important;
+    }
+
+    .pitch-details-page .ant-typography:not(h1):not(h2):not(h3):not(h4):not(h5) {
+        color: $copy-dark !important;
+    }
+
+    .pitch-details-page :is(h3, h4, h5).ant-typography {
+        color: $title-dark !important;
+    }
+
+    .ant-btn-primary span,
+    .ant-btn-primary .ant-btn-icon {
+        color: #0a0a0a !important;
+    }
+
+    .ant-btn-link {
+        color: #69b1ff !important;
+    }
+
+    .client-main .ant-typography-danger {
+        color: #ff7875 !important;
+    }
+
+    .client-main .ant-typography-success {
+        color: #95de64 !important;
+    }
+
+    .client-main .ant-typography-warning {
+        color: #ffd666 !important;
+    }
+
+    .client-main .ant-collapse-content-box,
+    .client-main .ant-form-item label,
+    .client-main .ant-form-item-explain,
+    .client-main .ant-form-item-extra,
+    .client-main .ant-input,
+    .client-main .ant-input-affix-wrapper,
+    .client-main .ant-select-selection-item,
+    .client-main .ant-select-selection-placeholder {
+        color: $copy-dark !important;
+    }
+
+    .client-main .ant-input::placeholder,
+    .client-main .ant-select-selection-placeholder {
+        color: #{rgba(255, 255, 255, 0.45)} !important;
+    }
+}

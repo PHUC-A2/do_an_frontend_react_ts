@@ -3,9 +3,11 @@ import { Outlet } from 'react-router';
 import { useCallback, useState, type CSSProperties } from 'react';
 import Header from '../components/client/Header';
 import Footer from '../components/client/Footer';
+import ClientBackground from '../components/client/background/ClientBackground';
 import MessageButton from '../components/client/chat/MessageButton';
 import ChatBot from '../components/client/chat/ChatBot';
 import layoutStyles from './ClientLayout.module.scss';
+import './clientAppText.scss';
 
 interface ClientLayoutProps {
     theme: 'light' | 'dark';
@@ -24,15 +26,14 @@ const contentStyle: CSSProperties = {
     paddingLeft: 'clamp(6px, 3vw, 24px)',
     paddingRight: 'clamp(6px, 3vw, 24px)',
     paddingBottom: '24px',
-    background: 'transparent',
 };
 
-const ClientLayout = ({ theme, toggleTheme }: ClientLayoutProps) => {
+export default function ClientLayout({ theme, toggleTheme }: ClientLayoutProps) {
     const isDark = theme === 'dark';
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
     const [mobileNavPortalEl, setMobileNavPortalEl] = useState<HTMLDivElement | null>(null);
 
-    const setNavSlotRef = useCallback((node: HTMLDivElement | null) => {
+    const setNavSlotRef = useCallback(function setNavSlotRef(node: HTMLDivElement | null) {
         setMobileNavPortalEl(node);
     }, []);
 
@@ -51,24 +52,28 @@ const ClientLayout = ({ theme, toggleTheme }: ClientLayoutProps) => {
                 },
             }}
         >
-            <Layout style={layoutStyle}>
-                <MessageButton />
-                <ChatBot />
-                <Header
-                    theme={theme}
-                    toggleTheme={toggleTheme}
-                    mobileNavOpen={mobileNavOpen}
-                    onMobileNavOpenChange={setMobileNavOpen}
-                    mobileNavPortalEl={mobileNavPortalEl}
-                />
-                <div ref={setNavSlotRef} className={layoutStyles.mobileNavSlot} aria-live="polite" />
-                <Content style={contentDynamicStyle}>
-                    <Outlet />
-                </Content>
-                <Footer theme={isDark ? 'dark' : 'light'} />
-            </Layout>
+            <div className={`${layoutStyles.clientRoot} client-app`} data-client-theme={theme}>
+                <ClientBackground theme={theme} />
+                <Layout className={layoutStyles.clientLayout} style={layoutStyle}>
+                    <MessageButton />
+                    <ChatBot />
+                    <Header
+                        theme={theme}
+                        toggleTheme={toggleTheme}
+                        mobileNavOpen={mobileNavOpen}
+                        onMobileNavOpenChange={setMobileNavOpen}
+                        mobileNavPortalEl={mobileNavPortalEl}
+                    />
+                    <div ref={setNavSlotRef} className={layoutStyles.mobileNavSlot} aria-live="polite" />
+                    <Content
+                        className={`${layoutStyles.mainContent} client-main`}
+                        style={contentDynamicStyle}
+                    >
+                        <Outlet />
+                    </Content>
+                    <Footer theme={isDark ? 'dark' : 'light'} />
+                </Layout>
+            </div>
         </ConfigProvider>
     );
-};
-
-export default ClientLayout;
+}

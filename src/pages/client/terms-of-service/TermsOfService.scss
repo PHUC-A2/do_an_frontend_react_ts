@@ -12,9 +12,9 @@
     padding                : 96px 0;
     border-top             : 1px solid var(--border);
     border-bottom          : 1px solid var(--border);
-    background             : color-mix(in srgb, var(--bg-card2, transparent) 88%, transparent);
-    backdrop-filter        : blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background             : color-mix(in srgb, var(--bg-card2, transparent) 92%, transparent);
+    backdrop-filter        : blur(16px) saturate(1.12);
+    -webkit-backdrop-filter: blur(16px) saturate(1.12);
 
     @media (max-width:768px) {
         padding: 64px 0;
@@ -37,7 +37,7 @@
 
 .terms-card {
 
-    background   : color-mix(in srgb, var(--bg-card) 90%, transparent);
+    background   : color-mix(in srgb, var(--bg-card) 94%, transparent);
     border       : 1px solid var(--border);
     border-left  : 3px solid rgba(250, 173, 20, 0.45);
     border-radius: 20px;
@@ -45,8 +45,8 @@
     padding: 32px;
 
     transition             : all .35s ease;
-    backdrop-filter        : blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter        : blur(16px) saturate(1.12);
+    -webkit-backdrop-filter: blur(16px) saturate(1.12);
     box-shadow             : 0 18px 42px rgba(0, 0, 0, 0.14);
 
     .terms-card-icon {

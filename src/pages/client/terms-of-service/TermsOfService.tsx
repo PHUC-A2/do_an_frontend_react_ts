@@ -7,6 +7,7 @@ import {
     CustomerServiceOutlined,
 } from "@ant-design/icons";
 import { motion, type Variants } from "framer-motion";
+import "../home/HomePage.scss";
 import "./TermsOfService.scss";
 
 const { Content } = Layout;

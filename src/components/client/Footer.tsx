@@ -22,9 +22,10 @@ const Footer = ({ theme }: FooterProps) => {
     const dividerColor = isDark ? 'rgba(250, 173, 20, 0.12)' : 'rgba(15, 23, 42, 0.10)';
     const gold = '#faad14';
     const linkBlue = '#1677ff';
-    const headingColor = isDark ? '#e2e8f0' : '#1a2733';
-    const subColor = isDark ? '#64748b' : '#94a3b8';
-    const textColor = isDark ? '#94a3b8' : '#64748b';
+    /* Nội dung footer: dark → trắng, light → đen (tiêu đề cột hơi nhấn hơn) */
+    const headingColor = isDark ? '#f8fafc' : '#0f172a';
+    const subColor = isDark ? 'rgba(255, 255, 255, 0.78)' : 'rgba(10, 10, 10, 0.62)';
+    const textColor = isDark ? '#ffffff' : '#0a0a0a';
 
     const navLinkStyle: React.CSSProperties = {
         textDecoration: 'none',

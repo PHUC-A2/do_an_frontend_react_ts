@@ -7,43 +7,53 @@ $green : #007b3d;
 $bp-md : 768px;
 $bp-lg : 1024px;
 
+/* Bo góc thống nhất: hero stack, thẻ tính năng, ảnh why, CTA */
+$hp-surface-radius: 20px;
+
 // ── Base layout ───────────────────────────────────────────────
 .hp {
     --gold    : #{$gold};
     overflow-x: hidden;
     width     : 100%;
+    max-width : 100%;
+
+    &.ant-layout {
+        width    : 100%;
+        max-width: 100%;
+    }
 
     &--light {
-        --bg          : #f5f7fa;
-        --bg-card     : rgba(255, 255, 255, 0.78);
-        --bg-card2    : rgba(240, 244, 248, 0.68);
+        /* Nền trong suốt: thấy ảnh + veil toàn site; kính chỉ trên thẻ */
+        --bg          : transparent;
+        --bg-card     : rgba(255, 255, 255, 0.52);
+        --bg-card2    : rgba(255, 255, 255, 0.4);
         --text        : #1a2733;
         --text-muted  : #64748b;
-        --border      : rgba(15, 23, 42, 0.10);
+        --border      : rgba(255, 255, 255, 0.55);
         --orb-1       : rgba(0, 123, 61, 0.12);
         --orb-2       : rgba(0, 100, 168, 0.10);
         --orb-3       : rgba(250, 173, 20, 0.08);
         --glass-shadow: 0 18px 46px rgba(15, 23, 42, 0.10);
         // float card
-        --float-bg    : rgba(255, 255, 255, 0.84);
+        --float-bg    : rgba(255, 255, 255, 0.58);
         --float-text  : #1a2733;
         background    : var(--bg);
         color         : var(--text);
     }
 
     &--dark {
-        --bg          : #080f17;
-        --bg-card     : rgba(15, 28, 43, 0.74);
-        --bg-card2    : rgba(13, 26, 38, 0.64);
+        --bg          : transparent;
+        --bg-card     : rgba(255, 255, 255, 0.08);
+        --bg-card2    : rgba(255, 255, 255, 0.05);
         --text        : #e2e8f0;
-        --text-muted  : #64748b;
-        --border      : rgba(250, 173, 20, 0.13);
+        --text-muted  : #94a3b8;
+        --border      : rgba(255, 255, 255, 0.18);
         --orb-1       : rgba(0, 123, 61, 0.18);
         --orb-2       : rgba(0, 100, 168, 0.16);
         --orb-3       : rgba(250, 173, 20, 0.10);
         --glass-shadow: 0 20px 48px rgba(2, 6, 23, 0.35);
         // float card
-        --float-bg    : rgba(15, 28, 43, 0.82);
+        --float-bg    : rgba(12, 18, 30, 0.55);
         --float-text  : #e2e8f0;
         background    : var(--bg);
         color         : var(--text);
@@ -51,8 +61,10 @@ $bp-lg : 1024px;
 }
 
 .hp__content {
-    padding: 0;
-    width  : 100%;
+    padding  : 0;
+    width    : 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .hp__container {
@@ -113,20 +125,29 @@ $bp-lg : 1024px;
 // HERO
 // ──────────────────────────────────────────────────────────────
 .hp__hero {
-    position: relative;
-    padding : 100px 0 80px;
-    overflow: hidden;
+    position : relative;
+    z-index  : 0;
+    width    : 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding  : 100px 0 80px;
+    overflow : hidden;
 
     @media (max-width: $bp-md) {
         padding: 64px 0 52px;
     }
 }
 
+/* Lớp orb: bám đúng khối section (padding box), full width — tránh co/lệch */
 .hp__hero-bg {
-    position: absolute;
-    inset   : 0;
-    z-index : 0;
-    overflow: hidden;
+    position      : absolute;
+    inset         : 0;
+    z-index       : 0;
+    width         : 100%;
+    height        : 100%;
+    min-width     : 0;
+    overflow      : hidden;
+    pointer-events: none;
 }
 
 .hp__hero-orb {
@@ -206,6 +227,11 @@ $bp-lg : 1024px;
     grid-template-columns: 1fr 1fr;
     gap                  : 64px;
     align-items          : center;
+    /* Cùng bo góc với panel Why / CTA / feat */
+    border-radius        : $hp-surface-radius;
+    border               : 2px solid $gold;
+    box-sizing           : border-box;
+    transition           : border-color 0.35s ease;
 
     @media (max-width: $bp-lg) {
         gap: 40px;
@@ -214,6 +240,11 @@ $bp-lg : 1024px;
     @media (max-width: $bp-md) {
         grid-template-columns: 1fr;
         gap                  : 40px;
+    }
+
+    &:hover,
+    &:focus-within {
+        border-color: $green;
     }
 }
 
@@ -273,11 +304,12 @@ $bp-lg : 1024px;
 }
 
 .hp__hero-stats {
-    display    : flex;
-    gap        : 32px;
-    flex-wrap  : wrap;
-    padding-top: 28px;
-    border-top : 1px solid var(--border);
+    display         : flex;
+    gap             : 32px;
+    flex-wrap       : wrap;
+    padding-top     : 28px;
+    padding-bottom  : 32px;
+    border-top      : 1px solid var(--border);
 
     @media (max-width: $bp-md) {
         gap: 20px;
@@ -311,7 +343,7 @@ $bp-lg : 1024px;
 
 .hp__img-stack {
     position     : relative;
-    border-radius: 20px;
+    border-radius: $hp-surface-radius;
     overflow     : hidden;
     aspect-ratio : 4/3;
     box-shadow   : var(--glass-shadow);
@@ -365,8 +397,9 @@ $bp-lg : 1024px;
     bottom         : 24px;
     right          : -16px;
     z-index        : 4;
-    background     : var(--float-bg);
-    backdrop-filter: blur(12px);
+    background             : var(--float-bg);
+    backdrop-filter        : blur(16px) saturate(1.15);
+    -webkit-backdrop-filter: blur(16px) saturate(1.15);
     border-radius  : 14px;
     padding        : 12px 16px;
     display        : flex;
@@ -430,20 +463,26 @@ $bp-lg : 1024px;
 .hp__feat-card {
     background             : var(--bg-card);
     border                 : 1px solid var(--border);
-    border-radius          : 20px;
+    border-radius          : $hp-surface-radius;
     padding                : 36px 28px 32px;
     position               : relative;
     overflow               : hidden;
     cursor                 : default;
     transition             : border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
-    backdrop-filter        : blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    /* Kính cục bộ: chỉ blur vùng sau thẻ — ảnh nền phía ngoài vẫn sắc nét */
+    backdrop-filter        : blur(14px) saturate(1.15);
+    -webkit-backdrop-filter: blur(14px) saturate(1.15);
+    box-shadow             : 0 12px 40px rgba(0, 0, 0, 0.12);
 
     &:hover {
-        border-color: rgba(250, 173, 20, 0.28);
-        box-shadow  : 0 20px 54px rgba(0, 0, 0, 0.16);
-        background  : color-mix(in srgb, var(--bg-card) 88%, rgba(250, 173, 20, 0.08));
+        border-color: rgba(250, 173, 20, 0.35);
+        box-shadow  : 0 22px 56px rgba(0, 0, 0, 0.18);
+        background  : color-mix(in srgb, var(--bg-card) 85%, rgba(250, 173, 20, 0.1));
     }
+}
+
+.hp--dark .hp__feat-card {
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
 }
 
 .hp__feat-icon {
@@ -481,19 +520,39 @@ $bp-lg : 1024px;
 }
 
 // ──────────────────────────────────────────────────────────────
-// WHY US
+// Khung section chung (Why + CTA): cùng container, cùng panel full width
 // ──────────────────────────────────────────────────────────────
-.hp__why {
-    padding                : 96px 0;
-    background             : var(--bg-card2);
-    backdrop-filter        : blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-top             : 1px solid var(--border);
-    border-bottom          : 1px solid var(--border);
+.hp__framed-section {
+    padding  : 96px 0;
+    width    : 100%;
+    max-width: 100%;
+    min-width: 0;
 
     @media (max-width: $bp-md) {
         padding: 64px 0;
     }
+
+    .hp__container {
+        display       : flex;
+        flex-direction: column;
+        align-items   : stretch;
+        min-width     : 0;
+    }
+
+    .hp__container > * {
+        width     : 100%;
+        max-width : 100%;
+        min-width : 0;
+        box-sizing: border-box;
+    }
+}
+
+// ──────────────────────────────────────────────────────────────
+// WHY US — vỏ ngoài trong suốt; kính nằm trong .hp__why-panel (đồng bộ CTA)
+// ──────────────────────────────────────────────────────────────
+.hp__why {
+    background: transparent;
+    border    : none;
 }
 
 .hp__why-inner {
@@ -518,11 +577,16 @@ $bp-lg : 1024px;
 
 .hp__why-img {
     width        : 100%;
-    border-radius: 20px;
+    border-radius: $hp-surface-radius;
     object-fit   : cover;
     aspect-ratio : 4/3;
     display      : block;
     box-shadow   : var(--glass-shadow);
+}
+
+/* Ảnh nằm trong panel — bỏ shadow ngoài để tránh “đôi viền” với khung kính */
+.hp__why-panel .hp__why-img {
+    box-shadow: none;
 }
 
 .hp__why-badge {
@@ -589,60 +653,155 @@ $bp-lg : 1024px;
 }
 
 // ──────────────────────────────────────────────────────────────
-// CTA
+// Panel kính dùng chung: Why + CTA (cùng width / bo / viền vàng)
 // ──────────────────────────────────────────────────────────────
-.hp__cta {
-    padding: 96px 0 112px;
+.hp__why-panel,
+.hp__cta-card {
+    position              : relative;
+    display               : block;
+    width                 : 100%;
+    max-width             : 100%;
+    box-sizing            : border-box;
+    border-radius         : $hp-surface-radius;
+    overflow              : hidden;
+    border                : 1px solid rgba(250, 173, 20, 0.28);
+    box-shadow            :
+        0 20px 56px rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    backdrop-filter       : blur(22px) saturate(1.15);
+    -webkit-backdrop-filter: blur(22px) saturate(1.15);
+}
+
+.hp__why-panel {
+    padding: clamp(40px, 5vw, 72px) clamp(22px, 4vw, 48px);
 
     @media (max-width: $bp-md) {
-        padding: 64px 0 80px;
+        padding: 36px 18px;
     }
 }
 
 .hp__cta-card {
-    position     : relative;
-    border-radius: 28px;
-    padding      : 80px 48px;
-    text-align   : center;
-    overflow     : hidden;
-    background   : linear-gradient(135deg,
-            rgba(0, 98, 47, 0.9) 0%,
-            rgba(0, 77, 122, 0.88) 50%,
-            rgba(0, 61, 110, 0.9) 100%);
-    border                 : 1px solid rgba(250, 173, 20, 0.22);
-    box-shadow             : var(--glass-shadow);
-    backdrop-filter        : blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    text-align: center;
+    padding   : clamp(48px, 6vw, 88px) clamp(24px, 4vw, 56px);
 
     @media (max-width: $bp-md) {
-        padding: 56px 24px;
+        padding: 44px 20px;
     }
 }
 
+.hp--light .hp__why-panel,
+.hp--light .hp__cta-card {
+    background: linear-gradient(
+        165deg,
+        rgba(255, 255, 255, 0.62) 0%,
+        rgba(255, 255, 255, 0.42) 100%
+    );
+    border-color: rgba(250, 173, 20, 0.35);
+    box-shadow  :
+        0 24px 60px rgba(15, 23, 42, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.hp--dark .hp__why-panel,
+.hp--dark .hp__cta-card {
+    background: linear-gradient(
+        165deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(8, 10, 16, 0.72) 100%
+    );
+    border-color: rgba(250, 173, 20, 0.22);
+    box-shadow  :
+        0 28px 64px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
 .hp__cta-bg {
-    position: absolute;
-    inset   : 0;
+    position  : absolute;
+    inset     : 0;
     background:
-        radial-gradient(ellipse at 20% 50%, rgba(250, 173, 20, 0.15) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 30%, rgba(218, 37, 28, 0.12) 0%, transparent 55%);
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(250, 173, 20, 0.14) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 90% 80%, rgba(250, 173, 20, 0.06) 0%, transparent 50%);
     pointer-events: none;
 }
 
-// CTA luôn trên nền tối — màu trắng cố định
 .hp__cta-title {
     font-size     : clamp(2rem, 5vw, 3rem);
     font-weight   : 900;
-    color         : #ffffff !important;
     margin        : 0 0 16px;
     position      : relative;
+    z-index       : 1;
     letter-spacing: -0.02em;
 }
 
+.hp--dark .hp__cta-title {
+    color: #ffffff !important;
+}
+
+.hp--light .hp__cta-title {
+    color: #0a0a0a !important;
+}
+
 .hp__cta-sub {
-    font-size: 1.05rem;
-    color    : rgba(255, 255, 255, 0.75) !important;
-    margin   : 0 0 40px;
-    position : relative;
+    font-size  : clamp(0.95rem, 2.2vw, 1.08rem);
+    position   : relative;
+    z-index    : 1;
+    max-width  : 520px;
+    margin     : 0 auto 40px;
+    line-height: 1.55;
+}
+
+.hp--dark .hp__cta-sub {
+    color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.hp--light .hp__cta-sub {
+    color: rgba(10, 10, 10, 0.74) !important;
+}
+
+/* Nhãn CTA: luôn vàng để đồng bộ section */
+.hp__cta-card .hp__section-label--light {
+    color        : #faad14 !important;
+    margin-bottom: 14px;
+    position     : relative;
+    z-index      : 1;
+}
+
+.hp__cta-card .hp__section-label.hp__section-label--light {
+    opacity: 1;
+}
+
+/* Nút ghost trên nền kính sáng — viền/chữ đậm */
+.hp--light .hp__cta-card .hp__btn-ghost--light {
+    color       : #0a0a0a !important;
+    border-color: rgba(10, 10, 10, 0.28) !important;
+
+    span {
+        color: #0a0a0a !important;
+    }
+
+    &:hover {
+        border-color: $gold !important;
+        color       : $gold !important;
+        background  : rgba(250, 173, 20, 0.08) !important;
+
+        span {
+            color: $gold !important;
+        }
+    }
+}
+
+.hp__cta-card .ant-space,
+.hp__cta-card .hp__btn-primary,
+.hp__cta-card .hp__btn-ghost {
+    position: relative;
+    z-index : 1;
+}
+
+/* Nút trong panel Why / CTA: bo đồng bộ */
+.hp__why-panel .hp__btn-primary,
+.hp__cta-card .hp__btn-primary,
+.hp__cta-card .hp__btn-ghost {
+    border-radius: 12px !important;
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -673,7 +832,7 @@ $bp-lg : 1024px;
     }
 
     &--white {
-        background: #ffffff !important;
+        background: rgba(255, 255, 255, 0.92) !important;
         color     : #003d6e !important;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
 

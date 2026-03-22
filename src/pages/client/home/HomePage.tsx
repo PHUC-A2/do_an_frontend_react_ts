@@ -277,91 +277,95 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                 {/* ════════════════════════════════════════════
                     WHY US — Split layout
                 ════════════════════════════════════════════ */}
-                <section className="hp__why">
-                    <div className="hp__container hp__why-inner">
-                        {/* Visual */}
-                        <motion.div
-                            className="hp__why-visual"
-                            initial={{ opacity: 0, x: -50 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true, margin: "-60px" }}
-                            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                        >
-                            <img
-                                src="https://images.unsplash.com/photo-1553778263-73a83bab9b0c?q=80&w=900"
-                                alt="Sân vận động"
-                                className="hp__why-img"
-                            />
-                            <div className="hp__why-badge">
-                                <ThunderboltOutlined />
-                                <span>Xác nhận &lt; 5 giây</span>
-                            </div>
-                        </motion.div>
-
-                        {/* Text */}
-                        <div className="hp__why-text">
-                            <motion.p
-                                className="hp__section-label"
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={{ once: true }}
-                                variants={fadeUp} custom={0}
-                            >
-                                Tại sao chọn chúng tôi
-                            </motion.p>
-                            <motion.h2
-                                className="hp__section-title"
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={{ once: true }}
-                                variants={fadeUp} custom={1}
-                            >
-                                Trải nghiệm đặt sân<br /><em>hoàn toàn mới</em>
-                            </motion.h2>
-                            <motion.p
-                                className="hp__why-desc"
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={{ once: true }}
-                                variants={fadeUp} custom={2}
-                            >
-                                Chúng tôi xây dựng hệ thống tập trung vào trải nghiệm người dùng — từ lúc chọn sân đến khi bước vào thi đấu, mọi bước đều mượt mà và minh bạch.
-                            </motion.p>
-
-                            <motion.div
-                                className="hp__benefits"
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={{ once: true }}
-                                variants={fadeIn} custom={3}
-                            >
-                                {benefits.map((b, i) => (
-                                    <motion.div
-                                        key={i}
-                                        className="hp__benefit-item"
-                                        variants={fadeUp}
-                                        custom={i * 0.5 + 3}
-                                    >
-                                        <CheckCircleFilled className="hp__benefit-icon" />
-                                        <span>{b}</span>
-                                    </motion.div>
-                                ))}
-                            </motion.div>
-
-                            <motion.div
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={{ once: true }}
-                                variants={fadeUp} custom={5}
-                            >
-                                <Button
-                                    className="hp__btn-primary"
-                                    size="large"
-                                    onClick={() => navigate("/pitch")}
+                <section className="hp__why hp__framed-section">
+                    <div className="hp__container">
+                        <div className="hp__why-panel">
+                            <div className="hp__why-inner">
+                                {/* Visual */}
+                                <motion.div
+                                    className="hp__why-visual"
+                                    initial={{ opacity: 0, x: -50 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: true, margin: "-60px" }}
+                                    transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                                 >
-                                    Khám phá sân bóng
-                                </Button>
-                            </motion.div>
+                                    <img
+                                        src="https://images.unsplash.com/photo-1553778263-73a83bab9b0c?q=80&w=900"
+                                        alt="Sân vận động"
+                                        className="hp__why-img"
+                                    />
+                                    <div className="hp__why-badge">
+                                        <ThunderboltOutlined />
+                                        <span>Xác nhận &lt; 5 giây</span>
+                                    </div>
+                                </motion.div>
+
+                                {/* Text */}
+                                <div className="hp__why-text">
+                                    <motion.p
+                                        className="hp__section-label"
+                                        initial="hidden"
+                                        whileInView="visible"
+                                        viewport={{ once: true }}
+                                        variants={fadeUp} custom={0}
+                                    >
+                                        Tại sao chọn chúng tôi
+                                    </motion.p>
+                                    <motion.h2
+                                        className="hp__section-title"
+                                        initial="hidden"
+                                        whileInView="visible"
+                                        viewport={{ once: true }}
+                                        variants={fadeUp} custom={1}
+                                    >
+                                        Trải nghiệm đặt sân<br /><em>hoàn toàn mới</em>
+                                    </motion.h2>
+                                    <motion.p
+                                        className="hp__why-desc"
+                                        initial="hidden"
+                                        whileInView="visible"
+                                        viewport={{ once: true }}
+                                        variants={fadeUp} custom={2}
+                                    >
+                                        Chúng tôi xây dựng hệ thống tập trung vào trải nghiệm người dùng — từ lúc chọn sân đến khi bước vào thi đấu, mọi bước đều mượt mà và minh bạch.
+                                    </motion.p>
+
+                                    <motion.div
+                                        className="hp__benefits"
+                                        initial="hidden"
+                                        whileInView="visible"
+                                        viewport={{ once: true }}
+                                        variants={fadeIn} custom={3}
+                                    >
+                                        {benefits.map((b, i) => (
+                                            <motion.div
+                                                key={i}
+                                                className="hp__benefit-item"
+                                                variants={fadeUp}
+                                                custom={i * 0.5 + 3}
+                                            >
+                                                <CheckCircleFilled className="hp__benefit-icon" />
+                                                <span>{b}</span>
+                                            </motion.div>
+                                        ))}
+                                    </motion.div>
+
+                                    <motion.div
+                                        initial="hidden"
+                                        whileInView="visible"
+                                        viewport={{ once: true }}
+                                        variants={fadeUp} custom={5}
+                                    >
+                                        <Button
+                                            className="hp__btn-primary"
+                                            size="large"
+                                            onClick={() => navigate("/pitch")}
+                                        >
+                                            Khám phá sân bóng
+                                        </Button>
+                                    </motion.div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -369,10 +373,11 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                 {/* ════════════════════════════════════════════
                     CTA BANNER
                 ════════════════════════════════════════════ */}
-                <section className="hp__cta">
+                <section className="hp__cta hp__framed-section">
                     <div className="hp__container">
                         <motion.div
                             className="hp__cta-card"
+                            style={{ width: '100%', maxWidth: '100%', display: 'block' }}
                             initial={{ opacity: 0, scale: 0.95 }}
                             whileInView={{ opacity: 1, scale: 1 }}
                             viewport={{ once: true, margin: "-60px" }}

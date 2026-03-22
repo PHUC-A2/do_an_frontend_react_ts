@@ -7,6 +7,7 @@ import {
     CheckCircleFilled,
     StarFilled,
 } from "@ant-design/icons";
+import '../home/HomePage.scss';
 import './AboutPage.scss';
 import { Link } from "react-router";
 
