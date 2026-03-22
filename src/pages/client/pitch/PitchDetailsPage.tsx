@@ -233,24 +233,6 @@ const PitchDetailsPage: React.FC = () => {
                                             ),
                                         },
                                         {
-                                            key: "amenities",
-                                            label: (
-                                                <Space>
-                                                    <CheckCircleOutlined />
-                                                    <span>Tiện ích sân bãi</span>
-                                                </Space>
-                                            ),
-                                            children: (
-                                                <Space wrap>
-                                                    {["Wifi", "Gửi xe", "Nước uống", "Đèn đêm"].map(item => (
-                                                        <Tag key={item} icon={<CheckCircleOutlined />} className="utility-tag">
-                                                            {item}
-                                                        </Tag>
-                                                    ))}
-                                                </Space>
-                                            ),
-                                        },
-                                        {
                                             key: "equipment",
                                             label: (
                                                 <Space>
@@ -294,6 +276,24 @@ const PitchDetailsPage: React.FC = () => {
                                                 </div>
                                             ) : (
                                                 <Text type="secondary">Sân chưa cập nhật danh sách thiết bị</Text>
+                                            ),
+                                        },
+                                        {
+                                            key: "amenities",
+                                            label: (
+                                                <Space>
+                                                    <CheckCircleOutlined />
+                                                    <span>Tiện ích sân bãi</span>
+                                                </Space>
+                                            ),
+                                            children: (
+                                                <Space wrap>
+                                                    {["Wifi", "Gửi xe", "Nước uống", "Đèn đêm"].map(item => (
+                                                        <Tag key={item} icon={<CheckCircleOutlined />} className="utility-tag">
+                                                            {item}
+                                                        </Tag>
+                                                    ))}
+                                                </Space>
                                             ),
                                         },
                                     ]}

@@ -12,6 +12,7 @@ import messengerButtonUiReducer from './features/messengerButtonUiSlice'
 import paymentReducer from './features/paymentSlice'
 import equipmentReducer from './features/equipmentSlice'
 import roomReducer from './features/v2/roomSlice'
+import roomScheduleV2Reducer from './features/v2/roomScheduleSlice'
 
 export const store = configureStore({
     reducer: {
@@ -28,6 +29,7 @@ export const store = configureStore({
         payment: paymentReducer,
         equipment: equipmentReducer,
         room: roomReducer,
+        roomScheduleV2: roomScheduleV2Reducer,
     }
 })
 

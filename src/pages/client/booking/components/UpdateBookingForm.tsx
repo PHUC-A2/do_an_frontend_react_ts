@@ -8,7 +8,7 @@ import { useSelector } from "react-redux";
 import { getBookingById, updateBookingClient, clientBorrowEquipment, clientGetBookingEquipments } from "../../../../config/Api";
 import type { IPitch } from "../../../../types/pitch";
 import { formatVND } from "../../../../utils/format/price";
-import EquipmentBorrowSection, { type IBorrowLinePayload } from "./EquipmentBorrowSection";
+import EquipmentBorrowSection, { type IBorrowLinePayload, type IBorrowPlanOptions } from "./EquipmentBorrowSection";
 import {
     fetchPitches,
     selectPitches,
@@ -71,14 +71,19 @@ const UpdateBookingForm = ({
 
     const [borrowLines, setBorrowLines] = useState<IBorrowLinePayload[]>([]);
     const [borrowNote, setBorrowNote] = useState("");
+    const [borrowOpts, setBorrowOpts] = useState<IBorrowPlanOptions>({
+        borrowConditionAcknowledged: false,
+        borrowReportPrintOptIn: false,
+    });
     const [equipmentTouched, setEquipmentTouched] = useState(false);
     const [initialQtyByEquipmentId, setInitialQtyByEquipmentId] = useState<Record<number, number>>({});
     const [initialBorrowNoteSeed, setInitialBorrowNoteSeed] = useState("");
     const [borrowInitialVersion, setBorrowInitialVersion] = useState(0);
 
-    const handleBorrowPlanChange = useCallback((lines: IBorrowLinePayload[], note: string) => {
+    const handleBorrowPlanChange = useCallback((lines: IBorrowLinePayload[], note: string, opts: IBorrowPlanOptions) => {
         setBorrowLines(lines);
         setBorrowNote(note);
+        setBorrowOpts(opts);
     }, []);
 
     // Sync pitch change
@@ -182,6 +187,11 @@ const UpdateBookingForm = ({
             return;
         }
 
+        if (equipmentTouched && borrowLines.length > 0 && !borrowOpts.borrowConditionAcknowledged) {
+            toast.error("Vui lòng xác nhận đã kiểm tra tình trạng thiết bị trước khi thêm mượn.");
+            return;
+        }
+
         setLoading(true);
         try {
             await updateBookingClient(bookingId, {
@@ -200,7 +210,9 @@ const UpdateBookingForm = ({
                         equipmentId: line.equipmentId,
                         quantity: line.quantity,
                         equipmentMobility: line.equipmentMobility,
-                        borrowConditionNote: borrowNote.trim() || undefined,
+                        borrowConditionNote: line.borrowConditionNote?.trim() || borrowNote.trim() || undefined,
+                        borrowConditionAcknowledged: true,
+                        borrowReportPrintOptIn: borrowOpts.borrowReportPrintOptIn,
                     }).catch(() => { })
                 );
                 await Promise.all(tasks);

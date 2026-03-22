@@ -14,10 +14,6 @@ import {
     Divider,
     theme,
     Table,
-    Modal,
-    Input,
-    InputNumber,
-    Checkbox,
     type CollapseProps,
     type PopconfirmProps
 } from "antd";
@@ -52,6 +48,7 @@ import type { IBooking } from "../../../../types/booking";
 import type { IBookingEquipment, IUpdateBookingEquipmentStatusReq } from "../../../../types/bookingEquipment";
 import { notifyBookingChanged } from "../../../../redux/features/bookingUiSlice";
 import PaymentDrawer from "./PaymentDrawer";
+import { ClientReturnEquipmentModal } from "./ClientReturnEquipmentModal";
 
 const { Text } = Typography;
 
@@ -73,14 +70,11 @@ const ModalBookingHistory = (props: IProps) => {
     const [deletingId, setDeletingId] = useState<number | null>(null);
 
     const [allMyEquips, setAllMyEquips] = useState<IBookingEquipment[]>([]);
-    const [returnModal, setReturnModal] = useState<{ booking: IBooking; record: IBookingEquipment } | null>(null);
-    const [returnNote, setReturnNote] = useState("");
-    const [printAfterReturn, setPrintAfterReturn] = useState(false);
-    const [returnQtyGood, setReturnQtyGood] = useState(0);
-    const [returnQtyLost, setReturnQtyLost] = useState(0);
-    const [returnQtyDamaged, setReturnQtyDamaged] = useState(0);
-    const [borrowerSign, setBorrowerSign] = useState("");
-    const [staffSign, setStaffSign] = useState("");
+    const [returnModal, setReturnModal] = useState<{
+        booking: IBooking;
+        record: IBookingEquipment;
+        preset: "full" | "lost" | "damaged";
+    } | null>(null);
 
     const refreshMyEquips = useCallback(() => {
         clientGetAllMyEquipments()
@@ -143,58 +137,31 @@ const ModalBookingHistory = (props: IProps) => {
         record: IBookingEquipment,
         preset: "full" | "lost" | "damaged"
     ) => {
-        const q = record.quantity;
-        setReturnNote("");
-        setPrintAfterReturn(false);
-        if (preset === "full") {
-            setReturnQtyGood(q);
-            setReturnQtyLost(0);
-            setReturnQtyDamaged(0);
-        } else if (preset === "lost") {
-            setReturnQtyGood(0);
-            setReturnQtyLost(q);
-            setReturnQtyDamaged(0);
-        } else {
-            setReturnQtyGood(0);
-            setReturnQtyLost(0);
-            setReturnQtyDamaged(q);
-        }
-        setBorrowerSign("");
-        setStaffSign("");
-        setReturnModal({ booking, record });
+        setReturnModal({ booking, record, preset });
     };
 
-    const submitClientReturn = async () => {
-        if (!returnModal) return;
-        const { booking, record } = returnModal;
-        const note = returnNote.trim();
-        const q = record.quantity;
-        const g = returnQtyGood;
-        const l = returnQtyLost;
-        const d = returnQtyDamaged;
-        if (g + l + d !== q) {
-            toast.error(`Tổng (trả tốt + mất + hỏng) phải bằng ${q}.`);
-            return Promise.reject(new Error("keep-open"));
+    const handleClientReturnSubmit = async (
+        booking: IBooking,
+        record: IBookingEquipment,
+        req: IUpdateBookingEquipmentStatusReq,
+        meta: {
+            returnNote: string;
+            g: number;
+            l: number;
+            d: number;
+            returnReportPrintOptIn: boolean;
+            borrowerSign: string;
+            staffSign: string;
         }
-        if (l + d > 0 && (!borrowerSign.trim() || !staffSign.trim())) {
-            toast.error("Khi có mất hoặc hỏng, vui lòng nhập họ tên người mượn và nhân viên ký xác nhận.");
-            return Promise.reject(new Error("keep-open"));
-        }
-        const updated = await handleUpdateEquipStatus(record.id, {
-            status: "RETURNED",
-            returnConditionNote: note || null,
-            quantityReturnedGood: g,
-            quantityLost: l,
-            quantityDamaged: d,
-            borrowerSignName: l + d > 0 ? borrowerSign.trim() : null,
-            staffSignName: l + d > 0 ? staffSign.trim() : null,
-        });
+    ) => {
+        const updated = await handleUpdateEquipStatus(record.id, req);
         if (!updated) {
-            return Promise.reject(new Error("keep-open"));
+            throw new Error("keep-open");
         }
-        if (printAfterReturn) {
-            const bSign = l + d > 0 ? borrowerSign.trim() : "";
-            const sSign = l + d > 0 ? staffSign.trim() : "";
+        if (meta.returnReportPrintOptIn) {
+            const { g, l, d, returnNote } = meta;
+            const bSign = l + d > 0 ? meta.borrowerSign : "";
+            const sSign = l + d > 0 ? meta.staffSign : "";
             const lineForPrint: IBookingEquipment = {
                 ...record,
                 ...updated,
@@ -203,7 +170,7 @@ const ModalBookingHistory = (props: IProps) => {
                 quantityDamaged: updated.quantityDamaged ?? d,
                 borrowerSignName: updated.borrowerSignName ?? (bSign || null),
                 staffSignName: updated.staffSignName ?? (sSign || null),
-                returnConditionNote: note || updated.returnConditionNote || null,
+                returnConditionNote: returnNote || updated.returnConditionNote || null,
                 status: updated.status,
                 penaltyAmount: updated.penaltyAmount,
             };
@@ -213,8 +180,6 @@ const ModalBookingHistory = (props: IProps) => {
             openBookingEquipmentHandoverPrint(booking, list);
         }
         setReturnModal(null);
-        setReturnNote("");
-        setPrintAfterReturn(false);
         dispatch(fetchBookingsClient(""));
     };
 
@@ -741,97 +706,15 @@ const ModalBookingHistory = (props: IProps) => {
                 }}
             />
 
-            <Modal
-                title="Trả thiết bị & biên bản"
-                width={520}
+            <ClientReturnEquipmentModal
                 open={!!returnModal}
-                onCancel={() => {
-                    setReturnModal(null);
-                    setReturnNote("");
-                    setPrintAfterReturn(false);
-                }}
-                onOk={submitClientReturn}
-                okText="Xác Nhận"
-                cancelText="Hủy"
+                booking={returnModal?.booking ?? null}
+                record={returnModal?.record ?? null}
+                preset={returnModal?.preset ?? "full"}
                 confirmLoading={returnModal != null && updatingEquipId === returnModal.record.id}
-            >
-                {returnModal && (
-                    <>
-                        <p style={{ marginBottom: 8 }}>
-                            <strong>{returnModal.record.equipmentName}</strong> × {returnModal.record.quantity}
-                        </p>
-                        <Text type="secondary">Kiểm đếm (tổng phải bằng {returnModal.record.quantity})</Text>
-                        <div
-                            style={{
-                                display: "grid",
-                                gridTemplateColumns: "repeat(3, 1fr)",
-                                gap: 10,
-                                marginTop: 8,
-                                marginBottom: 12,
-                            }}
-                        >
-                            <div>
-                                <div style={{ fontSize: 12, marginBottom: 4 }}>Trả tốt</div>
-                                <InputNumber
-                                    min={0}
-                                    max={returnModal.record.quantity}
-                                    style={{ width: "100%" }}
-                                    value={returnQtyGood}
-                                    onChange={v => setReturnQtyGood(v ?? 0)}
-                                />
-                            </div>
-                            <div>
-                                <div style={{ fontSize: 12, marginBottom: 4 }}>Mất</div>
-                                <InputNumber
-                                    min={0}
-                                    max={returnModal.record.quantity}
-                                    style={{ width: "100%" }}
-                                    value={returnQtyLost}
-                                    onChange={v => setReturnQtyLost(v ?? 0)}
-                                />
-                            </div>
-                            <div>
-                                <div style={{ fontSize: 12, marginBottom: 4 }}>Hỏng</div>
-                                <InputNumber
-                                    min={0}
-                                    max={returnModal.record.quantity}
-                                    style={{ width: "100%" }}
-                                    value={returnQtyDamaged}
-                                    onChange={v => setReturnQtyDamaged(v ?? 0)}
-                                />
-                            </div>
-                        </div>
-                        {returnQtyLost + returnQtyDamaged > 0 && (
-                            <>
-                                <Text type="secondary">Ký xác nhận khi có mất / hỏng (hiện trên biên bản in)</Text>
-                                <Input
-                                    placeholder="Họ tên người mượn"
-                                    value={borrowerSign}
-                                    onChange={e => setBorrowerSign(e.target.value)}
-                                    style={{ marginTop: 6, marginBottom: 8 }}
-                                />
-                                <Input
-                                    placeholder="Họ tên nhân viên / bên giao nhận"
-                                    value={staffSign}
-                                    onChange={e => setStaffSign(e.target.value)}
-                                    style={{ marginBottom: 12 }}
-                                />
-                            </>
-                        )}
-                        <Text type="secondary">Ghi chú biên bản khi trả (tình trạng nhận lại)</Text>
-                        <Input.TextArea
-                            rows={3}
-                            value={returnNote}
-                            onChange={e => setReturnNote(e.target.value)}
-                            placeholder="VD: đủ phụ kiện, có trầy nhẹ…"
-                            style={{ marginTop: 8, marginBottom: 12 }}
-                        />
-                        <Checkbox checked={printAfterReturn} onChange={e => setPrintAfterReturn(e.target.checked)}>
-                            In biên bản sau khi trả (tùy chọn)
-                        </Checkbox>
-                    </>
-                )}
-            </Modal>
+                onCancel={() => setReturnModal(null)}
+                onSubmit={handleClientReturnSubmit}
+            />
 
         </Drawer>
     );

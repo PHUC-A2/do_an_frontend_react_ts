@@ -1,4 +1,4 @@
-import { Modal, Table, InputNumber, Button, Tag, Space, Empty, Spin, Input, Typography } from 'antd';
+import { Modal, Table, InputNumber, Button, Tag, Space, Empty, Spin, Input, Typography, Checkbox } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -24,6 +24,15 @@ const ModalBorrowEquipment = ({ open, onClose, bookingId, pitchId }: IProps) => 
     const [borrowing, setBorrowing] = useState<Record<number, boolean>>({});
     const [borrowed, setBorrowed] = useState<IBookingEquipment[]>([]);
     const [borrowNote, setBorrowNote] = useState('');
+    const [borrowAck, setBorrowAck] = useState(false);
+    const [borrowPrintOptIn, setBorrowPrintOptIn] = useState(false);
+
+    useEffect(() => {
+        if (open) {
+            setBorrowAck(false);
+            setBorrowPrintOptIn(false);
+        }
+    }, [open]);
 
     useEffect(() => {
         if (!open || !pitchId) {
@@ -41,6 +50,10 @@ const ModalBorrowEquipment = ({ open, onClose, bookingId, pitchId }: IProps) => 
 
     const handleBorrow = async (pe: IPitchEquipment) => {
         if (!bookingId) return;
+        if (!borrowAck) {
+            toast.warning('Vui lòng tích xác nhận đã kiểm tra tình trạng thiết bị trước khi mượn.');
+            return;
+        }
         const qty = quantities[pe.id] ?? 1;
         const maxQty = Math.min(pe.quantity ?? 0, pe.equipmentAvailableQuantity ?? 0);
         if (maxQty <= 0 || qty > maxQty) {
@@ -56,6 +69,8 @@ const ModalBorrowEquipment = ({ open, onClose, bookingId, pitchId }: IProps) => 
                 quantity: qty,
                 equipmentMobility: pe.equipmentMobility,
                 borrowConditionNote: borrowNote.trim() || undefined,
+                borrowConditionAcknowledged: true,
+                borrowReportPrintOptIn: borrowPrintOptIn,
             });
             if (res.data.statusCode === 201 && res.data.data) {
                 toast.success(`Đã mượn ${qty} ${pe.equipmentName}`);
@@ -87,6 +102,8 @@ const ModalBorrowEquipment = ({ open, onClose, bookingId, pitchId }: IProps) => 
         setQuantities({});
         setRows([]);
         setBorrowNote('');
+        setBorrowAck(false);
+        setBorrowPrintOptIn(false);
         onClose();
     };
 
@@ -187,6 +204,14 @@ const ModalBorrowEquipment = ({ open, onClose, bookingId, pitchId }: IProps) => 
                         Chỉ hiển thị thiết bị admin đã gắn với sân này. Ghi chú áp dụng cho các lần mượn tiếp theo trong
                         phiên.
                     </Text>
+                    <div style={{ marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <Checkbox checked={borrowAck} onChange={e => setBorrowAck(e.target.checked)}>
+                            Tôi xác nhận đã kiểm tra tình trạng thiết bị (biên bản mượn).
+                        </Checkbox>
+                        <Checkbox checked={borrowPrintOptIn} onChange={e => setBorrowPrintOptIn(e.target.checked)}>
+                            In / lưu biên bản mượn (có chỗ ký chủ sân).
+                        </Checkbox>
+                    </div>
                     <Input.TextArea
                         rows={2}
                         value={borrowNote}

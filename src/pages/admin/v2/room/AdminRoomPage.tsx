@@ -7,6 +7,7 @@ import { CiEdit } from "react-icons/ci";
 import { FaArrowsToEye } from "react-icons/fa6";
 import { MdDelete } from "react-icons/md";
 import { FaDownload } from "react-icons/fa";
+import { SettingOutlined } from "@ant-design/icons";
 
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 import {
@@ -23,6 +24,7 @@ import ModalViewRoom from "./modals/ModalViewRoom";
 import { deleteRoom, getRoomById } from "../../../../config/Api";
 import { toast } from "react-toastify";
 import ModalUpdateRoom from "./modals/ModalUpdateRoom";
+import ModalConfigScheduleV2 from "./modals/ModalConfigScheduleV2";
 import { usePermission } from "../../../../hooks/common/usePermission";
 import PermissionWrapper from "../../../../components/wrapper/PermissionWrapper";
 import AdminWrapper from "../../../../components/wrapper/AdminWrapper";
@@ -42,11 +44,18 @@ const AdminRoomPage = () => {
     const [room, setRoom] = useState<IRoom | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [roomEdit, setRoomEdit] = useState<IRoom | null>(null);
+    const [openScheduleConfig, setOpenScheduleConfig] = useState(false);
+    const [roomForSchedule, setRoomForSchedule] = useState<IRoom | null>(null);
     const canViewRooms = usePermission("ROOM_VIEW_LIST");
 
     const handleEdit = (data: IRoom) => {
         setRoomEdit(data);
         setOpenModalUpdateRoom(true);
+    };
+
+    const handleOpenScheduleConfig = (data: IRoom) => {
+        setRoomForSchedule(data);
+        setOpenScheduleConfig(true);
     };
 
     const handleView = async (id: number) => {
@@ -165,6 +174,17 @@ const AdminRoomPage = () => {
                         </RBButton>
                     </PermissionWrapper>
 
+                    <PermissionWrapper required={"ROOM_UPDATE"}>
+                        <RBButton
+                            variant="outline-secondary"
+                            size="sm"
+                            title="Cấu hình Lịch"
+                            onClick={() => handleOpenScheduleConfig(record)}
+                        >
+                            <SettingOutlined />
+                        </RBButton>
+                    </PermissionWrapper>
+
                     <PermissionWrapper required={"ROOM_DELETE"}>
                         <Popconfirm
                             title="Xóa phòng"
@@ -270,6 +290,15 @@ const AdminRoomPage = () => {
                     openModalUpdateRoom={openModalUpdateRoom}
                     setOpenModalUpdateRoom={setOpenModalUpdateRoom}
                     roomEdit={roomEdit}
+                />
+
+                <ModalConfigScheduleV2
+                    open={openScheduleConfig}
+                    onClose={() => {
+                        setOpenScheduleConfig(false);
+                        setRoomForSchedule(null);
+                    }}
+                    room={roomForSchedule}
                 />
             </AdminWrapper>
         </>

@@ -1,4 +1,4 @@
-import { Avatar, Badge, Button, Flex, Input, Layout, Switch, Tooltip, Typography, type InputRef } from 'antd';
+import { Avatar, Badge, Button, Flex, Input, Layout, Modal, Switch, Tooltip, Typography, type InputRef } from 'antd';
 import { useEffect, useRef, useState, type CSSProperties, type TouchEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import {
@@ -25,7 +25,14 @@ import {
 } from 'react-icons/fi';
 import type { IconType } from 'react-icons';
 import { toast } from 'react-toastify';
-import { clientDeleteNotification, clientGetNotifications, clientMarkAllNotificationsRead, logout } from '../../config/Api';
+import {
+    clientDeleteAllNotifications,
+    clientDeleteNotification,
+    clientGetNotifications,
+    clientMarkAllNotificationsRead,
+    clientMarkNotificationRead,
+    logout,
+} from '../../config/Api';
 import { useBrowserNotification } from '../../hooks/common/useBrowserNotification';
 import { useOutsideClick } from '../../hooks/common/useOutsideClick';
 import type { INotification } from '../../types/notification';
@@ -92,7 +99,7 @@ const getHeaderHeight = (compact: boolean) => {
 };
 
 const DEFAULT_PITCH_PAGE_SIZE = 12;
-const CLIENT_SOUND_PREF_KEY = 'tub_sport_client_notification_sound';
+const CLIENT_SOUND_PREF_KEY = 'tbu_sport_client_notification_sound';
 
 const buildPitchSearchPath = (keyword: string) => {
     const params = new URLSearchParams();
@@ -511,6 +518,7 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
 
     const closeAllPanels = () => {
         setDrawerOpen(false);
+        setDrawerNotifOpen(false);
         setAccountMenuOpen(false);
         setSearchOpen(false);
         setNotifOpen(false);
@@ -596,6 +604,25 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
         } catch { /* ignore */ }
     };
 
+    const handleDeleteAllNotifications = () => {
+        if (notifications.length === 0) return;
+        Modal.confirm({
+            title: 'Xóa tất cả thông báo?',
+            content: 'Các mục sẽ được ẩn khỏi danh sách của bạn.',
+            okText: 'Xóa tất cả',
+            cancelText: 'Hủy',
+            okButtonProps: { danger: true },
+            onOk: async () => {
+                try {
+                    await clientDeleteAllNotifications();
+                    setNotifications([]);
+                } catch {
+                    toast.error('Không thể xóa thông báo');
+                }
+            },
+        });
+    };
+
     const handleDeleteNotif = async (id: number) => {
         try {
             await clientDeleteNotification(id);
@@ -603,8 +630,29 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
         } catch { /* ignore */ }
     };
 
-    const handleNotificationDetail = (n: INotification) => {
+    /** Nhấn vào dòng thông báo: chỉ đánh dấu đã đọc. */
+    const handleNotificationRowClick = async (n: INotification) => {
         if (Date.now() - swipedDeleteRef.current.at < 350 && swipedDeleteRef.current.id === n.id) return;
+        if (!n.isRead) {
+            try {
+                await clientMarkNotificationRead(n.id);
+                setNotifications(prev => prev.map(item => (item.id === n.id ? { ...item, isRead: true } : item)));
+            } catch {
+                /* ignore */
+            }
+        }
+    };
+
+    /** Link “Xem chi tiết”: đánh dấu đã đọc (nếu cần) rồi mở lịch đặt / luồng liên quan. */
+    const handleNotificationOpenDetail = async (n: INotification) => {
+        if (!n.isRead) {
+            try {
+                await clientMarkNotificationRead(n.id);
+                setNotifications(prev => prev.map(item => (item.id === n.id ? { ...item, isRead: true } : item)));
+            } catch {
+                /* vẫn mở */
+            }
+        }
         closeAllPanels();
         if (
             n.type === 'BOOKING_CREATED' || n.type === 'BOOKING_APPROVED' ||
@@ -756,6 +804,11 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                                                 Đánh dấu đã đọc
                                             </Button>
                                         )}
+                                        {notifications.length > 0 && (
+                                            <Button type="text" className={styles.notifDeleteAll} onClick={handleDeleteAllNotifications}>
+                                                Xóa tất cả
+                                            </Button>
+                                        )}
                                     </Flex>
                                 </Flex>
                                 <Flex vertical className={styles.notifList}>
@@ -765,12 +818,18 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                                         notifications.slice(0, 10).map(n => (
                                             <Flex key={n.id}
                                                 className={`${styles.notifItem}${!n.isRead ? ` ${styles.notifItemUnread}` : ''} ${styles.notifItemClickable}`}
-                                                onClick={() => handleNotificationDetail(n)}
+                                                onClick={() => void handleNotificationRowClick(n)}
                                                 onTouchStart={(e) => handleNotifTouchStart(n.id, e)}
                                                 onTouchEnd={(e) => handleNotifTouchEnd(n.id, e)}
                                                 role="button"
                                                 tabIndex={0}
-                                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNotificationDetail(n); } }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        e.preventDefault();
+                                                        void handleNotificationRowClick(n);
+                                                    }
+                                                }}
+                                                title="Nhấn để đánh dấu đã đọc"
                                             >
                                                 <FiBell className={styles.notifItemIcon} />
                                                 <Flex vertical className={styles.notifItemBody}>
@@ -778,6 +837,16 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                                                     <Text className={styles.notifItemTime}>
                                                         {new Date(n.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
                                                     </Text>
+                                                    <button
+                                                        type="button"
+                                                        className={styles.notifDetailLink}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            void handleNotificationOpenDetail(n);
+                                                        }}
+                                                    >
+                                                        Xem chi tiết
+                                                    </button>
                                                 </Flex>
                                                 <Flex align="center" gap={4}>
                                                     {!n.isRead && <span className={styles.notifDot} />}
@@ -1011,6 +1080,11 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                                         Đánh dấu đã đọc
                                     </Button>
                                 )}
+                                {notifications.length > 0 && (
+                                    <Button type="text" className={styles.notifDeleteAll} onClick={handleDeleteAllNotifications}>
+                                        Xóa tất cả
+                                    </Button>
+                                )}
                             </Flex>
                         </Flex>
                         <Flex vertical className={styles.drawerNotifList}>
@@ -1020,12 +1094,18 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                                 notifications.slice(0, 10).map(n => (
                                     <Flex key={n.id}
                                         className={`${styles.notifItem}${!n.isRead ? ` ${styles.notifItemUnread}` : ''} ${styles.notifItemClickable}`}
-                                        onClick={() => handleNotificationDetail(n)}
+                                        onClick={() => void handleNotificationRowClick(n)}
                                         onTouchStart={(e) => handleNotifTouchStart(n.id, e)}
                                         onTouchEnd={(e) => handleNotifTouchEnd(n.id, e)}
                                         role="button"
                                         tabIndex={0}
-                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNotificationDetail(n); } }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                void handleNotificationRowClick(n);
+                                            }
+                                        }}
+                                        title="Nhấn để đánh dấu đã đọc"
                                     >
                                         <FiBell className={styles.notifItemIcon} />
                                         <Flex vertical className={styles.notifItemBody}>
@@ -1033,6 +1113,16 @@ const Header = ({ theme, toggleTheme }: HeaderProps) => {
                                             <Text className={styles.notifItemTime}>
                                                 {new Date(n.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
                                             </Text>
+                                            <button
+                                                type="button"
+                                                className={styles.notifDetailLink}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    void handleNotificationOpenDetail(n);
+                                                }}
+                                            >
+                                                Xem chi tiết
+                                            </button>
                                         </Flex>
                                         <Flex align="center" gap={4}>
                                             {!n.isRead && <span className={styles.notifDot} />}

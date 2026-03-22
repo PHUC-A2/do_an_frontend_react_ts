@@ -9,7 +9,7 @@ import type { IEquipment, ICreateEquipmentReq, IUpdateEquipmentReq } from "../ty
 import type { ICreatePaymentReq, IPayment, IPaymentRes } from "../types/payment";
 import type { ICreatePermissionReq, IPermission, IUpdatePermissionReq } from "../types/permission";
 import type { ICreatePitchReq, IPitch, IUpdatePitchReq } from "../types/pitch";
-import type { IPitchEquipment, IUpsertPitchEquipmentReq } from "../types/pitchEquipment";
+import type { IEquipmentPitchAssignment, IPitchEquipment, IUpsertPitchEquipmentReq } from "../types/pitchEquipment";
 import type { IRevenueRes } from "../types/revenue";
 import type { IAssignPermissionReq, ICreateRoleReq, IRole, IUpdateRoleReq } from "../types/role";
 import type { INotification } from "../types/notification";
@@ -18,6 +18,11 @@ import type { IGetUploadResponse } from "../types/upload";
 import type { IAssignRoleReq, ICreateUserReq, IUpdateUserReq, IUser, IUpdateUserStatusReq, IUpdateUserStatusRes } from "../types/user";
 import instance from "./customAxios";
 import type { IRoom, ICreateRoomRequest, IUpdateRoomRequest, IRoomStatus } from "../types/v2/room";
+import type {
+    IRoomScheduleV2,
+    ICreateScheduleRequestV2,
+    IUpdateScheduleRequestV2,
+} from "../types/v2/roomSchedule";
 
 export const register = (data: IRegister) => instance.post("/api/v1/auth/register", data);
 export const login = (username: string, password: string) => instance.post("/api/v1/auth/login", { username, password });
@@ -201,6 +206,8 @@ export const uploadImageRoom = async (file: File) => {
 export const getAllEquipments = (query: string) => instance.get<IBackendRes<IModelPaginate<IEquipment>>>(`/api/v1/equipments?${query}`);
 export const createEquipment = (data: ICreateEquipmentReq) => instance.post<IBackendRes<IEquipment>>(`/api/v1/equipments`, data);
 export const getEquipmentById = (id: number) => instance.get<IBackendRes<IEquipment>>(`/api/v1/equipments/${id}`);
+export const adminGetEquipmentPitchAssignments = (equipmentId: number) =>
+    instance.get<IBackendRes<IEquipmentPitchAssignment[]>>(`/api/v1/equipments/${equipmentId}/pitch-assignments`);
 export const updateEquipment = (id: number, data: IUpdateEquipmentReq) => instance.put<IBackendRes<IEquipment>>(`/api/v1/equipments/${id}`, data);
 export const deleteEquipment = (id: number) => instance.delete<IBackendRes<IEquipment>>(`/api/v1/equipments/${id}`);
 
@@ -208,6 +215,8 @@ export const deleteEquipment = (id: number) => instance.delete<IBackendRes<IEqui
 export const getAllBookingEquipments = () => instance.get<IBackendRes<IBookingEquipment[]>>(`/api/v1/booking-equipments`);
 export const getBookingEquipmentsByBookingId = (bookingId: number) => instance.get<IBackendRes<IBookingEquipment[]>>(`/api/v1/booking-equipments/booking/${bookingId}`);
 export const updateBookingEquipmentStatus = (id: number, data: IUpdateBookingEquipmentStatusReq) => instance.patch<IBackendRes<IBookingEquipment>>(`/api/v1/booking-equipments/${id}/status`, data);
+export const adminConfirmBookingEquipmentReturn = (id: number) =>
+    instance.post<IBackendRes<IBookingEquipment>>(`/api/v1/booking-equipments/${id}/confirm-return`);
 export const adminGetEquipmentBorrowLogs = () =>
     instance.get<IBackendRes<IEquipmentBorrowLog[]>>(`/api/v1/equipment-borrow-logs`);
 export const adminGetEquipmentUsageStats = () =>
@@ -225,6 +234,7 @@ export const clientGetNotifications = () => instance.get<IBackendRes<INotificati
 export const clientMarkAllNotificationsRead = () => instance.patch<IBackendRes<null>>('/api/v1/client/notifications/read-all');
 export const clientMarkNotificationRead = (id: number) => instance.patch<IBackendRes<null>>(`/api/v1/client/notifications/${id}/read`);
 export const clientDeleteNotification = (id: number) => instance.delete<IBackendRes<null>>(`/api/v1/client/notifications/${id}`);
+export const clientDeleteAllNotifications = () => instance.delete<IBackendRes<null>>('/api/v1/client/notifications/clear');
 export const registerFcmToken = (token: string) => instance.post<IBackendRes<null>>('/api/v1/client/notifications/fcm-token', { token });
 
 /* api public equipments — client (không cần đăng nhập) */
@@ -306,3 +316,16 @@ export const patchRoomStatus = (id: number, status: IRoomStatus) =>
     instance.patch<IBackendRes<IRoom>>(`/api/v2/admin/rooms/${id}/status`, { status });
 export const deleteRoom = (id: number) =>
     instance.delete<IBackendRes<void>>(`/api/v2/admin/rooms/${id}`);
+
+/* cấu hình lịch tiết phòng (/api/v2/admin/rooms/{roomId}/schedules) */
+/** 400 + message "Chưa có cấu hình" là trạng thái bình thường khi phòng chưa lưu lịch — không reject để tránh log lỗi console. */
+export const getRoomScheduleV2 = (roomId: number) =>
+    instance.get<IBackendRes<IRoomScheduleV2>>(`/api/v2/admin/rooms/${roomId}/schedules`, {
+        validateStatus: (status) => status === 200 || status === 400,
+    });
+export const createRoomScheduleV2 = (roomId: number, data: ICreateScheduleRequestV2) =>
+    instance.post<IBackendRes<IRoomScheduleV2>>(`/api/v2/admin/rooms/${roomId}/schedules`, data);
+export const updateRoomScheduleV2 = (roomId: number, scheduleId: number, data: IUpdateScheduleRequestV2) =>
+    instance.put<IBackendRes<IRoomScheduleV2>>(`/api/v2/admin/rooms/${roomId}/schedules/${scheduleId}`, data);
+export const deleteRoomScheduleV2 = (roomId: number, scheduleId: number) =>
+    instance.delete<IBackendRes<void>>(`/api/v2/admin/rooms/${roomId}/schedules/${scheduleId}`);

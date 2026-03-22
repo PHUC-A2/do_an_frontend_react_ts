@@ -1534,6 +1534,12 @@ $bp-lg  : 1024px;
         width      : 72px;
         flex-shrink: 0;
     }
+
+    .bk__equip-thumb {
+        .ant-image-img {
+            border-radius: 8px;
+        }
+    }
 }
 
 // ── Shirt option radio group ───────────────────────────────────

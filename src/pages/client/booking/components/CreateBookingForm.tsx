@@ -11,7 +11,7 @@ import { formatVND } from "../../../../utils/format/price";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 import { fetchBookingsClient } from "../../../../redux/features/bookingClientSlice";
 import { TbSoccerField } from "react-icons/tb";
-import EquipmentBorrowSection, { type IBorrowLinePayload } from "./EquipmentBorrowSection";
+import EquipmentBorrowSection, { type IBorrowLinePayload, type IBorrowPlanOptions } from "./EquipmentBorrowSection";
 
 interface IProps {
     pitchIdNumber: number;
@@ -46,11 +46,16 @@ const CreateBookingForm = ({ pitchIdNumber, pitch, pitchLoading, bookingDate, is
 
     const [borrowLines, setBorrowLines] = useState<IBorrowLinePayload[]>([]);
     const [borrowNote, setBorrowNote] = useState("");
+    const [borrowOpts, setBorrowOpts] = useState<IBorrowPlanOptions>({
+        borrowConditionAcknowledged: false,
+        borrowReportPrintOptIn: false,
+    });
     const [borrowSectionKey, setBorrowSectionKey] = useState(0);
 
-    const handleBorrowPlanChange = useCallback((lines: IBorrowLinePayload[], note: string) => {
+    const handleBorrowPlanChange = useCallback((lines: IBorrowLinePayload[], note: string, opts: IBorrowPlanOptions) => {
         setBorrowLines(lines);
         setBorrowNote(note);
+        setBorrowOpts(opts);
     }, []);
 
     useEffect(() => {
@@ -80,6 +85,11 @@ const CreateBookingForm = ({ pitchIdNumber, pitch, pitchLoading, bookingDate, is
             return;
         }
 
+        if (borrowLines.length > 0 && !borrowOpts.borrowConditionAcknowledged) {
+            toast.error("Vui lòng xác nhận đã kiểm tra tình trạng thiết bị trước khi đặt lịch có mượn thiết bị.");
+            return;
+        }
+
         setLoading(true);
         const payload: ICreateBookingClientReq = {
             pitchId: pitchIdNumber,
@@ -99,7 +109,9 @@ const CreateBookingForm = ({ pitchIdNumber, pitch, pitchLoading, bookingDate, is
                             equipmentId: line.equipmentId,
                             quantity: line.quantity,
                             equipmentMobility: line.equipmentMobility,
-                            borrowConditionNote: borrowNote.trim() || undefined,
+                            borrowConditionNote: line.borrowConditionNote?.trim() || borrowNote.trim() || undefined,
+                            borrowConditionAcknowledged: true,
+                            borrowReportPrintOptIn: borrowOpts.borrowReportPrintOptIn,
                         }).catch(() => { })
                     );
                     await Promise.all(tasks);

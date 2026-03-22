@@ -24,6 +24,20 @@ export interface IBookingEquipment {
     staffSignName?: string | null;
     /** Họ tên người đặt (snapshot khi hoàn tất trả) — backend lưu, dùng khi in biên bản */
     bookingBorrowerSnapshot?: string | null;
+    /** Khách xác nhận đã kiểm tra tình trạng khi mượn */
+    borrowConditionAcknowledged?: boolean;
+    /** Khách chọn in/lưu biên bản mượn */
+    borrowReportPrintOptIn?: boolean;
+    /** Người trả thực tế (snapshot sau khi trả) */
+    returnerNameSnapshot?: string | null;
+    returnerPhoneSnapshot?: string | null;
+    returnReportPrintOptIn?: boolean | null;
+    /** Người nhận phía sân */
+    receiverNameSnapshot?: string | null;
+    receiverPhoneSnapshot?: string | null;
+    returnAdminConfirmed?: boolean;
+    returnAdminConfirmedAt?: string | null;
+    returnAdminConfirmedBy?: string | null;
 }
 
 export interface ICreateBookingEquipmentReq {
@@ -32,6 +46,8 @@ export interface ICreateBookingEquipmentReq {
     quantity: number;
     equipmentMobility: EquipmentMobilityEnum;
     borrowConditionNote?: string | null;
+    borrowConditionAcknowledged?: boolean;
+    borrowReportPrintOptIn?: boolean;
 }
 
 export interface IUpdateBookingEquipmentStatusReq {
@@ -43,6 +59,11 @@ export interface IUpdateBookingEquipmentStatusReq {
     quantityDamaged?: number;
     borrowerSignName?: string | null;
     staffSignName?: string | null;
+    returnerName?: string | null;
+    returnerPhone?: string | null;
+    receiverName?: string | null;
+    receiverPhone?: string | null;
+    returnReportPrintOptIn?: boolean | null;
 }
 
 export interface IEquipmentBorrowLog {
@@ -54,7 +75,21 @@ export interface IEquipmentBorrowLog {
     logType: "BORROW" | "RETURN";
     notes?: string | null;
     createdAt: string;
-    createdBy: string;
+    /** Email tài khoản ghi log (nếu có) */
+    createdBy?: string | null;
+    bookingUserName?: string | null;
+    bookingUserPhone?: string | null;
+    pitchName?: string | null;
+    actorName?: string | null;
+    actorPhone?: string | null;
+    borrowConditionAcknowledged?: boolean | null;
+    borrowReportPrintOptIn?: boolean | null;
+    returnerNameSnapshot?: string | null;
+    returnerPhoneSnapshot?: string | null;
+    returnReportPrintOptIn?: boolean | null;
+    receiverNameSnapshot?: string | null;
+    receiverPhoneSnapshot?: string | null;
+    returnAdminConfirmed?: boolean | null;
 }
 
 export interface IEquipmentUsageRow {

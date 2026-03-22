@@ -10,8 +10,9 @@ import {
     List,
     Button,
     Popconfirm,
+    Popover,
     Space,
-    Alert,
+    Tooltip,
     Radio,
     Tag,
     type GetProp,
@@ -19,7 +20,7 @@ import {
     type UploadProps,
 } from 'antd';
 import { Form, Input } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
@@ -244,6 +245,7 @@ const ModalUpdatePitch = (props: IProps) => {
             if (res.data.statusCode === 200) {
                 toast.success('Đã cập nhật thiết bị của sân');
                 await loadPitchEquipments(pitchEdit.id);
+                await loadAllEquipments();
                 setSelectedEquipmentId(undefined);
                 setPeQuantity(1);
                 setPeSpecification('');
@@ -265,6 +267,7 @@ const ModalUpdatePitch = (props: IProps) => {
             if (res.data.statusCode === 200) {
                 toast.success('Đã xóa thiết bị khỏi sân');
                 await loadPitchEquipments(pitchEdit.id);
+                await loadAllEquipments();
             }
         } catch (error: any) {
             toast.error(error?.response?.data?.message ?? 'Không thể xóa thiết bị khỏi sân');
@@ -471,36 +474,60 @@ const ModalUpdatePitch = (props: IProps) => {
                     <Input />
                 </Form.Item>
 
-                <Divider>Thiết bị gắn theo sân</Divider>
-
-                <Alert
-                    type="info"
-                    showIcon
-                    style={{ marginBottom: 12 }}
-                    message="Phân loại trước khi nhập thông số"
-                    description={
-                        <ul style={{ margin: '8px 0 0', paddingLeft: 18, marginBottom: 0 }}>
-                            <li>
-                                <strong>Cố định trên sân</strong>: đèn chiếu sáng, lưới quây, khung thành (gỗ/sắt, kích thước…) — chỉ mô tả
-                                cho khách, <strong>không</strong> mượn qua đặt sân.
-                            </li>
-                            <li>
-                                <strong>Cho mượn (lưu động)</strong>: bóng, áo… — khách chọn SL khi đặt; hệ thống xử lý mượn/trả. Giá, trạng
-                                thái &quot;hoạt động tốt&quot;, ghi chú tình trạng cần cấu hình ở <strong>Danh mục thiết bị</strong>.
-                            </li>
-                        </ul>
-                    }
-                />
+                <Divider orientation="horizontal">
+                    <Space size={6}>
+                        <span>Thiết bị gắn theo sân</span>
+                        <Tooltip title="Nhấn để xem gợi ý phân loại">
+                            <Popover
+                                trigger="click"
+                                placement="bottomLeft"
+                                title="Phân loại trước khi nhập thông số"
+                                content={
+                                    <ul
+                                        style={{
+                                            margin: 0,
+                                            paddingLeft: 18,
+                                            maxWidth: 420,
+                                            marginBottom: 0,
+                                        }}
+                                    >
+                                        <li>
+                                            <strong>Cố định trên sân</strong>: đèn chiếu sáng, lưới quây, khung thành (gỗ/sắt, kích thước…) — chỉ
+                                            mô tả cho khách, <strong>không</strong> mượn qua đặt sân.
+                                        </li>
+                                        <li>
+                                            <strong>Cho mượn (lưu động)</strong>: bóng, áo… — khách chọn SL khi đặt; hệ thống xử lý mượn/trả. Giá,
+                                            trạng thái &quot;hoạt động tốt&quot;, ghi chú tình trạng cần cấu hình ở <strong>Danh mục thiết bị</strong>.
+                                        </li>
+                                    </ul>
+                                }
+                            >
+                                <Button
+                                    type="text"
+                                    size="small"
+                                    icon={<QuestionCircleOutlined />}
+                                    aria-label="Gợi ý phân loại thiết bị"
+                                    style={{ color: 'var(--ant-color-info)' }}
+                                />
+                            </Popover>
+                        </Tooltip>
+                    </Space>
+                </Divider>
 
                 <Space orientation="vertical" style={{ width: '100%' }} size={10}>
                     <Select
                         placeholder="Chọn thiết bị từ kho để gắn vào sân"
                         value={selectedEquipmentId}
                         onChange={setSelectedEquipmentId}
-                        options={allEquipments.map((e) => ({
-                            value: e.id,
-                            label: `${e.name} (kho: ${e.totalQuantity})`,
-                        }))}
+                        options={allEquipments.map((e) => {
+                            const kho =
+                                e.quantityUnassignedToPitches ??
+                                Math.max(0, e.totalQuantity - (e.quantityAllocatedOnPitches ?? 0));
+                            return {
+                                value: e.id,
+                                label: `${e.name} (chưa gắn sân: ${kho} / tổng ${e.totalQuantity})`,
+                            };
+                        })}
                         showSearch
                         optionFilterProp="label"
                     />

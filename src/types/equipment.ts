@@ -6,6 +6,10 @@ export interface IEquipment {
     description?: string | null;
     totalQuantity: number;
     availableQuantity: number;
+    /** Tổng SL đã gắn trên các sân (API). */
+    quantityAllocatedOnPitches?: number;
+    /** SL còn chưa gắn sân — dùng hiển thị “kho” khi cấu hình sân. */
+    quantityUnassignedToPitches?: number;
     price: number;
     imageUrl?: string | null;
     status: EquipmentStatusEnum;

@@ -15,6 +15,17 @@ export interface IPitchEquipment {
     equipmentConditionNote?: string | null;
 }
 
+/** Một sân đang gắn thiết bị (API GET /equipments/:id/pitch-assignments). */
+export interface IEquipmentPitchAssignment {
+    pitchEquipmentId: number;
+    pitchId: number;
+    pitchName: string;
+    quantity: number;
+    equipmentMobility: EquipmentMobilityEnum;
+    specification?: string | null;
+    note?: string | null;
+}
+
 export interface IUpsertPitchEquipmentReq {
     equipmentId: number;
     quantity: number;

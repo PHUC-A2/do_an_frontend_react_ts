@@ -1,6 +1,7 @@
 import { Table, Tag, Space, Card, Popconfirm, type PopconfirmProps, Empty, Button } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import RBButton from 'react-bootstrap/Button';
 import { IoIosAddCircle } from 'react-icons/io';
 import { CiEdit } from 'react-icons/ci';
@@ -47,6 +48,8 @@ const AdminPitchPage = () => {
     const [pitchEdit, setPitchEdit] = useState<IPitch | null>(null);
     const canViewPitches = usePermission("PITCH_VIEW_LIST");
 
+    const [searchParams, setSearchParams] = useSearchParams();
+    const openPitchIdParam = searchParams.get('openPitchId');
 
     const handleEdit = (data: IPitch) => {
         setPitchEdit(data);
@@ -54,7 +57,7 @@ const AdminPitchPage = () => {
     };
 
 
-    const handleView = async (id: number) => {
+    const handleView = useCallback(async (id: number) => {
         setPitch(null);
         setIsLoading(true);
         setOpenModalPitchDetails(true);
@@ -75,7 +78,27 @@ const AdminPitchPage = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    /** Mở drawer chi tiết từ liên kết ngoài (vd. Quản lý thiết bị → sân). */
+    useEffect(() => {
+        if (!openPitchIdParam) return;
+        const id = Number(openPitchIdParam);
+        if (Number.isNaN(id) || id <= 0) {
+            setSearchParams((prev: URLSearchParams) => {
+                const next = new URLSearchParams(prev);
+                next.delete('openPitchId');
+                return next;
+            }, { replace: true });
+            return;
+        }
+        setSearchParams((prev: URLSearchParams) => {
+            const next = new URLSearchParams(prev);
+            next.delete('openPitchId');
+            return next;
+        }, { replace: true });
+        void handleView(id);
+    }, [openPitchIdParam, setSearchParams, handleView]);
 
 
     const handleDelete = async (id: number) => {
