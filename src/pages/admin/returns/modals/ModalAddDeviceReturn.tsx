@@ -48,7 +48,7 @@ const ModalAddDeviceReturn = (props: IProps) => {
                 setCheckoutOptions(eligible);
             } catch (e) {
                 console.error(e);
-                toast.error('Không tải được checkout đủ điều kiện trả');
+                toast.error('Không tải được biên bản nhận đủ điều kiện trả');
             } finally {
                 setLoadingOpts(false);
             }
@@ -73,7 +73,7 @@ const ModalAddDeviceReturn = (props: IProps) => {
             if (res.data.statusCode === 201) {
                 await dispatch(fetchDeviceReturns(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 setOpenModalAddDeviceReturn(false);
-                toast.success('Tạo phiếu trả thành công');
+                toast.success('Tạo biên bản trả phòng thành công');
                 resetModal();
             }
         } catch (error: any) {
@@ -93,7 +93,7 @@ const ModalAddDeviceReturn = (props: IProps) => {
 
     return (
         <Modal
-            title="Tạo phiếu trả tài sản"
+            title="Tạo biên bản trả phòng"
             maskClosable={false}
             closable={{ 'aria-label': 'Custom Close Button' }}
             open={openModalAddDeviceReturn}
@@ -112,27 +112,27 @@ const ModalAddDeviceReturn = (props: IProps) => {
             <div>
                 <hr />
                 <p style={{ marginBottom: 12, color: '#666' }}>
-                    Chỉ hiển thị phiếu nhận có đăng ký <strong>Đang dùng</strong> và chưa có phiếu trả.
+                    Chỉ hiển thị biên bản nhận có lịch đặt phòng <strong>Đang dùng</strong> và chưa có biên bản trả.
                 </p>
                 <Form<FormVals> form={form} onFinish={handleAdd} layout="vertical" autoComplete="off">
                     <Form.Item
-                        label="Phiếu nhận (checkout)"
+                        label="Biên bản nhận phòng"
                         name="checkoutId"
-                        rules={[{ required: true, message: 'Vui lòng chọn checkout!' }]}
+                        rules={[{ required: true, message: 'Vui lòng chọn biên bản nhận phòng!' }]}
                     >
                         <Select
                             showSearch
                             optionFilterProp="label"
                             loading={loadingOpts}
-                            placeholder="Chọn checkout"
+                            placeholder="Chọn biên bản nhận phòng"
                             options={checkoutOptions.map((c) => ({
                                 value: c.id,
-                                label: `#${c.id} — usage #${c.assetUsageId} — ${c.assetName ?? ''} — ${c.userEmail ?? ''}`,
+                                label: `#${c.id} — lịch #${c.assetUsageId} — ${c.assetName ?? ''} — ${c.userEmail ?? ''}`,
                             }))}
                         />
                     </Form.Item>
 
-                    <Form.Item label="Thời điểm trả" name="returnAt">
+                    <Form.Item label="Thời điểm trả phòng" name="returnAt">
                         <DatePicker showTime style={{ width: '100%' }} format="YYYY-MM-DD HH:mm:ss" />
                     </Form.Item>
 

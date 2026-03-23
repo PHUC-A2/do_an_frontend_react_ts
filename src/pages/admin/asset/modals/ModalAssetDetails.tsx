@@ -45,6 +45,9 @@ const ModalAssetDetails = (props: IProps) => {
                                     </Descriptions.Item>
                                     <Descriptions.Item label="ID">{asset?.id ?? 'N/A'}</Descriptions.Item>
                                     <Descriptions.Item label="Tên tài sản">{asset?.assetName ?? 'N/A'}</Descriptions.Item>
+                                    <Descriptions.Item label="Người phụ trách phòng">
+                                        {asset?.responsibleName ?? 'N/A'}
+                                    </Descriptions.Item>
                                     <Descriptions.Item label="Vị trí">{asset?.location ?? 'N/A'}</Descriptions.Item>
                                     <Descriptions.Item label="Sức chứa">
                                         {asset?.capacity != null ? <Text>{asset.capacity}</Text> : 'N/A'}

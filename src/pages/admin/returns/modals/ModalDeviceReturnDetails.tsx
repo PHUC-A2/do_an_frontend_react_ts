@@ -18,7 +18,7 @@ const ModalDeviceReturnDetails = (props: IProps) => {
 
     return (
         <Drawer
-            title="Chi tiết phiếu trả tài sản"
+            title="Chi tiết biên bản trả phòng"
             placement="right"
             onClose={() => setOpenModalDeviceReturnDetails(false)}
             open={openModalDeviceReturnDetails}
@@ -29,11 +29,11 @@ const ModalDeviceReturnDetails = (props: IProps) => {
                     items={[
                         {
                             key: 'usage',
-                            label: 'Checkout & đăng ký',
+                            label: 'Biên bản nhận & lịch đặt phòng',
                             children: (
                                 <Descriptions bordered column={1} size="small">
-                                    <Descriptions.Item label="ID checkout">{deviceReturn?.checkoutId ?? 'N/A'}</Descriptions.Item>
-                                    <Descriptions.Item label="ID đăng ký">{deviceReturn?.assetUsageId ?? 'N/A'}</Descriptions.Item>
+                                    <Descriptions.Item label="ID biên bản nhận">{deviceReturn?.checkoutId ?? 'N/A'}</Descriptions.Item>
+                                    <Descriptions.Item label="ID lịch đặt phòng">{deviceReturn?.assetUsageId ?? 'N/A'}</Descriptions.Item>
                                     <Descriptions.Item label="Người dùng">
                                         {deviceReturn?.userId != null ? (
                                             <Text>
@@ -43,7 +43,7 @@ const ModalDeviceReturnDetails = (props: IProps) => {
                                             'N/A'
                                         )}
                                     </Descriptions.Item>
-                                    <Descriptions.Item label="Tài sản">
+                                    <Descriptions.Item label="Phòng">
                                         {deviceReturn?.assetId != null ? (
                                             <Text>
                                                 #{deviceReturn.assetId} — {deviceReturn.assetName ?? ''}
@@ -52,7 +52,7 @@ const ModalDeviceReturnDetails = (props: IProps) => {
                                             'N/A'
                                         )}
                                     </Descriptions.Item>
-                                    <Descriptions.Item label="Loại usage">
+                                    <Descriptions.Item label="Loại sử dụng">
                                         {deviceReturn?.usageType ? (
                                             <Tag color={ASSET_USAGE_TYPE_META[deviceReturn.usageType]?.color}>
                                                 {ASSET_USAGE_TYPE_META[deviceReturn.usageType]?.label}
@@ -61,12 +61,12 @@ const ModalDeviceReturnDetails = (props: IProps) => {
                                             'N/A'
                                         )}
                                     </Descriptions.Item>
-                                    <Descriptions.Item label="Khung giờ đăng ký">
+                                    <Descriptions.Item label="Khung giờ đặt phòng">
                                         {deviceReturn?.usageDate
                                             ? `${formatLocalDate(deviceReturn.usageDate)} ${deviceReturn.startTime ?? ''} → ${deviceReturn.endTime ?? ''}`
                                             : 'N/A'}
                                     </Descriptions.Item>
-                                    <Descriptions.Item label="Trạng thái đăng ký">
+                                    <Descriptions.Item label="Trạng thái lịch đặt phòng">
                                         {deviceReturn?.assetUsageStatus ? (
                                             <Tag color={ASSET_USAGE_STATUS_META[deviceReturn.assetUsageStatus]?.color}>
                                                 {ASSET_USAGE_STATUS_META[deviceReturn.assetUsageStatus]?.label}
@@ -75,8 +75,8 @@ const ModalDeviceReturnDetails = (props: IProps) => {
                                             'N/A'
                                         )}
                                     </Descriptions.Item>
-                                    <Descriptions.Item label="Nhận lúc">{formatInstant(deviceReturn?.receiveTime)}</Descriptions.Item>
-                                    <Descriptions.Item label="Ghi chú lúc nhận">
+                                    <Descriptions.Item label="Nhận phòng lúc">{formatInstant(deviceReturn?.receiveTime)}</Descriptions.Item>
+                                    <Descriptions.Item label="Ghi chú lúc nhận phòng">
                                         {deviceReturn?.checkoutConditionNote ?? 'N/A'}
                                     </Descriptions.Item>
                                 </Descriptions>
@@ -84,11 +84,11 @@ const ModalDeviceReturnDetails = (props: IProps) => {
                         },
                         {
                             key: 'return',
-                            label: 'Phiếu trả',
+                            label: 'Biên bản trả phòng',
                             children: (
                                 <Descriptions bordered column={1} size="small">
-                                    <Descriptions.Item label="ID phiếu trả">{deviceReturn?.id ?? 'N/A'}</Descriptions.Item>
-                                    <Descriptions.Item label="Trả lúc">{formatInstant(deviceReturn?.returnTime)}</Descriptions.Item>
+                                    <Descriptions.Item label="ID biên bản trả">{deviceReturn?.id ?? 'N/A'}</Descriptions.Item>
+                                    <Descriptions.Item label="Trả phòng lúc">{formatInstant(deviceReturn?.returnTime)}</Descriptions.Item>
                                     <Descriptions.Item label="Tình trạng sau dùng">
                                         {deviceReturn?.deviceStatus ? (
                                             <Tag color={DEVICE_CONDITION_META[deviceReturn.deviceStatus]?.color}>

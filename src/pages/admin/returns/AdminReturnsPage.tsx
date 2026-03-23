@@ -112,7 +112,7 @@ const AdminReturnsPage = () => {
             const m = error?.response?.data?.message ?? 'Không xác định';
             toast.error(
                 <>
-                    <div>Có lỗi khi tải chi tiết phiếu trả</div>
+                    <div>Có lỗi khi tải chi tiết biên bản trả phòng</div>
                     <div>{m}</div>
                 </>
             );
@@ -235,28 +235,28 @@ const AdminReturnsPage = () => {
                 (meta.page - 1) * meta.pageSize + index + 1,
         },
         { title: 'ID', dataIndex: 'id', key: 'id', sorter: true },
-        { title: 'ID checkout', dataIndex: 'checkoutId', key: 'checkout.id', sorter: true },
+        { title: 'ID biên bản nhận', dataIndex: 'checkoutId', key: 'checkout.id', sorter: true },
         {
-            title: 'User',
+            title: 'Người dùng',
             key: 'user',
             render: (_: unknown, r: IDeviceReturn) => r.userEmail || r.userName || '-',
         },
         {
-            title: 'Tài sản',
+            title: 'Phòng',
             dataIndex: 'assetName',
             key: 'checkout.assetUsage.asset.assetName',
             sorter: true,
             render: (t?: string | null) => t || '-',
         },
         {
-            title: 'Ngày usage',
+            title: 'Ngày đặt phòng',
             dataIndex: 'usageDate',
             key: 'checkout.assetUsage.usageDate',
             sorter: true,
             render: (d?: string) => (d ? formatLocalDate(d) : '-'),
         },
         {
-            title: 'Trạng thái đ.ký',
+            title: 'Trạng thái lịch đặt',
             dataIndex: 'assetUsageStatus',
             key: 'checkout.assetUsage.status',
             sorter: true,
@@ -268,7 +268,7 @@ const AdminReturnsPage = () => {
                 ),
         },
         {
-            title: 'Trả lúc',
+            title: 'Trả phòng lúc',
             dataIndex: 'returnTime',
             key: 'returnTime',
             sorter: true,
@@ -300,8 +300,8 @@ const AdminReturnsPage = () => {
                     </PermissionWrapper>
                     <PermissionWrapper required="RETURN_DELETE">
                         <Popconfirm
-                            title="Xóa phiếu trả"
-                            description="Bạn có chắc chắn? Trạng thái đăng ký có thể về Đang dùng nếu đang Hoàn thành."
+                            title="Xóa biên bản trả phòng"
+                            description="Bạn có chắc chắn? Trạng thái lịch đặt phòng có thể về Đang sử dụng nếu đang Hoàn thành."
                             onConfirm={() => handleDelete(record.id)}
                             onCancel={cancel}
                             okText="Có"
@@ -324,26 +324,26 @@ const AdminReturnsPage = () => {
             <AdminWrapper>
                 <Card
                     size="small"
-                    title="Phiếu trả tài sản (Returns)"
+                    title="Quản lý biên bản trả phòng"
                     extra={
                         <Space align="center" wrap>
                             <Input.Search
                                 allowClear
-                                placeholder="Tìm email, tài sản"
+                                placeholder="Tìm email, phòng"
                                 style={{ width: 220 }}
                                 value={searchInput}
                                 onChange={(e) => setSearchInput(e.target.value)}
                             />
                             <Select<number>
                                 allowClear
-                                placeholder="Lọc checkout"
+                                placeholder="Lọc theo biên bản nhận"
                                 style={{ width: 220 }}
                                 loading={loadingCheckoutOpts}
                                 value={filterCheckoutId}
                                 onChange={(v) => setFilterCheckoutId(v ?? undefined)}
                                 options={checkoutOpts.map((c) => ({
                                     value: c.id,
-                                    label: `#${c.id} — usage #${c.assetUsageId}`,
+                                    label: `#${c.id} — lịch #${c.assetUsageId}`,
                                 }))}
                             />
                             <PermissionWrapper required="RETURN_CREATE">
@@ -354,7 +354,7 @@ const AdminReturnsPage = () => {
                                     onClick={() => setOpenAdd(true)}
                                 >
                                     <IoIosAddCircle />
-                                    Thêm phiếu trả
+                                    Thêm biên bản trả
                                 </RBButton>
                             </PermissionWrapper>
                             <Button
@@ -375,7 +375,7 @@ const AdminReturnsPage = () => {
                 >
                     <PermissionWrapper
                         required="RETURN_VIEW_LIST"
-                        fallback={<Empty description="Bạn không có quyền xem danh sách phiếu trả" />}
+                        fallback={<Empty description="Bạn không có quyền xem danh sách biên bản trả phòng" />}
                     >
                         <Table<IDeviceReturn>
                             columns={columns}

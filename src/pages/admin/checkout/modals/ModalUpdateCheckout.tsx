@@ -39,7 +39,7 @@ const ModalUpdateCheckout = (props: IProps) => {
             setSubmitting(true);
             const res = await updateCheckout(checkoutEdit.id, payload);
             if (res.data.statusCode === 200) {
-                toast.success('Cập nhật phiếu nhận thành công');
+                toast.success('Cập nhật biên bản nhận phòng thành công');
                 form.resetFields();
                 await dispatch(fetchCheckouts(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 setOpenModalUpdateCheckout(false);
@@ -68,7 +68,7 @@ const ModalUpdateCheckout = (props: IProps) => {
 
     return (
         <Modal
-            title="Cập nhật phiếu nhận tài sản"
+            title="Cập nhật biên bản nhận phòng"
             maskClosable={false}
             closable={{ 'aria-label': 'Custom Close Button' }}
             open={openModalUpdateCheckout}
@@ -82,9 +82,9 @@ const ModalUpdateCheckout = (props: IProps) => {
                 <hr />
                 <Form<FormVals> form={form} onFinish={handleEdit} layout="vertical" autoComplete="off">
                     <Form.Item
-                        label="Thời điểm nhận"
+                        label="Thời điểm nhận phòng"
                         name="receiveAt"
-                        rules={[{ required: true, message: 'Chọn thời điểm!' }]}
+                        rules={[{ required: true, message: 'Vui lòng chọn thời điểm nhận phòng!' }]}
                     >
                         <DatePicker showTime style={{ width: '100%' }} format="YYYY-MM-DD HH:mm:ss" />
                     </Form.Item>

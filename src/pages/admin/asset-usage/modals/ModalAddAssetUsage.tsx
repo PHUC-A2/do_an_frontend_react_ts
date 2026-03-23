@@ -59,7 +59,7 @@ const ModalAddAssetUsage = (props: IProps) => {
                 if (ar.data.statusCode === 200 && ar.data.data?.result) setAssets(ar.data.data.result);
             } catch (e) {
                 console.error(e);
-                toast.error('Không tải được danh sách người dùng / tài sản');
+                toast.error('Không tải được danh sách người dùng / phòng');
             } finally {
                 setLoadingRefs(false);
             }
@@ -95,7 +95,7 @@ const ModalAddAssetUsage = (props: IProps) => {
             if (res.data.statusCode === 201) {
                 await dispatch(fetchAssetUsages(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 setOpenModalAddAssetUsage(false);
-                toast.success('Tạo đăng ký sử dụng tài sản thành công');
+                toast.success('Tạo lịch đặt phòng thành công');
                 resetModal();
             }
         } catch (error: any) {
@@ -115,7 +115,7 @@ const ModalAddAssetUsage = (props: IProps) => {
 
     return (
         <Modal
-            title="Thêm đăng ký sử dụng tài sản"
+            title="Thêm lịch đặt phòng"
             maskClosable={false}
             closable={{ 'aria-label': 'Custom Close Button' }}
             open={openModalAddAssetUsage}
@@ -160,15 +160,15 @@ const ModalAddAssetUsage = (props: IProps) => {
                     </Form.Item>
 
                     <Form.Item
-                        label="Tài sản"
+                        label="Phòng"
                         name="assetId"
-                        rules={[{ required: true, message: 'Vui lòng chọn tài sản!' }]}
+                        rules={[{ required: true, message: 'Vui lòng chọn phòng!' }]}
                     >
                         <Select
                             showSearch
                             optionFilterProp="label"
                             loading={loadingRefs}
-                            placeholder="Chọn tài sản"
+                            placeholder="Chọn phòng"
                             options={assets.map((a) => ({
                                 value: a.id,
                                 label: `${a.id} — ${a.assetName}`,
@@ -176,18 +176,18 @@ const ModalAddAssetUsage = (props: IProps) => {
                         />
                     </Form.Item>
 
-                    <Form.Item label="Loại" name="usageType" rules={[{ required: true }]}>
+                    <Form.Item label="Loại sử dụng" name="usageType" rules={[{ required: true }]}>
                         <Select options={ASSET_USAGE_TYPE_OPTIONS} />
                     </Form.Item>
 
-                    <Form.Item label="Ngày" name="date" rules={[{ required: true, message: 'Chọn ngày!' }]}>
+                    <Form.Item label="Ngày đặt phòng" name="date" rules={[{ required: true, message: 'Vui lòng chọn ngày đặt phòng!' }]}>
                         <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
                     </Form.Item>
 
                     <Form.Item
                         label="Giờ bắt đầu"
                         name="startTime"
-                        rules={[{ required: true, message: 'Chọn giờ bắt đầu!' }]}
+                        rules={[{ required: true, message: 'Vui lòng chọn giờ bắt đầu!' }]}
                     >
                         <TimePicker style={{ width: '100%' }} format="HH:mm:ss" needConfirm={false} />
                     </Form.Item>
@@ -195,15 +195,15 @@ const ModalAddAssetUsage = (props: IProps) => {
                     <Form.Item
                         label="Giờ kết thúc"
                         name="endTime"
-                        rules={[{ required: true, message: 'Chọn giờ kết thúc!' }]}
+                        rules={[{ required: true, message: 'Vui lòng chọn giờ kết thúc!' }]}
                     >
                         <TimePicker style={{ width: '100%' }} format="HH:mm:ss" needConfirm={false} />
                     </Form.Item>
 
                     <Form.Item
-                        label="Mục đích"
+                        label="Mục đích sử dụng"
                         name="subject"
-                        rules={[{ required: true, message: 'Nhập mục đích!' }]}
+                        rules={[{ required: true, message: 'Vui lòng nhập mục đích sử dụng!' }]}
                     >
                         <Input.TextArea rows={2} />
                     </Form.Item>

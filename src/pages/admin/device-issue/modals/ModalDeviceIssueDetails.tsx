@@ -12,13 +12,13 @@ interface IProps {
     isLoading: boolean;
 }
 
-/** Drawer chi tiết sự cố — cùng pattern Drawer thiết bị / tài sản. */
+/** Drawer chi tiết sự cố — cùng pattern Drawer thiết bị / phòng. */
 const ModalDeviceIssueDetails = (props: IProps) => {
     const { openDrawerDeviceIssueDetails, setOpenDrawerDeviceIssueDetails, issue, isLoading } = props;
 
     return (
         <Drawer
-            title="Chi tiết sự cố thiết bị"
+            title="Chi tiết báo cáo sự cố thiết bị phòng"
             placement="right"
             onClose={() => setOpenDrawerDeviceIssueDetails(false)}
             open={openDrawerDeviceIssueDetails}
@@ -37,8 +37,8 @@ const ModalDeviceIssueDetails = (props: IProps) => {
                                     <Descriptions.Item label="Tên thiết bị">
                                         {issue?.deviceName ?? 'N/A'}
                                     </Descriptions.Item>
-                                    <Descriptions.Item label="ID tài sản">{issue?.assetId ?? 'N/A'}</Descriptions.Item>
-                                    <Descriptions.Item label="Tên tài sản">
+                                    <Descriptions.Item label="ID phòng">{issue?.assetId ?? 'N/A'}</Descriptions.Item>
+                                    <Descriptions.Item label="Tên phòng">
                                         {issue?.assetName ?? 'N/A'}
                                     </Descriptions.Item>
                                     <Descriptions.Item label="Mô tả">

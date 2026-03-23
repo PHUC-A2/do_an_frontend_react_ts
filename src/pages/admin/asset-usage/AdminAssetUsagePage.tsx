@@ -1,4 +1,5 @@
 import {
+    Badge,
     Button,
     Card,
     DatePicker,
@@ -9,7 +10,9 @@ import {
     Table,
     Input,
     Select,
+    Tabs,
     Tag,
+    Tooltip,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TableProps } from 'antd';
@@ -21,7 +24,7 @@ import { IoIosAddCircle } from 'react-icons/io';
 import { FaDownload } from 'react-icons/fa';
 import { CiEdit } from 'react-icons/ci';
 import { FaArrowsToEye } from 'react-icons/fa6';
-import { MdDelete } from 'react-icons/md';
+import { MdCheckCircle, MdClose, MdDelete } from 'react-icons/md';
 
 import { useAppDispatch, useAppSelector } from '../../../redux/hooks';
 import {
@@ -33,7 +36,7 @@ import {
 import type { AssetUsageStatus, AssetUsageType, IAssetUsage } from '../../../types/assetUsage';
 import type { IAsset } from '../../../types/asset';
 import type { IUser } from '../../../types/user';
-import { deleteAssetUsage, getAllAssets, getAllUsers, getAssetUsageById } from '../../../config/Api';
+import { deleteAssetUsage, getAllAssets, getAllAssetUsages, getAllUsers, getAssetUsageById, updateAssetUsage } from '../../../config/Api';
 import { toast } from 'react-toastify';
 import ModalAddAssetUsage from './modals/ModalAddAssetUsage';
 import ModalAssetUsageDetails from './modals/ModalAssetUsageDetails';
@@ -55,6 +58,7 @@ import {
 const USAGE_TEXT_FIELDS = ['user.name', 'user.email', 'asset.assetName', 'subject'];
 
 function combineAssetUsageListFilter(
+    tab: 'all' | 'pending',
     keyword: string,
     assetId: number | undefined,
     userId: number | undefined,
@@ -68,6 +72,7 @@ function combineAssetUsageListFilter(
     if (assetId != null && assetId > 0) parts.push(`asset.id==${assetId}`);
     if (userId != null && userId > 0) parts.push(`user.id==${userId}`);
     if (status) parts.push(`status : '${status}'`);
+    if (tab === 'pending') parts.push(`status : 'PENDING'`);
     if (usageType) parts.push(`usageType : '${usageType}'`);
     if (filterDate) parts.push(`usageDate : '${filterDate.format('YYYY-MM-DD')}'`);
     if (parts.length === 0) return undefined;
@@ -84,6 +89,10 @@ const AdminAssetUsagePage = () => {
     const [openDetail, setOpenDetail] = useState(false);
     const [openUpdate, setOpenUpdate] = useState(false);
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [processingId, setProcessingId] = useState<number | null>(null);
+    const [activeTab, setActiveTab] = useState<'all' | 'pending'>('all');
+    const [allCount, setAllCount] = useState(0);
+    const [pendingCount, setPendingCount] = useState(0);
 
     const [detail, setDetail] = useState<IAssetUsage | null>(null);
     const [detailLoading, setDetailLoading] = useState(false);
@@ -172,6 +181,7 @@ const AdminAssetUsagePage = () => {
                             page: meta.page,
                             pageSize: meta.pageSize,
                             filter: combineAssetUsageListFilter(
+                                activeTab,
                                 debouncedSearch,
                                 filterAssetId,
                                 filterUserId,
@@ -229,6 +239,7 @@ const AdminAssetUsagePage = () => {
     const filterStr = useMemo(
         () =>
             combineAssetUsageListFilter(
+                activeTab,
                 debouncedSearch,
                 filterAssetId,
                 filterUserId,
@@ -236,7 +247,7 @@ const AdminAssetUsagePage = () => {
                 filterUsageType,
                 filterDate
             ),
-        [debouncedSearch, filterAssetId, filterUserId, filterStatus, filterUsageType, filterDate]
+        [activeTab, debouncedSearch, filterAssetId, filterUserId, filterStatus, filterUsageType, filterDate]
     );
 
     const fetchPage = useCallback(
@@ -246,11 +257,56 @@ const AdminAssetUsagePage = () => {
         [dispatch, filterStr]
     );
 
+    const loadTabCounts = useCallback(async () => {
+        try {
+            const [allRes, pendingRes] = await Promise.all([
+                getAllAssetUsages(
+                    buildSpringListQuery({
+                        page: 1,
+                        pageSize: 1,
+                        filter: combineAssetUsageListFilter(
+                            'all',
+                            debouncedSearch,
+                            filterAssetId,
+                            filterUserId,
+                            filterStatus,
+                            filterUsageType,
+                            filterDate
+                        ),
+                    })
+                ),
+                getAllAssetUsages(
+                    buildSpringListQuery({
+                        page: 1,
+                        pageSize: 1,
+                        filter: combineAssetUsageListFilter(
+                            'pending',
+                            debouncedSearch,
+                            filterAssetId,
+                            filterUserId,
+                            filterStatus,
+                            filterUsageType,
+                            filterDate
+                        ),
+                    })
+                ),
+            ]);
+
+            setAllCount(allRes.data.data?.meta?.total ?? 0);
+            setPendingCount(pendingRes.data.data?.meta?.total ?? 0);
+        } catch {
+            setAllCount(0);
+            setPendingCount(0);
+        }
+    }, [debouncedSearch, filterAssetId, filterDate, filterStatus, filterUsageType, filterUserId]);
+
     useEffect(() => {
         if (!canView) return;
         fetchPage(1, meta.pageSize, sortRef.current);
+        void loadTabCounts();
     }, [
         canView,
+        activeTab,
         debouncedSearch,
         filterAssetId,
         filterUserId,
@@ -258,6 +314,7 @@ const AdminAssetUsagePage = () => {
         filterUsageType,
         filterDate,
         fetchPage,
+        loadTabCounts,
         meta.pageSize,
     ]);
 
@@ -265,6 +322,29 @@ const AdminAssetUsagePage = () => {
         const nextSort = tableSorterToSortItems(sorter);
         setSortItems(nextSort);
         fetchPage(pag?.current ?? 1, pag?.pageSize ?? meta.pageSize, nextSort);
+    };
+
+    const handleQuickUpdateStatus = async (record: IAssetUsage, nextStatus: IAssetUsage['status']) => {
+        try {
+            setProcessingId(record.id);
+            await updateAssetUsage(record.id, {
+                userId: record.userId,
+                assetId: record.assetId,
+                usageType: record.usageType,
+                date: record.date,
+                startTime: record.startTime.length === 5 ? `${record.startTime}:00` : record.startTime,
+                endTime: record.endTime.length === 5 ? `${record.endTime}:00` : record.endTime,
+                subject: record.subject,
+                status: nextStatus,
+            });
+            toast.success(nextStatus === 'APPROVED' ? 'Đã duyệt lịch đặt phòng' : 'Đã từ chối lịch đặt phòng');
+            fetchPage(meta.page, meta.pageSize, sortRef.current);
+            void loadTabCounts();
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message ?? 'Cập nhật trạng thái thất bại');
+        } finally {
+            setProcessingId(null);
+        }
     };
 
     const columns: ColumnsType<IAssetUsage> = [
@@ -275,16 +355,16 @@ const AdminAssetUsagePage = () => {
                 (meta.page - 1) * meta.pageSize + index + 1,
         },
         { title: 'ID', dataIndex: 'id', key: 'id', sorter: true },
-        { title: 'User', dataIndex: 'userId', key: 'user.id', sorter: true },
+        { title: 'Người dùng', dataIndex: 'userId', key: 'user.id', sorter: true },
         {
             title: 'Email / tên',
             key: 'user.email',
             sorter: true,
             render: (_: unknown, r: IAssetUsage) => r.userEmail || r.userName || '-',
         },
-        { title: 'ID TS', dataIndex: 'assetId', key: 'asset.id', sorter: true },
+        { title: 'ID phòng', dataIndex: 'assetId', key: 'asset.id', sorter: true },
         {
-            title: 'Tài sản',
+            title: 'Phòng',
             dataIndex: 'assetName',
             key: 'asset.assetName',
             sorter: true,
@@ -323,19 +403,60 @@ const AdminAssetUsagePage = () => {
             render: (_: unknown, record: IAssetUsage) => (
                 <Space align="center" style={{ justifyContent: 'center', width: '100%' }}>
                     <PermissionWrapper required="ASSET_USAGE_VIEW_DETAIL">
-                        <RBButton variant="outline-info" size="sm" onClick={() => handleView(record.id)}>
-                            <FaArrowsToEye />
-                        </RBButton>
+                        <Tooltip title="Xem chi tiết lịch đặt phòng">
+                            <RBButton variant="outline-info" size="sm" onClick={() => handleView(record.id)}>
+                                <FaArrowsToEye />
+                            </RBButton>
+                        </Tooltip>
                     </PermissionWrapper>
                     <PermissionWrapper required="ASSET_USAGE_UPDATE">
-                        <RBButton variant="outline-warning" size="sm" onClick={() => handleEdit(record)}>
-                            <CiEdit />
-                        </RBButton>
+                        <Tooltip
+                            title={
+                                record.status === 'CANCELLED' || record.status === 'COMPLETED' || record.status === 'REJECTED'
+                                    ? 'Không thể sửa lịch đặt đã kết thúc / đã hủy / đã từ chối'
+                                    : 'Chỉnh sửa lịch đặt phòng'
+                            }
+                        >
+                            <RBButton
+                                variant="outline-warning"
+                                size="sm"
+                                disabled={record.status === 'CANCELLED' || record.status === 'COMPLETED' || record.status === 'REJECTED'}
+                                onClick={() => handleEdit(record)}
+                            >
+                                <CiEdit />
+                            </RBButton>
+                        </Tooltip>
                     </PermissionWrapper>
+                    {record.status === 'PENDING' && (
+                        <PermissionWrapper required="ASSET_USAGE_UPDATE">
+                            <>
+                                <Tooltip title="Duyệt lịch đặt phòng chờ xác nhận">
+                                    <RBButton
+                                        variant="outline-success"
+                                        size="sm"
+                                        disabled={processingId === record.id}
+                                        onClick={() => void handleQuickUpdateStatus(record, 'APPROVED')}
+                                    >
+                                        <MdCheckCircle />
+                                    </RBButton>
+                                </Tooltip>
+                                <Tooltip title="Từ chối lịch đặt phòng chờ xác nhận">
+                                    <RBButton
+                                        variant="outline-secondary"
+                                        size="sm"
+                                        disabled={processingId === record.id}
+                                        onClick={() => void handleQuickUpdateStatus(record, 'REJECTED')}
+                                    >
+                                        <MdClose />
+                                    </RBButton>
+                                </Tooltip>
+                            </>
+                        </PermissionWrapper>
+                    )}
                     <PermissionWrapper required="ASSET_USAGE_DELETE">
                         <Popconfirm
-                            title="Xóa đăng ký"
-                            description="Bạn có chắc chắn muốn xóa bản ghi này không?"
+                            title="Xóa lịch đặt phòng"
+                            description="Bạn có chắc chắn muốn xóa lịch đặt phòng này không?"
                             onConfirm={() => handleDelete(record.id)}
                             onCancel={cancel}
                             okText="Có"
@@ -343,9 +464,11 @@ const AdminAssetUsagePage = () => {
                             placement="topLeft"
                             okButtonProps={{ loading: deletingId === record.id }}
                         >
-                            <RBButton size="sm" variant="outline-danger" disabled={deletingId === record.id}>
-                                <MdDelete />
-                            </RBButton>
+                            <Tooltip title="Xóa lịch đặt phòng">
+                                <RBButton size="sm" variant="outline-danger" disabled={deletingId === record.id}>
+                                    <MdDelete />
+                                </RBButton>
+                            </Tooltip>
                         </Popconfirm>
                     </PermissionWrapper>
                 </Space>
@@ -358,12 +481,12 @@ const AdminAssetUsagePage = () => {
             <AdminWrapper>
                 <Card
                     size="small"
-                    title="Đăng ký sử dụng tài sản (thuê / mượn)"
+                    title="Quản lý lịch đặt phòng"
                     extra={
                         <Space align="center" wrap>
                             <Input.Search
                                 allowClear
-                                placeholder="Tìm user, tài sản, mục đích"
+                                placeholder="Tìm user, phòng, mục đích"
                                 style={{ width: 220 }}
                                 value={searchInput}
                                 onChange={(e) => setSearchInput(e.target.value)}
@@ -382,7 +505,7 @@ const AdminAssetUsagePage = () => {
                             />
                             <Select<number>
                                 allowClear
-                                placeholder="Tài sản"
+                                placeholder="Phòng"
                                 style={{ width: 200 }}
                                 loading={loadingOpts}
                                 value={filterAssetId}
@@ -444,8 +567,32 @@ const AdminAssetUsagePage = () => {
                 >
                     <PermissionWrapper
                         required="ASSET_USAGE_VIEW_LIST"
-                        fallback={<Empty description="Bạn không có quyền xem danh sách đăng ký sử dụng tài sản" />}
+                        fallback={<Empty description="Bạn không có quyền xem danh sách lịch đặt phòng" />}
                     >
+                        <Tabs
+                            activeKey={activeTab}
+                            onChange={(key) => setActiveTab(key as 'all' | 'pending')}
+                            items={[
+                                {
+                                    key: 'all',
+                                    label: (
+                                        <Space size={8}>
+                                            <span>Tất cả lịch đặt phòng</span>
+                                            <Badge count={allCount} color="#1677ff" />
+                                        </Space>
+                                    ),
+                                },
+                                {
+                                    key: 'pending',
+                                    label: (
+                                        <Space size={8}>
+                                            <span>Chờ duyệt</span>
+                                            <Badge count={pendingCount} color="#faad14" />
+                                        </Space>
+                                    ),
+                                },
+                            ]}
+                        />
                         <Table<IAssetUsage>
                             columns={columns}
                             dataSource={list}

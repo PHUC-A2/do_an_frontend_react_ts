@@ -49,7 +49,7 @@ const ModalAddCheckout = (props: IProps) => {
                 setUsageOptions(usages.filter((u) => !usedIds.has(u.id)));
             } catch (e) {
                 console.error(e);
-                toast.error('Không tải được đăng ký đủ điều kiện nhận');
+                toast.error('Không tải được lịch đặt phòng đủ điều kiện nhận');
             } finally {
                 setLoadingOpts(false);
             }
@@ -74,7 +74,7 @@ const ModalAddCheckout = (props: IProps) => {
             if (res.data.statusCode === 201) {
                 await dispatch(fetchCheckouts(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 setOpenModalAddCheckout(false);
-                toast.success('Tạo phiếu nhận tài sản thành công');
+                toast.success('Tạo biên bản nhận phòng thành công');
                 resetModal();
             }
         } catch (error: any) {
@@ -94,7 +94,7 @@ const ModalAddCheckout = (props: IProps) => {
 
     return (
         <Modal
-            title="Tạo phiếu nhận tài sản"
+            title="Tạo biên bản nhận phòng"
             maskClosable={false}
             closable={{ 'aria-label': 'Custom Close Button' }}
             open={openModalAddCheckout}
@@ -113,19 +113,19 @@ const ModalAddCheckout = (props: IProps) => {
             <div>
                 <hr />
                 <p style={{ marginBottom: 12, color: '#666' }}>
-                    Chỉ hiển thị đăng ký <strong>Đã duyệt</strong> và chưa có phiếu nhận.
+                    Chỉ hiển thị lịch đặt phòng <strong>Đã duyệt</strong> và chưa có biên bản nhận.
                 </p>
                 <Form<FormVals> form={form} onFinish={handleAdd} layout="vertical" autoComplete="off">
                     <Form.Item
-                        label="Đăng ký sử dụng tài sản"
+                        label="Lịch đặt phòng"
                         name="assetUsageId"
-                        rules={[{ required: true, message: 'Vui lòng chọn đăng ký!' }]}
+                        rules={[{ required: true, message: 'Vui lòng chọn lịch đặt phòng!' }]}
                     >
                         <Select
                             showSearch
                             optionFilterProp="label"
                             loading={loadingOpts}
-                            placeholder="Chọn đăng ký (APPROVED, chưa checkout)"
+                            placeholder="Chọn lịch đặt phòng (Đã duyệt, chưa nhận)"
                             options={usageOptions.map((u) => ({
                                 value: u.id,
                                 label: `#${u.id} — ${u.assetName ?? 'TS'} — ${u.date} ${u.startTime}-${u.endTime} (${ASSET_USAGE_TYPE_META[u.usageType]?.label ?? u.usageType})`,
@@ -133,7 +133,7 @@ const ModalAddCheckout = (props: IProps) => {
                         />
                     </Form.Item>
 
-                    <Form.Item label="Thời điểm nhận" name="receiveAt">
+                    <Form.Item label="Thời điểm nhận phòng" name="receiveAt">
                         <DatePicker showTime style={{ width: '100%' }} format="YYYY-MM-DD HH:mm:ss" />
                     </Form.Item>
 

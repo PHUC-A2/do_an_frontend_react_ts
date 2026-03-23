@@ -13,6 +13,7 @@ import type { IEquipmentPitchAssignment, IPitchEquipment, IUpsertPitchEquipmentR
 import type { IRevenueRes } from "../types/revenue";
 import type { IAssignPermissionReq, ICreateRoleReq, IRole, IUpdateRoleReq } from "../types/role";
 import type { INotification } from "../types/notification";
+import type { IAssetRoomTimeline, RoomTimelineMode } from "../types/roomTimeline";
 import type { IPitchTimeline } from "../types/timeline";
 import type { IGetUploadResponse } from "../types/upload";
 import type { IAssignRoleReq, ICreateUserReq, IUpdateUserReq, IUser, IUpdateUserStatusReq, IUpdateUserStatusRes } from "../types/user";
@@ -20,6 +21,8 @@ import type { IAsset, ICreateAssetReq, IUpdateAssetReq } from "../types/asset";
 import type { ICreateDeviceReq, IDevice, IUpdateDeviceReq } from "../types/device";
 import type {
     IAssetUsage,
+    ICreateClientRoomBookingReq,
+    IUpdateClientRoomBookingReq,
     ICreateAssetUsageReq,
     IUpdateAssetUsageReq,
 } from "../types/assetUsage";
@@ -88,6 +91,8 @@ export const getPublicAssets = (query: string) =>
     instance.get<IBackendRes<IModelPaginate<IAsset>>>(`/api/v1/client/public/assets?${query}`);
 export const getPublicAssetById = (id: number) =>
     instance.get<IBackendRes<IAsset>>(`/api/v1/client/public/assets/${id}`);
+export const getPublicAssetDevices = (assetId: number) =>
+    instance.get<IBackendRes<IDevice[]>>(`/api/v1/client/public/assets/${assetId}/devices`);
 
 /* api device — thiết bị theo tài sản (bảng devices) */
 export const getAllDevices = (query: string) =>
@@ -104,6 +109,32 @@ export const getAllAssetUsages = (query: string) =>
     instance.get<IBackendRes<IModelPaginate<IAssetUsage>>>(`/api/v1/asset-usages?${query}`);
 export const createAssetUsage = (data: ICreateAssetUsageReq) =>
     instance.post<IBackendRes<IAssetUsage>>(`/api/v1/asset-usages`, data);
+export const createClientRoomBooking = (data: ICreateClientRoomBookingReq) =>
+    instance.post<IBackendRes<IAssetUsage>>(`/api/v1/client/room-bookings`, data);
+export const getAllClientRoomBookings = (query: string) =>
+    instance.get<IBackendRes<IModelPaginate<IAssetUsage>>>(`/api/v1/client/room-bookings?${query}`);
+export const getClientRoomBookingById = (id: number) =>
+    instance.get<IBackendRes<IAssetUsage>>(`/api/v1/client/room-bookings/${id}`);
+export const updateClientRoomBooking = (id: number, data: IUpdateClientRoomBookingReq) =>
+    instance.put<IBackendRes<IAssetUsage>>(`/api/v1/client/room-bookings/${id}`, data);
+export const cancelClientRoomBooking = (id: number) =>
+    instance.patch<IBackendRes<null>>(`/api/v1/client/room-bookings/${id}/cancel`);
+/** Xóa booking phòng khỏi lịch sử của chính user (soft delete; admin vẫn thấy). */
+export const deleteClientRoomBooking = (id: number) =>
+    instance.delete<IBackendRes<null>>(`/api/v1/client/room-bookings/${id}`);
+export const getClientRoomBookingCheckout = (id: number) =>
+    instance.get<IBackendRes<ICheckout>>(`/api/v1/client/room-bookings/${id}/checkout`);
+export const getClientRoomBookingReturn = (id: number) =>
+    instance.get<IBackendRes<IDeviceReturn>>(`/api/v1/client/room-bookings/${id}/return`);
+export const createClientRoomBookingCheckout = (id: number, data?: { receiveTime?: string; conditionNote?: string }) =>
+    instance.post<IBackendRes<ICheckout>>(`/api/v1/client/room-bookings/${id}/checkout`, data ?? {});
+export const createClientRoomBookingReturn = (
+    id: number,
+    data: Pick<ICreateDeviceReturnReq, "returnTime" | "deviceStatus">
+) =>
+    instance.post<IBackendRes<IDeviceReturn>>(`/api/v1/client/room-bookings/${id}/return`, data);
+export const createClientRoomBookingIssue = (id: number, data: Pick<ICreateDeviceIssueReq, 'deviceId' | 'description'>) =>
+    instance.post<IBackendRes<IDeviceIssue>>(`/api/v1/client/room-bookings/${id}/issues`, data);
 export const deleteAssetUsage = (id: number) =>
     instance.delete<IBackendRes<IAssetUsage>>(`/api/v1/asset-usages/${id}`);
 export const getAssetUsageById = (id: number) =>
@@ -223,6 +254,12 @@ export const cancelBookingClient = (id: number) => instance.patch<IBackendRes<IB
 // http://localhost:8080/api/v1/client/public/pitches/5/timeline?date=2026-02-01
 export const getTimeline = (pitchId: number, params: string) => instance.get<IBackendRes<IPitchTimeline>>(`/api/v1/client/public/pitches/${pitchId}/timeline?date=${params}`);
 
+/** Timeline phòng tin (public): tiết cố định hoặc khoảng bận linh hoạt — khớp GET room-timeline backend. */
+export const getAssetRoomTimeline = (assetId: number, date: string, mode: RoomTimelineMode = "PERIODS") =>
+    instance.get<IBackendRes<IAssetRoomTimeline>>(
+        `/api/v1/client/public/assets/${assetId}/room-timeline?date=${date}&mode=${mode}`
+    );
+
 /* api revenue */
 // export const getRevenue = () => instance.get<IBackendRes<IRevenueRes>>(`/api/v1/revenues`);
 export const getRevenue = (from?: string, to?: string) =>
@@ -269,6 +306,21 @@ export const uploadImagePitch = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("folder", "pitch"); // folder riêng cho sân
+
+    const { data } = await instance.post<IGetUploadResponse>(
+        "/api/v1/files/upload",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+    );
+
+    return data;
+};
+
+// upload device image (admin) — cùng API file upload, folder riêng cho thiết bị trong rooms.
+export const uploadImageDevice = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", "device"); // folder riêng cho thiết bị
 
     const { data } = await instance.post<IGetUploadResponse>(
         "/api/v1/files/upload",

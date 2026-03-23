@@ -131,6 +131,10 @@ const ModalAddAsset = (props: IProps) => {
                         <Input />
                     </Form.Item>
 
+                    <Form.Item label="Người phụ trách phòng" name="responsibleName">
+                        <Input placeholder="Ví dụ: Thầy/Cô phụ trách" />
+                    </Form.Item>
+
                     <Form.Item label="Vị trí" name="location">
                         <Input />
                     </Form.Item>

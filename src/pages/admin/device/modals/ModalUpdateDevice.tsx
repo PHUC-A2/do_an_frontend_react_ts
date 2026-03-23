@@ -1,7 +1,19 @@
-import { Form, Input, InputNumber, Modal, Select } from 'antd';
+import {
+    Form,
+    Input,
+    InputNumber,
+    Image,
+    Modal,
+    Select,
+    Upload,
+    type GetProp,
+    type UploadFile,
+    type UploadProps,
+} from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { getAllAssets, updateDevice } from '../../../../config/Api';
+import { getAllAssets, updateDevice, uploadImageDevice } from '../../../../config/Api';
 import type { IAsset } from '../../../../types/asset';
 import type { IDevice, IUpdateDeviceReq } from '../../../../types/device';
 import { useAppDispatch, useAppSelector } from '../../../../redux/hooks';
@@ -25,6 +37,38 @@ const ModalUpdateDevice = (props: IProps) => {
     const [submitting, setSubmitting] = useState(false);
     const [assets, setAssets] = useState<IAsset[]>([]);
     const [loadingAssets, setLoadingAssets] = useState(false);
+
+    type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
+
+    /** Convert file -> base64 để preview khi cần. */
+    const getBase64 = (file: FileType): Promise<string> =>
+        new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = (error) => reject(error);
+        });
+
+    const [previewOpen, setPreviewOpen] = useState(false);
+    const [previewImage, setPreviewImage] = useState('');
+    const [fileList, setFileList] = useState<UploadFile[]>([]);
+
+    const handlePreview = async (file: UploadFile) => {
+        if (!file.url && !file.preview) {
+            file.preview = await getBase64(file.originFileObj as FileType);
+        }
+        setPreviewImage(file.url || (file.preview as string));
+        setPreviewOpen(true);
+    };
+
+    const handleChange: UploadProps['onChange'] = ({ fileList: newFileList }) => setFileList(newFileList);
+
+    const uploadButton = (
+        <button style={{ border: 0, background: 'none' }} type="button">
+            <PlusOutlined />
+            <div style={{ marginTop: 8 }}>Upload</div>
+        </button>
+    );
 
     useEffect(() => {
         if (!openModalUpdateDevice) return;
@@ -59,6 +103,9 @@ const ModalUpdateDevice = (props: IProps) => {
             if (body.statusCode === 200) {
                 toast.success('Cập nhật thiết bị theo tài sản thành công');
                 form.resetFields();
+                setFileList([]);
+                setPreviewOpen(false);
+                setPreviewImage('');
                 await dispatch(fetchDevices(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 setOpenModalUpdateDevice(false);
             }
@@ -75,6 +122,33 @@ const ModalUpdateDevice = (props: IProps) => {
         }
     };
 
+    /** Upload ảnh thiết bị (admin) và gán tên file vào field hidden `imageUrl`. */
+    const handleUpload = async ({ file, onSuccess, onError }: any) => {
+        try {
+            const res = await uploadImageDevice(file);
+            const imageUrl = res.data?.fileName;
+            const url = res.data?.url;
+
+            // Lưu tên file ảnh vào request DTO.
+            form.setFieldValue('imageUrl', imageUrl);
+            setFileList([
+                {
+                    uid: file.uid || Date.now(),
+                    name: file.name,
+                    status: 'done',
+                    url,
+                    originFileObj: file,
+                },
+            ]);
+            onSuccess?.('ok');
+            toast.success('Upload ảnh thiết bị thành công');
+        } catch (err) {
+            console.error(err);
+            onError?.(err);
+            toast.error('Upload ảnh thất bại');
+        }
+    };
+
     useEffect(() => {
         if (!deviceEdit) return;
         form.resetFields();
@@ -84,7 +158,24 @@ const ModalUpdateDevice = (props: IProps) => {
             quantity: deviceEdit.quantity,
             status: deviceEdit.status,
             deviceType: deviceEdit.deviceType,
+            imageUrl: deviceEdit.imageUrl ?? null,
         });
+
+        // Nạp fileList để hiển thị preview ảnh hiện tại (nếu đã cấu hình).
+        if (deviceEdit.imageUrl) {
+            setFileList([
+                {
+                    uid: `existing-${deviceEdit.id}`,
+                    name: deviceEdit.imageUrl,
+                    status: 'done',
+                    url: `/storage/device/${deviceEdit.imageUrl}`,
+                },
+            ]);
+        } else {
+            setFileList([]);
+        }
+        setPreviewOpen(false);
+        setPreviewImage('');
     }, [deviceEdit]);
 
     return (
@@ -97,7 +188,11 @@ const ModalUpdateDevice = (props: IProps) => {
             cancelText="Hủy"
             confirmLoading={submitting}
             onOk={() => form.submit()}
-            onCancel={() => setOpenModalUpdateDevice(false)}
+            onCancel={() => {
+                setOpenModalUpdateDevice(false);
+                setPreviewOpen(false);
+                setPreviewImage('');
+            }}
         >
             <div>
                 <hr />
@@ -141,6 +236,34 @@ const ModalUpdateDevice = (props: IProps) => {
 
                     <Form.Item label="Loại thiết bị" name="deviceType" rules={[{ required: true }]}>
                         <Select options={DEVICE_TYPE_OPTIONS} />
+                    </Form.Item>
+
+                    <Form.Item label="Ảnh thiết bị">
+                        <Upload
+                            listType="picture-circle"
+                            fileList={fileList}
+                            onPreview={handlePreview}
+                            onChange={handleChange}
+                            customRequest={handleUpload}
+                            accept=".jpg,.jpeg,.png,.webp"
+                        >
+                            {fileList.length >= 1 ? null : uploadButton}
+                        </Upload>
+
+                        {previewImage ? (
+                            <Image
+                                preview={{
+                                    visible: previewOpen,
+                                    onVisibleChange: (visible) => setPreviewOpen(visible),
+                                }}
+                                src={previewImage}
+                                style={{ display: 'none' }}
+                            />
+                        ) : null}
+                    </Form.Item>
+
+                    <Form.Item name="imageUrl" hidden>
+                        <Input />
                     </Form.Item>
                 </Form>
             </div>

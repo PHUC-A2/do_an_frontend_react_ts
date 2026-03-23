@@ -25,6 +25,9 @@ import PitchPage from '../pages/client/pitch/PitchPage';
 import PitchDetailsPage from '../pages/client/pitch/PitchDetailsPage';
 import AssetPage from '../pages/client/asset/AssetPage';
 import AssetDetailsPage from '../pages/client/asset/AssetDetailsPage';
+import RoomsPage from '../pages/client/rooms/RoomsPage';
+import RoomDetailsPage from '../pages/client/rooms/RoomDetailsPage';
+import RoomBookingPage from '../pages/client/rooms/booking/RoomBookingPage';
 import AdminPaymentPage from '../pages/admin/payment/AdminPaymentPage';
 import AdminEquipmentPage from '../pages/admin/equipment/AdminEquipmentPage';
 import AdminBookingEquipmentPage from '../pages/admin/bookingequipment/AdminBookingEquipmentPage';
@@ -105,6 +108,9 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
                         { path: "/pitch/:id", element: <PitchDetailsPage /> },
                         { path: "/asset", element: <AssetPage theme={theme} /> },
                         { path: "/asset/:id", element: <AssetDetailsPage /> },
+                        { path: "/rooms", element: <RoomsPage theme={theme} /> },
+                        { path: "/rooms/:id", element: <RoomDetailsPage /> },
+                        { path: "/rooms/booking/:assetId", element: <RoomBookingPage theme={theme} /> },
                         { path: "/booking/:pitchId", element: <BookingPage theme={theme} /> },
                         { path: "/about", element: <AboutPage theme={theme} /> },
                         { path: "/terms", element: <TermsOfService theme={theme} /> },

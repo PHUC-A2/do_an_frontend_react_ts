@@ -113,7 +113,7 @@ const AdminCheckoutPage = () => {
             const m = error?.response?.data?.message ?? 'Không xác định';
             toast.error(
                 <>
-                    <div>Có lỗi khi tải chi tiết phiếu nhận</div>
+                    <div>Có lỗi khi tải chi tiết biên bản nhận phòng</div>
                     <div>{m}</div>
                 </>
             );
@@ -236,28 +236,28 @@ const AdminCheckoutPage = () => {
                 (meta.page - 1) * meta.pageSize + index + 1,
         },
         { title: 'ID', dataIndex: 'id', key: 'id', sorter: true },
-        { title: 'ID đăng ký', dataIndex: 'assetUsageId', key: 'assetUsage.id', sorter: true },
+        { title: 'ID lịch đặt phòng', dataIndex: 'assetUsageId', key: 'assetUsage.id', sorter: true },
         {
-            title: 'User',
+            title: 'Người dùng',
             key: 'user',
             render: (_: unknown, r: ICheckout) => r.userEmail || r.userName || '-',
         },
         {
-            title: 'Tài sản',
+            title: 'Phòng',
             dataIndex: 'assetName',
             key: 'assetUsage.asset.assetName',
             sorter: true,
             render: (t?: string | null) => t || '-',
         },
         {
-            title: 'Ngày usage',
+            title: 'Ngày đặt phòng',
             dataIndex: 'usageDate',
             key: 'assetUsage.usageDate',
             sorter: true,
             render: (d?: string) => (d ? formatLocalDate(d) : '-'),
         },
         {
-            title: 'Trạng thái đ.ký',
+            title: 'Trạng thái lịch đặt',
             dataIndex: 'assetUsageStatus',
             key: 'assetUsage.status',
             sorter: true,
@@ -269,7 +269,7 @@ const AdminCheckoutPage = () => {
                 ),
         },
         {
-            title: 'Nhận lúc',
+            title: 'Nhận phòng lúc',
             dataIndex: 'receiveTime',
             key: 'receiveTime',
             sorter: true,
@@ -298,8 +298,8 @@ const AdminCheckoutPage = () => {
                     </PermissionWrapper>
                     <PermissionWrapper required="CHECKOUT_DELETE">
                         <Popconfirm
-                            title="Xóa phiếu nhận"
-                            description="Bạn có chắc chắn muốn xóa? Trạng thái đăng ký có thể được hoàn về Đã duyệt nếu đang Đang dùng."
+                            title="Xóa biên bản nhận phòng"
+                            description="Bạn có chắc chắn muốn xóa? Trạng thái lịch đặt phòng có thể được hoàn về Đã duyệt nếu đang Đang sử dụng."
                             onConfirm={() => handleDelete(record.id)}
                             onCancel={cancel}
                             okText="Có"
@@ -322,19 +322,19 @@ const AdminCheckoutPage = () => {
             <AdminWrapper>
                 <Card
                     size="small"
-                    title="Phiếu nhận tài sản (Checkout)"
+                    title="Quản lý biên bản nhận phòng"
                     extra={
                         <Space align="center" wrap>
                             <Input.Search
                                 allowClear
-                                placeholder="Tìm email, tài sản, mục đích, ghi chú"
+                                placeholder="Tìm email, phòng, mục đích, ghi chú"
                                 style={{ width: 240 }}
                                 value={searchInput}
                                 onChange={(e) => setSearchInput(e.target.value)}
                             />
                             <Select<number>
                                 allowClear
-                                placeholder="Lọc theo đăng ký"
+                                placeholder="Lọc theo lịch đặt phòng"
                                 style={{ width: 220 }}
                                 loading={loadingUsageOpts}
                                 value={filterAssetUsageId}
@@ -352,7 +352,7 @@ const AdminCheckoutPage = () => {
                                     onClick={() => setOpenAdd(true)}
                                 >
                                     <IoIosAddCircle />
-                                    Thêm phiếu nhận
+                                    Thêm biên bản nhận
                                 </RBButton>
                             </PermissionWrapper>
                             <Button
@@ -373,7 +373,7 @@ const AdminCheckoutPage = () => {
                 >
                     <PermissionWrapper
                         required="CHECKOUT_VIEW_LIST"
-                        fallback={<Empty description="Bạn không có quyền xem danh sách phiếu nhận tài sản" />}
+                        fallback={<Empty description="Bạn không có quyền xem danh sách biên bản nhận phòng" />}
                     >
                         <Table<ICheckout>
                             columns={columns}

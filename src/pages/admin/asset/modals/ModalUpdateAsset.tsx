@@ -111,6 +111,7 @@ const ModalUpdateAsset = (props: IProps) => {
         form.resetFields();
         form.setFieldsValue({
             assetName: assetEdit.assetName,
+            responsibleName: assetEdit.responsibleName ?? undefined,
             location: assetEdit.location ?? undefined,
             capacity: assetEdit.capacity ?? undefined,
             assetsUrl: assetEdit.assetsUrl ?? undefined,
@@ -151,6 +152,10 @@ const ModalUpdateAsset = (props: IProps) => {
                         rules={[{ required: true, message: 'Vui lòng nhập tên tài sản!' }]}
                     >
                         <Input />
+                    </Form.Item>
+
+                    <Form.Item label="Người phụ trách phòng" name="responsibleName">
+                        <Input placeholder="Ví dụ: Thầy/Cô phụ trách" />
                     </Form.Item>
 
                     <Form.Item label="Vị trí" name="location">

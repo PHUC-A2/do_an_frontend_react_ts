@@ -40,7 +40,7 @@ const ModalUpdateDeviceReturn = (props: IProps) => {
             setSubmitting(true);
             const res = await updateDeviceReturn(returnEdit.id, payload);
             if (res.data.statusCode === 200) {
-                toast.success('Cập nhật phiếu trả thành công');
+                toast.success('Cập nhật biên bản trả phòng thành công');
                 form.resetFields();
                 await dispatch(fetchDeviceReturns(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 setOpenModalUpdateDeviceReturn(false);
@@ -69,7 +69,7 @@ const ModalUpdateDeviceReturn = (props: IProps) => {
 
     return (
         <Modal
-            title="Cập nhật phiếu trả tài sản"
+            title="Cập nhật biên bản trả phòng"
             maskClosable={false}
             closable={{ 'aria-label': 'Custom Close Button' }}
             open={openModalUpdateDeviceReturn}
@@ -83,9 +83,9 @@ const ModalUpdateDeviceReturn = (props: IProps) => {
                 <hr />
                 <Form<FormVals> form={form} onFinish={handleEdit} layout="vertical" autoComplete="off">
                     <Form.Item
-                        label="Thời điểm trả"
+                        label="Thời điểm trả phòng"
                         name="returnAt"
-                        rules={[{ required: true, message: 'Chọn thời điểm!' }]}
+                        rules={[{ required: true, message: 'Vui lòng chọn thời điểm trả phòng!' }]}
                     >
                         <DatePicker showTime style={{ width: '100%' }} format="YYYY-MM-DD HH:mm:ss" />
                     </Form.Item>

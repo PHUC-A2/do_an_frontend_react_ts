@@ -59,7 +59,7 @@ const ModalUpdateAssetUsage = (props: IProps) => {
                 if (ar.data.statusCode === 200 && ar.data.data?.result) setAssets(ar.data.data.result);
             } catch (e) {
                 console.error(e);
-                toast.error('Không tải được danh sách người dùng / tài sản');
+                toast.error('Không tải được danh sách người dùng / phòng');
             } finally {
                 setLoadingRefs(false);
             }
@@ -86,7 +86,7 @@ const ModalUpdateAssetUsage = (props: IProps) => {
             setSubmitting(true);
             const res = await updateAssetUsage(usageEdit.id, payload);
             if (res.data.statusCode === 200) {
-                toast.success('Cập nhật đăng ký sử dụng tài sản thành công');
+                toast.success('Cập nhật lịch đặt phòng thành công');
                 form.resetFields();
                 await dispatch(fetchAssetUsages(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 setOpenModalUpdateAssetUsage(false);
@@ -121,7 +121,7 @@ const ModalUpdateAssetUsage = (props: IProps) => {
 
     return (
         <Modal
-            title="Cập nhật đăng ký sử dụng tài sản"
+            title="Cập nhật lịch đặt phòng"
             maskClosable={false}
             closable={{ 'aria-label': 'Custom Close Button' }}
             open={openModalUpdateAssetUsage}
@@ -152,15 +152,15 @@ const ModalUpdateAssetUsage = (props: IProps) => {
                     </Form.Item>
 
                     <Form.Item
-                        label="Tài sản"
+                        label="Phòng"
                         name="assetId"
-                        rules={[{ required: true, message: 'Vui lòng chọn tài sản!' }]}
+                        rules={[{ required: true, message: 'Vui lòng chọn phòng!' }]}
                     >
                         <Select
                             showSearch
                             optionFilterProp="label"
                             loading={loadingRefs}
-                            placeholder="Chọn tài sản"
+                            placeholder="Chọn phòng"
                             options={assets.map((a) => ({
                                 value: a.id,
                                 label: `${a.id} — ${a.assetName}`,
@@ -168,23 +168,23 @@ const ModalUpdateAssetUsage = (props: IProps) => {
                         />
                     </Form.Item>
 
-                    <Form.Item label="Loại" name="usageType" rules={[{ required: true }]}>
+                    <Form.Item label="Loại sử dụng" name="usageType" rules={[{ required: true }]}>
                         <Select options={ASSET_USAGE_TYPE_OPTIONS} />
                     </Form.Item>
 
-                    <Form.Item label="Ngày" name="date" rules={[{ required: true }]}>
+                    <Form.Item label="Ngày đặt phòng" name="date" rules={[{ required: true, message: 'Vui lòng chọn ngày đặt phòng!' }]}>
                         <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
                     </Form.Item>
 
-                    <Form.Item label="Giờ bắt đầu" name="startTime" rules={[{ required: true }]}>
+                    <Form.Item label="Giờ bắt đầu" name="startTime" rules={[{ required: true, message: 'Vui lòng chọn giờ bắt đầu!' }]}>
                         <TimePicker style={{ width: '100%' }} format="HH:mm:ss" needConfirm={false} />
                     </Form.Item>
 
-                    <Form.Item label="Giờ kết thúc" name="endTime" rules={[{ required: true }]}>
+                    <Form.Item label="Giờ kết thúc" name="endTime" rules={[{ required: true, message: 'Vui lòng chọn giờ kết thúc!' }]}>
                         <TimePicker style={{ width: '100%' }} format="HH:mm:ss" needConfirm={false} />
                     </Form.Item>
 
-                    <Form.Item label="Mục đích" name="subject" rules={[{ required: true }]}>
+                    <Form.Item label="Mục đích sử dụng" name="subject" rules={[{ required: true, message: 'Vui lòng nhập mục đích sử dụng!' }]}>
                         <Input.TextArea rows={2} />
                     </Form.Item>
 

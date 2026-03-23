@@ -14,6 +14,7 @@ import {
     FiLogIn,
     FiLogOut,
     FiMapPin,
+    FiMonitor,
     FiMenu,
     FiMoon,
     FiSearch,
@@ -41,6 +42,7 @@ import ModalAccount from '../../pages/auth/modal/ModalAccount';
 import ModalForget from '../../pages/auth/modal/ModalForget';
 import ModalUpdateAccount from '../../pages/auth/modal/ModalUpdateAccount';
 import ModalBookingHistory from '../../pages/client/booking/modals/ModalBookingHistory';
+import ModalRoomBookingHistory from '../../pages/client/rooms/booking/modals/ModalRoomBookingHistory';
 import { setLogout } from '../../redux/features/authSlice';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import styles from './Header.module.scss';
@@ -59,7 +61,7 @@ const { useBreakpoint } = Grid;
 const { Header: AntHeader } = Layout;
 
 interface NavItem {
-    key: 'home' | 'pitch' | 'booking' | 'about';
+    key: 'home' | 'pitch' | 'rooms' | 'booking' | 'about';
     label: string;
     to: string;
     matches: string[];
@@ -69,6 +71,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
     { key: 'home', label: 'Trang chủ', to: '/', matches: ['/'], icon: FiHome },
     { key: 'pitch', label: 'Sân bóng', to: '/pitch', matches: ['/pitch'], icon: FiMapPin },
+    { key: 'rooms', label: 'Phòng tin học', to: '/rooms', matches: ['/rooms'], icon: FiMonitor },
     { key: 'booking', label: 'Đặt sân', to: '/pitch', matches: ['/booking'], icon: FiBookOpen },
     { key: 'about', label: 'Giới thiệu', to: '/about', matches: ['/about'], icon: FiInfo },
 ];
@@ -137,6 +140,21 @@ const buildAssetSearchPath = (keyword: string, preserveSort?: string | null) => 
     return `/asset?${params.toString()}`;
 };
 
+/** Tìm kiếm trên trang phòng — cùng tham số URL như /asset, khác pathname /rooms. */
+const buildRoomsSearchPath = (keyword: string, preserveSort?: string | null) => {
+    const params = new URLSearchParams();
+    const trimmedKeyword = keyword.trim();
+    params.set('page', '1');
+    params.set('pageSize', String(DEFAULT_PITCH_PAGE_SIZE));
+    if (trimmedKeyword) {
+        params.set('keyword', trimmedKeyword);
+    }
+    if (preserveSort?.trim()) {
+        params.set('sort', preserveSort.trim());
+    }
+    return `/rooms?${params.toString()}`;
+};
+
 const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobileNavPortalEl }: HeaderProps) => {
     const screens = useBreakpoint();
     const isMobileLayout = screens.md !== true;
@@ -148,6 +166,7 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
     const [openModalUpdateAccount, setOpenModalUpdateAccount] = useState(false);
     const [openModalForget, setOpenModalForget] = useState(false);
     const [openModalBookingHistory, setOpenModalBookingHistory] = useState(false);
+    const [openModalRoomBookingHistory, setOpenModalRoomBookingHistory] = useState(false);
     const [notifications, setNotifications] = useState<INotification[]>([]);
     const [bellSoundEnabled, setBellSoundEnabled] = useState<boolean>(() => {
         if (typeof window === 'undefined') return true;
@@ -185,11 +204,12 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
-    const searchPlaceholder = location.pathname.startsWith('/asset')
-        ? 'Tìm tên tài sản, vị trí...'
+    const isAssetOrRoomsPath = location.pathname.startsWith('/asset') || location.pathname.startsWith('/rooms');
+    const searchPlaceholder = isAssetOrRoomsPath
+        ? 'Tìm tên phòng / tài sản, vị trí...'
         : 'Tìm tên sân, khu vực...';
-    const searchAriaLabel = location.pathname.startsWith('/asset') ? 'Từ khóa tìm tài sản' : 'Từ khóa tìm sân';
-    const searchTooltipTitle = location.pathname.startsWith('/asset') ? 'Tìm kiếm tài sản' : 'Tìm kiếm sân';
+    const searchAriaLabel = isAssetOrRoomsPath ? 'Từ khóa tìm phòng hoặc tài sản' : 'Từ khóa tìm sân';
+    const searchTooltipTitle = isAssetOrRoomsPath ? 'Tìm kiếm phòng / tài sản' : 'Tìm kiếm sân';
 
     useEffect(() => {
         localStorage.setItem(CLIENT_SOUND_PREF_KEY, bellSoundEnabled ? 'on' : 'off');
@@ -469,13 +489,15 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
                 try {
                     const notif: INotification = JSON.parse(e.data);
                     setNotifications(prev => [notif, ...prev]);
+                    const isRoomBookingNotif = (notif.message || '').toLowerCase().includes('phòng')
+                        || (notif.message || '').toLowerCase().includes('roombooking');
 
                     // Tiêu đề theo loại thông báo
                     const titleMap: Record<string, string> = {
-                        BOOKING_CREATED: '🏟️ Đặt sân thành công',
-                        BOOKING_PENDING_CONFIRMATION: '📝 Yêu cầu đặt sân mới',
-                        BOOKING_APPROVED: '✅ Booking đã được xác nhận',
-                        BOOKING_REJECTED: '❌ Booking đã bị từ chối',
+                        BOOKING_CREATED: isRoomBookingNotif ? '🏫 Đặt phòng thành công' : '🏟️ Đặt sân thành công',
+                        BOOKING_PENDING_CONFIRMATION: isRoomBookingNotif ? '📝 Yêu cầu đặt phòng mới' : '📝 Yêu cầu đặt sân mới',
+                        BOOKING_APPROVED: isRoomBookingNotif ? '✅ Lịch đặt phòng đã được xác nhận' : '✅ Booking đã được xác nhận',
+                        BOOKING_REJECTED: isRoomBookingNotif ? '❌ Lịch đặt phòng đã bị từ chối' : '❌ Booking đã bị từ chối',
                         EQUIPMENT_BORROWED: '🎽 Mượn thiết bị',
                         EQUIPMENT_RETURNED: '📦 Trả thiết bị',
                         EQUIPMENT_LOST: '⚠️ Báo mất thiết bị',
@@ -605,19 +627,39 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
         const currentPath = `${location.pathname}${location.search}`;
         const isPitchListingPage = location.pathname === '/pitch';
         const isAssetListingPage = location.pathname === '/asset';
+        const isRoomsListingPage = location.pathname === '/rooms';
+        const inAssetFlow = location.pathname.startsWith('/asset');
+        const inRoomsFlow = location.pathname.startsWith('/rooms');
         const sortParam = isPitchListingPage
             ? new URLSearchParams(location.search).get('sort')
-            : isAssetListingPage
+            : inAssetFlow || inRoomsFlow
                 ? new URLSearchParams(location.search).get('sort')
                 : null;
 
-        const nextPath = isAssetListingPage
-            ? trimmedKeyword
-                ? buildAssetSearchPath(trimmedKeyword, sortParam)
-                : buildAssetSearchPath('', sortParam)
-            : trimmedKeyword
+        let nextPath: string;
+        if (inAssetFlow) {
+            nextPath = isAssetListingPage
+                ? trimmedKeyword
+                    ? buildAssetSearchPath(trimmedKeyword, sortParam)
+                    : buildAssetSearchPath('', sortParam)
+                : trimmedKeyword
+                    ? buildAssetSearchPath(trimmedKeyword, sortParam)
+                    : currentPath;
+        } else if (inRoomsFlow) {
+            nextPath = isRoomsListingPage
+                ? trimmedKeyword
+                    ? buildRoomsSearchPath(trimmedKeyword, sortParam)
+                    : buildRoomsSearchPath('', sortParam)
+                : trimmedKeyword
+                    ? buildRoomsSearchPath(trimmedKeyword, sortParam)
+                    : currentPath;
+        } else {
+            nextPath = trimmedKeyword
                 ? buildPitchSearchPath(trimmedKeyword, sortParam)
-                : (isPitchListingPage ? buildPitchSearchPath('', sortParam) : currentPath);
+                : isPitchListingPage
+                    ? buildPitchSearchPath('', sortParam)
+                    : currentPath;
+        }
 
         if (currentPath === nextPath) {
             onMobileNavOpenChange(false);
@@ -701,6 +743,8 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
             }
         }
         closeAllPanels();
+        const normalizedMsg = (n.message || '').toLowerCase();
+        const isRoomBookingNotif = normalizedMsg.includes('phòng') || normalizedMsg.includes('roombooking');
         if (
             n.type === 'BOOKING_CREATED' || n.type === 'BOOKING_APPROVED' ||
             n.type === 'BOOKING_REJECTED' || n.type === 'BOOKING_PENDING_CONFIRMATION' ||
@@ -708,7 +752,15 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
             n.type === 'EQUIPMENT_BORROWED' || n.type === 'EQUIPMENT_RETURNED' ||
             n.type === 'EQUIPMENT_LOST' || n.type === 'EQUIPMENT_DAMAGED'
         ) {
+            if (isRoomBookingNotif) {
+                setOpenModalRoomBookingHistory(true);
+                return;
+            }
             setOpenModalBookingHistory(true);
+            return;
+        }
+        if (isRoomBookingNotif) {
+            setOpenModalRoomBookingHistory(true);
             return;
         }
         setOpenModalBookingHistory(true);
@@ -740,6 +792,18 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
         }
 
         setOpenModalBookingHistory(true);
+    };
+
+    const handleRoomBookingShortcut = () => {
+        closeAllPanels();
+
+        if (!isAuthenticated) {
+            toast.info('Vui lòng đăng nhập để xem lịch sử đặt phòng.');
+            navigate('/login');
+            return;
+        }
+
+        setOpenModalRoomBookingHistory(true);
     };
 
     const openAccountInfo = () => {
@@ -908,6 +972,9 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
                         </Flex>
                         <Tooltip title="Lịch đặt sân" placement="bottom" classNames={{ root: styles.headerTooltip }}>
                             <Button type="text" className={styles.actionButton} onClick={handleBookingShortcut} aria-label="Lịch đặt sân" icon={<FiCalendar />} />
+                        </Tooltip>
+                        <Tooltip title="Lịch sử đặt phòng" placement="bottom" classNames={{ root: styles.headerTooltip }}>
+                            <Button type="text" className={styles.actionButton} onClick={handleRoomBookingShortcut} aria-label="Lịch sử đặt phòng" icon={<FiMonitor />} />
                         </Tooltip>
                         <Tooltip title={isDark ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'} placement="bottom" classNames={{ root: styles.headerTooltip }}>
                             <Flex className={styles.themeSwitchShell}>
@@ -1109,6 +1176,10 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
                                 <FiCalendar />
                                 <Text>Lịch đặt</Text>
                             </Button>
+                            <Button type="text" className={styles.drawerQuickButton} onClick={handleRoomBookingShortcut}>
+                                <FiMonitor />
+                                <Text>Lịch sử phòng</Text>
+                            </Button>
                         </Flex>
 
                         {drawerNotifOpen && isAuthenticated && (
@@ -1223,6 +1294,10 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
             <ModalBookingHistory
                 openModalBookingHistory={openModalBookingHistory}
                 setOpenModalBookingHistory={setOpenModalBookingHistory}
+            />
+            <ModalRoomBookingHistory
+                open={openModalRoomBookingHistory}
+                onClose={() => setOpenModalRoomBookingHistory(false)}
             />
         </>
     );

@@ -102,7 +102,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const routeLabelMap: Record<string, string> = {
         admin: 'Bảng điều khiển',
         user: 'Người dùng',
-        asset: 'Tài sản',
+        asset: 'Tài sản · Phòng',
         device: 'Thiết bị theo tài sản',
         'device-issues': 'Sự cố thiết bị',
         'asset-usage': 'Sử dụng tài sản',
@@ -147,7 +147,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     };
 
     // Đặt '/admin' cuối cùng để khớp con (/admin/asset, ...) trước, tránh mọi URL bị coi là Dashboard
-    const routeMenuKeys = ['/admin/user', '/admin/asset', '/admin/device', '/admin/device-issues', '/admin/asset-usage', '/admin/checkouts', '/admin/returns', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/ai', '/admin/support', '/admin/v2/rooms', '/admin'];
+    const routeMenuKeys = ['/admin/user', '/admin/asset', '/admin/device', '/admin/device-issues', '/admin/asset-usage', '/admin/checkouts', '/admin/returns', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/ai', '/admin/support', '/admin'];
 
     const selectedMenuKey = useMemo(() => {
         const currentPath = location.pathname;
@@ -251,12 +251,14 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                 }
 
                 setNotifications(prev => [notif, ...prev]);
+                const isRoomBookingNotif = (notif.message || '').toLowerCase().includes('phòng')
+                    || (notif.message || '').toLowerCase().includes('roombooking');
 
                 const titleMap: Record<string, string> = {
-                    BOOKING_CREATED: '🏟️ Đặt sân thành công',
-                    BOOKING_PENDING_CONFIRMATION: '📝 Booking chờ duyệt',
-                    BOOKING_APPROVED: '✅ Booking đã được xác nhận',
-                    BOOKING_REJECTED: '❌ Booking đã bị từ chối',
+                    BOOKING_CREATED: isRoomBookingNotif ? '🏫 Đặt phòng thành công' : '🏟️ Đặt sân thành công',
+                    BOOKING_PENDING_CONFIRMATION: isRoomBookingNotif ? '📝 Lịch đặt phòng chờ duyệt' : '📝 Booking chờ duyệt',
+                    BOOKING_APPROVED: isRoomBookingNotif ? '✅ Lịch đặt phòng đã được xác nhận' : '✅ Booking đã được xác nhận',
+                    BOOKING_REJECTED: isRoomBookingNotif ? '❌ Lịch đặt phòng đã bị từ chối' : '❌ Booking đã bị từ chối',
                     EQUIPMENT_BORROWED: '🎽 Mượn thiết bị',
                     EQUIPMENT_RETURNED: '📦 Trả thiết bị',
                     EQUIPMENT_LOST: '⚠️ Báo mất thiết bị',
@@ -316,7 +318,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
 
                         ...(canViewAssets ? [{
                             key: '/admin/asset',
-                            label: <Link to="/admin/asset" className={styles.menuLink}>Tài sản</Link>,
+                            label: <Link to="/admin/asset" className={styles.menuLink}>Tài sản (phòng)</Link>,
                             icon: <AppstoreOutlined />,
                         }] : []),
 
@@ -504,6 +506,21 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         return match?.[1] ?? null;
     };
 
+    const extractAssetUsageId = (message: string): string | null => {
+        const m1 = message.match(/AssetUsage\s*#(\d+)/i);
+        if (m1?.[1]) return m1[1];
+        const m2 = message.match(/RoomBooking\s*#(\d+)/i);
+        if (m2?.[1]) return m2[1];
+        const m3 = message.match(/đặt phòng\s*#(\d+)/i);
+        if (m3?.[1]) return m3[1];
+        return null;
+    };
+
+    const isRoomBookingMessage = (message: string) => {
+        const normalized = message.toLowerCase();
+        return normalized.includes('phòng') || normalized.includes('room') || normalized.includes('assetusage');
+    };
+
     /** Nhấn vào dòng: chỉ đánh dấu đã đọc (đồng bộ luồng client Header) */
     const handleNotificationRowClick = async (notif: INotification) => {
         if (Date.now() - swipedDeleteRef.current.at < 350 && swipedDeleteRef.current.id === notif.id) {
@@ -534,6 +551,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         }
 
         const bookingId = extractBookingId(notif.message);
+        const assetUsageId = extractAssetUsageId(notif.message);
 
         if (notif.type === 'PAYMENT_CONFIRMED' || notif.type === 'PAYMENT_REQUESTED' || notif.type === 'PAYMENT_PROOF_UPLOADED') {
             navigate('/admin/payment');
@@ -545,6 +563,20 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
             navigate('/admin/booking-equipment');
             setNotifOpen(false);
             return;
+        }
+
+        if (
+            notif.type === 'BOOKING_CREATED' ||
+            notif.type === 'BOOKING_PENDING_CONFIRMATION' ||
+            notif.type === 'BOOKING_APPROVED' ||
+            notif.type === 'BOOKING_REJECTED'
+        ) {
+            const routeToRooms = isRoomBookingMessage(notif.message) || assetUsageId != null;
+            if (routeToRooms) {
+                navigate(assetUsageId ? `/admin/asset-usage?openAssetUsageId=${assetUsageId}` : '/admin/asset-usage');
+                setNotifOpen(false);
+                return;
+            }
         }
 
         if (bookingId) {

@@ -17,7 +17,7 @@ const ModalCheckoutDetails = (props: IProps) => {
 
     return (
         <Drawer
-            title="Chi tiết phiếu nhận tài sản"
+            title="Chi tiết biên bản nhận phòng"
             placement="right"
             onClose={() => setOpenModalCheckoutDetails(false)}
             open={openModalCheckoutDetails}
@@ -28,7 +28,7 @@ const ModalCheckoutDetails = (props: IProps) => {
                     items={[
                         {
                             key: 'usage',
-                            label: 'Đăng ký liên quan',
+                            label: 'Lịch đặt phòng liên quan',
                             children: (
                                 <Descriptions bordered column={1} size="small">
                                     <Descriptions.Item label="ID đăng ký">{checkout?.assetUsageId ?? 'N/A'}</Descriptions.Item>
@@ -41,7 +41,7 @@ const ModalCheckoutDetails = (props: IProps) => {
                                             'N/A'
                                         )}
                                     </Descriptions.Item>
-                                    <Descriptions.Item label="Tài sản">
+                                    <Descriptions.Item label="Phòng">
                                         {checkout?.assetId != null ? (
                                             <Text>
                                                 #{checkout.assetId} — {checkout.assetName ?? ''}
@@ -50,7 +50,7 @@ const ModalCheckoutDetails = (props: IProps) => {
                                             'N/A'
                                         )}
                                     </Descriptions.Item>
-                                    <Descriptions.Item label="Loại usage">
+                                    <Descriptions.Item label="Loại sử dụng">
                                         {checkout?.usageType ? (
                                             <Tag color={ASSET_USAGE_TYPE_META[checkout.usageType]?.color}>
                                                 {ASSET_USAGE_TYPE_META[checkout.usageType]?.label}
@@ -59,13 +59,13 @@ const ModalCheckoutDetails = (props: IProps) => {
                                             'N/A'
                                         )}
                                     </Descriptions.Item>
-                                    <Descriptions.Item label="Ngày / giờ đăng ký">
+                                    <Descriptions.Item label="Ngày / giờ đặt phòng">
                                         {checkout?.usageDate
                                             ? `${formatLocalDate(checkout.usageDate)} ${checkout.startTime ?? ''} → ${checkout.endTime ?? ''}`
                                             : 'N/A'}
                                     </Descriptions.Item>
                                     <Descriptions.Item label="Mục đích">{checkout?.subject ?? 'N/A'}</Descriptions.Item>
-                                    <Descriptions.Item label="Trạng thái đăng ký">
+                                    <Descriptions.Item label="Trạng thái lịch đặt phòng">
                                         {checkout?.assetUsageStatus ? (
                                             <Tag color={ASSET_USAGE_STATUS_META[checkout.assetUsageStatus]?.color}>
                                                 {ASSET_USAGE_STATUS_META[checkout.assetUsageStatus]?.label}
@@ -79,11 +79,11 @@ const ModalCheckoutDetails = (props: IProps) => {
                         },
                         {
                             key: 'checkout',
-                            label: 'Phiếu nhận',
+                            label: 'Biên bản nhận phòng',
                             children: (
                                 <Descriptions bordered column={1} size="small">
-                                    <Descriptions.Item label="ID phiếu">{checkout?.id ?? 'N/A'}</Descriptions.Item>
-                                    <Descriptions.Item label="Thời điểm nhận">
+                                    <Descriptions.Item label="ID biên bản">{checkout?.id ?? 'N/A'}</Descriptions.Item>
+                                    <Descriptions.Item label="Thời điểm nhận phòng">
                                         {formatInstant(checkout?.receiveTime)}
                                     </Descriptions.Item>
                                     <Descriptions.Item label="Tình trạng ban đầu">

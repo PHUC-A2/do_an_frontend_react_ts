@@ -2,6 +2,8 @@
 export interface IAsset {
     id: number;
     assetName: string;
+    /** Tên người phụ trách phòng (lấy từ lúc admin tạo tài sản/room). */
+    responsibleName?: string | null;
     location?: string | null;
     capacity?: number | null;
     /** URL ảnh tài sản (upload giống avatar user) */
@@ -15,6 +17,8 @@ export interface IAsset {
 /** Payload tạo mới — map ReqCreateAssetDTO */
 export interface ICreateAssetReq {
     assetName: string;
+    /** Tên người phụ trách phòng (tùy chọn). */
+    responsibleName?: string | null;
     location?: string | null;
     capacity?: number | null;
     assetsUrl?: string | null;
@@ -23,6 +27,8 @@ export interface ICreateAssetReq {
 /** Payload cập nhật — map ReqUpdateAssetDTO */
 export interface IUpdateAssetReq {
     assetName: string;
+    /** Tên người phụ trách phòng (tùy chọn). */
+    responsibleName?: string | null;
     location?: string | null;
     capacity?: number | null;
     assetsUrl?: string | null;

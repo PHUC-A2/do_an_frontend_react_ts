@@ -10,6 +10,8 @@ export interface IDevice {
     quantity: number;
     status: DeviceStatus;
     deviceType: DeviceType;
+    /** Tên file ảnh minh họa thiết bị (tùy chọn) để ghép /storage/device/. */
+    imageUrl?: string | null;
     createdAt: string;
     updatedAt?: string | null;
     createdBy: string;
@@ -22,6 +24,8 @@ export interface ICreateDeviceReq {
     quantity: number;
     status: DeviceStatus;
     deviceType: DeviceType;
+    /** Tên file ảnh minh họa thiết bị (tùy chọn). */
+    imageUrl?: string | null;
 }
 
 export interface IUpdateDeviceReq {
@@ -30,4 +34,6 @@ export interface IUpdateDeviceReq {
     quantity: number;
     status: DeviceStatus;
     deviceType: DeviceType;
+    /** Tên file ảnh minh họa thiết bị (tùy chọn). */
+    imageUrl?: string | null;
 }

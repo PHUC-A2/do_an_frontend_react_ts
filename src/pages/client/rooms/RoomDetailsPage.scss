@@ -1,0 +1,290 @@
+// Chi tiết phòng tin — bố cục giống PitchDetailsPage, viền nhấn xanh + vàng CSVC
+.room-details-page {
+    min-height      : 100vh;
+    --page-bg       : transparent;
+    --accent-room   : #1677ff;
+    background-color: transparent;
+    color           : var(--text-page);
+    --glass-card    : rgba(255, 255, 255, 0.52);
+    --glass-border  : rgba(255, 255, 255, 0.48);
+    --glass-shadow  : 0 20px 48px rgba(15, 23, 42, 0.14);
+
+    body.dark & {
+        --page-bg     : transparent;
+        --glass-card  : rgba(255, 255, 255, 0.09);
+        --glass-border: rgba(255, 255, 255, 0.18);
+        --glass-shadow: 0 22px 50px rgba(2, 6, 23, 0.42);
+    }
+
+    .loading-container {
+        height         : 100vh;
+        display        : flex;
+        justify-content: center;
+        align-items    : center;
+        background     : transparent;
+    }
+
+    .main-row {
+        min-height : 100vh;
+        height     : auto;
+        max-width  : 1240px;
+        margin     : 0 auto;
+        padding    : 18px;
+        align-items: flex-start;
+    }
+
+    .media-section {
+        background: transparent;
+        position  : relative;
+
+        @media (min-width: 992px) {
+            padding-right: 14px;
+            position     : sticky;
+            top          : 18px;
+            align-self   : flex-start;
+            height       : calc(100vh - 36px);
+        }
+
+        .sticky-container {
+            height       : 100%;
+            width        : 100%;
+            border-radius: 18px;
+            overflow     : hidden;
+            box-shadow   : var(--glass-shadow);
+        }
+
+        .room-hero-image {
+            width     : 100%;
+            height    : min(66vh, 560px) !important;
+            object-fit: cover;
+            opacity   : 0.92;
+
+            @media (min-width: 992px) {
+                height: 100% !important;
+            }
+        }
+
+        .back-btn-glass {
+            position       : absolute;
+            top            : 24px;
+            left           : 24px;
+            z-index        : 10;
+            background     : rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border         : 1px solid rgba(255, 255, 255, 0.3);
+            color          : #fff;
+
+            &:hover {
+                background: var(--text-color);
+                color     : #fff;
+            }
+        }
+
+        .status-overlay {
+            position: absolute;
+            bottom  : 30px;
+            left    : 30px;
+
+            .status-tag-vip {
+                padding       : 4px 16px;
+                border-radius : 20px;
+                font-weight   : 600;
+                font-size     : 14px;
+                text-transform: uppercase;
+                box-shadow    : 0 4px 15px rgba(0, 0, 0, 0.3);
+                border        : 1px solid color-mix(in srgb, var(--accent-room) 35%, transparent);
+            }
+        }
+    }
+
+    .content-section {
+        height    : auto;
+        overflow-y: visible;
+        background: transparent;
+
+        @media (min-width: 992px) {
+            padding-left: 14px;
+        }
+
+        &::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background   : var(--text-color);
+            border-radius: 10px;
+        }
+
+        .scroll-content {
+            padding: 22px 10px 30px;
+        }
+
+        .header-box {
+            margin-bottom: 4px;
+        }
+
+        .address-line {
+            margin-top: 4px;
+        }
+
+        .room-title {
+            color         : var(--text-page) !important;
+            font-size     : clamp(2rem, 4vw, 2.6rem) !important;
+            margin-bottom : 8px !important;
+            letter-spacing: -0.03em;
+            line-height   : 1.1;
+        }
+
+        .booking-card-wrapper {
+            margin-top: 8px;
+        }
+
+        .booking-card-glass {
+            background             : var(--glass-card);
+            border                 : 1px solid var(--glass-border);
+            border-radius          : 16px;
+            margin                 : 20px 0 24px;
+            box-shadow             : var(--glass-shadow);
+            backdrop-filter        : blur(18px) saturate(1.15);
+            -webkit-backdrop-filter: blur(18px) saturate(1.15);
+            border-left            : 4px solid color-mix(in srgb, var(--accent-room) 65%, #faad14);
+
+            .price-label {
+                font-size     : 12px;
+                letter-spacing: 2px;
+                color         : var(--text-color);
+                opacity       : 0.7;
+            }
+
+            .price-value-big {
+                font-size  : 32px;
+                font-weight: 800;
+                color      : var(--accent-room);
+
+                small {
+                    font-size  : 14px;
+                    font-weight: 400;
+                    margin-left: 4px;
+                    color      : #faad14;
+                }
+            }
+
+            .btn-book-now {
+                height       : 48px;
+                padding      : 0 24px;
+                border-radius: 12px;
+                font-weight  : 700;
+                background   : #faad14;
+                color        : #fff;
+                border       : none;
+
+                &:hover {
+                    transform : scale(1.03);
+                    background: #d48806;
+                    color     : #fff;
+                }
+            }
+        }
+
+        .feature-item-card {
+            background             : var(--glass-card);
+            border-radius          : 12px;
+            border                 : 1px solid var(--glass-border);
+            border-left            : 4px solid var(--accent-room);
+            backdrop-filter        : blur(18px) saturate(1.15);
+            -webkit-backdrop-filter: blur(18px) saturate(1.15);
+            box-shadow             : var(--glass-shadow);
+
+            .ant-typography {
+                color: var(--text-page);
+            }
+        }
+
+        .room-detail-collapse {
+            background: transparent;
+
+            .ant-collapse-item {
+                background   : var(--glass-card);
+                border       : 1px solid var(--glass-border);
+                border-left  : 4px solid color-mix(in srgb, var(--accent-room) 55%, #faad14);
+                border-radius: 12px;
+                overflow     : hidden;
+                box-shadow   : var(--glass-shadow);
+                margin-bottom: 12px;
+            }
+
+            .ant-collapse-header {
+                align-items: center !important;
+            }
+
+            .detail-line {
+                display        : flex;
+                align-items    : center;
+                gap            : 8px;
+                justify-content: flex-start;
+                flex-wrap      : wrap;
+            }
+
+            .detail-line--map {
+                justify-content: space-between;
+            }
+        }
+
+        .utility-tag {
+            background   : color-mix(in srgb, var(--accent-room) 10%, rgba(250, 173, 20, 0.08));
+            border       : 1px solid color-mix(in srgb, var(--accent-room) 22%, rgba(250, 173, 20, 0.2));
+            color        : var(--text-page);
+            padding      : 4px 12px;
+            border-radius: 6px;
+        }
+    }
+}
+
+@media (max-width: 992px) {
+    .room-details-page {
+        .main-row {
+            min-height: auto;
+            padding   : 0;
+        }
+
+        .media-section {
+            .room-hero-image {
+                height: 40vh !important;
+            }
+
+            .sticky-container {
+                border-radius: 0;
+                box-shadow   : none;
+            }
+        }
+
+        .content-section {
+            height                 : auto;
+            margin-top             : -30px;
+            border-radius          : 30px 30px 0 0;
+            position               : relative;
+            z-index                : 5;
+            background             : var(--glass-card);
+            backdrop-filter        : blur(20px) saturate(1.12);
+            -webkit-backdrop-filter: blur(20px) saturate(1.12);
+
+            .scroll-content {
+                padding: 40px 20px;
+            }
+
+            .room-title {
+                font-size: 32px !important;
+            }
+
+            .booking-card-glass .price-value-big {
+                font-size: 24px;
+            }
+        }
+
+        .media-section {
+            position: relative;
+            top     : auto;
+            height  : auto;
+        }
+    }
+}

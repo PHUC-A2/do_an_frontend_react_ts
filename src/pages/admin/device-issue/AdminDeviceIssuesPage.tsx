@@ -110,7 +110,7 @@ const AdminDeviceIssuesPage = () => {
             const m = error?.response?.data?.message ?? 'Không xác định';
             toast.error(
                 <>
-                    <div>Có lỗi khi tải chi tiết sự cố</div>
+                    <div>Có lỗi khi tải chi tiết báo cáo sự cố thiết bị phòng</div>
                     <div>{m}</div>
                 </>
             );
@@ -226,7 +226,7 @@ const AdminDeviceIssuesPage = () => {
             render: (_: unknown, r: IDeviceIssue) => `${r.deviceId} — ${r.deviceName ?? ''}`,
         },
         {
-            title: 'Tài sản',
+            title: 'Phòng',
             key: 'asset',
             sorter: true,
             render: (_: unknown, r: IDeviceIssue) => `${r.assetId} — ${r.assetName ?? ''}`,
@@ -272,8 +272,8 @@ const AdminDeviceIssuesPage = () => {
 
                     <PermissionWrapper required="DEVICE_ISSUE_DELETE">
                         <Popconfirm
-                            title="Xóa sự cố"
-                            description="Bạn có chắc chắn muốn xóa bản ghi này không?"
+                            title="Xóa báo cáo sự cố"
+                            description="Bạn có chắc chắn muốn xóa báo cáo sự cố này không?"
                             onConfirm={() => handleDelete(record.id)}
                             onCancel={cancel}
                             okText="Có"
@@ -298,19 +298,19 @@ const AdminDeviceIssuesPage = () => {
             <AdminWrapper>
                 <Card
                     size="small"
-                    title="Quản lý sự cố thiết bị"
+                    title="Quản lý báo cáo sự cố thiết bị phòng"
                     extra={
                         <Space align="center" wrap>
                             <Input.Search
                                 allowClear
-                                placeholder="Tìm mô tả, người báo, tên TB / tài sản"
+                                placeholder="Tìm mô tả, người báo, tên thiết bị / phòng"
                                 style={{ width: 280 }}
                                 value={searchInput}
                                 onChange={(e) => setSearchInput(e.target.value)}
                             />
                             <Select<number>
                                 allowClear
-                                placeholder="Lọc tài sản"
+                                placeholder="Lọc phòng"
                                 style={{ width: 200 }}
                                 loading={loadingAssetsFilter}
                                 value={filterAssetId}
@@ -358,7 +358,7 @@ const AdminDeviceIssuesPage = () => {
                 >
                     <PermissionWrapper
                         required="DEVICE_ISSUE_VIEW_LIST"
-                        fallback={<Empty description="Bạn không có quyền xem danh sách sự cố thiết bị" />}
+                        fallback={<Empty description="Bạn không có quyền xem danh sách báo cáo sự cố thiết bị phòng" />}
                     >
                         <Table<IDeviceIssue>
                             columns={columns}

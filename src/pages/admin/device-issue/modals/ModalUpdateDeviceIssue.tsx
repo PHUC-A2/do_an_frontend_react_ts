@@ -43,7 +43,7 @@ const ModalUpdateDeviceIssue = (props: IProps) => {
                 }
             } catch (e) {
                 console.error(e);
-                toast.error('Không tải được danh sách tài sản');
+                toast.error('Không tải được danh sách phòng');
             } finally {
                 setLoadingAssets(false);
             }
@@ -70,7 +70,7 @@ const ModalUpdateDeviceIssue = (props: IProps) => {
                 }
             } catch (e) {
                 console.error(e);
-                toast.error('Không tải được thiết bị theo tài sản');
+                toast.error('Không tải được thiết bị theo phòng');
                 setDevices([]);
             } finally {
                 setLoadingDevices(false);
@@ -89,7 +89,7 @@ const ModalUpdateDeviceIssue = (props: IProps) => {
             const res = await updateDeviceIssue(issueEdit.id, values);
             const body = res.data;
             if (body.statusCode === 200) {
-                toast.success('Cập nhật sự cố thiết bị thành công');
+                toast.success('Cập nhật báo cáo sự cố thiết bị phòng thành công');
                 form.resetFields();
                 await dispatch(fetchDeviceIssues(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 setOpenModalUpdateDeviceIssue(false);
@@ -121,7 +121,7 @@ const ModalUpdateDeviceIssue = (props: IProps) => {
 
     return (
         <Modal
-            title="Cập nhật sự cố thiết bị"
+            title="Cập nhật báo cáo sự cố thiết bị phòng"
             maskClosable={false}
             closable={{ 'aria-label': 'Custom Close Button' }}
             open={openModalUpdateDeviceIssue}
@@ -135,15 +135,15 @@ const ModalUpdateDeviceIssue = (props: IProps) => {
                 <hr />
                 <Form<IUpdateDeviceIssueReq> form={form} onFinish={handleEdit} layout="vertical" autoComplete="off">
                     <Form.Item
-                        label="Tài sản"
+                        label="Phòng"
                         name="assetId"
-                        rules={[{ required: true, message: 'Vui lòng chọn tài sản!' }]}
+                        rules={[{ required: true, message: 'Vui lòng chọn phòng!' }]}
                     >
                         <Select<number>
                             showSearch
                             optionFilterProp="label"
                             loading={loadingAssets}
-                            placeholder="Chọn tài sản"
+                            placeholder="Chọn phòng"
                             onChange={() => form.setFieldValue('deviceId', undefined)}
                             options={assets.map((a) => ({
                                 value: a.id,
@@ -162,7 +162,7 @@ const ModalUpdateDeviceIssue = (props: IProps) => {
                             optionFilterProp="label"
                             loading={loadingDevices}
                             disabled={watchedAssetId == null}
-                            placeholder="Chọn thiết bị thuộc tài sản"
+                            placeholder="Chọn thiết bị thuộc phòng"
                             options={devices.map((d) => ({
                                 value: d.id,
                                 label: `${d.id} — ${d.deviceName}`,
