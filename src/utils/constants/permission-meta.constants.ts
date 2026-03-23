@@ -23,6 +23,26 @@ export const LIST_PERMISSION: PermissionGroup[] = [
         ],
     },
     {
+        group: "ASSET",
+        items: [
+            { name: "ASSET_VIEW_LIST", description: "Xem danh sách tài sản" },
+            { name: "ASSET_VIEW_DETAIL", description: "Xem chi tiết tài sản" },
+            { name: "ASSET_CREATE", description: "Tạo tài sản" },
+            { name: "ASSET_UPDATE", description: "Cập nhật tài sản" },
+            { name: "ASSET_DELETE", description: "Xóa tài sản" },
+        ],
+    },
+    {
+        group: "DEVICE",
+        items: [
+            { name: "DEVICE_VIEW_LIST", description: "Xem danh sách thiết bị theo tài sản" },
+            { name: "DEVICE_VIEW_DETAIL", description: "Xem chi tiết thiết bị theo tài sản" },
+            { name: "DEVICE_CREATE", description: "Tạo thiết bị theo tài sản" },
+            { name: "DEVICE_UPDATE", description: "Cập nhật thiết bị theo tài sản" },
+            { name: "DEVICE_DELETE", description: "Xóa thiết bị theo tài sản" },
+        ],
+    },
+    {
         group: "ROLE",
         items: [
             { name: "ROLE_VIEW_LIST", description: "Xem danh sách vai trò" },

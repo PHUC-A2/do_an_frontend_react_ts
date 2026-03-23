@@ -16,6 +16,8 @@ import type { INotification } from "../types/notification";
 import type { IPitchTimeline } from "../types/timeline";
 import type { IGetUploadResponse } from "../types/upload";
 import type { IAssignRoleReq, ICreateUserReq, IUpdateUserReq, IUser, IUpdateUserStatusReq, IUpdateUserStatusRes } from "../types/user";
+import type { IAsset, ICreateAssetReq, IUpdateAssetReq } from "../types/asset";
+import type { ICreateDeviceReq, IDevice, IUpdateDeviceReq } from "../types/device";
 import instance from "./customAxios";
 
 export const register = (data: IRegister) => instance.post("/api/v1/auth/register", data);
@@ -61,6 +63,29 @@ export const deleteUser = (id: number) => instance.delete<IBackendRes<IUser>>(`/
 export const getUserById = (id: number) => instance.get<IBackendRes<IUser>>(`/api/v1/users/${id}`);
 export const updateUser = (id: number, data: IUpdateUserReq) => instance.put<IBackendRes<IUser>>(`/api/v1/users/${id}`, data);
 export const updateUserStatus = (id: number, data: IUpdateUserStatusReq) => instance.patch<IBackendRes<IUpdateUserStatusRes>>(`/api/v1/users/${id}/status`, data);
+
+/* api asset (tài sản) */
+export const getAllAssets = (query: string) => instance.get<IBackendRes<IModelPaginate<IAsset>>>(`/api/v1/assets?${query}`);
+export const createAsset = (data: ICreateAssetReq) => instance.post<IBackendRes<IAsset>>(`/api/v1/assets`, data);
+export const deleteAsset = (id: number) => instance.delete<IBackendRes<IAsset>>(`/api/v1/assets/${id}`);
+export const getAssetById = (id: number) => instance.get<IBackendRes<IAsset>>(`/api/v1/assets/${id}`);
+export const updateAsset = (id: number, data: IUpdateAssetReq) => instance.put<IBackendRes<IAsset>>(`/api/v1/assets/${id}`, data);
+
+/** Tài sản — public (không cần JWT), cùng pattern client/public/equipments */
+export const getPublicAssets = (query: string) =>
+    instance.get<IBackendRes<IModelPaginate<IAsset>>>(`/api/v1/client/public/assets?${query}`);
+export const getPublicAssetById = (id: number) =>
+    instance.get<IBackendRes<IAsset>>(`/api/v1/client/public/assets/${id}`);
+
+/* api device — thiết bị theo tài sản (bảng devices) */
+export const getAllDevices = (query: string) =>
+    instance.get<IBackendRes<IModelPaginate<IDevice>>>(`/api/v1/devices?${query}`);
+export const createDevice = (data: ICreateDeviceReq) =>
+    instance.post<IBackendRes<IDevice>>(`/api/v1/devices`, data);
+export const deleteDevice = (id: number) => instance.delete<IBackendRes<IDevice>>(`/api/v1/devices/${id}`);
+export const getDeviceById = (id: number) => instance.get<IBackendRes<IDevice>>(`/api/v1/devices/${id}`);
+export const updateDevice = (id: number, data: IUpdateDeviceReq) =>
+    instance.put<IBackendRes<IDevice>>(`/api/v1/devices/${id}`, data);
 
 /* api pitch */
 export const getAllPitches = (query: string) => instance.get<IBackendRes<IModelPaginate<IPitch>>>(`/api/v1/pitches?${query}`);
@@ -164,6 +189,21 @@ export const uploadImageAvatar = async (file: File) => {
     );
 
     return data; //  trả về đúng cấu trúc JSON từ backend
+};
+
+// upload ảnh tài sản (admin) — cùng API file, folder riêng
+export const uploadImageAsset = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', 'assets');
+
+    const { data } = await instance.post<IGetUploadResponse>(
+        '/api/v1/files/upload',
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+
+    return data;
 };
 
 // upload pitch image

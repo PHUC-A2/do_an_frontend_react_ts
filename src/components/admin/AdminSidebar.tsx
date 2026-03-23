@@ -1,7 +1,9 @@
-import { Layout, Menu, Breadcrumb, Button, Grid, Drawer, Switch, Tooltip, Typography, Avatar, Popover, Badge, Space } from 'antd';
+import { Layout, Menu, Breadcrumb, Button, Grid, Drawer, Switch, Tooltip, Typography, Avatar, Popover, Badge, Space, Modal } from 'antd';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type TouchEvent } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import {
+    AppstoreOutlined,
+    LaptopOutlined,
     BellOutlined,
     DeleteOutlined,
     UserOutlined,
@@ -17,7 +19,14 @@ import { FaReact, FaUserCircle, FaUserCog } from 'react-icons/fa';
 import ModalAccount from '../../pages/auth/modal/ModalAccount';
 import ModalForget from '../../pages/auth/modal/ModalForget';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
-import { clientDeleteNotification, clientGetNotifications, clientMarkAllNotificationsRead, logout } from '../../config/Api';
+import {
+    clientDeleteAllNotifications,
+    clientDeleteNotification,
+    clientGetNotifications,
+    clientMarkAllNotificationsRead,
+    clientMarkNotificationRead,
+    logout,
+} from '../../config/Api';
 import { toast } from 'react-toastify';
 import { setLogout } from '../../redux/features/authSlice';
 import { IoMenu, IoSunny, IoChevronBackOutline, IoChevronForwardOutline } from 'react-icons/io5';
@@ -34,6 +43,9 @@ const { Sider, Header, Content } = Layout;
 const { useBreakpoint } = Grid;
 const { Text } = Typography;
 const ADMIN_SOUND_PREF_KEY = 'tub_sport_admin_notification_sound';
+
+/** Nhắc lịch đá chỉ dành cho khách xem trên trang client; panel quản trị không hiển thị (tránh trùng khi tài khoản vừa ADMIN vừa là người đặt sân). */
+const isNotificationHiddenOnAdminPanel = (type: string) => type === 'MATCH_REMINDER';
 
 interface AdminSidebarProps {
     theme: 'light' | 'dark';
@@ -68,6 +80,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const isDark = theme === 'dark';
     const isViewRole = useRole("VIEW");
     const canViewUsers = usePermission("USER_VIEW_LIST");
+    const canViewAssets = usePermission("ASSET_VIEW_LIST");
+    const canViewDevices = usePermission("DEVICE_VIEW_LIST");
     const canViewRoles = usePermission("ROLE_VIEW_LIST");
     const canViewPermissions = usePermission("PERMISSION_VIEW_LIST");
     const canViewPitches = usePermission("PITCH_VIEW_LIST");
@@ -80,9 +94,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const routeLabelMap: Record<string, string> = {
         admin: 'Bảng điều khiển',
         user: 'Người dùng',
+        asset: 'Tài sản',
+        device: 'Thiết bị theo tài sản',
         role: 'Vai trò',
         permission: 'Quyền hạn',
         pitch: 'Sân bóng',
+        v2: 'Phòng tin học',
+        rooms: 'Phòng tin học',
         booking: 'Lịch đặt',
         payment: 'Thanh toán',
         equipment: 'Thiết bị',
@@ -116,7 +134,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         }
     };
 
-    const routeMenuKeys = ['/admin', '/admin/user', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/ai', '/admin/support'];
+    // Đặt '/admin' cuối cùng để khớp con (/admin/asset, ...) trước, tránh mọi URL bị coi là Dashboard
+    const routeMenuKeys = ['/admin/user', '/admin/asset', '/admin/device', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/ai', '/admin/support', '/admin/v2/rooms', '/admin'];
 
     const selectedMenuKey = useMemo(() => {
         const currentPath = location.pathname;
@@ -130,6 +149,15 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     }, [location.pathname]);
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
+
+    /** Độ rộng drawer menu mobile — đồng bộ với desktop Sider (280 / 88) */
+    const mobileDrawerStyles = useMemo(
+        () => ({
+            body: { padding: collapsed ? 6 : 12 },
+            wrapper: { width: collapsed ? 88 : 280 },
+        }),
+        [collapsed]
+    );
 
     useEffect(() => {
         localStorage.setItem(ADMIN_SOUND_PREF_KEY, bellSoundEnabled ? 'on' : 'off');
@@ -205,6 +233,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         es.addEventListener('notification', (e: MessageEvent) => {
             try {
                 const notif: INotification = JSON.parse(e.data);
+                // Bỏ qua hoàn toàn: không đưa vào danh sách admin, không chuông / popup hệ thống
+                if (isNotificationHiddenOnAdminPanel(notif.type)) {
+                    return;
+                }
+
                 setNotifications(prev => [notif, ...prev]);
 
                 const titleMap: Record<string, string> = {
@@ -219,7 +252,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                     PAYMENT_REQUESTED: '💸 Yêu cầu thanh toán QR',
                     PAYMENT_PROOF_UPLOADED: '🧾 Đã tải minh chứng thanh toán',
                     PAYMENT_CONFIRMED: '💳 Thanh toán xác nhận',
-                    MATCH_REMINDER: '⏰ Sắp đến giờ đá!',
                 };
 
                 if (bellSoundEnabled) {
@@ -266,43 +298,54 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                     ? [
                         ...(canViewUsers ? [{
                             key: '/admin/user',
-                            label: <Link to="/admin/user" className={styles.menuLink}>QL Người dùng</Link>,
+                            label: <Link to="/admin/user" className={styles.menuLink}>Người dùng</Link>,
                             icon: <UserOutlined />,
+                        }] : []),
+
+                        ...(canViewAssets ? [{
+                            key: '/admin/asset',
+                            label: <Link to="/admin/asset" className={styles.menuLink}>Tài sản</Link>,
+                            icon: <AppstoreOutlined />,
+                        }] : []),
+
+                        ...(canViewDevices ? [{
+                            key: '/admin/device',
+                            label: <Link to="/admin/device" className={styles.menuLink}>Thiết bị theo tài sản</Link>,
+                            icon: <LaptopOutlined />,
                         }] : []),
 
                         ...(canViewRoles ? [{
                             key: '/admin/role',
-                            label: <Link to="/admin/role" className={styles.menuLink}>QL Vai trò</Link>,
+                            label: <Link to="/admin/role" className={styles.menuLink}>Vai trò</Link>,
                             icon: <FaUserCog />,
                         }] : []),
 
                         ...(canViewPermissions ? [{
                             key: '/admin/permission',
-                            label: <Link to="/admin/permission" className={styles.menuLink}>QL Quyền hạn</Link>,
+                            label: <Link to="/admin/permission" className={styles.menuLink}>Quyền hạn</Link>,
                             icon: <MdOutlineSecurity />,
                         }] : []),
 
                         ...(canViewPitches ? [{
                             key: '/admin/pitch',
-                            label: <Link to="/admin/pitch" className={styles.menuLink}>QL Sân</Link>,
+                            label: <Link to="/admin/pitch" className={styles.menuLink}>Sân bóng</Link>,
                             icon: <PiSoccerBallBold />,
                         }] : []),
-
                         ...(canViewBookings ? [{
                             key: '/admin/booking',
-                            label: <Link to="/admin/booking" className={styles.menuLink}>QL Lịch đặt</Link>,
+                            label: <Link to="/admin/booking" className={styles.menuLink}>Lịch đặt</Link>,
                             icon: <TbBrandBooking />,
                         }] : []),
 
                         ...(canViewPayments ? [{
                             key: '/admin/payment',
-                            label: <Link to="/admin/payment" className={styles.menuLink}>QL thanh toán</Link>,
+                            label: <Link to="/admin/payment" className={styles.menuLink}>Thanh toán</Link>,
                             icon: <MdPayments />,
                         }] : []),
 
                         ...(canViewEquipments ? [{
                             key: '/admin/equipment',
-                            label: <Link to="/admin/equipment" className={styles.menuLink}>QL thiết bị</Link>,
+                            label: <Link to="/admin/equipment" className={styles.menuLink}>Thiết bị</Link>,
                             icon: <MdSportsHandball />,
                         }] : []),
 
@@ -314,7 +357,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
 
                         ...(canManageAi ? [{
                             key: '/admin/ai',
-                            label: <Link to="/admin/ai" className={styles.menuLink}>Quản lý AI</Link>,
+                            label: <Link to="/admin/ai" className={styles.menuLink}>AI</Link>,
                             icon: <RiRobot2Line />,
                         }] : []),
                         {
@@ -365,7 +408,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         clientGetNotifications()
             .then(res => {
                 if (res.data.statusCode === 200) {
-                    setNotifications(res.data.data ?? []);
+                    const raw = res.data.data ?? [];
+                    // Lọc thông báo chỉ dành cho khách (nhắc giờ đá) khỏi panel quản trị
+                    setNotifications(raw.filter(n => !isNotificationHiddenOnAdminPanel(n.type)));
                 }
             })
             .catch(() => { /* ignore */ });
@@ -399,14 +444,57 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         }
     };
 
+    const handleDeleteAllNotifications = () => {
+        if (notifications.length === 0) return;
+        Modal.confirm({
+            title: 'Xóa tất cả thông báo?',
+            content: 'Các mục sẽ được ẩn khỏi danh sách của bạn.',
+            okText: 'Xóa tất cả',
+            cancelText: 'Hủy',
+            okButtonProps: { danger: true },
+            onOk: async () => {
+                try {
+                    await clientDeleteAllNotifications();
+                    setNotifications([]);
+                } catch {
+                    toast.error('Không thể xóa thông báo');
+                }
+            },
+        });
+    };
+
     const extractBookingId = (message: string): string | null => {
         const match = message.match(/Booking\s*#(\d+)/i);
         return match?.[1] ?? null;
     };
 
-    const handleNotificationDetail = (notif: INotification) => {
+    /** Nhấn vào dòng: chỉ đánh dấu đã đọc (đồng bộ luồng client Header) */
+    const handleNotificationRowClick = async (notif: INotification) => {
         if (Date.now() - swipedDeleteRef.current.at < 350 && swipedDeleteRef.current.id === notif.id) {
             return;
+        }
+        if (!notif.isRead) {
+            try {
+                await clientMarkNotificationRead(notif.id);
+                setNotifications(prev => prev.map(item => (item.id === notif.id ? { ...item, isRead: true } : item)));
+            } catch {
+                /* bỏ qua */
+            }
+        }
+    };
+
+    /** “Xem chi tiết”: đánh dấu đã đọc rồi điều hướng tới trang liên quan */
+    const handleNotificationOpenDetail = async (notif: INotification) => {
+        if (Date.now() - swipedDeleteRef.current.at < 350 && swipedDeleteRef.current.id === notif.id) {
+            return;
+        }
+        if (!notif.isRead) {
+            try {
+                await clientMarkNotificationRead(notif.id);
+                setNotifications(prev => prev.map(item => (item.id === notif.id ? { ...item, isRead: true } : item)));
+            } catch {
+                /* vẫn mở chi tiết */
+            }
         }
 
         const bookingId = extractBookingId(notif.message);
@@ -455,7 +543,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         <div className={styles.notifCard}>
             <div className={styles.notifHeader}>
                 <span className={styles.notifTitle}>Thông báo quản trị</span>
-                <Space size={10} className={styles.notifActions}>
+                <Space size={10} wrap className={styles.notifActions}>
                     <span className={styles.notifSoundLabel}>Âm</span>
                     <Switch
                         size="small"
@@ -463,8 +551,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                         onChange={setBellSoundEnabled}
                     />
                     {unreadCount > 0 && (
-                        <button className={styles.notifMarkAll} onClick={handleMarkAllRead}>
+                        <button type="button" className={styles.notifMarkAll} onClick={handleMarkAllRead}>
                             Đánh dấu đã đọc
+                        </button>
+                    )}
+                    {notifications.length > 0 && (
+                        <button type="button" className={styles.notifDeleteAll} onClick={handleDeleteAllNotifications}>
+                            Xóa tất cả
                         </button>
                     )}
                 </Space>
@@ -477,7 +570,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                         <div
                             key={notif.id}
                             className={`${styles.notifItem} ${!notif.isRead ? styles.notifItemUnread : ''} ${styles.notifItemClickable}`}
-                            onClick={() => handleNotificationDetail(notif)}
+                            onClick={() => void handleNotificationRowClick(notif)}
                             onTouchStart={(e) => handleNotifTouchStart(notif.id, e)}
                             onTouchEnd={(e) => handleNotifTouchEnd(notif.id, e)}
                             role="button"
@@ -485,10 +578,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
                                     e.preventDefault();
-                                    handleNotificationDetail(notif);
+                                    void handleNotificationRowClick(notif);
                                 }
                             }}
-                            title="Nhấn để xem chi tiết"
+                            title="Nhấn để đánh dấu đã đọc"
                         >
                             <BellOutlined className={styles.notifItemIcon} />
                             <div className={styles.notifItemBody}>
@@ -496,10 +589,21 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                                 <span className={styles.notifItemTime}>
                                     {new Date(notif.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
                                 </span>
+                                <button
+                                    type="button"
+                                    className={styles.notifDetailLink}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        void handleNotificationOpenDetail(notif);
+                                    }}
+                                >
+                                    Xem chi tiết
+                                </button>
                             </div>
                             <div className={styles.notifItemActions}>
                                 {!notif.isRead && <span className={styles.notifDot} />}
                                 <button
+                                    type="button"
                                     className={styles.notifDeleteBtn}
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -547,11 +651,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                         </Tooltip>
                     </div>
 
-                    {/* Bọc Menu trong vùng flex co giãn để phần dưới header có overflow-y và cuộn được trên desktop */}
                     <div className={styles.siderMenuScroll}>
                         <Menu
                             theme={isDark ? 'dark' : 'light'}
                             mode="inline"
+                            inlineCollapsed={collapsed}
                             items={menuItems}
                             selectedKeys={selectedMenuKey ? [selectedMenuKey] : []}
                             defaultOpenKeys={['features', 'settings']}
@@ -563,24 +667,44 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
 
             {!screens.md && (
                 <Drawer
-                    title={<span className={styles.drawerTitle}>UTB Admin</span>}
+                    /* Close bên trái, nút thu gọn (extra) bên phải — flex trong SCSS giữ title không đè nút */
+                    closable={{ placement: 'start' }}
+                    title={
+                        <span className={styles.mobileDrawerTitle}>
+                            <FaReact className={`icon-spin ${styles.brandIcon}`} />
+                            {!collapsed && <span className={styles.drawerTitle}>UTB Admin</span>}
+                        </span>
+                    }
+                    extra={
+                        <Tooltip title={collapsed ? 'Mở rộng' : 'Thu gọn'} placement="bottom">
+                            <Button
+                                type="text"
+                                onClick={() => setCollapsed(!collapsed)}
+                                className={`${styles.collapseButton} ${styles.drawerCollapseButton}`}
+                                icon={collapsed ? <IoChevronForwardOutline /> : <IoChevronBackOutline />}
+                            />
+                        </Tooltip>
+                    }
                     placement="left"
                     onClose={() => setDrawerVisible(false)}
                     open={drawerVisible}
                     rootClassName={styles.mobileDrawer}
                     rootStyle={cssVars}
-                    styles={{ body: { padding: 12 }, wrapper: { width: 280 } }}
+                    styles={mobileDrawerStyles}
                     mask={false}
                 >
-                    <Menu
-                        mode="inline"
-                        items={menuItems}
-                        theme={isDark ? 'dark' : 'light'}
-                        onClick={() => setDrawerVisible(false)}
-                        selectedKeys={selectedMenuKey ? [selectedMenuKey] : []}
-                        defaultOpenKeys={['features', 'settings']}
-                        className={styles.sidebarMenu}
-                    />
+                    <div className={styles.siderMenuScroll}>
+                        <Menu
+                            mode="inline"
+                            inlineCollapsed={collapsed}
+                            items={menuItems}
+                            theme={isDark ? 'dark' : 'light'}
+                            onClick={() => setDrawerVisible(false)}
+                            selectedKeys={selectedMenuKey ? [selectedMenuKey] : []}
+                            defaultOpenKeys={['features', 'settings']}
+                            className={styles.sidebarMenu}
+                        />
+                    </div>
                 </Drawer>
             )}
 

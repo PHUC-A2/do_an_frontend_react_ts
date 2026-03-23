@@ -11,6 +11,9 @@ import permissionReducer from './features/permissionSlice'
 import messengerButtonUiReducer from './features/messengerButtonUiSlice'
 import paymentReducer from './features/paymentSlice'
 import equipmentReducer from './features/equipmentSlice'
+import assetReducer from './features/assetSlice'
+import clientAssetReducer from './features/clientAssetSlice'
+import deviceReducer from './features/deviceSlice'
 
 export const store = configureStore({
     reducer: {
@@ -26,6 +29,9 @@ export const store = configureStore({
         messengerButtonUi: messengerButtonUiReducer,
         payment: paymentReducer,
         equipment: equipmentReducer,
+        asset: assetReducer,
+        clientAsset: clientAssetReducer,
+        device: deviceReducer,
     }
 })
 

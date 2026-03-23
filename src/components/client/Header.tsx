@@ -123,6 +123,20 @@ const buildPitchSearchPath = (keyword: string, preserveSort?: string | null) => 
     return `/pitch?${params.toString()}`;
 };
 
+const buildAssetSearchPath = (keyword: string, preserveSort?: string | null) => {
+    const params = new URLSearchParams();
+    const trimmedKeyword = keyword.trim();
+    params.set('page', '1');
+    params.set('pageSize', String(DEFAULT_PITCH_PAGE_SIZE));
+    if (trimmedKeyword) {
+        params.set('keyword', trimmedKeyword);
+    }
+    if (preserveSort?.trim()) {
+        params.set('sort', preserveSort.trim());
+    }
+    return `/asset?${params.toString()}`;
+};
+
 const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobileNavPortalEl }: HeaderProps) => {
     const screens = useBreakpoint();
     const isMobileLayout = screens.md !== true;
@@ -170,6 +184,12 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
     const accountMenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
+
+    const searchPlaceholder = location.pathname.startsWith('/asset')
+        ? 'Tìm tên tài sản, vị trí...'
+        : 'Tìm tên sân, khu vực...';
+    const searchAriaLabel = location.pathname.startsWith('/asset') ? 'Từ khóa tìm tài sản' : 'Từ khóa tìm sân';
+    const searchTooltipTitle = location.pathname.startsWith('/asset') ? 'Tìm kiếm tài sản' : 'Tìm kiếm sân';
 
     useEffect(() => {
         localStorage.setItem(CLIENT_SOUND_PREF_KEY, bellSoundEnabled ? 'on' : 'off');
@@ -584,10 +604,20 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
         const trimmedKeyword = searchValue.trim();
         const currentPath = `${location.pathname}${location.search}`;
         const isPitchListingPage = location.pathname === '/pitch';
-        const sortParam = isPitchListingPage ? new URLSearchParams(location.search).get('sort') : null;
-        const nextPath = trimmedKeyword
-            ? buildPitchSearchPath(trimmedKeyword, sortParam)
-            : (isPitchListingPage ? buildPitchSearchPath('', sortParam) : currentPath);
+        const isAssetListingPage = location.pathname === '/asset';
+        const sortParam = isPitchListingPage
+            ? new URLSearchParams(location.search).get('sort')
+            : isAssetListingPage
+                ? new URLSearchParams(location.search).get('sort')
+                : null;
+
+        const nextPath = isAssetListingPage
+            ? trimmedKeyword
+                ? buildAssetSearchPath(trimmedKeyword, sortParam)
+                : buildAssetSearchPath('', sortParam)
+            : trimmedKeyword
+                ? buildPitchSearchPath(trimmedKeyword, sortParam)
+                : (isPitchListingPage ? buildPitchSearchPath('', sortParam) : currentPath);
 
         if (currentPath === nextPath) {
             onMobileNavOpenChange(false);
@@ -777,18 +807,18 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
                                         setSearchValue(event.target.value);
                                     }}
                                     allowClear={{ clearIcon: <FiX className={styles.clearIcon} /> }}
-                                    placeholder="Tìm tên sân, khu vực..."
-                                    aria-label="Từ khóa tìm sân"
+                                    placeholder={searchPlaceholder}
+                                    aria-label={searchAriaLabel}
                                     onPressEnter={handleSearchPressEnter}
                                 />
                             </Flex>
 
-                            <Tooltip title="Tìm kiếm sân" placement="bottom" classNames={{ root: styles.headerTooltip }}>
+                            <Tooltip title={searchTooltipTitle} placement="bottom" classNames={{ root: styles.headerTooltip }}>
                                 <Button
                                     type="text"
                                     className={`${styles.actionButton} ${styles.desktopSearchToggle}${searchOpen ? ` ${styles.actionButtonActive}` : ''}`}
                                     onClick={handleDesktopSearchAction}
-                                    aria-label="Tìm kiếm sân"
+                                    aria-label={searchTooltipTitle}
                                     aria-expanded={searchOpen}
                                     icon={<FiSearch />}
                                 />
@@ -975,8 +1005,8 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
                                         setSearchValue(event.target.value);
                                     }}
                                     allowClear={{ clearIcon: <FiX className={styles.clearIcon} /> }}
-                                    placeholder="Tìm tên sân..."
-                                    aria-label="Tìm sân trên mobile"
+                                    placeholder={searchPlaceholder}
+                                    aria-label={searchAriaLabel}
                                     onPressEnter={handleSearchPressEnter}
                                 />
                             </Flex>
@@ -984,7 +1014,7 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
                                 type="text"
                                 className={`${styles.actionButton} ${styles.mobileSearchToggle}${searchOpen ? ` ${styles.actionButtonActive}` : ''}`}
                                 onClick={handleMobileSearchAction}
-                                aria-label="Tìm kiếm sân"
+                                aria-label={searchTooltipTitle}
                                 aria-expanded={searchOpen}
                                 icon={<FiSearch />}
                             />

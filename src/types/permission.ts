@@ -43,6 +43,18 @@ export type PermissionKey =
     | "EQUIPMENT_CREATE"
     | "EQUIPMENT_UPDATE"
     | "EQUIPMENT_DELETE"
+    // ASSET
+    | "ASSET_VIEW_LIST"
+    | "ASSET_VIEW_DETAIL"
+    | "ASSET_CREATE"
+    | "ASSET_UPDATE"
+    | "ASSET_DELETE"
+    // DEVICE (thiết bị theo tài sản — devices)
+    | "DEVICE_VIEW_LIST"
+    | "DEVICE_VIEW_DETAIL"
+    | "DEVICE_CREATE"
+    | "DEVICE_UPDATE"
+    | "DEVICE_DELETE"
     // BOOKING_EQUIPMENT
     | "BOOKING_EQUIPMENT_VIEW"
     | "BOOKING_EQUIPMENT_CREATE"

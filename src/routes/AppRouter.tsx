@@ -11,12 +11,16 @@ import NotFoundPage from "../pages/error/NotFoundPage";
 import AdminLayout from '../layouts/AdminLayout';
 import AdminPage from '../pages/admin/AdminPage';
 import AdminUserPage from '../pages/admin/user/AdminUserPage';
+import AdminAssetPage from '../pages/admin/asset/AdminAssetPage';
+import AdminDevicePage from '../pages/admin/device/AdminDevicePage';
 import AdminPitchPage from '../pages/admin/pitch/AdminPitchPage';
 import AdminPermissionPage from '../pages/admin/permission/AdminPermissionPage';
 import AdminRolePage from '../pages/admin/role/AdminRolePage';
 import AdminBookingPage from '../pages/admin/booking/AdminBookingPage';
 import PitchPage from '../pages/client/pitch/PitchPage';
 import PitchDetailsPage from '../pages/client/pitch/PitchDetailsPage';
+import AssetPage from '../pages/client/asset/AssetPage';
+import AssetDetailsPage from '../pages/client/asset/AssetDetailsPage';
 import AdminPaymentPage from '../pages/admin/payment/AdminPaymentPage';
 import AdminEquipmentPage from '../pages/admin/equipment/AdminEquipmentPage';
 import AdminBookingEquipmentPage from '../pages/admin/bookingequipment/AdminBookingEquipmentPage';
@@ -95,6 +99,8 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
                         { index: true, element: <HomePage theme={theme} /> },
                         { path: "/pitch", element: <PitchPage theme={theme} /> },
                         { path: "/pitch/:id", element: <PitchDetailsPage /> },
+                        { path: "/asset", element: <AssetPage theme={theme} /> },
+                        { path: "/asset/:id", element: <AssetDetailsPage /> },
                         { path: "/booking/:pitchId", element: <BookingPage theme={theme} /> },
                         { path: "/about", element: <AboutPage theme={theme} /> },
                         { path: "/terms", element: <TermsOfService theme={theme} /> },
@@ -106,6 +112,8 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
                     children: [
                         { index: true, element: <AdminPage /> },
                         { path: "/admin/user", element: <AdminUserPage /> },
+                        { path: "/admin/asset", element: <AdminAssetPage /> },
+                        { path: "/admin/device", element: <AdminDevicePage /> },
                         { path: "/admin/role", element: <AdminRolePage /> },
                         { path: "/admin/permission", element: <AdminPermissionPage /> },
                         { path: "/admin/pitch", element: <AdminPitchPage /> },
