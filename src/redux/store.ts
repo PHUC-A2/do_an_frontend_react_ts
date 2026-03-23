@@ -14,6 +14,10 @@ import equipmentReducer from './features/equipmentSlice'
 import assetReducer from './features/assetSlice'
 import clientAssetReducer from './features/clientAssetSlice'
 import deviceReducer from './features/deviceSlice'
+import assetUsageReducer from './features/assetUsageSlice'
+import checkoutReducer from './features/checkoutSlice'
+import deviceReturnReducer from './features/deviceReturnSlice'
+import deviceIssueReducer from './features/deviceIssueSlice'
 
 export const store = configureStore({
     reducer: {
@@ -32,6 +36,10 @@ export const store = configureStore({
         asset: assetReducer,
         clientAsset: clientAssetReducer,
         device: deviceReducer,
+        assetUsage: assetUsageReducer,
+        checkout: checkoutReducer,
+        deviceReturn: deviceReturnReducer,
+        deviceIssue: deviceIssueReducer,
     }
 })
 

@@ -55,6 +55,30 @@ export type PermissionKey =
     | "DEVICE_CREATE"
     | "DEVICE_UPDATE"
     | "DEVICE_DELETE"
+    // ASSET_USAGE (thuê/mượn tài sản — asset_usages)
+    | "ASSET_USAGE_VIEW_LIST"
+    | "ASSET_USAGE_VIEW_DETAIL"
+    | "ASSET_USAGE_CREATE"
+    | "ASSET_USAGE_UPDATE"
+    | "ASSET_USAGE_DELETE"
+    // CHECKOUT (nhận tài sản)
+    | "CHECKOUT_VIEW_LIST"
+    | "CHECKOUT_VIEW_DETAIL"
+    | "CHECKOUT_CREATE"
+    | "CHECKOUT_UPDATE"
+    | "CHECKOUT_DELETE"
+    // RETURN (trả tài sản — returns)
+    | "RETURN_VIEW_LIST"
+    | "RETURN_VIEW_DETAIL"
+    | "RETURN_CREATE"
+    | "RETURN_UPDATE"
+    | "RETURN_DELETE"
+    // DEVICE_ISSUE (sự cố thiết bị — device_issues)
+    | "DEVICE_ISSUE_VIEW_LIST"
+    | "DEVICE_ISSUE_VIEW_DETAIL"
+    | "DEVICE_ISSUE_CREATE"
+    | "DEVICE_ISSUE_UPDATE"
+    | "DEVICE_ISSUE_DELETE"
     // BOOKING_EQUIPMENT
     | "BOOKING_EQUIPMENT_VIEW"
     | "BOOKING_EQUIPMENT_CREATE"

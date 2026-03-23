@@ -3,8 +3,12 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type TouchEve
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import {
     AppstoreOutlined,
+    CalendarOutlined,
+    ImportOutlined,
+    ExportOutlined,
     LaptopOutlined,
     BellOutlined,
+    WarningOutlined,
     DeleteOutlined,
     UserOutlined,
     SettingOutlined,
@@ -82,6 +86,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const canViewUsers = usePermission("USER_VIEW_LIST");
     const canViewAssets = usePermission("ASSET_VIEW_LIST");
     const canViewDevices = usePermission("DEVICE_VIEW_LIST");
+    const canViewDeviceIssues = usePermission("DEVICE_ISSUE_VIEW_LIST");
+    const canViewAssetUsages = usePermission("ASSET_USAGE_VIEW_LIST");
+    const canViewCheckouts = usePermission("CHECKOUT_VIEW_LIST");
+    const canViewReturns = usePermission("RETURN_VIEW_LIST");
     const canViewRoles = usePermission("ROLE_VIEW_LIST");
     const canViewPermissions = usePermission("PERMISSION_VIEW_LIST");
     const canViewPitches = usePermission("PITCH_VIEW_LIST");
@@ -96,6 +104,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         user: 'Người dùng',
         asset: 'Tài sản',
         device: 'Thiết bị theo tài sản',
+        'device-issues': 'Sự cố thiết bị',
+        'asset-usage': 'Sử dụng tài sản',
+        checkouts: 'Nhận tài sản',
+        returns: 'Trả tài sản',
         role: 'Vai trò',
         permission: 'Quyền hạn',
         pitch: 'Sân bóng',
@@ -135,7 +147,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     };
 
     // Đặt '/admin' cuối cùng để khớp con (/admin/asset, ...) trước, tránh mọi URL bị coi là Dashboard
-    const routeMenuKeys = ['/admin/user', '/admin/asset', '/admin/device', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/ai', '/admin/support', '/admin/v2/rooms', '/admin'];
+    const routeMenuKeys = ['/admin/user', '/admin/asset', '/admin/device', '/admin/device-issues', '/admin/asset-usage', '/admin/checkouts', '/admin/returns', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/ai', '/admin/support', '/admin/v2/rooms', '/admin'];
 
     const selectedMenuKey = useMemo(() => {
         const currentPath = location.pathname;
@@ -312,6 +324,30 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                             key: '/admin/device',
                             label: <Link to="/admin/device" className={styles.menuLink}>Thiết bị theo tài sản</Link>,
                             icon: <LaptopOutlined />,
+                        }] : []),
+
+                        ...(canViewDeviceIssues ? [{
+                            key: '/admin/device-issues',
+                            label: <Link to="/admin/device-issues" className={styles.menuLink}>Sự cố thiết bị</Link>,
+                            icon: <WarningOutlined />,
+                        }] : []),
+
+                        ...(canViewAssetUsages ? [{
+                            key: '/admin/asset-usage',
+                            label: <Link to="/admin/asset-usage" className={styles.menuLink}>Sử dụng tài sản</Link>,
+                            icon: <CalendarOutlined />,
+                        }] : []),
+
+                        ...(canViewCheckouts ? [{
+                            key: '/admin/checkouts',
+                            label: <Link to="/admin/checkouts" className={styles.menuLink}>Nhận tài sản</Link>,
+                            icon: <ImportOutlined />,
+                        }] : []),
+
+                        ...(canViewReturns ? [{
+                            key: '/admin/returns',
+                            label: <Link to="/admin/returns" className={styles.menuLink}>Trả tài sản</Link>,
+                            icon: <ExportOutlined />,
                         }] : []),
 
                         ...(canViewRoles ? [{

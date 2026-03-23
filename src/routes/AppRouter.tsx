@@ -13,6 +13,10 @@ import AdminPage from '../pages/admin/AdminPage';
 import AdminUserPage from '../pages/admin/user/AdminUserPage';
 import AdminAssetPage from '../pages/admin/asset/AdminAssetPage';
 import AdminDevicePage from '../pages/admin/device/AdminDevicePage';
+import AdminDeviceIssuesPage from '../pages/admin/device-issue/AdminDeviceIssuesPage';
+import AdminAssetUsagePage from '../pages/admin/asset-usage/AdminAssetUsagePage';
+import AdminCheckoutPage from '../pages/admin/checkout/AdminCheckoutPage';
+import AdminReturnsPage from '../pages/admin/returns/AdminReturnsPage';
 import AdminPitchPage from '../pages/admin/pitch/AdminPitchPage';
 import AdminPermissionPage from '../pages/admin/permission/AdminPermissionPage';
 import AdminRolePage from '../pages/admin/role/AdminRolePage';
@@ -114,6 +118,10 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
                         { path: "/admin/user", element: <AdminUserPage /> },
                         { path: "/admin/asset", element: <AdminAssetPage /> },
                         { path: "/admin/device", element: <AdminDevicePage /> },
+                        { path: "/admin/device-issues", element: <AdminDeviceIssuesPage /> },
+                        { path: "/admin/asset-usage", element: <AdminAssetUsagePage /> },
+                        { path: "/admin/checkouts", element: <AdminCheckoutPage /> },
+                        { path: "/admin/returns", element: <AdminReturnsPage /> },
                         { path: "/admin/role", element: <AdminRolePage /> },
                         { path: "/admin/permission", element: <AdminPermissionPage /> },
                         { path: "/admin/pitch", element: <AdminPitchPage /> },

@@ -18,6 +18,18 @@ import type { IGetUploadResponse } from "../types/upload";
 import type { IAssignRoleReq, ICreateUserReq, IUpdateUserReq, IUser, IUpdateUserStatusReq, IUpdateUserStatusRes } from "../types/user";
 import type { IAsset, ICreateAssetReq, IUpdateAssetReq } from "../types/asset";
 import type { ICreateDeviceReq, IDevice, IUpdateDeviceReq } from "../types/device";
+import type {
+    IAssetUsage,
+    ICreateAssetUsageReq,
+    IUpdateAssetUsageReq,
+} from "../types/assetUsage";
+import type { ICheckout, ICreateCheckoutReq, IUpdateCheckoutReq } from "../types/checkout";
+import type { ICreateDeviceReturnReq, IDeviceReturn, IUpdateDeviceReturnReq } from "../types/deviceReturn";
+import type {
+    ICreateDeviceIssueReq,
+    IDeviceIssue,
+    IUpdateDeviceIssueReq,
+} from "../types/deviceIssue";
 import instance from "./customAxios";
 
 export const register = (data: IRegister) => instance.post("/api/v1/auth/register", data);
@@ -86,6 +98,52 @@ export const deleteDevice = (id: number) => instance.delete<IBackendRes<IDevice>
 export const getDeviceById = (id: number) => instance.get<IBackendRes<IDevice>>(`/api/v1/devices/${id}`);
 export const updateDevice = (id: number, data: IUpdateDeviceReq) =>
     instance.put<IBackendRes<IDevice>>(`/api/v1/devices/${id}`, data);
+
+/* api asset-usage — đăng ký thuê/mượn tài sản (bảng asset_usages) */
+export const getAllAssetUsages = (query: string) =>
+    instance.get<IBackendRes<IModelPaginate<IAssetUsage>>>(`/api/v1/asset-usages?${query}`);
+export const createAssetUsage = (data: ICreateAssetUsageReq) =>
+    instance.post<IBackendRes<IAssetUsage>>(`/api/v1/asset-usages`, data);
+export const deleteAssetUsage = (id: number) =>
+    instance.delete<IBackendRes<IAssetUsage>>(`/api/v1/asset-usages/${id}`);
+export const getAssetUsageById = (id: number) =>
+    instance.get<IBackendRes<IAssetUsage>>(`/api/v1/asset-usages/${id}`);
+export const updateAssetUsage = (id: number, data: IUpdateAssetUsageReq) =>
+    instance.put<IBackendRes<IAssetUsage>>(`/api/v1/asset-usages/${id}`, data);
+
+/* api checkout — nhận tài sản (checkouts.asset_usage_id) */
+export const getAllCheckouts = (query: string) =>
+    instance.get<IBackendRes<IModelPaginate<ICheckout>>>(`/api/v1/checkouts?${query}`);
+export const createCheckout = (data: ICreateCheckoutReq) =>
+    instance.post<IBackendRes<ICheckout>>(`/api/v1/checkouts`, data);
+export const deleteCheckout = (id: number) => instance.delete<IBackendRes<ICheckout>>(`/api/v1/checkouts/${id}`);
+export const getCheckoutById = (id: number) => instance.get<IBackendRes<ICheckout>>(`/api/v1/checkouts/${id}`);
+export const updateCheckout = (id: number, data: IUpdateCheckoutReq) =>
+    instance.put<IBackendRes<ICheckout>>(`/api/v1/checkouts/${id}`, data);
+
+/* api returns — trả tài sản (bảng returns, FK checkout_id) */
+export const getAllDeviceReturns = (query: string) =>
+    instance.get<IBackendRes<IModelPaginate<IDeviceReturn>>>(`/api/v1/returns?${query}`);
+export const createDeviceReturn = (data: ICreateDeviceReturnReq) =>
+    instance.post<IBackendRes<IDeviceReturn>>(`/api/v1/returns`, data);
+export const deleteDeviceReturn = (id: number) =>
+    instance.delete<IBackendRes<IDeviceReturn>>(`/api/v1/returns/${id}`);
+export const getDeviceReturnById = (id: number) =>
+    instance.get<IBackendRes<IDeviceReturn>>(`/api/v1/returns/${id}`);
+export const updateDeviceReturn = (id: number, data: IUpdateDeviceReturnReq) =>
+    instance.put<IBackendRes<IDeviceReturn>>(`/api/v1/returns/${id}`, data);
+
+/* api device-issues — sự cố thiết bị (bảng device_issues) */
+export const getAllDeviceIssues = (query: string) =>
+    instance.get<IBackendRes<IModelPaginate<IDeviceIssue>>>(`/api/v1/device-issues?${query}`);
+export const createDeviceIssue = (data: ICreateDeviceIssueReq) =>
+    instance.post<IBackendRes<IDeviceIssue>>(`/api/v1/device-issues`, data);
+export const deleteDeviceIssue = (id: number) =>
+    instance.delete<IBackendRes<IDeviceIssue>>(`/api/v1/device-issues/${id}`);
+export const getDeviceIssueById = (id: number) =>
+    instance.get<IBackendRes<IDeviceIssue>>(`/api/v1/device-issues/${id}`);
+export const updateDeviceIssue = (id: number, data: IUpdateDeviceIssueReq) =>
+    instance.put<IBackendRes<IDeviceIssue>>(`/api/v1/device-issues/${id}`, data);
 
 /* api pitch */
 export const getAllPitches = (query: string) => instance.get<IBackendRes<IModelPaginate<IPitch>>>(`/api/v1/pitches?${query}`);

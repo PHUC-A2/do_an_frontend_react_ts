@@ -43,6 +43,46 @@ export const LIST_PERMISSION: PermissionGroup[] = [
         ],
     },
     {
+        group: "ASSET_USAGE",
+        items: [
+            { name: "ASSET_USAGE_VIEW_LIST", description: "Xem danh sách đăng ký sử dụng tài sản" },
+            { name: "ASSET_USAGE_VIEW_DETAIL", description: "Xem chi tiết đăng ký sử dụng tài sản" },
+            { name: "ASSET_USAGE_CREATE", description: "Tạo đăng ký sử dụng tài sản" },
+            { name: "ASSET_USAGE_UPDATE", description: "Cập nhật đăng ký sử dụng tài sản" },
+            { name: "ASSET_USAGE_DELETE", description: "Xóa đăng ký sử dụng tài sản" },
+        ],
+    },
+    {
+        group: "CHECKOUT",
+        items: [
+            { name: "CHECKOUT_VIEW_LIST", description: "Xem danh sách phiếu nhận tài sản" },
+            { name: "CHECKOUT_VIEW_DETAIL", description: "Xem chi tiết phiếu nhận tài sản" },
+            { name: "CHECKOUT_CREATE", description: "Tạo phiếu nhận tài sản" },
+            { name: "CHECKOUT_UPDATE", description: "Cập nhật phiếu nhận tài sản" },
+            { name: "CHECKOUT_DELETE", description: "Xóa phiếu nhận tài sản" },
+        ],
+    },
+    {
+        group: "RETURN",
+        items: [
+            { name: "RETURN_VIEW_LIST", description: "Xem danh sách phiếu trả tài sản" },
+            { name: "RETURN_VIEW_DETAIL", description: "Xem chi tiết phiếu trả tài sản" },
+            { name: "RETURN_CREATE", description: "Tạo phiếu trả tài sản" },
+            { name: "RETURN_UPDATE", description: "Cập nhật phiếu trả tài sản" },
+            { name: "RETURN_DELETE", description: "Xóa phiếu trả tài sản" },
+        ],
+    },
+    {
+        group: "DEVICE_ISSUE",
+        items: [
+            { name: "DEVICE_ISSUE_VIEW_LIST", description: "Xem danh sách sự cố thiết bị" },
+            { name: "DEVICE_ISSUE_VIEW_DETAIL", description: "Xem chi tiết sự cố thiết bị" },
+            { name: "DEVICE_ISSUE_CREATE", description: "Tạo báo cáo sự cố thiết bị" },
+            { name: "DEVICE_ISSUE_UPDATE", description: "Cập nhật sự cố thiết bị" },
+            { name: "DEVICE_ISSUE_DELETE", description: "Xóa sự cố thiết bị" },
+        ],
+    },
+    {
         group: "ROLE",
         items: [
             { name: "ROLE_VIEW_LIST", description: "Xem danh sách vai trò" },
