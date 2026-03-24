@@ -1,5 +1,5 @@
 import { memo, useEffect, useState, useCallback } from "react";
-import { Modal, Input, InputNumber, Checkbox, Typography } from "antd";
+import { Modal, Input, InputNumber, Checkbox, Typography, Button, Space } from "antd";
 import { toast } from "react-toastify";
 import type { IBooking } from "../../../../types/booking";
 import type { IBookingEquipment, IUpdateBookingEquipmentStatusReq } from "../../../../types/bookingEquipment";
@@ -43,6 +43,8 @@ function ClientReturnEquipmentModalInner({
     onCancel,
     onSubmit,
 }: ClientReturnEquipmentModalProps) {
+    // State điều khiển modal xem trước biên bản trước khi xác nhận trả.
+    const [openPreview, setOpenPreview] = useState(false);
     const [returnNote, setReturnNote] = useState("");
     const [returnReportPrintOptIn, setReturnReportPrintOptIn] = useState(false);
     const [returnQtyGood, setReturnQtyGood] = useState(0);
@@ -84,6 +86,10 @@ function ClientReturnEquipmentModalInner({
         if (!open || !record) return;
         resetFormForRecord(record, preset);
     }, [open, record?.id, preset, record, resetFormForRecord]);
+
+    useEffect(() => {
+        if (!open) setOpenPreview(false);
+    }, [open]);
 
     const handleOk = async () => {
         if (!booking || !record) return;
@@ -132,19 +138,27 @@ function ClientReturnEquipmentModalInner({
     };
 
     return (
-        <Modal
-            title="Trả thiết bị & biên bản"
-            width={520}
-            open={open}
-            onCancel={onCancel}
-            onOk={handleOk}
-            okText="Xác Nhận"
-            cancelText="Hủy"
-            confirmLoading={confirmLoading}
-            destroyOnHidden
-        >
-            {record && (
-                <>
+        <>
+            <Modal
+                title="Trả thiết bị & biên bản"
+                width={520}
+                open={open}
+                onCancel={onCancel}
+                footer={[
+                    <Button key="cancel" onClick={onCancel}>
+                        Hủy
+                    </Button>,
+                    <Button key="preview" onClick={() => setOpenPreview(true)} disabled={!record}>
+                        Xem trước biên bản
+                    </Button>,
+                    <Button key="confirm" type="primary" loading={confirmLoading} onClick={() => void handleOk()}>
+                        Xác Nhận
+                    </Button>,
+                ]}
+                destroyOnHidden
+            >
+                {record && (
+                    <>
                     <p style={{ marginBottom: 8 }}>
                         <strong>{record.equipmentName}</strong> × {record.quantity}
                     </p>
@@ -249,9 +263,56 @@ function ClientReturnEquipmentModalInner({
                     <Checkbox checked={returnReportPrintOptIn} onChange={e => setReturnReportPrintOptIn(e.target.checked)}>
                         In / lưu biên bản trả (chữ ký chủ sân — tùy chọn)
                     </Checkbox>
-                </>
-            )}
-        </Modal>
+                    </>
+                )}
+            </Modal>
+
+            <Modal
+                title="Xem trước biên bản trả thiết bị"
+                width={560}
+                open={openPreview && !!record}
+                onCancel={() => setOpenPreview(false)}
+                footer={
+                    <Space>
+                        <Button onClick={() => setOpenPreview(false)}>Đóng</Button>
+                        <Button type="primary" onClick={() => void handleOk()} loading={confirmLoading}>
+                            Xác Nhận
+                        </Button>
+                    </Space>
+                }
+                destroyOnHidden
+            >
+                {record && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <Text>
+                            <strong>Thiết bị:</strong> {record.equipmentName} × {record.quantity}
+                        </Text>
+                        <Text>
+                            <strong>Kiểm đếm:</strong> Trả tốt {returnQtyGood} / Mất {returnQtyLost} / Hỏng {returnQtyDamaged}
+                        </Text>
+                        <Text>
+                            <strong>Người trả thực tế:</strong> {returnerName.trim() || booking?.userName || "—"}
+                            {returnerPhone.trim() ? ` — ${returnerPhone.trim()}` : ""}
+                        </Text>
+                        <Text>
+                            <strong>Người nhận tại sân:</strong> {receiverName.trim() || "—"}
+                            {receiverPhone.trim() ? ` — ${receiverPhone.trim()}` : ""}
+                        </Text>
+                        <Text>
+                            <strong>Ghi chú trả:</strong> {returnNote.trim() || "—"}
+                        </Text>
+                        {returnQtyLost + returnQtyDamaged > 0 ? (
+                            <Text>
+                                <strong>Ký xác nhận mất / hỏng:</strong> {borrowerSign.trim() || "—"} / {staffSign.trim() || "—"}
+                            </Text>
+                        ) : null}
+                        <Text>
+                            <strong>In / lưu biên bản trả:</strong> {returnReportPrintOptIn ? "Có" : "Không"}
+                        </Text>
+                    </div>
+                )}
+            </Modal>
+        </>
     );
 }
 

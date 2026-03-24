@@ -31,6 +31,10 @@ function esc(s: string) {
     return s.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+function escAttr(s: string) {
+    return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 /** Sau khi đã trả: hiển thị số; khi đang mượn: — */
 function fmtQty(n: number | undefined | null, status: IBookingEquipment["status"]) {
     if (status === "BORROWED") return "—";
@@ -48,7 +52,16 @@ function borrowerCol(r: IBookingEquipment, booking: IBooking) {
 
 function staffCol(r: IBookingEquipment) {
     const s = r.staffSignName?.trim();
-    return esc(s || "—");
+    if (s) return esc(s);
+    const receiver = r.receiverNameSnapshot?.trim();
+    return esc(receiver || "—");
+}
+
+function equipmentImageCol(r: IBookingEquipment) {
+    const t = r.equipmentImageUrl?.trim();
+    if (!t) return "—";
+    const src = `${window.location.origin}/storage/equipment/${t}`;
+    return `<img src="${escAttr(src)}" alt="${escAttr(r.equipmentName)}" style="width:46px;height:46px;object-fit:cover;border-radius:4px;border:1px solid #ddd;" />`;
 }
 
 /** In biên bản mượn/trả (client hoặc admin) — mở cửa sổ in, không bắt buộc. */
@@ -58,6 +71,7 @@ export function openBookingEquipmentHandoverPrint(booking: IBooking, lines: IBoo
         .map(
             l => `<tr>
 <td>${esc(l.equipmentName)}</td>
+<td>${equipmentImageCol(l)}</td>
 <td>${l.quantity}</td>
 <td>${fmtQty(l.quantityReturnedGood, l.status)}</td>
 <td>${fmtQty(l.quantityLost, l.status)}</td>
@@ -91,9 +105,9 @@ th{background:#f0f0f0;font-size:9px;}
 </div>
 <table>
 <thead><tr>
-<th>Thiết bị</th><th>SL mượn</th><th>Trả tốt</th><th>Mất</th><th>Hỏng</th><th>TT</th><th>Loại</th><th>Ghi chú mượn</th><th>Ghi chú trả</th><th>Người mượn (ký / TM)</th><th>Người thu / NV</th><th>Giá ĐV</th>
+<th>Thiết bị</th><th>Ảnh</th><th>SL mượn</th><th>Trả tốt</th><th>Mất</th><th>Hỏng</th><th>TT</th><th>Loại</th><th>Ghi chú mượn</th><th>Ghi chú trả</th><th>Người mượn (ký / TM)</th><th>Người thu / NV</th><th>Giá ĐV</th>
 </tr></thead>
-<tbody>${rows || "<tr><td colspan=\"12\">Không có dòng thiết bị</td></tr>"}</tbody>
+<tbody>${rows || "<tr><td colspan=\"13\">Không có dòng thiết bị</td></tr>"}</tbody>
 </table>
 <p style="margin-top:16px;font-size:10px;color:#555;">Cột <em>Người mượn</em>: ưu tiên chữ ký biên bản, sau đó họ tên lưu tại thời điểm trả, cuối cùng là tên trên booking. Cột <em>Người thu / NV</em>: nhân viên hoặc bên nhận thiết bị (ghi trên biên bản).</p>
 <p style="margin-top:20px;font-size:11px;color:#666;">In lúc ${formatDateTime(new Date().toISOString(), "DD/MM/YYYY HH:mm")}</p>

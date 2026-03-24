@@ -1,21 +1,27 @@
 @mixin scrollableHiddenScrollbar {
     -ms-overflow-style: none;
-    scrollbar-width: none;
+    scrollbar-width   : none;
 
     &::-webkit-scrollbar {
-        width : 0;
-        height: 0;
+        width  : 0;
+        height : 0;
         display: none;
     }
 }
 
+/* Một giá trị cho header nội dung + hàng brand sidebar (căn ngang đồng bộ) */
 .adminShell {
-    /* Đồng bộ với .adminHeader — một giá trị cho cả header nội dung & brand sidebar */
-    --admin-top-bar-height: 76px;
+    --admin-top-bar-height: 84px;
 
     min-height: 100vh;
     background: var(--admin-layout);
     transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+@media (max-width: 992px) {
+    .adminShell {
+        --admin-top-bar-height: 76px;
+    }
 }
 
 .desktopSider {
@@ -46,6 +52,14 @@
     }
 }
 
+.siderMenuScroll {
+    flex      : 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    @include scrollableHiddenScrollbar;
+}
+
 .siderBrand {
     display        : flex;
     flex-shrink    : 0;
@@ -54,6 +68,7 @@
     box-sizing     : border-box;
     height         : var(--admin-top-bar-height);
     min-height     : var(--admin-top-bar-height);
+    max-height     : var(--admin-top-bar-height);
     padding        : 0 12px 0 16px;
     justify-content: space-between;
     border-bottom  : 1px solid var(--admin-border);
@@ -86,18 +101,9 @@
     }
 }
 
-.siderMenuScroll {
-    flex       : 1;
-    min-height : 0;
-    overflow-y : auto;
-    overflow-x : hidden;
-    @include scrollableHiddenScrollbar;
-}
-
 .brandIcon {
     color    : var(--admin-accent);
     font-size: 1.25rem;
-    flex-shrink: 0;
 }
 
 .brandText {
@@ -124,97 +130,27 @@
     background       : transparent !important;
     color            : var(--admin-text);
     font-weight      : 600;
-    padding          : 8px 8px 16px;
+    padding          : 8px;
 
     :global(.ant-menu-item),
     :global(.ant-menu-submenu-title) {
-        display      : flex !important;
-        align-items  : center !important;
         border-radius: 12px;
-        padding-inline-start: 12px !important;
-        padding-inline-end  : 12px !important;
-        transition   : background-color 0.22s ease, color 0.22s ease, border-color 0.22s ease;
-    }
-
-    /* Cấp gốc: Dashboard + tiêu đề nhóm (vd. Tính năng, Cài đặt) — lớn & đậm hơn */
-    :global(.ant-menu.ant-menu-inline > .ant-menu-item),
-    :global(.ant-menu.ant-menu-inline > .ant-menu-submenu > .ant-menu-submenu-title) {
         margin-block : 4px;
-        min-height   : 44px;
-        height       : 44px;
-        line-height  : 44px;
-        font-size    : 0.94rem;
-        font-weight  : 700;
-    }
-
-    :global(.ant-menu.ant-menu-inline > .ant-menu-item .ant-menu-item-icon),
-    :global(.ant-menu.ant-menu-inline > .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-item-icon) {
-        display        : inline-flex !important;
-        align-items    : center;
-        justify-content: center;
-        min-width      : 24px;
-        width          : 24px;
-        margin-inline-end: 10px !important;
-        font-size      : 1.08rem;
-        line-height    : 1;
-    }
-
-    /* Cấp con trong submenu: thụt (inlineIndent) + nhỏ hơn để phân biệt cha */
-    :global(.ant-menu-sub .ant-menu-item),
-    :global(.ant-menu-sub .ant-menu-submenu > .ant-menu-submenu-title) {
-        margin-block : 2px;
-        min-height   : 36px;
-        height       : 36px;
-        line-height  : 36px;
-        font-size    : 0.8125rem;
-        font-weight  : 500;
-        color        : color-mix(in srgb, var(--admin-text) 88%, transparent);
-    }
-
-    :global(.ant-menu-sub .ant-menu-item .ant-menu-item-icon),
-    :global(.ant-menu-sub .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-item-icon) {
-        display        : inline-flex !important;
-        align-items    : center;
-        justify-content: center;
-        min-width      : 20px;
-        width          : 20px;
-        margin-inline-end: 8px !important;
-        font-size      : 0.95rem;
-        line-height    : 1;
-    }
-
-    /* Sub lồng sub (nếu có): thụt sâu hơn + chữ nhỏ hơn nữa */
-    :global(.ant-menu-sub .ant-menu-sub .ant-menu-item),
-    :global(.ant-menu-sub .ant-menu-sub .ant-menu-submenu > .ant-menu-submenu-title) {
-        min-height   : 34px;
-        height       : 34px;
-        line-height  : 34px;
-        font-size    : 0.78rem;
-        font-weight  : 500;
-    }
-
-    :global(.ant-menu-sub .ant-menu-sub .ant-menu-item .ant-menu-item-icon),
-    :global(.ant-menu-sub .ant-menu-sub .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-item-icon) {
-        min-width    : 18px;
-        width        : 18px;
-        font-size    : 0.88rem;
-    }
-
-    :global(.ant-menu-title-content) {
-        flex            : 1;
-        min-width       : 0;
-        text-align      : start;
+        height       : 42px;
+        line-height  : 42px;
+        transition   : background-color 0.24s ease, color 0.24s ease, transform 0.24s ease;
     }
 
     :global(.ant-menu-item:hover),
     :global(.ant-menu-submenu-title:hover) {
         color     : var(--admin-accent) !important;
-        background: color-mix(in srgb, var(--admin-accent) 13%, transparent) !important;
+        background: color-mix(in srgb, var(--admin-accent) 13%, transparent);
+        transform : translateX(2px);
     }
 
     :global(.ant-menu-item-selected) {
         color     : var(--admin-accent) !important;
-        background: color-mix(in srgb, var(--admin-accent) 18%, transparent) !important;
+        background: color-mix(in srgb, var(--admin-accent) 18%, transparent);
     }
 
     :global(.ant-menu-item-selected::after) {
@@ -227,31 +163,6 @@
 
     :global(.ant-menu-sub) {
         background: transparent !important;
-    }
-
-    :global(.ant-menu-submenu-arrow) {
-        color: var(--admin-muted);
-    }
-
-    /* Thu gọn (desktop Sider + mobile Drawer): cùng hành vi icon-only */
-    :global(.ant-menu-inline-collapsed) {
-        :global(.ant-menu-item),
-        :global(.ant-menu-submenu-title) {
-            min-height   : 44px !important;
-            height       : 44px !important;
-            line-height  : 44px !important;
-            font-size    : inherit !important;
-            font-weight  : 600 !important;
-            margin-block : 4px !important;
-        }
-
-        :global(.ant-menu-item-icon),
-        :global(.ant-menu-submenu-title .ant-menu-item-icon) {
-            min-width     : auto !important;
-            width         : auto !important;
-            margin-inline-end: 0 !important;
-            font-size     : 1.05rem !important;
-        }
     }
 }
 
@@ -266,7 +177,14 @@
 }
 
 .mobileDrawer {
-    /* Chiều cao header: var(--admin-top-bar-height) từ rootStyle (cssVars) — Drawer không nằm trong .adminShell */
+    /* Portal ngoài .adminShell — tự khai báo chiều cao header để khớp .adminHeader */
+    --admin-top-bar-height: 84px;
+
+    /* Drawer nhận biến tại root class */
+
+    :global(.ant-drawer-content-wrapper) {
+        transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
 
     :global(.ant-drawer-content),
     :global(.ant-drawer-body),
@@ -276,39 +194,55 @@
         transition         : background 0.25s ease, border-color 0.25s ease;
     }
 
-    /* Cùng chiều cao & padding với header chính trên mobile (992px: .adminHeader) */
     :global(.ant-drawer-header) {
-        box-sizing       : border-box;
-        height           : var(--admin-top-bar-height, 76px);
-        min-height       : var(--admin-top-bar-height, 76px);
-        max-height       : var(--admin-top-bar-height, 76px);
-        padding          : 0 16px !important;
-        margin           : 0 !important;
-        display          : flex;
-        align-items      : center;
-        flex-shrink      : 0;
-        background       : var(--admin-layout) !important;
-        border-bottom    : 1px solid var(--admin-border);
-        transition       : background 0.25s ease, border-color 0.25s ease;
+        box-sizing     : border-box;
+        height         : var(--admin-top-bar-height, 76px);
+        min-height     : var(--admin-top-bar-height, 76px);
+        max-height     : var(--admin-top-bar-height, 76px);
+        padding        : 0 12px 0 16px !important;
+        margin         : 0 !important;
+        display        : flex !important;
+        flex-direction : row;
+        align-items    : center;
+        justify-content: flex-start;
+        gap            : 6px;
+        flex-shrink    : 0;
+        background     : var(--admin-layout) !important;
+        border-bottom  : 1px solid var(--admin-border);
     }
 
-    /* Một hàng title tùy chỉnh (closable={false}) — full width, không chồng icon */
+    /* Khối [Close][logo+chữ] — flex:1; nút thu gọn nằm trong .ant-drawer-extra bên phải header */
     :global(.ant-drawer-header-title) {
-        display    : flex;
+        display    : flex !important;
+        flex       : 1 1 auto !important;
         align-items: center;
-        flex       : 1;
-        min-width  : 0;
-        width      : 100%;
+        gap        : 4px;
+        min-width  : 0 !important;
+        margin     : 0 !important;
     }
 
     :global(.ant-drawer-title) {
-        flex       : 1;
-        min-width  : 0;
-        width      : 100%;
-        margin     : 0 !important;
-        display    : flex;
+        flex     : 1 1 auto !important;
+        min-width: 0 !important;
+        margin   : 0 !important;
+        overflow : hidden;
+    }
+
+    :global(.ant-drawer-extra) {
+        flex-shrink: 0 !important;
+        display    : inline-flex;
         align-items: center;
-        line-height: 1.2;
+    }
+
+    :global(.ant-drawer-close) {
+        flex-shrink: 0 !important;
+        position   : relative !important;
+        inset      : auto !important;
+    }
+
+    :global(.ant-drawer-title),
+    :global(.ant-drawer-close) {
+        color: var(--admin-text);
     }
 
     :global(.ant-drawer-body) {
@@ -317,69 +251,37 @@
     }
 }
 
-.drawerHeaderRow {
-    display        : flex;
-    align-items    : center;
-    justify-content: space-between;
-    width          : 100%;
-    min-width      : 0;
-    gap            : 6px;
-}
-
-.drawerHeaderBrand {
-    flex            : 1;
-    min-width       : 0;
-    text-align      : center;
-    color           : var(--admin-text);
-    font-weight     : 800;
-    letter-spacing  : 0.04em;
-    font-size       : 0.95rem;
-    overflow        : hidden;
-    text-overflow   : ellipsis;
-    white-space     : nowrap;
-}
-
-.drawerHeaderCloseBtn {
-    flex-shrink    : 0;
-    width          : 36px !important;
-    height         : 36px !important;
-    min-width      : 36px !important;
-    padding        : 0 !important;
-    display        : inline-flex !important;
-    align-items    : center;
-    justify-content: center;
-    color          : var(--admin-text) !important;
-
-    &:hover {
-        color     : var(--admin-accent) !important;
-        background: color-mix(in srgb, var(--admin-accent) 12%, transparent) !important;
+@media (max-width: 992px) {
+    .mobileDrawer {
+        --admin-top-bar-height: 76px;
     }
 }
 
+.drawerTitle {
+    color         : var(--admin-text);
+    font-weight   : 800;
+    letter-spacing: 0.04em;
+}
+
+/* Hàng title drawer mobile: icon + chữ (chữ ẩn khi thu gọn — giống desktop siderBrand) */
+.mobileDrawerTitle {
+    display    : flex;
+    align-items: center;
+    gap        : 10px;
+    min-width  : 0;
+    max-width  : 100%;
+    overflow   : hidden;
+
+    .drawerTitle {
+        overflow     : hidden;
+        text-overflow: ellipsis;
+        white-space  : nowrap;
+    }
+}
+
+/* Nút thu gọn trong header drawer — bỏ margin auto của .collapseButton (desktop đẩy về phải trong brand) */
 .drawerCollapseButton {
     margin-left: 0 !important;
-}
-
-.mobileDrawerCollapsed {
-    :global(.ant-drawer-header) {
-        padding: 0 8px !important;
-    }
-
-    .drawerHeaderCloseBtn {
-        width    : 32px !important;
-        height   : 32px !important;
-        min-width: 32px !important;
-    }
-
-    .drawerHeaderRow {
-        gap: 4px;
-    }
-
-    .collapseButton {
-        width    : 26px !important;
-        height   : 26px !important;
-        min-width: 26px !important;
-    }
 }
 
 .mainLayout {
@@ -643,8 +545,10 @@
 
 .notifHeader {
     display        : flex;
+    flex-wrap      : wrap;
     align-items    : center;
     justify-content: space-between;
+    gap            : 8px;
     padding        : 14px 16px 12px;
     border-bottom  : 1px solid var(--admin-border);
 }
@@ -751,16 +655,16 @@
 }
 
 .notifDetailLink {
-    align-self: flex-start;
-    margin-top: 2px;
-    padding     : 0;
-    border      : none;
-    background  : transparent;
-    cursor      : pointer;
-    font-size   : 0.76rem;
-    font-weight : 600;
-    color       : var(--admin-accent);
-    text-decoration: underline;
+    align-self           : flex-start;
+    margin-top           : 2px;
+    padding              : 0;
+    border               : none;
+    background           : transparent;
+    cursor               : pointer;
+    font-size            : 0.76rem;
+    font-weight          : 600;
+    color                : var(--admin-accent);
+    text-decoration      : underline;
     text-underline-offset: 2px;
 
     &:hover {
@@ -903,7 +807,6 @@
 
 @media (max-width: 992px) {
     .adminHeader {
-        height : var(--admin-top-bar-height);
         padding: 0 16px;
     }
 
@@ -932,9 +835,6 @@
     :global(.ant-drawer-header),
     :global(.ant-drawer-body) {
         background: var(--admin-panel) !important;
-    }
-
-    :global(.ant-drawer-body) {
         overflow-y: auto;
         @include scrollableHiddenScrollbar;
     }
