@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import {
     Card, Row, Col, Typography, Tag, Divider, Space,
-    Button, Form, Input, Tooltip, message, Badge,
+    Button, Form, Input, Tooltip, Badge,
 } from 'antd';
+import { toast } from 'react-toastify';
 import {
     PhoneOutlined, MailOutlined, GlobalOutlined,
     ToolOutlined, WarningOutlined, CheckCircleOutlined,
@@ -132,12 +133,12 @@ const AdminSupportPage = () => {
         const values = contactForm.getFieldsValue();
         setContacts(prev => prev.map(c => c.id === editingContactId ? { ...c, ...values } : c));
         setEditingContactId(null);
-        message.success('Đã lưu thông tin liên hệ');
+        toast.success('Đã lưu thông tin liên hệ');
     };
 
     const handleDeleteContact = (id: number) => {
         setContacts(prev => prev.filter(c => c.id !== id));
-        message.success('Đã xóa');
+        toast.success('Đã xóa');
     };
 
     const handleAddContact = () => {
@@ -146,7 +147,7 @@ const AdminSupportPage = () => {
             setContacts(prev => [...prev, { id: newId, ...values }]);
             newContactForm.resetFields();
             setAddingContact(false);
-            message.success('Đã thêm liên hệ mới');
+            toast.success('Đã thêm liên hệ mới');
         });
     };
 

@@ -31,6 +31,13 @@ export default defineConfig({
       "/storage": {
         target: "http://localhost:8080",
         changeOrigin: true
+      },
+
+      // WebSocket thông báo / chat review: browser nối tới cùng host Vite → cần proxy tới Spring Boot
+      "/ws": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+        ws: true
       }
     }
   }

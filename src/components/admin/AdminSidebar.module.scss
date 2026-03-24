@@ -564,6 +564,26 @@
     font-weight: 700;
 }
 
+// Nút cài đặt chuông trong card thông báo (không dùng style nút header)
+.adminNotifGearBtn {
+    display        : inline-flex !important;
+    align-items    : center !important;
+    justify-content: center !important;
+    width          : 32px !important;
+    min-width      : 32px !important;
+    height         : 28px !important;
+    padding        : 0 !important;
+    color          : var(--admin-muted) !important;
+
+    &:hover {
+        color: var(--admin-accent) !important;
+    }
+}
+
+.adminNotifSoundPopover {
+    z-index: 1200 !important;
+}
+
 .notifTitle {
     font-size  : 0.95rem;
     font-weight: 700;

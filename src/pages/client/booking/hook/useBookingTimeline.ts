@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Dayjs } from "dayjs";
 
-import { message } from "antd";
+import { toast } from "react-toastify";
 import { getTimeline } from "../../../../config/Api";
 import type { IPitchTimeline } from "../../../../types/timeline";
 
@@ -26,7 +26,7 @@ export const useBookingTimeline = (
                 setTimeline(res.data.data ?? null);
             }
         } catch {
-            message.error("Không lấy được timeline");
+            toast.error("Không lấy được timeline");
         } finally {
             setTimelineLoading(false);
         }

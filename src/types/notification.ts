@@ -16,6 +16,9 @@ export interface INotification {
     id: number;
     type: NotificationTypeEnum;
     message: string;
+    senderId?: number | null;
+    senderName?: string | null;
+    senderAvatarUrl?: string | null;
     isRead: boolean;
     deletedByUser: boolean;
     createdAt: string;

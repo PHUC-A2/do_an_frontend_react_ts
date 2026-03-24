@@ -24,9 +24,11 @@ import {
     clientMarkAllNotificationsRead,
     clientMarkNotificationRead,
     logout,
+    updateAccount,
 } from '../../config/Api';
 import { toast } from 'react-toastify';
 import { setLogout } from '../../redux/features/authSlice';
+import { setAccount } from '../../redux/features/accountSlice';
 import { IoMenu, IoSunny, IoChevronBackOutline, IoChevronForwardOutline } from 'react-icons/io5';
 import { LuMoon } from 'react-icons/lu';
 import { PiSoccerBallBold } from 'react-icons/pi';
@@ -35,6 +37,13 @@ import { usePermission } from '../../hooks/common/usePermission';
 import { TbBrandBooking } from 'react-icons/tb';
 import { useBrowserNotification } from '../../hooks/common/useBrowserNotification';
 import type { INotification } from '../../types/notification';
+import NotificationSoundSettingsPanel from '../common/NotificationSoundSettingsPanel';
+import {
+    normalizeNotificationSoundPreset,
+    attachNotificationAudioUserGestureUnlock,
+    playNotificationSound,
+    type NotificationSoundPreset,
+} from '../../utils/notificationSound';
 import styles from './AdminSidebar.module.scss';
 
 const { Sider, Header, Content } = Layout;
@@ -58,17 +67,21 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         if (typeof window === 'undefined') return true;
         return localStorage.getItem(ADMIN_SOUND_PREF_KEY) !== 'off';
     });
+    const [soundPreset, setSoundPreset] = useState<NotificationSoundPreset>('DEFAULT');
+    const [adminNotifSoundPopoverOpen, setAdminNotifSoundPopoverOpen] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const screens = useBreakpoint();
     const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
     const account = useAppSelector(state => state.account.account);
-    const sseRef = useRef<EventSource | null>(null);
+    const notificationWsRef = useRef<WebSocket | null>(null);
     const reconnectRef = useRef<number | null>(null);
     const audioCtxRef = useRef<AudioContext | null>(null);
     const notifTouchRef = useRef<{ id: number | null; x: number; y: number }>({ id: null, x: 0, y: 0 });
     const swipedDeleteRef = useRef<{ id: number | null; at: number }>({ id: null, at: 0 });
+    const bellSoundEnabledRef = useRef(bellSoundEnabled);
+    const soundPresetRef = useRef<NotificationSoundPreset>('DEFAULT');
 
     const { requestPermission, sendBrowserNotif } = useBrowserNotification();
 
@@ -159,61 +172,34 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     );
 
     useEffect(() => {
+        bellSoundEnabledRef.current = bellSoundEnabled;
+    }, [bellSoundEnabled]);
+
+    useEffect(() => {
         localStorage.setItem(ADMIN_SOUND_PREF_KEY, bellSoundEnabled ? 'on' : 'off');
     }, [bellSoundEnabled]);
 
-    const playNotificationBell = () => {
-        try {
-            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-            if (!AudioCtx) return;
-
-            if (!audioCtxRef.current) {
-                audioCtxRef.current = new AudioCtx();
-            }
-
-            const ctx = audioCtxRef.current;
-            if (ctx.state === 'suspended') {
-                void ctx.resume();
-            }
-
-            const now = ctx.currentTime;
-
-            const triggerPulse = (startAt: number) => {
-                const carrier = ctx.createOscillator();
-                const harmonics = ctx.createOscillator();
-                const gain = ctx.createGain();
-
-                carrier.type = 'square';
-                harmonics.type = 'triangle';
-
-                carrier.frequency.setValueAtTime(1900, startAt);
-                carrier.frequency.exponentialRampToValueAtTime(1150, startAt + 0.14);
-
-                harmonics.frequency.setValueAtTime(2400, startAt);
-                harmonics.frequency.exponentialRampToValueAtTime(1400, startAt + 0.14);
-
-                // Loud and short pulse for high noticeability.
-                gain.gain.setValueAtTime(0.0001, startAt);
-                gain.gain.exponentialRampToValueAtTime(0.32, startAt + 0.015);
-                gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.16);
-
-                carrier.connect(gain);
-                harmonics.connect(gain);
-                gain.connect(ctx.destination);
-
-                carrier.start(startAt);
-                harmonics.start(startAt);
-
-                carrier.stop(startAt + 0.16);
-                harmonics.stop(startAt + 0.16);
-            };
-
-            triggerPulse(now);
-            triggerPulse(now + 0.19);
-        } catch {
-            // ignore audio errors in restricted browsers
+    useEffect(() => {
+        if (account?.notificationSoundEnabled === undefined || account?.notificationSoundEnabled === null) {
+            return;
         }
-    };
+        setBellSoundEnabled(Boolean(account.notificationSoundEnabled));
+    }, [account?.notificationSoundEnabled]);
+
+    useEffect(() => {
+        if (account?.notificationSoundPreset === undefined || account?.notificationSoundPreset === null) {
+            return;
+        }
+        const next = normalizeNotificationSoundPreset(String(account.notificationSoundPreset));
+        setSoundPreset(next);
+    }, [account?.notificationSoundPreset]);
+
+    useEffect(() => {
+        soundPresetRef.current = soundPreset;
+    }, [soundPreset]);
+
+    // Mở khóa Web Audio sau lần chạm đầu — thông báo realtime qua WebSocket không kế thừa gesture từ thao tác khác
+    useEffect(() => attachNotificationAudioUserGestureUnlock(audioCtxRef), []);
 
     const clearReconnectTimer = () => {
         if (reconnectRef.current !== null) {
@@ -222,59 +208,62 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         }
     };
 
-    const connectSse = () => {
+    const connectNotificationSocket = () => {
         clearReconnectTimer();
 
         const token = localStorage.getItem('access_token') ?? '';
-        const es = new EventSource(`/api/v1/client/notifications/subscribe?token=${encodeURIComponent(token)}`);
-        sseRef.current = es;
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const ws = new WebSocket(`${protocol}://${window.location.host}/ws/notifications?token=${encodeURIComponent(token)}`);
+        notificationWsRef.current = ws;
 
-        es.addEventListener('notification', (e: MessageEvent) => {
+        ws.onmessage = (event) => {
             try {
-                const notif: INotification = JSON.parse(e.data);
-                setNotifications(prev => [notif, ...prev]);
-                const isRoomBookingNotif = (notif.message || '').toLowerCase().includes('phòng')
-                    || (notif.message || '').toLowerCase().includes('roombooking');
+                const payload = JSON.parse(event.data) as { event?: string; data?: INotification | string };
+                if (payload.event === 'notification' && payload.data && typeof payload.data !== 'string') {
+                    const notif = payload.data as INotification;
+                    setNotifications(prev => [notif, ...prev]);
+                    const isRoomBookingNotif = (notif.message || '').toLowerCase().includes('phòng')
+                        || (notif.message || '').toLowerCase().includes('roombooking');
 
-                const titleMap: Record<string, string> = {
-                    BOOKING_CREATED: isRoomBookingNotif ? '🏫 Đặt phòng thành công' : '🏟️ Đặt sân thành công',
-                    BOOKING_PENDING_CONFIRMATION: isRoomBookingNotif ? '📝 Lịch đặt phòng chờ duyệt' : '📝 Booking chờ duyệt',
-                    BOOKING_APPROVED: isRoomBookingNotif ? '✅ Lịch đặt phòng đã được xác nhận' : '✅ Booking đã được xác nhận',
-                    BOOKING_REJECTED: isRoomBookingNotif ? '❌ Lịch đặt phòng đã bị từ chối' : '❌ Booking đã bị từ chối',
-                    EQUIPMENT_BORROWED: '🎽 Mượn thiết bị',
-                    EQUIPMENT_RETURNED: '📦 Trả thiết bị',
-                    EQUIPMENT_LOST: '⚠️ Báo mất thiết bị',
-                    EQUIPMENT_DAMAGED: '🛠️ Thiết bị bị hỏng',
-                    PAYMENT_REQUESTED: '💸 Yêu cầu thanh toán QR',
-                    PAYMENT_PROOF_UPLOADED: '🧾 Đã tải minh chứng thanh toán',
-                    PAYMENT_CONFIRMED: '💳 Thanh toán xác nhận',
-                    MATCH_REMINDER: '⏰ Sắp đến giờ đá!',
-                };
+                    const titleMap: Record<string, string> = {
+                        BOOKING_CREATED: isRoomBookingNotif ? '🏫 Đặt phòng thành công' : '🏟️ Đặt sân thành công',
+                        BOOKING_PENDING_CONFIRMATION: isRoomBookingNotif ? '📝 Lịch đặt phòng chờ duyệt' : '📝 Booking chờ duyệt',
+                        BOOKING_APPROVED: isRoomBookingNotif ? '✅ Lịch đặt phòng đã được xác nhận' : '✅ Booking đã được xác nhận',
+                        BOOKING_REJECTED: isRoomBookingNotif ? '❌ Lịch đặt phòng đã bị từ chối' : '❌ Booking đã bị từ chối',
+                        EQUIPMENT_BORROWED: '🎽 Mượn thiết bị',
+                        EQUIPMENT_RETURNED: '📦 Trả thiết bị',
+                        EQUIPMENT_LOST: '⚠️ Báo mất thiết bị',
+                        EQUIPMENT_DAMAGED: '🛠️ Thiết bị bị hỏng',
+                        PAYMENT_REQUESTED: '💸 Yêu cầu thanh toán QR',
+                        PAYMENT_PROOF_UPLOADED: '🧾 Đã tải minh chứng thanh toán',
+                        PAYMENT_CONFIRMED: '💳 Thanh toán xác nhận',
+                        MATCH_REMINDER: '⏰ Sắp đến giờ đá!',
+                    };
 
-                if (bellSoundEnabled) {
-                    playNotificationBell();
-                }
-                sendBrowserNotif(titleMap[notif.type] ?? 'TUB Sport', notif.message);
+                    if (bellSoundEnabledRef.current) {
+                        playNotificationSound(audioCtxRef, soundPresetRef.current);
+                    }
+                    sendBrowserNotif(titleMap[notif.type] ?? 'TUB Sport', notif.message);
 
-                if (notif.type === 'BOOKING_PENDING_CONFIRMATION') {
-                    toast.info(notif.message, { autoClose: 6000 });
+                    if (notif.type === 'BOOKING_PENDING_CONFIRMATION') {
+                        toast.info(notif.message, { autoClose: 6000 });
+                    }
+                } else if (payload.event === 'ring' && bellSoundEnabledRef.current) {
+                    playNotificationSound(audioCtxRef, soundPresetRef.current);
                 }
             } catch {
-                // ignore malformed SSE payload
+                // ignore malformed payload
             }
-        });
+        };
 
-        es.addEventListener('ring', () => {
-            if (bellSoundEnabled) {
-                playNotificationBell();
-            }
-        });
+        ws.onerror = () => {
+            ws.close();
+        };
 
-        es.onerror = () => {
-            es.close();
+        ws.onclose = () => {
             if (isAuthenticated) {
                 reconnectRef.current = window.setTimeout(() => {
-                    connectSse();
+                    connectNotificationSocket();
                 }, 3000);
             }
         };
@@ -385,9 +374,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     useEffect(() => {
         if (!isAuthenticated) {
             clearReconnectTimer();
-            if (sseRef.current) {
-                sseRef.current.close();
-                sseRef.current = null;
+            if (notificationWsRef.current) {
+                notificationWsRef.current.close();
+                notificationWsRef.current = null;
             }
             setNotifications([]);
             return;
@@ -403,16 +392,45 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
             })
             .catch(() => { /* ignore */ });
 
-        connectSse();
+        connectNotificationSocket();
 
         return () => {
             clearReconnectTimer();
-            if (sseRef.current) {
-                sseRef.current.close();
+            if (notificationWsRef.current) {
+                notificationWsRef.current.close();
             }
-            sseRef.current = null;
+            notificationWsRef.current = null;
         };
-    }, [isAuthenticated, requestPermission, sendBrowserNotif, bellSoundEnabled]);
+    }, [isAuthenticated, requestPermission, sendBrowserNotif]);
+
+    const handleAdminBellSoundPreferenceChange = async (checked: boolean) => {
+        setBellSoundEnabled(checked);
+        if (!account) {
+            return;
+        }
+        try {
+            await updateAccount({ notificationSoundEnabled: checked });
+            dispatch(setAccount({ ...account, notificationSoundEnabled: checked }));
+        } catch {
+            toast.error('Không lưu được cấu hình chuông thông báo');
+            setBellSoundEnabled(!checked);
+        }
+    };
+
+    const handleAdminSoundPresetPreferenceChange = async (preset: NotificationSoundPreset) => {
+        const previous = soundPreset;
+        setSoundPreset(preset);
+        if (!account) {
+            return;
+        }
+        try {
+            await updateAccount({ notificationSoundPreset: preset });
+            dispatch(setAccount({ ...account, notificationSoundPreset: preset }));
+        } catch {
+            toast.error('Không lưu được kiểu âm thanh thông báo');
+            setSoundPreset(previous);
+        }
+    };
 
     const handleMarkAllRead = async () => {
         try {
@@ -557,17 +575,44 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         }
     };
 
+    const adminSoundSettingsPopover = (
+        <Popover
+            title="Cài đặt chuông thông báo"
+            trigger="click"
+            open={adminNotifSoundPopoverOpen}
+            onOpenChange={setAdminNotifSoundPopoverOpen}
+            placement="bottomRight"
+            rootClassName={styles.adminNotifSoundPopover}
+            getPopupContainer={() => document.body}
+            content={(
+                <NotificationSoundSettingsPanel
+                    bellSoundEnabled={bellSoundEnabled}
+                    onBellSoundChange={(c) => { void handleAdminBellSoundPreferenceChange(c); }}
+                    soundPreset={soundPreset}
+                    onSoundPresetChange={(p) => { void handleAdminSoundPresetPreferenceChange(p); }}
+                    onTestSound={() => playNotificationSound(audioCtxRef, soundPresetRef.current)}
+                />
+            )}
+        >
+            <Tooltip title="Cài đặt chuông thông báo" placement="bottom">
+                <Button
+                    type="text"
+                    size="small"
+                    className={styles.adminNotifGearBtn}
+                    icon={<SettingOutlined />}
+                    aria-label="Cài đặt chuông thông báo"
+                    onClick={(e) => e.stopPropagation()}
+                />
+            </Tooltip>
+        </Popover>
+    );
+
     const notifContent = (
         <div className={styles.notifCard}>
             <div className={styles.notifHeader}>
                 <span className={styles.notifTitle}>Thông báo quản trị</span>
                 <Space size={10} wrap className={styles.notifActions}>
-                    <span className={styles.notifSoundLabel}>Âm</span>
-                    <Switch
-                        size="small"
-                        checked={bellSoundEnabled}
-                        onChange={setBellSoundEnabled}
-                    />
+                    {adminSoundSettingsPopover}
                     {unreadCount > 0 && (
                         <button type="button" className={styles.notifMarkAll} onClick={handleMarkAllRead}>
                             Đánh dấu đã đọc
@@ -601,8 +646,15 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                             }}
                             title="Nhấn để đánh dấu đã đọc"
                         >
-                            <BellOutlined className={styles.notifItemIcon} />
+                            <Avatar
+                                size={28}
+                                src={notif.senderAvatarUrl || undefined}
+                                className={styles.notifItemIcon}
+                            >
+                                {!notif.senderAvatarUrl ? (notif.senderName?.trim()?.[0] || 'H') : null}
+                            </Avatar>
                             <div className={styles.notifItemBody}>
+                                <span className={styles.notifItemTime}>{notif.senderName || 'Hệ thống'}</span>
                                 <span className={styles.notifItemMsg}>{notif.message}</span>
                                 <span className={styles.notifItemTime}>
                                     {new Date(notif.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
@@ -770,6 +822,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                                         type="text"
                                         className={styles.headerUtilityButton}
                                         icon={<BellOutlined />}
+                                        aria-label="Thông báo quản trị"
                                     />
                                 </Badge>
                             </Popover>
@@ -780,6 +833,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                                         type="text"
                                         className={styles.headerUtilityButton}
                                         icon={<BellOutlined />}
+                                        aria-label="Thông báo quản trị"
                                         onClick={() => setNotifOpen(true)}
                                     />
                                 </Badge>

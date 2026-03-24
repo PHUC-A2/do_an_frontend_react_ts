@@ -1,4 +1,5 @@
-import { Avatar, Badge, Button, Flex, Grid, Input, Layout, Modal, Switch, Tooltip, Typography, type InputRef } from 'antd';
+import { Avatar, Badge, Button, Flex, Grid, Input, Layout, Modal, Popover, Switch, Tooltip, Typography, type InputRef } from 'antd';
+import { SettingOutlined } from '@ant-design/icons';
 import { createPortal } from 'react-dom';
 import { useEffect, useRef, useState, type CSSProperties, type TouchEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
@@ -33,6 +34,7 @@ import {
     clientMarkAllNotificationsRead,
     clientMarkNotificationRead,
     logout,
+    updateAccount,
 } from '../../config/Api';
 import { useBrowserNotification } from '../../hooks/common/useBrowserNotification';
 import { useOutsideClick } from '../../hooks/common/useOutsideClick';
@@ -42,9 +44,17 @@ import ModalForget from '../../pages/auth/modal/ModalForget';
 import ModalUpdateAccount from '../../pages/auth/modal/ModalUpdateAccount';
 import ModalBookingHistory from '../../pages/client/booking/modals/ModalBookingHistory';
 import { setLogout } from '../../redux/features/authSlice';
+import { setAccount } from '../../redux/features/accountSlice';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import styles from './Header.module.scss';
 import LogoGlow from '../logo-glow/LogoGlow';
+import NotificationSoundSettingsPanel from '../common/NotificationSoundSettingsPanel';
+import {
+    normalizeNotificationSoundPreset,
+    attachNotificationAudioUserGestureUnlock,
+    playNotificationSound,
+    type NotificationSoundPreset,
+} from '../../utils/notificationSound';
 
 interface HeaderProps {
     theme: 'light' | 'dark';
@@ -139,18 +149,20 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
         if (typeof window === 'undefined') return true;
         return localStorage.getItem(CLIENT_SOUND_PREF_KEY) !== 'off';
     });
+    const [soundPreset, setSoundPreset] = useState<NotificationSoundPreset>('DEFAULT');
+    const [notifSoundPopoverOpen, setNotifSoundPopoverOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
     const [drawerNotifOpen, setDrawerNotifOpen] = useState(false);
     const notifRef = useRef<HTMLDivElement | null>(null);
     const notifCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const sseRef = useRef<EventSource | null>(null);
-    const sseReconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const notificationPollingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const sseFailureCountRef = useRef(0);
-    const pollingNoticeShownRef = useRef(false);
+    const notificationWsRef = useRef<WebSocket | null>(null);
+    const notificationReconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const notificationFailureCountRef = useRef(0);
     const audioCtxRef = useRef<AudioContext | null>(null);
     const notifTouchRef = useRef<{ id: number | null; x: number; y: number }>({ id: null, x: 0, y: 0 });
     const swipedDeleteRef = useRef<{ id: number | null; at: number }>({ id: null, at: 0 });
+    const bellSoundEnabledRef = useRef(bellSoundEnabled);
+    const soundPresetRef = useRef<NotificationSoundPreset>('DEFAULT');
 
     const { requestPermission, sendBrowserNotif } = useBrowserNotification();
 
@@ -172,61 +184,34 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
     useEffect(() => {
+        bellSoundEnabledRef.current = bellSoundEnabled;
+    }, [bellSoundEnabled]);
+
+    useEffect(() => {
         localStorage.setItem(CLIENT_SOUND_PREF_KEY, bellSoundEnabled ? 'on' : 'off');
     }, [bellSoundEnabled]);
 
-    const playNotificationBell = () => {
-        try {
-            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-            if (!AudioCtx) return;
-
-            if (!audioCtxRef.current) {
-                audioCtxRef.current = new AudioCtx();
-            }
-
-            const ctx = audioCtxRef.current;
-            if (ctx.state === 'suspended') {
-                void ctx.resume();
-            }
-
-            const now = ctx.currentTime;
-
-            const triggerPulse = (startAt: number) => {
-                const carrier = ctx.createOscillator();
-                const harmonics = ctx.createOscillator();
-                const gain = ctx.createGain();
-
-                carrier.type = 'square';
-                harmonics.type = 'triangle';
-
-                carrier.frequency.setValueAtTime(1850, startAt);
-                carrier.frequency.exponentialRampToValueAtTime(1100, startAt + 0.14);
-
-                harmonics.frequency.setValueAtTime(2300, startAt);
-                harmonics.frequency.exponentialRampToValueAtTime(1350, startAt + 0.14);
-
-                // Loud and short pulse for high noticeability.
-                gain.gain.setValueAtTime(0.0001, startAt);
-                gain.gain.exponentialRampToValueAtTime(0.32, startAt + 0.015);
-                gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.16);
-
-                carrier.connect(gain);
-                harmonics.connect(gain);
-                gain.connect(ctx.destination);
-
-                carrier.start(startAt);
-                harmonics.start(startAt);
-
-                carrier.stop(startAt + 0.16);
-                harmonics.stop(startAt + 0.16);
-            };
-
-            triggerPulse(now);
-            triggerPulse(now + 0.19);
-        } catch {
-            // ignore audio errors in restricted browsers
+    useEffect(() => {
+        if (account?.notificationSoundEnabled === undefined || account?.notificationSoundEnabled === null) {
+            return;
         }
-    };
+        setBellSoundEnabled(Boolean(account.notificationSoundEnabled));
+    }, [account?.notificationSoundEnabled]);
+
+    useEffect(() => {
+        if (account?.notificationSoundPreset === undefined || account?.notificationSoundPreset === null) {
+            return;
+        }
+        const next = normalizeNotificationSoundPreset(String(account.notificationSoundPreset));
+        setSoundPreset(next);
+    }, [account?.notificationSoundPreset]);
+
+    useEffect(() => {
+        soundPresetRef.current = soundPreset;
+    }, [soundPreset]);
+
+    // Mở khóa Web Audio sau lần chạm đầu — chuông qua WebSocket không nằm trong cùng gesture với thao tác đặt sân
+    useEffect(() => attachNotificationAudioUserGestureUnlock(audioCtxRef), []);
 
     const handleNotifMouseEnter = () => {
         if (notifCloseTimerRef.current) {
@@ -371,23 +356,18 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
         };
     }, []);
 
-    // SSE: connect when authenticated, disconnect on logout
+    // WebSocket: connect when authenticated, disconnect on logout
     useEffect(() => {
         if (!isAuthenticated) {
-            if (sseRef.current) {
-                sseRef.current.close();
-                sseRef.current = null;
+            if (notificationWsRef.current) {
+                notificationWsRef.current.close();
+                notificationWsRef.current = null;
             }
-            if (sseReconnectTimerRef.current) {
-                clearTimeout(sseReconnectTimerRef.current);
-                sseReconnectTimerRef.current = null;
+            if (notificationReconnectTimerRef.current) {
+                clearTimeout(notificationReconnectTimerRef.current);
+                notificationReconnectTimerRef.current = null;
             }
-            if (notificationPollingTimerRef.current) {
-                clearInterval(notificationPollingTimerRef.current);
-                notificationPollingTimerRef.current = null;
-            }
-            sseFailureCountRef.current = 0;
-            pollingNoticeShownRef.current = false;
+            notificationFailureCountRef.current = 0;
             setNotifications([]);
             return;
         }
@@ -408,127 +388,161 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
             }
         };
 
-        const stopPollingFallback = () => {
-            if (notificationPollingTimerRef.current) {
-                clearInterval(notificationPollingTimerRef.current);
-                notificationPollingTimerRef.current = null;
-            }
-            pollingNoticeShownRef.current = false;
-        };
-
-        const startPollingFallback = () => {
-            if (notificationPollingTimerRef.current) {
-                return;
-            }
-
-            if (!pollingNoticeShownRef.current) {
-                toast.warn('Kết nối thông báo thời gian thực không ổn định, hệ thống chuyển sang chế độ đồng bộ định kỳ.');
-                pollingNoticeShownRef.current = true;
-            }
-
-            notificationPollingTimerRef.current = setInterval(() => {
-                void fetchNotifications();
-            }, 10000);
-        };
-
-        const connectSse = () => {
+        const connectNotificationSocket = () => {
             if (cancelled) {
                 return;
             }
 
             const token = localStorage.getItem('access_token') ?? '';
-            const es = new EventSource(`/api/v1/client/notifications/subscribe?token=${encodeURIComponent(token)}`);
-            sseRef.current = es;
+            const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            const ws = new WebSocket(`${protocol}://${window.location.host}/ws/notifications?token=${encodeURIComponent(token)}`);
+            notificationWsRef.current = ws;
 
-            es.addEventListener('open', () => {
-                sseFailureCountRef.current = 0;
-                stopPollingFallback();
-            });
+            ws.onopen = () => {
+                notificationFailureCountRef.current = 0;
+            };
 
-            es.addEventListener('notification', (e: MessageEvent) => {
+            ws.onmessage = (event) => {
                 try {
-                    const notif: INotification = JSON.parse(e.data);
-                    setNotifications(prev => [notif, ...prev]);
+                    const payload = JSON.parse(event.data) as { event?: string; data?: INotification | string };
+                    if (payload.event === 'notification' && payload.data && typeof payload.data !== 'string') {
+                        const notif = payload.data as INotification;
+                        setNotifications(prev => [notif, ...prev]);
 
-                    // Tiêu đề theo loại thông báo
-                    const titleMap: Record<string, string> = {
-                        BOOKING_CREATED: '🏟️ Đặt sân thành công',
-                        BOOKING_PENDING_CONFIRMATION: '📝 Yêu cầu đặt sân mới',
-                        BOOKING_APPROVED: '✅ Booking đã được xác nhận',
-                        BOOKING_REJECTED: '❌ Booking đã bị từ chối',
-                        EQUIPMENT_BORROWED: '🎽 Mượn thiết bị',
-                        EQUIPMENT_RETURNED: '📦 Trả thiết bị',
-                        EQUIPMENT_LOST: '⚠️ Báo mất thiết bị',
-                        EQUIPMENT_DAMAGED: '🛠️ Thiết bị bị hỏng',
-                        PAYMENT_REQUESTED: '💸 Yêu cầu thanh toán QR',
-                        PAYMENT_PROOF_UPLOADED: '🧾 Đã tải minh chứng thanh toán',
-                        PAYMENT_CONFIRMED: '💳 Thanh toán xác nhận',
-                        MATCH_REMINDER: '⏰ Sắp đến giờ đá!',
-                    };
-                    const title = titleMap[notif.type] ?? 'UTB Sport';
+                        const titleMap: Record<string, string> = {
+                            BOOKING_CREATED: '🏟️ Đặt sân thành công',
+                            BOOKING_PENDING_CONFIRMATION: '📝 Yêu cầu đặt sân mới',
+                            BOOKING_APPROVED: '✅ Booking đã được xác nhận',
+                            BOOKING_REJECTED: '❌ Booking đã bị từ chối',
+                            EQUIPMENT_BORROWED: '🎽 Mượn thiết bị',
+                            EQUIPMENT_RETURNED: '📦 Trả thiết bị',
+                            EQUIPMENT_LOST: '⚠️ Báo mất thiết bị',
+                            EQUIPMENT_DAMAGED: '🛠️ Thiết bị bị hỏng',
+                            PAYMENT_REQUESTED: '💸 Yêu cầu thanh toán QR',
+                            PAYMENT_PROOF_UPLOADED: '🧾 Đã tải minh chứng thanh toán',
+                            PAYMENT_CONFIRMED: '💳 Thanh toán xác nhận',
+                            MATCH_REMINDER: '⏰ Sắp đến giờ đá!',
+                        };
+                        const title = titleMap[notif.type] ?? 'UTB Sport';
 
-                    if (bellSoundEnabled) {
-                        playNotificationBell();
-                    }
-
-                    // Browser notification (hiện popup hệ thống)
-                    sendBrowserNotif(title, notif.message);
-
-                    // Toast chỉ cho MATCH_REMINDER (các loại khác form đã toast)
-                    if (notif.type === 'MATCH_REMINDER') {
-                        toast.info(notif.message, { autoClose: 6000 });
+                        if (bellSoundEnabledRef.current) {
+                            playNotificationSound(audioCtxRef, soundPresetRef.current);
+                        }
+                        sendBrowserNotif(title, notif.message);
+                        if (notif.type === 'MATCH_REMINDER') {
+                            toast.info(notif.message, { autoClose: 6000 });
+                        }
+                    } else if (payload.event === 'ring' && bellSoundEnabledRef.current) {
+                        playNotificationSound(audioCtxRef, soundPresetRef.current);
                     }
                 } catch {
                     // ignore parse error
                 }
-            });
+            };
 
-            es.addEventListener('ring', () => {
-                if (bellSoundEnabled) {
-                    playNotificationBell();
-                }
-            });
-
-            es.onerror = () => {
+            ws.onerror = () => {
                 if (cancelled) {
                     return;
                 }
+                ws.close();
+            };
 
-                if (sseRef.current === es) {
-                    es.close();
-                    sseRef.current = null;
+            ws.onclose = () => {
+                if (cancelled) {
+                    return;
                 }
-
-                sseFailureCountRef.current += 1;
-                if (sseFailureCountRef.current >= 4) {
-                    startPollingFallback();
+                if (notificationWsRef.current === ws) {
+                    notificationWsRef.current = null;
                 }
-
-                const retryDelay = Math.min(30000, 1000 * Math.pow(2, Math.min(sseFailureCountRef.current, 5)));
-                if (sseReconnectTimerRef.current) {
-                    clearTimeout(sseReconnectTimerRef.current);
+                notificationFailureCountRef.current += 1;
+                if (notificationFailureCountRef.current === 4) {
+                    toast.warn('Kết nối WebSocket thông báo đang không ổn định, hệ thống sẽ tự động thử lại.');
                 }
-                sseReconnectTimerRef.current = setTimeout(connectSse, retryDelay);
+                const retryDelay = Math.min(30000, 1000 * Math.pow(2, Math.min(notificationFailureCountRef.current, 5)));
+                if (notificationReconnectTimerRef.current) {
+                    clearTimeout(notificationReconnectTimerRef.current);
+                }
+                notificationReconnectTimerRef.current = setTimeout(connectNotificationSocket, retryDelay);
             };
         };
 
         void fetchNotifications();
-        connectSse();
+        connectNotificationSocket();
 
         return () => {
             cancelled = true;
-            if (sseRef.current) {
-                sseRef.current.close();
-                sseRef.current = null;
+            if (notificationWsRef.current) {
+                notificationWsRef.current.close();
+                notificationWsRef.current = null;
             }
-            if (sseReconnectTimerRef.current) {
-                clearTimeout(sseReconnectTimerRef.current);
-                sseReconnectTimerRef.current = null;
+            if (notificationReconnectTimerRef.current) {
+                clearTimeout(notificationReconnectTimerRef.current);
+                notificationReconnectTimerRef.current = null;
             }
-            stopPollingFallback();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isAuthenticated, bellSoundEnabled]);
+    }, [isAuthenticated]);
+
+    const handleBellSoundPreferenceChange = async (checked: boolean) => {
+        setBellSoundEnabled(checked);
+        if (!account) {
+            return;
+        }
+        try {
+            await updateAccount({ notificationSoundEnabled: checked });
+            dispatch(setAccount({ ...account, notificationSoundEnabled: checked }));
+        } catch {
+            toast.error('Không lưu được cấu hình chuông thông báo');
+            setBellSoundEnabled(!checked);
+        }
+    };
+
+    const handleSoundPresetPreferenceChange = async (preset: NotificationSoundPreset) => {
+        const previous = soundPreset;
+        setSoundPreset(preset);
+        if (!account) {
+            return;
+        }
+        try {
+            await updateAccount({ notificationSoundPreset: preset });
+            dispatch(setAccount({ ...account, notificationSoundPreset: preset }));
+        } catch {
+            toast.error('Không lưu được kiểu âm thanh thông báo');
+            setSoundPreset(previous);
+        }
+    };
+
+    const clientSoundSettingsPopover = (
+        <Popover
+            title="Cài đặt chuông thông báo"
+            trigger="click"
+            open={notifSoundPopoverOpen}
+            onOpenChange={setNotifSoundPopoverOpen}
+            placement="bottomRight"
+            rootClassName={styles.notifSoundPopover}
+            getPopupContainer={() => document.body}
+            content={(
+                <NotificationSoundSettingsPanel
+                    bellSoundEnabled={bellSoundEnabled}
+                    onBellSoundChange={(c) => { void handleBellSoundPreferenceChange(c); }}
+                    soundPreset={soundPreset}
+                    onSoundPresetChange={(p) => { void handleSoundPresetPreferenceChange(p); }}
+                    onTestSound={() => playNotificationSound(audioCtxRef, soundPresetRef.current)}
+                />
+            )}
+        >
+            <Tooltip title="Cài đặt chuông thông báo" placement="bottom" classNames={{ root: styles.headerTooltip }}>
+                <Button
+                    type="text"
+                    size="small"
+                    className={styles.notifHeaderGear}
+                    icon={<SettingOutlined />}
+                    aria-label="Cài đặt chuông thông báo"
+                    onClick={(e) => e.stopPropagation()}
+                />
+            </Tooltip>
+        </Popover>
+    );
 
     useOutsideClick(notifRef, () => setNotifOpen(false), notifOpen);
 
@@ -813,9 +827,8 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
                             <Flex vertical className={`${styles.notifMenu}${notifOpen ? ` ${styles.notifMenuOpen}` : ''}`}>
                                 <Flex className={styles.notifHeader}>
                                     <Text className={styles.notifTitle}>Thông báo</Text>
-                                    <Flex align="center" gap={8} className={styles.notifActions}>
-                                        <Text className={styles.notifSoundLabel}>Âm</Text>
-                                        <Switch size="small" checked={bellSoundEnabled} onChange={setBellSoundEnabled} />
+                                    <Flex align="center" gap={8} wrap="wrap" className={styles.notifActions}>
+                                        {isAuthenticated ? clientSoundSettingsPopover : null}
                                         {unreadCount > 0 && (
                                             <Button type="text" className={styles.notifMarkAll} onClick={handleMarkAllRead}>
                                                 Đánh dấu đã đọc
@@ -848,8 +861,17 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
                                                 }}
                                                 title="Nhấn để đánh dấu đã đọc"
                                             >
-                                                <FiBell className={styles.notifItemIcon} />
+                                                <Avatar
+                                                    size={28}
+                                                    src={n.senderAvatarUrl || undefined}
+                                                    className={styles.notifItemIcon}
+                                                >
+                                                    {!n.senderAvatarUrl ? (n.senderName?.trim()?.[0] || 'H') : null}
+                                                </Avatar>
                                                 <Flex vertical className={styles.notifItemBody}>
+                                                    <Text className={styles.notifItemTime}>
+                                                        {n.senderName || 'Hệ thống'}
+                                                    </Text>
                                                     <Text className={styles.notifItemMsg}>{n.message}</Text>
                                                     <Text className={styles.notifItemTime}>
                                                         {new Date(n.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
@@ -1085,9 +1107,8 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
                             <Flex vertical className={styles.drawerNotifPanel}>
                                 <Flex className={styles.notifHeader}>
                                     <Text className={styles.notifTitle}>Thông báo</Text>
-                                    <Flex align="center" gap={8} className={styles.notifActions}>
-                                        <Text className={styles.notifSoundLabel}>Âm</Text>
-                                        <Switch size="small" checked={bellSoundEnabled} onChange={setBellSoundEnabled} />
+                                    <Flex align="center" gap={8} wrap="wrap" className={styles.notifActions}>
+                                        {isAuthenticated ? clientSoundSettingsPopover : null}
                                         {unreadCount > 0 && (
                                             <Button type="text" className={styles.notifMarkAll} onClick={handleMarkAllRead}>
                                                 Đánh dấu đã đọc
@@ -1120,8 +1141,17 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
                                                 }}
                                                 title="Nhấn để đánh dấu đã đọc"
                                             >
-                                                <FiBell className={styles.notifItemIcon} />
+                                                <Avatar
+                                                    size={28}
+                                                    src={n.senderAvatarUrl || undefined}
+                                                    className={styles.notifItemIcon}
+                                                >
+                                                    {!n.senderAvatarUrl ? (n.senderName?.trim()?.[0] || 'H') : null}
+                                                </Avatar>
                                                 <Flex vertical className={styles.notifItemBody}>
+                                                    <Text className={styles.notifItemTime}>
+                                                        {n.senderName || 'Hệ thống'}
+                                                    </Text>
                                                     <Text className={styles.notifItemMsg}>{n.message}</Text>
                                                     <Text className={styles.notifItemTime}>
                                                         {new Date(n.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}

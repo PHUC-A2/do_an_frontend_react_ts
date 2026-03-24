@@ -456,6 +456,26 @@ $bp-md: 768px;
     font-weight: 700;
 }
 
+// Nút bánh răng cài đặt chuông trong tiêu đề panel thông báo (gọn, không chiếm chỗ như nút header)
+.notifHeaderGear {
+    display        : inline-flex !important;
+    align-items    : center !important;
+    justify-content: center !important;
+    width          : 32px !important;
+    min-width      : 32px !important;
+    height         : 28px !important;
+    padding        : 0 !important;
+    color          : var(--header-muted) !important;
+
+    &:hover {
+        color: var(--header-accent) !important;
+    }
+}
+
+.notifSoundPopover {
+    z-index: 1200 !important;
+}
+
 .notifTitle {
     color      : var(--header-text) !important;
     font-size  : 0.96rem;

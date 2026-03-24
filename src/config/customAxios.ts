@@ -8,9 +8,25 @@ type TrackedAxiosConfig = InternalAxiosRequestConfig & {
     __topProgressSettled?: boolean;
 };
 
+/**
+ * Base URL cho axios:
+ * - Để trống / không set VITE_BACKEND_URL → gọi /api... cùng host với trang (nginx hoặc Vite proxy) — khuyến nghị deploy.
+ * - Chỉ set VITE_BACKEND_URL khi cần gọi thẳng backend (vd. http://localhost:8080) khi dev không dùng proxy.
+ */
+const resolveAxiosBaseURL = (): string => {
+    const v = import.meta.env.VITE_BACKEND_URL;
+    if (v === undefined || v === null) {
+        return '';
+    }
+    const s = String(v).trim();
+    if (s === '' || s === 'undefined') {
+        return '';
+    }
+    return s.replace(/\/$/, '');
+};
+
 const instance = axios.create({
-    baseURL: import.meta.env.VITE_BACKEND_URL,
-    // baseURL: "/",
+    baseURL: resolveAxiosBaseURL(),
     withCredentials: true, // gửi cookie refresh_token
 });
 

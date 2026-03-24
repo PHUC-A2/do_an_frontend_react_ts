@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Avatar, Button, Card, Grid, Input, Modal, Popover, Rate, Select, Space, Table, Tag, Typography } from 'antd';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Button, Card, Grid, Input, Modal, Popover, Rate, Select, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { adminGetReviewMessages, adminGetReviews, adminSendReviewMessage, adminUpdateReviewStatus } from '../../../config/Api';
 import type { IReview, IReviewMessage, ReviewStatus } from '../../../types/review';
 import { buildSpringListQuery } from '../../../utils/pagination/buildSpringPageQuery';
 import { toast } from 'react-toastify';
-import { MessageOutlined, SendOutlined, SmileOutlined, UserOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
+import { SendOutlined, SmileOutlined } from '@ant-design/icons';
 import { useAppSelector } from '../../../redux/hooks';
+import ReviewChatMessageRow from '../../../components/common/ReviewChatMessageRow';
+import '../../../styles/reviewChatScroll.scss';
 
 const REVIEW_STATUS_OPTIONS = [
     { value: 'PENDING', label: 'Chờ duyệt' },
@@ -41,8 +42,11 @@ const AdminReviewManager = () => {
         sort: [{ property: 'id', direction: 'desc' }],
     }), [page, pageSize]);
 
-    const loadReviews = async () => {
-        setLoading(true);
+    const loadReviews = useCallback(async (opts?: { silent?: boolean }) => {
+        const silent = Boolean(opts?.silent);
+        if (!silent) {
+            setLoading(true);
+        }
         try {
             const res = await adminGetReviews(query);
             setReviews(res.data.data?.result ?? []);
@@ -53,13 +57,50 @@ const AdminReviewManager = () => {
             setTotal(0);
             setForbidden(true);
         } finally {
-            setLoading(false);
+            if (!silent) {
+                setLoading(false);
+            }
         }
-    };
+    }, [query]);
 
     useEffect(() => {
-        loadReviews();
-    }, [query]);
+        void loadReviews();
+    }, [loadReviews]);
+
+    // Bảng đánh giá không có WebSocket — refetch định kỳ (không bật Spin) để thấy đánh giá mới
+    useEffect(() => {
+        if (forbidden) return;
+        const timer = window.setInterval(() => {
+            void loadReviews({ silent: true });
+        }, 20000);
+        return () => window.clearInterval(timer);
+    }, [forbidden, loadReviews]);
+
+    // Modal chat mở: poll tin nhắn để luôn khớp DB khi WebSocket không đẩy được tới tab này
+    useEffect(() => {
+        if (!chatModalOpen || !activeReview) {
+            return;
+        }
+        const reviewId = activeReview.id;
+        const syncMessages = async () => {
+            try {
+                const res = await adminGetReviewMessages(reviewId);
+                setChatMessages(res.data.data ?? []);
+            } catch {
+                /* bỏ qua một nhịp */
+            }
+        };
+        const quickSync = window.setTimeout(() => {
+            void syncMessages();
+        }, 600);
+        const timer = window.setInterval(() => {
+            void syncMessages();
+        }, 4000);
+        return () => {
+            window.clearTimeout(quickSync);
+            window.clearInterval(timer);
+        };
+    }, [chatModalOpen, activeReview?.id]);
 
     const closeSocket = () => {
         if (socketRef.current) {
@@ -71,6 +112,7 @@ const AdminReviewManager = () => {
     const openChat = async (review: IReview) => {
         setActiveReview(review);
         setChatModalOpen(true);
+        closeSocket();
         try {
             const res = await adminGetReviewMessages(review.id);
             setChatMessages(res.data.data ?? []);
@@ -78,15 +120,20 @@ const AdminReviewManager = () => {
             toast.error('Không thể tải hội thoại');
         }
 
-        closeSocket();
         const token = localStorage.getItem('access_token');
         if (!token) return;
         const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
         const ws = new WebSocket(`${protocol}://${window.location.host}/ws/reviews/${review.id}?token=${encodeURIComponent(token)}`);
+        ws.onerror = () => {
+            toast.warn(
+                'Kết nối chat realtime lỗi (cấu hình nginx/Vite cần proxy /ws). Tin gửi qua API vẫn được; mở lại chat để đồng bộ.',
+                { autoClose: 8000 },
+            );
+        };
         ws.onmessage = (event) => {
             try {
                 const incoming: IReviewMessage = JSON.parse(event.data);
-                setChatMessages((prev) => [...prev, incoming]);
+                setChatMessages((prev) => (prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming]));
             } catch {
                 // ignore malformed payload
             }
@@ -229,68 +276,24 @@ const AdminReviewManager = () => {
                 footer={null}
                 width={isMobile ? 'calc(100vw - 16px)' : 760}
             >
-                <div style={{ maxHeight: isMobile ? 320 : 360, overflowY: 'auto', marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div
+                    className="review-chat-scroll"
+                    style={{ maxHeight: isMobile ? 320 : 360, marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 8 }}
+                >
                     {chatMessages.length === 0 ? (
                         <Text type="secondary">Chưa có tin nhắn nào trong đoạn chat này</Text>
                     ) : (
                         chatMessages.map((item) => {
-                            const mine = item.senderId === account?.id;
-                            const senderName = item.senderFullName || item.senderName || 'Người dùng';
-                            const sentAt = dayjs(item.createdAt).format('HH:mm DD/MM/YYYY');
-                            const statusLabel = getChatStatusLabel(item);
+                            const mine =
+                                account?.id != null && Number(item.senderId) === Number(account.id);
                             return (
-                                <div key={item.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            flexDirection: mine ? 'row-reverse' : 'row',
-                                            alignItems: 'flex-end',
-                                            gap: 8,
-                                            maxWidth: isMobile ? '100%' : '86%',
-                                        }}
-                                    >
-                                        <Popover
-                                            trigger="click"
-                                            content={
-                                                <div style={{ minWidth: isMobile ? 170 : 220 }}>
-                                                    <div style={{ fontWeight: 700, marginBottom: 4 }}>{senderName}</div>
-                                                    <div style={{ fontSize: 12, opacity: 0.78 }}>ID người dùng: {item.senderId}</div>
-                                                    <div style={{ fontSize: 12, opacity: 0.78 }}>Gửi lúc: {sentAt}</div>
-                                                    {mine ? <div style={{ fontSize: 12, opacity: 0.78 }}>Trạng thái: {statusLabel}</div> : null}
-                                                </div>
-                                            }
-                                        >
-                                            <Avatar
-                                                size={isMobile ? 26 : 30}
-                                                src={item.senderAvatarUrl || undefined}
-                                                icon={<UserOutlined />}
-                                                style={{ cursor: 'pointer', flexShrink: 0 }}
-                                            />
-                                        </Popover>
-
-                                        <div
-                                            style={{
-                                                display: 'inline-block',
-                                                padding: '8px 10px',
-                                                borderRadius: 12,
-                                                background: mine ? 'rgba(250,173,20,0.2)' : 'rgba(15,23,42,0.18)',
-                                            }}
-                                        >
-                                            <div style={{ fontSize: 12, opacity: 0.72 }}>{senderName}</div>
-                                            <div>{item.content}</div>
-                                            <div
-                                                style={{
-                                                    fontSize: 11,
-                                                    marginTop: 4,
-                                                    opacity: 0.72,
-                                                    textAlign: mine ? 'right' : 'left',
-                                                }}
-                                            >
-                                                {sentAt}{mine ? ` · ${statusLabel}` : ''}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <ReviewChatMessageRow
+                                    key={item.id}
+                                    msg={item}
+                                    isMine={mine}
+                                    isMobile={isMobile}
+                                    statusLabel={getChatStatusLabel(item)}
+                                />
                             );
                         })
                     )}

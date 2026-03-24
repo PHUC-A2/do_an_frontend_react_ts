@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import {
     Card, Input, Button, Tag, Divider, Typography, Space,
-    Table, Form, Select, Switch, Popconfirm, message, Badge, Tooltip, Empty
+    Table, Form, Select, Switch, Popconfirm, Badge, Tooltip, Empty
 } from 'antd';
+import { toast } from 'react-toastify';
 import { RiRobot2Line } from 'react-icons/ri';
 import { PlusOutlined, DeleteOutlined, ReloadOutlined, KeyOutlined } from '@ant-design/icons';
 import { adminAiChat, adminGetAiKeys, adminAddAiKey, adminToggleAiKey, adminDeleteAiKey } from '../../../config/Api';
@@ -40,7 +41,7 @@ const AdminAiPage = () => {
             const res = await adminGetAiKeys();
             setKeys(res.data?.data ?? []);
         } catch {
-            message.error('Không thể tải danh sách key');
+            toast.error('Không thể tải danh sách key');
         } finally {
             setLoadingKeys(false);
         }
@@ -50,17 +51,17 @@ const AdminAiPage = () => {
 
     const handleAdd = async (values: { provider: AiProvider; apiKey: string; label?: string }) => {
         if (!canCreateAiKey) {
-            message.error('Bạn không có quyền thêm AI key');
+            toast.error('Bạn không có quyền thêm AI key');
             return;
         }
         setAdding(true);
         try {
             await adminAddAiKey(values);
-            message.success('Đã thêm key thành công!');
+            toast.success('Đã thêm key thành công!');
             addForm.resetFields();
             fetchKeys();
         } catch {
-            message.error('Thêm key thất bại');
+            toast.error('Thêm key thất bại');
         } finally {
             setAdding(false);
         }
@@ -68,7 +69,7 @@ const AdminAiPage = () => {
 
     const handleToggle = async (id: number) => {
         if (!canUpdateAiKey) {
-            message.error('Bạn không có quyền cập nhật AI key');
+            toast.error('Bạn không có quyền cập nhật AI key');
             return;
         }
         try {
@@ -76,27 +77,27 @@ const AdminAiPage = () => {
             const updated = res.data?.data;
             setKeys(prev => prev.map(k => k.id === id ? { ...k, active: updated?.active ?? k.active } : k));
         } catch {
-            message.error('Cập nhật thất bại');
+            toast.error('Cập nhật thất bại');
         }
     };
 
     const handleDelete = async (id: number) => {
         if (!canDeleteAiKey) {
-            message.error('Bạn không có quyền xóa AI key');
+            toast.error('Bạn không có quyền xóa AI key');
             return;
         }
         try {
             await adminDeleteAiKey(id);
-            message.success('Đã xóa key');
+            toast.success('Đã xóa key');
             setKeys(prev => prev.filter(k => k.id !== id));
         } catch {
-            message.error('Xóa thất bại');
+            toast.error('Xóa thất bại');
         }
     };
 
     const handleTest = async () => {
         if (!canChatAiAdmin) {
-            message.error('Bạn không có quyền sử dụng AI chat admin');
+            toast.error('Bạn không có quyền sử dụng AI chat admin');
             return;
         }
         if (!testMsg.trim()) return;

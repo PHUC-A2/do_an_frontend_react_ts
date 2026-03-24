@@ -15,10 +15,8 @@ import {
     DatePicker,
     Rate,
     Input,
-    message,
     Modal,
     Popover,
-    Avatar,
     Grid,
 } from "antd";
 import { motion, type Variants } from "framer-motion";
@@ -42,7 +40,6 @@ import {
     MessageOutlined,
     SendOutlined,
     SmileOutlined,
-    UserOutlined,
 } from "@ant-design/icons";
 import { IoMdClock } from "react-icons/io";
 import { useNavigate, useParams } from "react-router";
@@ -58,11 +55,14 @@ import {
 import { formatVND } from "../../../utils/format/price";
 
 import "./PitchDetailsPage.scss";
+import "../../../styles/reviewChatScroll.scss";
 import { formatDateTime } from "../../../utils/format/localdatetime";
 import dayjs, { type Dayjs } from "dayjs";
 import { useBookingTimeline } from "../booking/hook/useBookingTimeline";
 import BookingTime from "../booking/components/BookingTimeline";
 import { useAppSelector } from "../../../redux/hooks";
+import ReviewChatMessageRow from "../../../components/common/ReviewChatMessageRow";
+import { toast } from "react-toastify";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -137,8 +137,11 @@ const PitchDetailsPage: React.FC = () => {
         clientGetMyReviews()
             .then((res) => {
                 const list = res.data.data ?? [];
-                const filtered = list.filter((item) =>
-                    item.targetType === "PITCH" && (pitchId == null || item.pitchId === pitchId)
+                // So sánh số — backend có thể trả pitchId kiểu khác, tránh lọc rỗng nhầm
+                const filtered = list.filter(
+                    (item) =>
+                        item.targetType === "PITCH" &&
+                        (pitchId == null || Number(item.pitchId) === Number(pitchId)),
                 );
                 setMyReviews(filtered);
             })
@@ -148,6 +151,18 @@ const PitchDetailsPage: React.FC = () => {
     useEffect(() => {
         if (!id) return;
         loadMyReviews(Number(id));
+    }, [id]);
+
+    // Khi quay lại tab: đồng bộ danh sách đánh giá (không phải F5 cả trang)
+    useEffect(() => {
+        if (!id) return;
+        const onVis = () => {
+            if (document.visibilityState === "visible") {
+                loadMyReviews(Number(id));
+            }
+        };
+        document.addEventListener("visibilitychange", onVis);
+        return () => document.removeEventListener("visibilitychange", onVis);
     }, [id]);
 
     const pitchArea =
@@ -187,22 +202,34 @@ const PitchDetailsPage: React.FC = () => {
     const handleCreateReview = async () => {
         try {
             if (!reviewContent.trim()) {
-                message.error("Vui lòng nhập nội dung nhận xét");
+                toast.error("Vui lòng nhập nội dung nhận xét");
                 return;
             }
-            await clientCreateReview({
+            const res = await clientCreateReview({
                 targetType: "PITCH",
                 pitchId: Number(id),
                 rating: reviewRating,
                 content: reviewContent.trim(),
             });
-            message.success("Gửi đánh giá thành công");
+            const created = res.data?.data;
+            toast.success("Gửi đánh giá thành công");
             setReviewModalOpen(false);
             setReviewContent("");
             setReviewRating(5);
-            loadMyReviews(Number(id));
+            const pid = Number(id);
+            if (created) {
+                setMyReviews((prev) => {
+                    const merged = [created, ...prev.filter((r) => r.id !== created.id)];
+                    return merged.filter(
+                        (item) =>
+                            item.targetType === "PITCH" && Number(item.pitchId) === pid,
+                    );
+                });
+                await openChatByReview(created);
+            }
+            void loadMyReviews(pid);
         } catch (error: any) {
-            message.error(error?.response?.data?.message ?? "Không thể gửi đánh giá");
+            toast.error(error?.response?.data?.message ?? "Không thể gửi đánh giá");
         }
     };
 
@@ -217,25 +244,31 @@ const PitchDetailsPage: React.FC = () => {
         try {
             setActiveReview(review);
             setEmojiOpen(false);
+            closeChatSocket();
             const res = await clientGetReviewMessages(review.id);
             setChatMessages(res.data.data ?? []);
 
-            closeChatSocket();
             const token = localStorage.getItem("access_token");
             if (!token) return;
             const protocol = window.location.protocol === "https:" ? "wss" : "ws";
             const ws = new WebSocket(`${protocol}://${window.location.host}/ws/reviews/${review.id}?token=${encodeURIComponent(token)}`);
+            ws.onerror = () => {
+                toast.warn(
+                    "Kết nối chat realtime lỗi (kiểm tra proxy /ws trên server). Gửi tin vẫn được qua API; để xem tin mới hãy mở lại khung chat.",
+                    { autoClose: 8000 },
+                );
+            };
             ws.onmessage = (event) => {
                 try {
                     const incoming: IReviewMessage = JSON.parse(event.data);
-                    setChatMessages((prev) => [...prev, incoming]);
+                    setChatMessages((prev) => (prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming]));
                 } catch {
                     // bỏ qua payload lỗi
                 }
             };
             chatSocketRef.current = ws;
         } catch {
-            message.error("Không thể tải chat đánh giá");
+            toast.error("Không thể tải chat đánh giá");
         }
     };
 
@@ -253,7 +286,7 @@ const PitchDetailsPage: React.FC = () => {
             setChatMessages(res.data.data ?? []);
             setChatContent("");
         } catch {
-            message.error("Không thể gửi tin nhắn");
+            toast.error("Không thể gửi tin nhắn");
         }
     };
 
@@ -273,6 +306,32 @@ const PitchDetailsPage: React.FC = () => {
             closeChatSocket();
         };
     }, []);
+
+    // Đang mở khung chat: đồng bộ REST định kỳ (dự phòng khi WebSocket/proxy lỗi — vẫn thấy tin như admin gửi)
+    useEffect(() => {
+        if (!activeReview) {
+            return;
+        }
+        const reviewId = activeReview.id;
+        const syncMessages = async () => {
+            try {
+                const res = await clientGetReviewMessages(reviewId);
+                setChatMessages(res.data.data ?? []);
+            } catch {
+                /* bỏ qua một nhịp nếu mạng lỗi */
+            }
+        };
+        const quickSync = window.setTimeout(() => {
+            void syncMessages();
+        }, 600);
+        const timer = window.setInterval(() => {
+            void syncMessages();
+        }, 4000);
+        return () => {
+            window.clearTimeout(quickSync);
+            window.clearInterval(timer);
+        };
+    }, [activeReview?.id]);
 
     useEffect(() => {
         if (!stripRef.current) return;
@@ -657,80 +716,30 @@ const PitchDetailsPage: React.FC = () => {
                                                                         }}
                                                                     >
                                                                         <div
+                                                                            className="review-chat-scroll"
                                                                             style={{
                                                                                 maxHeight: isMobile ? 180 : 220,
-                                                                                overflowY: "auto",
                                                                                 marginBottom: 10,
                                                                                 display: "flex",
                                                                                 flexDirection: "column",
                                                                                 gap: 8,
-                                                                                paddingRight: 4,
                                                                             }}
                                                                         >
                                                                             {chatMessages.length === 0 ? (
                                                                                 <Text type="secondary">Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện.</Text>
                                                                             ) : (
                                                                                 chatMessages.map((msg) => {
-                                                                                    const mine = msg.senderId === account?.id;
-                                                                                    const senderName = msg.senderFullName || msg.senderName || "Người dùng";
-                                                                                    const senderAvatar = msg.senderAvatarUrl || undefined;
-                                                                                    const sentAt = dayjs(msg.createdAt).format("HH:mm DD/MM/YYYY");
-                                                                                    const statusLabel = getChatStatusLabel(msg);
+                                                                                    const mine =
+                                                                                        account?.id != null &&
+                                                                                        Number(msg.senderId) === Number(account.id);
                                                                                     return (
-                                                                                        <div key={msg.id} style={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start" }}>
-                                                                                            <div
-                                                                                                style={{
-                                                                                                    display: "flex",
-                                                                                                    flexDirection: mine ? "row-reverse" : "row",
-                                                                                                    alignItems: "flex-end",
-                                                                                                    gap: 8,
-                                                                                                    maxWidth: isMobile ? "100%" : "86%",
-                                                                                                }}
-                                                                                            >
-                                                                                                <Popover
-                                                                                                    trigger="click"
-                                                                                                    content={
-                                                                                                        <div style={{ minWidth: isMobile ? 170 : 220 }}>
-                                                                                                            <div style={{ fontWeight: 700, marginBottom: 4 }}>{senderName}</div>
-                                                                                                            <div style={{ fontSize: 12, opacity: 0.78 }}>ID người dùng: {msg.senderId}</div>
-                                                                                                            <div style={{ fontSize: 12, opacity: 0.78 }}>Gửi lúc: {sentAt}</div>
-                                                                                                            {mine ? <div style={{ fontSize: 12, opacity: 0.78 }}>Trạng thái: {statusLabel}</div> : null}
-                                                                                                        </div>
-                                                                                                    }
-                                                                                                >
-                                                                                                    <Avatar
-                                                                                                        size={isMobile ? 26 : 30}
-                                                                                                        src={senderAvatar}
-                                                                                                        icon={<UserOutlined />}
-                                                                                                        style={{ cursor: "pointer", flexShrink: 0 }}
-                                                                                                    />
-                                                                                                </Popover>
-
-                                                                                                <div
-                                                                                                    style={{
-                                                                                                        display: "inline-block",
-                                                                                                        padding: "8px 10px",
-                                                                                                        borderRadius: 12,
-                                                                                                        background: mine ? "rgba(250,173,20,0.2)" : "rgba(15,23,42,0.18)",
-                                                                                                    }}
-                                                                                                >
-                                                                                                    <div style={{ fontSize: 12, opacity: 0.72 }}>
-                                                                                                        {senderName}
-                                                                                                    </div>
-                                                                                                    <div>{msg.content}</div>
-                                                                                                    <div
-                                                                                                        style={{
-                                                                                                            fontSize: 11,
-                                                                                                            marginTop: 4,
-                                                                                                            opacity: 0.72,
-                                                                                                            textAlign: mine ? "right" : "left",
-                                                                                                        }}
-                                                                                                    >
-                                                                                                        {sentAt}{mine ? ` · ${statusLabel}` : ""}
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        </div>
+                                                                                        <ReviewChatMessageRow
+                                                                                            key={msg.id}
+                                                                                            msg={msg}
+                                                                                            isMine={mine}
+                                                                                            isMobile={isMobile}
+                                                                                            statusLabel={getChatStatusLabel(msg)}
+                                                                                        />
                                                                                     );
                                                                                 })
                                                                             )}

@@ -8,7 +8,9 @@ import {
     Space,
     Typography,
     theme,
-    Divider
+    Divider,
+    Switch,
+    Radio,
 } from "antd";
 import type { UploadFile, UploadProps, GetProp } from "antd";
 import {
@@ -16,7 +18,8 @@ import {
     PhoneOutlined,
     IdcardOutlined,
     CameraOutlined,
-    SaveOutlined
+    SaveOutlined,
+    SoundOutlined,
 } from "@ant-design/icons";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks";
 import { useEffect, useState } from "react";
@@ -25,6 +28,11 @@ import { updateAccount, uploadImageAvatar } from "../../../config/Api";
 import { fetchAccount } from "../../../redux/features/accountSlice";
 import { motion } from "framer-motion";
 import type { IUpdateAccountReq } from "../../../types/account";
+import {
+    NOTIFICATION_SOUND_PRESET_LABELS,
+    normalizeNotificationSoundPreset,
+    type NotificationSoundPreset,
+} from "../../../utils/notificationSound";
 
 const { Text } = Typography;
 
@@ -66,6 +74,10 @@ const ModalUpdateAccount = ({
                 fullName: account.fullName,
                 phoneNumber: account.phoneNumber,
                 avatarUrl: account.avatarUrl,
+                notificationSoundEnabled: account.notificationSoundEnabled !== false,
+                notificationSoundPreset: normalizeNotificationSoundPreset(
+                    account.notificationSoundPreset ? String(account.notificationSoundPreset) : undefined,
+                ),
             });
 
             if (account.avatarUrl) {
@@ -242,6 +254,32 @@ const ModalUpdateAccount = ({
                         <Input placeholder="Ví dụ: 0912345678" />
                     </Form.Item>
 
+                    <Divider titlePlacement="start" plain>
+                        <Typography.Text type="secondary" style={{ fontSize: 12, fontWeight: 500 }}>
+                            THÔNG BÁO
+                        </Typography.Text>
+                    </Divider>
+
+                    <Form.Item
+                        name="notificationSoundEnabled"
+                        label={<Space><SoundOutlined /> <Text strong>Chuông thông báo trên giao diện</Text></Space>}
+                        valuePropName="checked"
+                    >
+                        <Switch checkedChildren="Bật" unCheckedChildren="Tắt" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="notificationSoundPreset"
+                        label={<Text strong>Kiểu âm thanh thông báo</Text>}
+                    >
+                        <Radio.Group style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            {(Object.keys(NOTIFICATION_SOUND_PRESET_LABELS) as NotificationSoundPreset[]).map((key) => (
+                                <Radio key={key} value={key}>
+                                    {NOTIFICATION_SOUND_PRESET_LABELS[key]}
+                                </Radio>
+                            ))}
+                        </Radio.Group>
+                    </Form.Item>
 
                     {/* Hidden field cho avatarUrl */}
                     <Form.Item name="avatarUrl" hidden>
