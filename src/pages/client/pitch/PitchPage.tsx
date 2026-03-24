@@ -61,6 +61,35 @@ const parsePositiveNumber = (value: string | null, fallbackValue: number) => {
     return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : fallbackValue;
 };
 
+const normalizeKeyword = (value: string) =>
+    value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+
+const detectPitchTypeFilter = (keyword: string): "THREE" | "SEVEN" | undefined => {
+    const normalized = normalizeKeyword(keyword);
+    if (!normalized) return undefined;
+
+    if (/\b3\b/.test(normalized) || /\bthree\b/.test(normalized) || /\bsan 3\b/.test(normalized)) {
+        return "THREE";
+    }
+    if (/\b7\b/.test(normalized) || /\bseven\b/.test(normalized) || /\bsan 7\b/.test(normalized)) {
+        return "SEVEN";
+    }
+    return undefined;
+};
+
+const combinePitchFilter = (keyword: string): string | undefined => {
+    const textFilter = orFieldsInsensitiveLike(["name", "address"], keyword);
+    const pitchType = detectPitchTypeFilter(keyword);
+    const pitchTypeFilter = pitchType ? `pitchType : '${pitchType}'` : undefined;
+
+    if (textFilter && pitchTypeFilter) return `(${textFilter} or ${pitchTypeFilter})`;
+    return textFilter ?? pitchTypeFilter;
+};
+
 const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
     const isDark = theme === "dark";
     const dispatch = useAppDispatch();
@@ -85,7 +114,7 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
             buildSpringListQuery({
                 page: currentPage,
                 pageSize: currentPageSize,
-                filter: orFieldsInsensitiveLike(["name", "address"], currentKeyword),
+                filter: combinePitchFilter(currentKeyword),
                 sort: currentSort,
             }),
         [currentPage, currentPageSize, currentKeyword, currentSort]

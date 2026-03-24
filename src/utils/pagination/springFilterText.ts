@@ -12,6 +12,20 @@ export function sanitizeLikeAtom(raw: string): string {
 export function orFieldsInsensitiveLike(fields: string[], keyword: string): string | undefined {
     const safe = sanitizeLikeAtom(keyword.trim());
     if (!safe) return undefined;
-    const parts = fields.map((f) => `${f} ~~ '*${safe}*'`);
-    return `(${parts.join(" or ")})`;
+
+    // Hỗ trợ tìm kiếm theo nhiều từ: "Sân 3" sẽ khớp cả "Sân bóng số 3".
+    const tokens = safe
+        .split(/\s+/)
+        .map((token) => token.trim())
+        .filter(Boolean);
+
+    if (!tokens.length) return undefined;
+
+    const groups = tokens.map((token) => {
+        const fieldsOr = fields.map((f) => `${f} ~~ '*${token}*'`);
+        return `(${fieldsOr.join(" or ")})`;
+    });
+
+    // Mỗi token phải xuất hiện ở ít nhất một field.
+    return `(${groups.join(" and ")})`;
 }
