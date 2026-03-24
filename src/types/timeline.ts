@@ -9,4 +9,4 @@ export interface IPitchTimeline {
     }[];
 }
 
-export type SlotStatus = "PAST" | "FREE" | "BUSY";
+export type SlotStatus = "PAST" | "FREE" | "PENDING" | "BOOKED" | "BOOKED_BY_OTHER";

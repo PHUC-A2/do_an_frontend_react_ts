@@ -8,6 +8,7 @@ import {
     StarFilled,
     LeftOutlined,
     RightOutlined,
+    ReloadOutlined,
     DownOutlined,
 } from "@ant-design/icons";
 import { TbSoccerField } from "react-icons/tb";
@@ -120,6 +121,11 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
 
     const goToPrevWeek = () => setWeekAnchor(a => a.subtract(7, "day"));
     const goToNextWeek = () => setWeekAnchor(a => a.add(7, "day"));
+    const resetTimeline = () => {
+        const today = dayjs();
+        setBookingDate(today);
+        setWeekAnchor(today);
+    };
     const pickerPopupClass = isDark ? "bk__picker-popup bk__picker-popup--dark" : "bk__picker-popup bk__picker-popup--light";
 
     const handlePickerChange = (value: Dayjs | null) => {
@@ -219,6 +225,9 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                                         </Tooltip>
                                         <button className="bk__nav-btn" onClick={goToNextWeek} title="Tuần sau">
                                             <RightOutlined />
+                                        </button>
+                                        <button className="bk__nav-btn" onClick={resetTimeline} title="Đặt lại timeline về hôm nay">
+                                            <ReloadOutlined />
                                         </button>
                                     </div>
                                     <motion.span

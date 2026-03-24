@@ -21,18 +21,66 @@ const slotVariants: Variants = {
 };
 
 const slotClass = (status: SlotStatus) => {
-    if (status === "BUSY") return "booked";
+    if (status === "PENDING") return "pending";
+    if (status === "BOOKED") return "booked";
+    if (status === "BOOKED_BY_OTHER") return "booked-by-other";
     if (status === "PAST") return "past";
     return "free";
 };
 
 const slotLabel = (status: SlotStatus) => {
-    if (status === "BUSY") return "BẬN";
+    if (status === "PENDING") return "BẬN";
+    if (status === "BOOKED") return "ĐÃ ĐẶT";
+    if (status === "BOOKED_BY_OTHER") return "ĐÃ CÓ NGƯỜI ĐẶT";
     if (status === "PAST") return "ĐÃ QUA";
     return "TRỐNG";
 };
 
+interface IDisplaySlot {
+    start: string;
+    end: string;
+    status: SlotStatus;
+}
+
+const DISPLAY_SLOT_MINUTES = 5;
+
+const addMinutesToIso = (iso: string, minutes: number) => {
+    const dt = new Date(iso);
+    return new Date(dt.getTime() + minutes * 60_000).toISOString();
+};
+
+const buildFiveMinuteTimeline = (timeline: IPitchTimeline | null): IDisplaySlot[] => {
+    if (!timeline?.slots || timeline.slots.length === 0) return [];
+    const nowMs = Date.now();
+
+    // Chỉ thay đổi phần HIỂN THỊ: chia mỗi slot backend thành các mốc 5 phút.
+    return timeline.slots.flatMap((slot) => {
+        const startMs = new Date(slot.start).getTime();
+        const endMs = new Date(slot.end).getTime();
+        const durationMinutes = Math.max(0, Math.floor((endMs - startMs) / 60_000));
+        const chunks = Math.max(1, Math.floor(durationMinutes / DISPLAY_SLOT_MINUTES));
+
+        return Array.from({ length: chunks }, (_, idx) => {
+            const start = addMinutesToIso(slot.start, idx * DISPLAY_SLOT_MINUTES);
+            const end =
+                idx === chunks - 1
+                    ? slot.end
+                    : addMinutesToIso(slot.start, (idx + 1) * DISPLAY_SLOT_MINUTES);
+            const endMs = new Date(end).getTime();
+            const isPastByNow = endMs <= nowMs;
+            const status: SlotStatus = isPastByNow ? "PAST" : slot.status;
+            return {
+                start,
+                end,
+                status,
+            };
+        });
+    });
+};
+
 const BookingTime = ({ timelineLoading, timeline }: IProps) => {
+    const displaySlots = buildFiveMinuteTimeline(timeline);
+
     return (
         <AnimatePresence mode="wait">
             {timelineLoading ? (
@@ -52,7 +100,7 @@ const BookingTime = ({ timelineLoading, timeline }: IProps) => {
                     animate="visible"
                     variants={containerVariants}
                 >
-                    {(!timeline?.slots || timeline.slots.length === 0) ? (
+                    {displaySlots.length === 0 ? (
                         <motion.p
                             variants={slotVariants}
                             className="bk__time-empty"
@@ -61,12 +109,12 @@ const BookingTime = ({ timelineLoading, timeline }: IProps) => {
                         </motion.p>
                     ) : (
                         <div className="bk__time-grid">
-                            {timeline.slots.map(slot => {
+                            {displaySlots.map(slot => {
                                 const st = slot.status;
                                 const isFree = st === "FREE";
                                 return (
                                     <motion.div
-                                        key={slot.start}
+                                        key={`${slot.start}-${slot.end}`}
                                         variants={slotVariants}
                                         whileHover={isFree ? { scale: 1.05, y: -4 } : {}}
                                         className={`bk__slot bk__slot--${slotClass(st)}`}

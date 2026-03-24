@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
     Layout,
     Typography,
@@ -12,8 +12,10 @@ import {
     Space,
     Card,
     Collapse,
+    DatePicker,
 } from "antd";
 import { motion, type Variants } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import {
     ClockCircleOutlined,
     ArrowLeftOutlined,
@@ -24,21 +26,28 @@ import {
     InfoCircleOutlined,
     ToolOutlined,
     EnvironmentOutlined as EnvironmentIcon,
+    CalendarOutlined,
+    LeftOutlined,
+    RightOutlined,
+    ReloadOutlined,
+    DownOutlined,
 } from "@ant-design/icons";
+import { IoMdClock } from "react-icons/io";
 import { useNavigate, useParams } from "react-router";
-import { MdMergeType } from "react-icons/md";
 import RBButton from 'react-bootstrap/Button';
 import { clientGetPitchEquipments, getPitchById } from "../../../config/Api";
 import type { IPitch } from "../../../types/pitch";
 import type { IPitchEquipment } from "../../../types/pitchEquipment";
 import {
-    getPitchTypeLabel,
     PITCH_STATUS_META
 } from "../../../utils/constants/pitch.constants";
 import { formatVND } from "../../../utils/format/price";
 
 import "./PitchDetailsPage.scss";
 import { formatDateTime } from "../../../utils/format/localdatetime";
+import dayjs, { type Dayjs } from "dayjs";
+import { useBookingTimeline } from "../booking/hook/useBookingTimeline";
+import BookingTime from "../booking/components/BookingTimeline";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -57,12 +66,25 @@ const itemVariants: Variants = {
     visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } },
 };
 
+const DOW_VN = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+
+function weekOf(anchor: Dayjs): Dayjs[] {
+    const monday = anchor.startOf("week");
+    return Array.from({ length: 7 }, (_, i) => monday.add(i, "day"));
+}
+
 const PitchDetailsPage: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [pitch, setPitch] = useState<IPitch | null>(null);
     const [pitchEquipments, setPitchEquipments] = useState<IPitchEquipment[]>([]);
     const [loading, setLoading] = useState(false);
+    const [timelineDate, setTimelineDate] = useState<Dayjs>(dayjs());
+    const [weekAnchor, setWeekAnchor] = useState<Dayjs>(dayjs());
+    const [timelineOpen, setTimelineOpen] = useState(true);
+    const stripRef = useRef<HTMLDivElement>(null);
+
+    const { timeline, timelineLoading } = useBookingTimeline(Number(id), timelineDate);
 
     useEffect(() => {
         if (!id) return;
@@ -96,6 +118,30 @@ const PitchDetailsPage: React.FC = () => {
         return `/storage/equipment/${fileName}`;
     };
 
+    const goToPrevWeek = () => setWeekAnchor((a) => a.subtract(7, "day"));
+    const goToNextWeek = () => setWeekAnchor((a) => a.add(7, "day"));
+    const resetTimeline = () => {
+        const today = dayjs();
+        setTimelineDate(today);
+        setWeekAnchor(today);
+    };
+    const weekDays = weekOf(weekAnchor);
+    const selectDay = (d: Dayjs) => {
+        setTimelineDate(d);
+        setWeekAnchor(d);
+    };
+    const handlePickerChange = (value: Dayjs | null) => {
+        if (!value) return;
+        setTimelineDate(value);
+        setWeekAnchor(value);
+    };
+
+    useEffect(() => {
+        if (!stripRef.current) return;
+        const el = stripRef.current.querySelector<HTMLElement>(".bk__date-chip--active");
+        el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }, [timelineDate]);
+
     if (loading) {
         return <Spin fullscreen tip="Đang tải dữ liệu sân..." />;
     }
@@ -105,56 +151,31 @@ const PitchDetailsPage: React.FC = () => {
 
     return (
         <Layout className="pitch-details-page">
-            <Row gutter={[0, 0]} className="main-row">
-                {/* LEFT: MEDIA SECTION */}
-                <Col xs={24} lg={12} className="media-section">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="sticky-container"
-                    >
-                        <Button
-                            shape="circle"
-                            icon={<ArrowLeftOutlined />}
-                            className="back-btn-glass"
-                            onClick={() => navigate(-1)}
-                        />
-                        <Image
-                            src={pitch.pitchUrl ?? "/placeholder-pitch.jpg"}
-                            className="pitch-hero-image"
-                            preview={{
-                                cover: (
-                                    <div className="mask-content">
-                                        <GlobalOutlined /> Xem toàn cảnh
-                                    </div>
-                                ),
-                            }}
-                        />
-
-                        <div className="status-overlay">
-                            <Tag color={PITCH_STATUS_META[pitch.status].color} className="status-tag-vip">
-                                {PITCH_STATUS_META[pitch.status].label}
-                            </Tag>
-                        </div>
-                    </motion.div>
-                </Col>
-
-                {/* RIGHT: CONTENT SECTION */}
-                <Col xs={24} lg={12} className="content-section">
+            <div className="main-row">
+                <div className="content-section content-section--full">
                     <Content className="scroll-content">
                         <motion.div
                             variants={containerVariants}
                             initial="hidden"
                             animate="visible"
                         >
+                            <Button
+                                shape="circle"
+                                icon={<ArrowLeftOutlined />}
+                                className="back-btn-glass"
+                                onClick={() => navigate(-1)}
+                            />
+
                             {/* Header */}
                             <motion.div variants={itemVariants} className="header-box">
-                                <Tag color="gold" icon={<MdMergeType />}>{getPitchTypeLabel(pitch.pitchType)}</Tag>
                                 <Title level={1} className="pitch-title">{pitch.name}</Title>
                                 <Space className="address-line">
                                     <EnvironmentOutlined />
                                     <Text type="secondary">{pitch.address}</Text>
                                 </Space>
+                                <Tag color={PITCH_STATUS_META[pitch.status].color} className="status-tag-vip status-tag-inline">
+                                    {PITCH_STATUS_META[pitch.status].label}
+                                </Tag>
                             </motion.div>
 
                             {/* Booking Card */}
@@ -180,6 +201,102 @@ const PitchDetailsPage: React.FC = () => {
                                 </Card>
                             </motion.div>
 
+                            <motion.div variants={itemVariants} className="pitch-timeline-top">
+                                <div className="bk__panel">
+                                    <div
+                                        className="bk__pitch-accordion"
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={() => setTimelineOpen((o) => !o)}
+                                        onKeyDown={(e) => e.key === "Enter" && setTimelineOpen((o) => !o)}
+                                    >
+                                        <span className="bk__pitch-accordion__title">
+                                            <CalendarOutlined />
+                                            Timeline lịch sân (chỉ xem)
+                                        </span>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                            <div className="bk__cal-nav" onClick={(e) => e.stopPropagation()}>
+                                                <button type="button" className="bk__nav-btn" onClick={goToPrevWeek} title="Tuần trước">
+                                                    <LeftOutlined />
+                                                </button>
+                                                <DatePicker
+                                                    className="bk__nav-picker"
+                                                    value={timelineDate}
+                                                    format="DD/MM/YYYY"
+                                                    allowClear={false}
+                                                    inputReadOnly
+                                                    suffixIcon={<CalendarOutlined />}
+                                                    disabledDate={(current: Dayjs) =>
+                                                        !!current && current.startOf("day").isBefore(dayjs().startOf("day"))
+                                                    }
+                                                    onChange={handlePickerChange}
+                                                />
+                                                <button type="button" className="bk__nav-btn" onClick={goToNextWeek} title="Tuần sau">
+                                                    <RightOutlined />
+                                                </button>
+                                                <button type="button" className="bk__nav-btn" onClick={resetTimeline} title="Về hôm nay">
+                                                    <ReloadOutlined />
+                                                </button>
+                                            </div>
+                                            <motion.span
+                                                animate={{ rotate: timelineOpen ? 180 : 0 }}
+                                                transition={{ duration: 0.25 }}
+                                                className="bk__pitch-accordion__arrow"
+                                            >
+                                                <DownOutlined />
+                                            </motion.span>
+                                        </div>
+                                    </div>
+
+                                    <AnimatePresence initial={false}>
+                                        {timelineOpen && (
+                                            <motion.div
+                                                key="timeline-body"
+                                                initial={{ opacity: 0, y: -8 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -8 }}
+                                                transition={{ duration: 0.25, ease: "easeOut" }}
+                                                className="pitch-timeline-view"
+                                            >
+                                                <p className="bk__week-label">
+                                                    {weekDays[0].format("DD/MM")} – {weekDays[6].format("DD/MM/YYYY")}
+                                                </p>
+
+                                                <div className="bk__date-strip" ref={stripRef}>
+                                                    {weekDays.map((d) => {
+                                                        const isActive = d.isSame(timelineDate, "day");
+                                                        const isToday = d.isSame(dayjs(), "day");
+                                                        return (
+                                                            <button
+                                                                key={d.format("YYYY-MM-DD")}
+                                                                type="button"
+                                                                className={[
+                                                                    "bk__date-chip",
+                                                                    isActive ? "bk__date-chip--active" : "",
+                                                                    isToday ? "bk__date-chip--today" : "",
+                                                                ].filter(Boolean).join(" ")}
+                                                                onClick={() => selectDay(d)}
+                                                            >
+                                                                <span className="bk__date-chip__dow">{DOW_VN[d.day()]}</span>
+                                                                <span className="bk__date-chip__day">{d.format("DD")}</span>
+                                                                <span className="bk__date-chip__mon">Th{d.format("M")}</span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+
+                                                <p className="bk__panel-label" style={{ marginBottom: 10 }}>
+                                                    <IoMdClock size={12} />
+                                                    {timelineDate.format("dddd, DD/MM/YYYY")}
+                                                </p>
+
+                                                <BookingTime timelineLoading={timelineLoading} timeline={timeline} />
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </motion.div>
+
                             <Divider titlePlacement="left">
                                 Thông tin chi tiết
                             </Divider>
@@ -199,37 +316,55 @@ const PitchDetailsPage: React.FC = () => {
                                                 </Space>
                                             ),
                                             children: (
-                                                <Space orientation="vertical" size={12} style={{ width: '100%' }}>
-                                                    <div className="detail-line">
-                                                        <Text strong><ClockCircleOutlined /> Thời gian hoạt động:</Text>{' '}
-                                                        {pitch.open24h ?
-                                                            <Tag color="green">Mở cửa 24/7</Tag> :
-                                                            <Text code>{pitch.openTime} - {pitch.closeTime}</Text>
-                                                        }
-                                                    </div>
+                                                <div className="detail-overview-stack">
+                                                    <div className="detail-overview-grid">
+                                                        <div className="detail-hero-image-wrap">
+                                                            <Image
+                                                                src={pitch.pitchUrl ?? "/placeholder-pitch.jpg"}
+                                                                className="detail-hero-image"
+                                                                preview={{
+                                                                    cover: (
+                                                                        <div className="mask-content">
+                                                                            <GlobalOutlined /> Xem toàn cảnh
+                                                                        </div>
+                                                                    ),
+                                                                }}
+                                                            />
+                                                        </div>
 
-                                                    <div className="detail-line">
-                                                        <Text strong>📐 Kích thước:</Text>{' '}
-                                                        <Text>{pitch.length ?? '--'}m x {pitch.width ?? '--'}m x {pitch.height ?? '--'}m</Text>
-                                                    </div>
+                                                        <div className="detail-overview-meta">
+                                                            <div className="detail-line">
+                                                                <Text strong><ClockCircleOutlined /> Thời gian hoạt động:</Text>{' '}
+                                                                {pitch.open24h ?
+                                                                    <Tag color="green">Mở cửa 24/7</Tag> :
+                                                                    <Text code>{pitch.openTime} - {pitch.closeTime}</Text>
+                                                                }
+                                                            </div>
 
-                                                    <div className="detail-line">
-                                                        <Text strong>📏 Diện tích:</Text>{' '}
-                                                        <Text>{pitchArea != null ? `${pitchArea.toLocaleString('vi-VN')} m2` : 'Chưa cập nhật'}</Text>
-                                                    </div>
+                                                            <div className="detail-line">
+                                                                <Text strong>📐 Kích thước:</Text>{' '}
+                                                                <Text>{pitch.length ?? '--'}m x {pitch.width ?? '--'}m x {pitch.height ?? '--'}m</Text>
+                                                            </div>
 
-                                                    <div className="detail-line detail-line--map">
-                                                        <Space>
-                                                            <EnvironmentOutlined />
-                                                            <Text strong>Chỉ đường</Text>
-                                                        </Space>
-                                                        <Button type="link" onClick={handleOpenMap}>
-                                                            <EnvironmentIcon /> Google Maps
-                                                        </Button>
-                                                    </div>
+                                                            <div className="detail-line">
+                                                                <Text strong>📏 Diện tích:</Text>{' '}
+                                                                <Text>{pitchArea != null ? `${pitchArea.toLocaleString('vi-VN')} m2` : 'Chưa cập nhật'}</Text>
+                                                            </div>
 
-                                                    <Text type="secondary">{pitch.address}</Text>
-                                                </Space>
+                                                            <div className="detail-line detail-line--map">
+                                                                <Space>
+                                                                    <EnvironmentOutlined />
+                                                                    <Text strong>Chỉ đường</Text>
+                                                                </Space>
+                                                                <Button type="link" onClick={handleOpenMap}>
+                                                                    <EnvironmentIcon /> Google Maps
+                                                                </Button>
+                                                            </div>
+
+                                                            <Text type="secondary">{pitch.address}</Text>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             ),
                                         },
                                         {
@@ -306,8 +441,8 @@ const PitchDetailsPage: React.FC = () => {
                             </div>
                         </motion.div>
                     </Content>
-                </Col>
-            </Row>
+                </div>
+            </div>
         </Layout>
     );
 };

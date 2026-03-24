@@ -137,13 +137,10 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                             variants={fadeInUp}
                         >
                             <Title className="hero-title">
-                                DANH SÁCH <br />
-                                <span className="gold-text">SÂN BÓNG</span>
+                                <span className="gold-text">Danh sách sân bóng</span>
                             </Title>
                             <Paragraph className="hero-paragraph">
-                                {currentKeyword
-                                    ? `Đang hiển thị danh sách sân phù hợp với từ khóa bạn tìm từ Header.`
-                                    : 'Chọn sân phù hợp, xem lịch trống và đặt sân ngay tức thì.'}
+                                {currentKeyword ? `Kết quả theo từ khóa: ${currentKeyword}` : 'Chọn sân và đặt ngay.'}
                             </Paragraph>
                         </motion.div>
                     </div>

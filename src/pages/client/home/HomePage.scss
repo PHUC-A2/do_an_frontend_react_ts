@@ -232,6 +232,7 @@ $hp-surface-radius: 20px;
     border               : 2px solid $gold;
     box-sizing           : border-box;
     transition           : border-color 0.35s ease;
+    padding              : clamp(22px, 3vw, 34px);
 
     @media (max-width: $bp-lg) {
         gap: 40px;
@@ -240,6 +241,7 @@ $hp-surface-radius: 20px;
     @media (max-width: $bp-md) {
         grid-template-columns: 1fr;
         gap                  : 40px;
+        padding              : 20px 16px;
     }
 
     &:hover,
@@ -682,10 +684,10 @@ $hp-surface-radius: 20px;
 
 .hp__cta-card {
     text-align: center;
-    padding   : clamp(48px, 6vw, 88px) clamp(24px, 4vw, 56px);
+    padding   : clamp(56px, 7vw, 96px) clamp(28px, 4vw, 60px);
 
     @media (max-width: $bp-md) {
-        padding: 44px 20px;
+        padding: 48px 20px;
     }
 }
 
@@ -795,6 +797,62 @@ $hp-surface-radius: 20px;
 .hp__cta-card .hp__btn-ghost {
     position: relative;
     z-index : 1;
+}
+
+/* Đồng bộ nút trong CTA: cùng kích thước, màu và hiệu ứng */
+.hp__cta-card .ant-space {
+    width          : 100%;
+    justify-content: center;
+    gap            : 14px !important;
+}
+
+.hp__cta-card .ant-space .ant-space-item {
+    display        : flex;
+    justify-content: center;
+}
+
+.hp__cta-card .ant-space .ant-btn.hp__btn-primary,
+.hp__cta-card .ant-space .ant-btn.hp__btn-ghost {
+    width        : 220px !important;
+    min-width    : 220px !important;
+    height       : 52px !important;
+    border-radius: 14px !important;
+    font-weight  : 700 !important;
+    font-size    : 1.02rem !important;
+    transition   : transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease !important;
+}
+
+.hp__cta-card .ant-space .ant-btn.hp__btn-primary,
+.hp__cta-card .ant-space .ant-btn.hp__btn-primary--white,
+.hp__cta-card .ant-space .ant-btn.hp__btn-ghost,
+.hp__cta-card .ant-space .ant-btn.hp__btn-ghost--light {
+    background  : rgba(255, 255, 255, 0.94) !important;
+    color       : #003d6e !important;
+    border      : 1px solid rgba(255, 255, 255, 0.9) !important;
+    box-shadow  : 0 8px 22px rgba(0, 0, 0, 0.2) !important;
+    text-shadow : none !important;
+
+    span {
+        color: #003d6e !important;
+    }
+
+    &:hover {
+        filter    : brightness(1.05) !important;
+        transform : translateY(-2px) !important;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28) !important;
+
+        span {
+            color: #003d6e !important;
+        }
+    }
+}
+
+@media (max-width: $bp-md) {
+    .hp__cta-card .ant-space .ant-btn.hp__btn-primary,
+    .hp__cta-card .ant-space .ant-btn.hp__btn-ghost {
+        width    : min(100%, 230px) !important;
+        min-width: min(100%, 230px) !important;
+    }
 }
 
 /* Nút trong panel Why / CTA: bo đồng bộ */

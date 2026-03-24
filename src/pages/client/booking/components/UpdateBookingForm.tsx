@@ -34,9 +34,9 @@ type FormValues = {
     pitchId?: number;
 };
 
-const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
-    const h = String(Math.floor(i / 2)).padStart(2, "0");
-    const m = i % 2 === 0 ? "00" : "30";
+const TIME_OPTIONS = Array.from({ length: 24 * 12 }, (_, i) => {
+    const h = String(Math.floor(i / 12)).padStart(2, "0");
+    const m = String((i % 12) * 5).padStart(2, "0");
     return `${h}:${m}`;
 });
 
@@ -124,7 +124,8 @@ const UpdateBookingForm = ({
                 const end = dayjs(b.endDateTime);
 
                 const roundTime = (dj: Dayjs) => {
-                    const m = dj.minute() < 30 ? "00" : "30";
+                    const roundedMinute = Math.floor(dj.minute() / 5) * 5;
+                    const m = String(roundedMinute).padStart(2, "0");
                     return `${String(dj.hour()).padStart(2, "0")}:${m}`;
                 };
                 setStartTime(roundTime(start));
@@ -179,6 +180,10 @@ const UpdateBookingForm = ({
     const handleUpdate = async (values: FormValues) => {
         setTouched(true);
         if (blocked || !isValid) return;
+        if (minutes < 30) {
+            toast.error("Thời lượng đặt sân tối thiểu là 30 phút.");
+            return;
+        }
 
         if (!isAuthenticated) {
             toast.warning("Vui lòng đăng nhập để cập nhật lịch đặt");

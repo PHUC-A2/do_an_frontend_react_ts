@@ -882,6 +882,58 @@ $bp-lg  : 1024px;
         }
     }
 
+    &--pending {
+        opacity: 0.44;
+        cursor : default;
+
+        &::before {
+            background: linear-gradient(180deg, transparent, rgba(250, 173, 20, 0.78), rgba(250, 173, 20, 1), transparent);
+        }
+
+        &::after {
+            background: rgba(7, 14, 28, 0.86);
+        }
+
+        .bk__slot__time {
+            color: rgba(255, 255, 255, 0.76);
+        }
+
+        .bk__slot__label {
+            color: #faad14;
+        }
+
+        &:hover {
+            transform : none;
+            box-shadow: none;
+        }
+    }
+
+    &--booked-by-other {
+        opacity: 0.5;
+        cursor : not-allowed;
+
+        &::before {
+            background: linear-gradient(180deg, transparent, rgba(147, 51, 234, 0.72), rgba(126, 34, 206, 0.94), transparent);
+        }
+
+        &::after {
+            background: rgba(7, 14, 28, 0.86);
+        }
+
+        .bk__slot__time {
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .bk__slot__label {
+            color: #c084fc;
+        }
+
+        &:hover {
+            transform : none;
+            box-shadow: none;
+        }
+    }
+
     &--past {
         opacity: 0.42;
         cursor : not-allowed;
@@ -921,6 +973,8 @@ $bp-lg  : 1024px;
 
 .bk--light .bk__slot--free::after,
 .bk--light .bk__slot--booked::after,
+.bk--light .bk__slot--pending::after,
+.bk--light .bk__slot--booked-by-other::after,
 .bk--light .bk__slot--past::after {
     background: rgba(240, 246, 255, 0.90);
 }
@@ -931,6 +985,14 @@ $bp-lg  : 1024px;
 
 .bk--light .bk__slot--booked .bk__slot__time {
     color: #3a0a0a;
+}
+
+.bk--light .bk__slot--pending .bk__slot__time {
+    color: #6f4a00;
+}
+
+.bk--light .bk__slot--booked-by-other .bk__slot__time {
+    color: #4c1d95;
 }
 
 .bk--light .bk__slot--past .bk__slot__time {
