@@ -193,17 +193,17 @@
     }
 
     .pitch-summaryBar {
-        display        : flex;
-        align-items    : center;
-        justify-content: space-between;
-        gap            : 16px;
-        flex-wrap      : wrap;
-        margin-bottom  : 18px;
-        padding        : 16px 18px;
-        border         : 1px solid var(--border);
-        border-radius  : 24px;
-        background     : var(--card-bg);
-        box-shadow     : var(--glass-shadow);
+        display                : flex;
+        align-items            : center;
+        justify-content        : space-between;
+        gap                    : 16px;
+        flex-wrap              : wrap;
+        margin-bottom          : 18px;
+        padding                : 16px 18px;
+        border                 : 1px solid var(--border);
+        border-radius          : 24px;
+        background             : var(--card-bg);
+        box-shadow             : var(--glass-shadow);
         backdrop-filter        : blur(16px) saturate(1.12);
         -webkit-backdrop-filter: blur(16px) saturate(1.12);
 
@@ -287,12 +287,29 @@
             margin-inline-end: 0;
             font-size        : 0.74rem;
         }
+
+        :global(.pitch-rating-stars.ant-rate-disabled .ant-rate-star-first),
+        :global(.pitch-rating-stars.ant-rate-disabled .ant-rate-star-second),
+        :global(.pitch-rating-stars .ant-rate-star-first),
+        :global(.pitch-rating-stars .ant-rate-star-second) {
+            color: #faad14 !important;
+        }
     }
 
     .pitch-inlineIcon {
         font-size     : 0.72rem;
         margin-right  : 2px;
         vertical-align: 0;
+    }
+
+    .pitch-inlineIcon--gold {
+        color: #faad14 !important;
+    }
+
+    .pitch-rating-tag {
+        background: rgba(15, 23, 42, 0.55) !important;
+        border    : 1px solid rgba(250, 173, 20, 0.24) !important;
+        color     : #f8fafc !important;
     }
 
     .pitch-card-price,

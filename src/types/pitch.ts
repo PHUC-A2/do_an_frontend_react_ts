@@ -18,6 +18,8 @@ export interface IPitch {
     width?: number | null;
     height?: number | null;
     imageUrl?: string | null;
+    averageRating?: number | null;
+    reviewCount?: number | null;
     createdAt: string;
     updatedAt: string | null;
     createdBy: string;

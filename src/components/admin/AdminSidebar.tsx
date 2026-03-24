@@ -10,7 +10,7 @@ import {
     LoginOutlined,
 } from '@ant-design/icons';
 import { LockOutlined } from '@ant-design/icons';
-import { MdFeaturedPlayList, MdOutlineSecurity, MdPayments, MdSportsHandball, MdOutlineSupportAgent } from 'react-icons/md';
+import { MdFeaturedPlayList, MdOutlineSecurity, MdPayments, MdSportsHandball, MdOutlineSupportAgent, MdRateReview } from 'react-icons/md';
 import { RiRobot2Line } from 'react-icons/ri';
 import { GiReturnArrow } from 'react-icons/gi';
 import { FaReact, FaUserCircle, FaUserCog } from 'react-icons/fa';
@@ -104,6 +104,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         'booking-equipment': 'Mượn thiết bị',
         'room-booking-equipment': 'Mượn / trả phòng',
         support: 'Hỗ trợ & Bảo trì',
+        review: 'Đánh giá & Chat',
     };
 
     const cssVars = useMemo(() => ({
@@ -133,7 +134,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     };
 
     // Đặt '/admin' cuối cùng để khớp con (/admin/asset, ...) trước, tránh mọi URL bị coi là Dashboard
-    const routeMenuKeys = ['/admin/user', '/admin/asset', '/admin/device', '/admin/device-issues', '/admin/asset-usage', '/admin/checkouts', '/admin/returns', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/room-booking-equipment', '/admin/ai', '/admin/support', '/admin'];
+    const routeMenuKeys = ['/admin/user', '/admin/asset', '/admin/device', '/admin/device-issues', '/admin/asset-usage', '/admin/checkouts', '/admin/returns', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/room-booking-equipment', '/admin/ai', '/admin/review', '/admin/support', '/admin'];
 
     const selectedMenuKey = useMemo(() => {
         const currentPath = location.pathname;
@@ -343,6 +344,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                             key: '/admin/ai',
                             label: <Link to="/admin/ai" className={styles.menuLink}>AI</Link>,
                             icon: <RiRobot2Line />,
+                        }] : []),
+                        ...(canViewBookings ? [{
+                            key: '/admin/review',
+                            label: <Link to="/admin/review" className={styles.menuLink}>Đánh giá & Chat</Link>,
+                            icon: <MdRateReview />,
                         }] : []),
                         {
                             key: '/admin/support',

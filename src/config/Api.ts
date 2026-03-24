@@ -11,6 +11,7 @@ import type { ICreatePermissionReq, IPermission, IUpdatePermissionReq } from "..
 import type { ICreatePitchReq, IPitch, IUpdatePitchReq } from "../types/pitch";
 import type { IEquipmentPitchAssignment, IPitchEquipment, IUpsertPitchEquipmentReq } from "../types/pitchEquipment";
 import type { IRevenueRes } from "../types/revenue";
+import type { ICreateReviewReq, IReview, IReviewMessage, IReviewMessageReq, IUpdateReviewStatusReq } from "../types/review";
 import type { IAssignPermissionReq, ICreateRoleReq, IRole, IUpdateRoleReq } from "../types/role";
 import type { INotification } from "../types/notification";
 import type { IPitchTimeline } from "../types/timeline";
@@ -281,3 +282,22 @@ export const adminToggleAiKey = (id: number) =>
     instance.patch<IBackendRes<IAiKey>>(`/api/v1/admin/ai/keys/${id}/toggle`);
 export const adminDeleteAiKey = (id: number) =>
     instance.delete<IBackendRes<void>>(`/api/v1/admin/ai/keys/${id}`);
+
+/* api review */
+export const clientCreateReview = (data: ICreateReviewReq) =>
+    instance.post<IBackendRes<IReview>>('/api/v1/client/reviews', data);
+export const clientGetMyReviews = () =>
+    instance.get<IBackendRes<IReview[]>>('/api/v1/client/reviews/my');
+export const clientGetReviewMessages = (reviewId: number) =>
+    instance.get<IBackendRes<IReviewMessage[]>>(`/api/v1/client/reviews/${reviewId}/messages`);
+export const clientSendReviewMessage = (reviewId: number, data: IReviewMessageReq) =>
+    instance.post<IBackendRes<IReviewMessage>>(`/api/v1/client/reviews/${reviewId}/messages`, data);
+
+export const adminGetReviews = (query: string) =>
+    instance.get<IBackendRes<IModelPaginate<IReview>>>(`/api/v1/reviews?${query}`);
+export const adminUpdateReviewStatus = (reviewId: number, data: IUpdateReviewStatusReq) =>
+    instance.patch<IBackendRes<IReview>>(`/api/v1/reviews/${reviewId}/status`, data);
+export const adminGetReviewMessages = (reviewId: number) =>
+    instance.get<IBackendRes<IReviewMessage[]>>(`/api/v1/reviews/${reviewId}/messages`);
+export const adminSendReviewMessage = (reviewId: number, data: IReviewMessageReq) =>
+    instance.post<IBackendRes<IReviewMessage>>(`/api/v1/reviews/${reviewId}/messages`, data);

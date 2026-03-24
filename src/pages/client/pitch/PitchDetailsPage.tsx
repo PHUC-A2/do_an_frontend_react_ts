@@ -13,6 +13,13 @@ import {
     Card,
     Collapse,
     DatePicker,
+    Rate,
+    Input,
+    message,
+    Modal,
+    Popover,
+    Avatar,
+    Grid,
 } from "antd";
 import { motion, type Variants } from "framer-motion";
 import { AnimatePresence } from "framer-motion";
@@ -31,13 +38,20 @@ import {
     RightOutlined,
     ReloadOutlined,
     DownOutlined,
+    StarFilled,
+    MessageOutlined,
+    SendOutlined,
+    SmileOutlined,
+    UserOutlined,
 } from "@ant-design/icons";
 import { IoMdClock } from "react-icons/io";
 import { useNavigate, useParams } from "react-router";
 import RBButton from 'react-bootstrap/Button';
 import { clientGetPitchEquipments, getPitchById } from "../../../config/Api";
+import { clientCreateReview, clientGetMyReviews, clientGetReviewMessages, clientSendReviewMessage } from "../../../config/Api";
 import type { IPitch } from "../../../types/pitch";
 import type { IPitchEquipment } from "../../../types/pitchEquipment";
+import type { IReview, IReviewMessage } from "../../../types/review";
 import {
     PITCH_STATUS_META
 } from "../../../utils/constants/pitch.constants";
@@ -48,9 +62,13 @@ import { formatDateTime } from "../../../utils/format/localdatetime";
 import dayjs, { type Dayjs } from "dayjs";
 import { useBookingTimeline } from "../booking/hook/useBookingTimeline";
 import BookingTime from "../booking/components/BookingTimeline";
+import { useAppSelector } from "../../../redux/hooks";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
+const { TextArea } = Input;
+const { useBreakpoint } = Grid;
+const QUICK_EMOJIS = ["😀", "😁", "😂", "😍", "🥰", "😘", "😎", "🤩", "😢", "😭", "😡", "👍", "👏", "🙏", "🔥", "⚽", "❤️"];
 
 // Animation Variants đồng bộ với AboutPage
 const containerVariants: Variants = {
@@ -74,6 +92,8 @@ function weekOf(anchor: Dayjs): Dayjs[] {
 }
 
 const PitchDetailsPage: React.FC = () => {
+    const screens = useBreakpoint();
+    const isMobile = screens.md !== true;
     const { id } = useParams();
     const navigate = useNavigate();
     const [pitch, setPitch] = useState<IPitch | null>(null);
@@ -83,6 +103,17 @@ const PitchDetailsPage: React.FC = () => {
     const [weekAnchor, setWeekAnchor] = useState<Dayjs>(dayjs());
     const [timelineOpen, setTimelineOpen] = useState(true);
     const stripRef = useRef<HTMLDivElement>(null);
+    const account = useAppSelector((state) => state.account.account);
+
+    const [reviewModalOpen, setReviewModalOpen] = useState(false);
+    const [reviewRating, setReviewRating] = useState(5);
+    const [reviewContent, setReviewContent] = useState("");
+    const [myReviews, setMyReviews] = useState<IReview[]>([]);
+    const [activeReview, setActiveReview] = useState<IReview | null>(null);
+    const [chatMessages, setChatMessages] = useState<IReviewMessage[]>([]);
+    const [chatContent, setChatContent] = useState("");
+    const [emojiOpen, setEmojiOpen] = useState(false);
+    const chatSocketRef = useRef<WebSocket | null>(null);
 
     const { timeline, timelineLoading } = useBookingTimeline(Number(id), timelineDate);
 
@@ -100,6 +131,23 @@ const PitchDetailsPage: React.FC = () => {
         clientGetPitchEquipments(Number(id))
             .then((res) => setPitchEquipments(res.data.data ?? []))
             .catch(() => setPitchEquipments([]));
+    }, [id]);
+
+    const loadMyReviews = (pitchId?: number) => {
+        clientGetMyReviews()
+            .then((res) => {
+                const list = res.data.data ?? [];
+                const filtered = list.filter((item) =>
+                    item.targetType === "PITCH" && (pitchId == null || item.pitchId === pitchId)
+                );
+                setMyReviews(filtered);
+            })
+            .catch(() => setMyReviews([]));
+    };
+
+    useEffect(() => {
+        if (!id) return;
+        loadMyReviews(Number(id));
     }, [id]);
 
     const pitchArea =
@@ -135,6 +183,96 @@ const PitchDetailsPage: React.FC = () => {
         setTimelineDate(value);
         setWeekAnchor(value);
     };
+
+    const handleCreateReview = async () => {
+        try {
+            if (!reviewContent.trim()) {
+                message.error("Vui lòng nhập nội dung nhận xét");
+                return;
+            }
+            await clientCreateReview({
+                targetType: "PITCH",
+                pitchId: Number(id),
+                rating: reviewRating,
+                content: reviewContent.trim(),
+            });
+            message.success("Gửi đánh giá thành công");
+            setReviewModalOpen(false);
+            setReviewContent("");
+            setReviewRating(5);
+            loadMyReviews(Number(id));
+        } catch (error: any) {
+            message.error(error?.response?.data?.message ?? "Không thể gửi đánh giá");
+        }
+    };
+
+    const closeChatSocket = () => {
+        if (chatSocketRef.current) {
+            chatSocketRef.current.close();
+            chatSocketRef.current = null;
+        }
+    };
+
+    const openChatByReview = async (review: IReview) => {
+        try {
+            setActiveReview(review);
+            setEmojiOpen(false);
+            const res = await clientGetReviewMessages(review.id);
+            setChatMessages(res.data.data ?? []);
+
+            closeChatSocket();
+            const token = localStorage.getItem("access_token");
+            if (!token) return;
+            const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+            const ws = new WebSocket(`${protocol}://${window.location.host}/ws/reviews/${review.id}?token=${encodeURIComponent(token)}`);
+            ws.onmessage = (event) => {
+                try {
+                    const incoming: IReviewMessage = JSON.parse(event.data);
+                    setChatMessages((prev) => [...prev, incoming]);
+                } catch {
+                    // bỏ qua payload lỗi
+                }
+            };
+            chatSocketRef.current = ws;
+        } catch {
+            message.error("Không thể tải chat đánh giá");
+        }
+    };
+
+    const handleSendChat = async () => {
+        if (!activeReview || !chatContent.trim()) return;
+        const payload = { content: chatContent.trim() };
+        if (chatSocketRef.current && chatSocketRef.current.readyState === WebSocket.OPEN) {
+            chatSocketRef.current.send(JSON.stringify(payload));
+            setChatContent("");
+            return;
+        }
+        try {
+            await clientSendReviewMessage(activeReview.id, payload);
+            const res = await clientGetReviewMessages(activeReview.id);
+            setChatMessages(res.data.data ?? []);
+            setChatContent("");
+        } catch {
+            message.error("Không thể gửi tin nhắn");
+        }
+    };
+
+    const insertEmoji = (emoji: string) => {
+        setChatContent((prev) => `${prev}${emoji}`);
+        setEmojiOpen(false);
+    };
+
+    const getChatStatusLabel = (msg: IReviewMessage) => {
+        if (msg.readAt) return "Đã xem";
+        if (msg.deliveredAt) return "Đã nhận";
+        return "Đã gửi";
+    };
+
+    useEffect(() => {
+        return () => {
+            closeChatSocket();
+        };
+    }, []);
 
     useEffect(() => {
         if (!stripRef.current) return;
@@ -173,6 +311,18 @@ const PitchDetailsPage: React.FC = () => {
                                     <EnvironmentOutlined />
                                     <Text type="secondary">{pitch.address}</Text>
                                 </Space>
+                                {(pitch.reviewCount ?? 0) > 0 ? (
+                                    <Space size={6}>
+                                        <StarFilled style={{ color: "#faad14" }} />
+                                        <Text>{`${(pitch.averageRating ?? 0).toFixed(1)} / 5`}</Text>
+                                        <Text type="secondary">({pitch.reviewCount ?? 0} đánh giá)</Text>
+                                    </Space>
+                                ) : (
+                                    <Space size={6}>
+                                        <StarFilled style={{ color: "#94a3b8" }} />
+                                        <Text type="secondary">Chưa có đánh giá được duyệt</Text>
+                                    </Space>
+                                )}
                                 <Tag color={PITCH_STATUS_META[pitch.status].color} className="status-tag-vip status-tag-inline">
                                     {PITCH_STATUS_META[pitch.status].label}
                                 </Tag>
@@ -435,6 +585,224 @@ const PitchDetailsPage: React.FC = () => {
                                 />
                             </motion.div>
 
+                            <motion.div variants={itemVariants} className="booking-card-wrapper">
+                                <Card className="booking-card-glass">
+                                    <Collapse
+                                        className="pitch-detail-collapse"
+                                        defaultActiveKey={["review-box"]}
+                                        items={[
+                                            {
+                                                key: "review-box",
+                                                label: (
+                                                    <Space>
+                                                        <StarFilled style={{ color: "#faad14" }} />
+                                                        <span>Đánh giá & nhận xét</span>
+                                                    </Space>
+                                                ),
+                                                extra: (
+                                                    <Button
+                                                        type="primary"
+                                                        size="small"
+                                                        icon={<StarFilled />}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setReviewModalOpen(true);
+                                                        }}
+                                                    >
+                                                        Đánh giá sân này
+                                                    </Button>
+                                                ),
+                                                children: myReviews.slice(0, 6).length === 0 ? (
+                                                    <Text type="secondary">Bạn chưa có đánh giá nào</Text>
+                                                ) : (
+                                                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                                                        {myReviews.slice(0, 6).map((item) => (
+                                                            <div
+                                                                key={item.id}
+                                                                style={{
+                                                                    border: "1px solid rgba(148,163,184,0.25)",
+                                                                    borderRadius: 10,
+                                                                    padding: "10px 12px",
+                                                                    background: "rgba(148,163,184,0.06)",
+                                                                }}
+                                                            >
+                                                                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                                                                    <Space>
+                                                                        <Rate
+                                                                            disabled
+                                                                            allowHalf
+                                                                            value={item.rating}
+                                                                            style={{ fontSize: 14, color: "#faad14", whiteSpace: "nowrap", flexShrink: 0 }}
+                                                                        />
+                                                                        <Tag color="gold">{item.pitchName ?? "Sân"}</Tag>
+                                                                        <Tag color={item.status === "APPROVED" ? "green" : item.status === "HIDDEN" ? "red" : "orange"}>
+                                                                            {item.status === "APPROVED" ? "Đã duyệt" : item.status === "HIDDEN" ? "Đã ẩn" : "Chờ duyệt"}
+                                                                        </Tag>
+                                                                    </Space>
+                                                                    <Button
+                                                                        type="link"
+                                                                        icon={<MessageOutlined />}
+                                                                        onClick={() => openChatByReview(item)}
+                                                                    >
+                                                                        {activeReview?.id === item.id ? "Đang chat" : "Chat với admin"}
+                                                                    </Button>
+                                                                </div>
+                                                                <Text>{item.content}</Text>
+                                                                {activeReview?.id === item.id ? (
+                                                                    <div
+                                                                        style={{
+                                                                            marginTop: 10,
+                                                                            borderTop: "1px dashed rgba(148,163,184,0.35)",
+                                                                            paddingTop: 10,
+                                                                        }}
+                                                                    >
+                                                                        <div
+                                                                            style={{
+                                                                                maxHeight: isMobile ? 180 : 220,
+                                                                                overflowY: "auto",
+                                                                                marginBottom: 10,
+                                                                                display: "flex",
+                                                                                flexDirection: "column",
+                                                                                gap: 8,
+                                                                                paddingRight: 4,
+                                                                            }}
+                                                                        >
+                                                                            {chatMessages.length === 0 ? (
+                                                                                <Text type="secondary">Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện.</Text>
+                                                                            ) : (
+                                                                                chatMessages.map((msg) => {
+                                                                                    const mine = msg.senderId === account?.id;
+                                                                                    const senderName = msg.senderFullName || msg.senderName || "Người dùng";
+                                                                                    const senderAvatar = msg.senderAvatarUrl || undefined;
+                                                                                    const sentAt = dayjs(msg.createdAt).format("HH:mm DD/MM/YYYY");
+                                                                                    const statusLabel = getChatStatusLabel(msg);
+                                                                                    return (
+                                                                                        <div key={msg.id} style={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start" }}>
+                                                                                            <div
+                                                                                                style={{
+                                                                                                    display: "flex",
+                                                                                                    flexDirection: mine ? "row-reverse" : "row",
+                                                                                                    alignItems: "flex-end",
+                                                                                                    gap: 8,
+                                                                                                    maxWidth: isMobile ? "100%" : "86%",
+                                                                                                }}
+                                                                                            >
+                                                                                                <Popover
+                                                                                                    trigger="click"
+                                                                                                    content={
+                                                                                                        <div style={{ minWidth: isMobile ? 170 : 220 }}>
+                                                                                                            <div style={{ fontWeight: 700, marginBottom: 4 }}>{senderName}</div>
+                                                                                                            <div style={{ fontSize: 12, opacity: 0.78 }}>ID người dùng: {msg.senderId}</div>
+                                                                                                            <div style={{ fontSize: 12, opacity: 0.78 }}>Gửi lúc: {sentAt}</div>
+                                                                                                            {mine ? <div style={{ fontSize: 12, opacity: 0.78 }}>Trạng thái: {statusLabel}</div> : null}
+                                                                                                        </div>
+                                                                                                    }
+                                                                                                >
+                                                                                                    <Avatar
+                                                                                                        size={isMobile ? 26 : 30}
+                                                                                                        src={senderAvatar}
+                                                                                                        icon={<UserOutlined />}
+                                                                                                        style={{ cursor: "pointer", flexShrink: 0 }}
+                                                                                                    />
+                                                                                                </Popover>
+
+                                                                                                <div
+                                                                                                    style={{
+                                                                                                        display: "inline-block",
+                                                                                                        padding: "8px 10px",
+                                                                                                        borderRadius: 12,
+                                                                                                        background: mine ? "rgba(250,173,20,0.2)" : "rgba(15,23,42,0.18)",
+                                                                                                    }}
+                                                                                                >
+                                                                                                    <div style={{ fontSize: 12, opacity: 0.72 }}>
+                                                                                                        {senderName}
+                                                                                                    </div>
+                                                                                                    <div>{msg.content}</div>
+                                                                                                    <div
+                                                                                                        style={{
+                                                                                                            fontSize: 11,
+                                                                                                            marginTop: 4,
+                                                                                                            opacity: 0.72,
+                                                                                                            textAlign: mine ? "right" : "left",
+                                                                                                        }}
+                                                                                                    >
+                                                                                                        {sentAt}{mine ? ` · ${statusLabel}` : ""}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    );
+                                                                                })
+                                                                            )}
+                                                                        </div>
+
+                                                                        <div
+                                                                            style={{
+                                                                                display: "flex",
+                                                                                alignItems: "center",
+                                                                                gap: 8,
+                                                                                width: "100%",
+                                                                                flexWrap: isMobile ? "wrap" : "nowrap",
+                                                                            }}
+                                                                        >
+                                                                            <Popover
+                                                                                trigger="click"
+                                                                                open={emojiOpen}
+                                                                                onOpenChange={setEmojiOpen}
+                                                                                content={
+                                                                                    <div
+                                                                                        style={{
+                                                                                            display: "grid",
+                                                                                            gridTemplateColumns: "repeat(6, minmax(26px, 1fr))",
+                                                                                            gap: 6,
+                                                                                            maxWidth: 220,
+                                                                                        }}
+                                                                                    >
+                                                                                        {QUICK_EMOJIS.map((emoji) => (
+                                                                                            <button
+                                                                                                key={emoji}
+                                                                                                type="button"
+                                                                                                onClick={() => insertEmoji(emoji)}
+                                                                                                style={{
+                                                                                                    border: "1px solid rgba(148,163,184,0.3)",
+                                                                                                    background: "transparent",
+                                                                                                    borderRadius: 8,
+                                                                                                    height: 30,
+                                                                                                    cursor: "pointer",
+                                                                                                    fontSize: 18,
+                                                                                                }}
+                                                                                            >
+                                                                                                {emoji}
+                                                                                            </button>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                }
+                                                                            >
+                                                                                <Button icon={<SmileOutlined />} />
+                                                                            </Popover>
+                                                                            <Input
+                                                                                value={chatContent}
+                                                                                onChange={(e) => setChatContent(e.target.value)}
+                                                                                placeholder="Nhập nội dung chat với admin..."
+                                                                                onPressEnter={handleSendChat}
+                                                                                style={{ flex: 1, minWidth: isMobile ? "100%" : 180 }}
+                                                                            />
+                                                                            <Button type="primary" icon={<SendOutlined />} onClick={handleSendChat}>
+                                                                                Gửi
+                                                                            </Button>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : null}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ),
+                                            },
+                                        ]}
+                                    />
+                                </Card>
+                            </motion.div>
+
                             <div className="meta-footer">
                                 <Divider dashed />
                                 <Text disabled>Cập nhật lần cuối: {formatDateTime(pitch.createdAt)}</Text>
@@ -443,6 +811,38 @@ const PitchDetailsPage: React.FC = () => {
                     </Content>
                 </div>
             </div>
+
+            <Modal
+                title="Đánh giá sân bóng"
+                open={reviewModalOpen}
+                onCancel={() => setReviewModalOpen(false)}
+                onOk={handleCreateReview}
+                okButtonProps={{ icon: <SendOutlined /> }}
+                okText="Gửi đánh giá"
+                cancelText="Hủy"
+            >
+                <Space orientation="vertical" style={{ width: "100%" }} size={12}>
+                    <div>
+                        <Text>Chấm sao</Text>
+                        <div>
+                            <Rate value={reviewRating} onChange={setReviewRating} />
+                        </div>
+                    </div>
+                    <div>
+                        <Text>Nội dung nhận xét</Text>
+                        <TextArea
+                            rows={4}
+                            value={reviewContent}
+                            onChange={(e) => setReviewContent(e.target.value)}
+                            placeholder="Nhập trải nghiệm của bạn..."
+                            maxLength={1000}
+                            showCount
+                            style={{ marginBottom: 14 }}
+                        />
+                    </div>
+                </Space>
+            </Modal>
+
         </Layout>
     );
 };

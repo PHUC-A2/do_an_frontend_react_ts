@@ -11,6 +11,7 @@ import {
 import { MdOutlineSupportAgent, MdBugReport, MdOutlineHandyman } from 'react-icons/md';
 import { FaServer, FaDatabase, FaNetworkWired } from 'react-icons/fa';
 import RoleWrapper from '../../../components/wrapper/AdminWrapper';
+import AdminReviewManager from './AdminReviewManager';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -425,6 +426,8 @@ const AdminSupportPage = () => {
                         </Card>
                     </Col>
                 </Row>
+
+                <AdminReviewManager />
             </div>
         </RoleWrapper>
     );

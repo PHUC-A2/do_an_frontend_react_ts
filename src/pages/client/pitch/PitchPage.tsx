@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from "react";
-import { Layout, Typography, Row, Col, Card, Image, Tag, Button, Empty, Pagination, Select } from "antd";
+import { Layout, Typography, Row, Col, Card, Image, Tag, Button, Empty, Pagination, Select, Rate } from "antd";
 import { motion, type Variants } from "framer-motion";
 import {
     EnvironmentOutlined,
@@ -255,6 +255,25 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                                                     <Tag color={PITCH_STATUS_META[pitch.status].color}>
                                                         <CheckCircleOutlined className="pitch-inlineIcon" /> {PITCH_STATUS_META[pitch.status].label}
                                                     </Tag>
+                                                    {(pitch.reviewCount ?? 0) > 0 ? (
+                                                        <Tag className="pitch-rating-tag">
+                                                            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                                                                <Rate
+                                                                    disabled
+                                                                    allowHalf
+                                                                    value={pitch.averageRating ?? 0}
+                                                                    className="pitch-rating-stars"
+                                                                    style={{ fontSize: 12 }}
+                                                                />
+                                                                <span>{`${(pitch.averageRating ?? 0).toFixed(1)} (${pitch.reviewCount ?? 0})`}</span>
+                                                            </span>
+                                                        </Tag>
+                                                    ) : (
+                                                        <Tag className="pitch-rating-tag">
+                                                            <StarFilled className="pitch-inlineIcon pitch-inlineIcon--gold" />
+                                                            Chưa có đánh giá
+                                                        </Tag>
+                                                    )}
                                                 </div>
 
                                                 <Text strong type="warning" className="pitch-card-price" style={{ display: "block" }}>
