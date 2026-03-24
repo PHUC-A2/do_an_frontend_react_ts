@@ -19,6 +19,17 @@ export interface IDeviceReturn {
     receiveTime?: string | null;
     returnTime: string;
     deviceStatus: DeviceCondition;
+    quantityReturnedGood?: number | null;
+    quantityLost?: number | null;
+    quantityDamaged?: number | null;
+    borrowerSignName?: string | null;
+    staffSignName?: string | null;
+    returnerNameSnapshot?: string | null;
+    returnerPhoneSnapshot?: string | null;
+    receiverNameSnapshot?: string | null;
+    receiverPhoneSnapshot?: string | null;
+    returnConditionNote?: string | null;
+    returnReportPrintOptIn?: boolean | null;
     createdAt: string;
     updatedAt?: string | null;
     createdBy: string;
@@ -32,6 +43,29 @@ export interface ICreateDeviceReturnReq {
     checkoutId: number;
     returnTime?: string | null;
     deviceStatus: DeviceCondition;
+    quantityReturnedGood?: number | null;
+    quantityLost?: number | null;
+    quantityDamaged?: number | null;
+    /** Snapshot tên người trả (ưu tiên input, fallback user ở backend). */
+    returnerName?: string | null;
+    /** Snapshot SĐT người trả (ưu tiên input, fallback user/contact ở backend). */
+    returnerPhone?: string | null;
+
+    /** Họ tên người nhận thiết bị tại sân (bắt buộc theo backend). */
+    receiverName: string;
+    /** SĐT người nhận thiết bị tại sân (bắt buộc theo backend). */
+    receiverPhone: string;
+
+    /** Ghi chú biên bản khi trả phòng. */
+    returnConditionNote?: string | null;
+
+    /** Tùy chọn in/lưu biên bản trả phòng. */
+    returnReportPrintOptIn?: boolean | null;
+
+    /** Họ tên người mượn ký xác nhận khi có mất/hỏng. */
+    borrowerSignName?: string | null;
+    /** Họ tên nhân viên / bên giao nhận ký xác nhận khi có mất/hỏng. */
+    staffSignName?: string | null;
 }
 
 export interface IUpdateDeviceReturnReq {

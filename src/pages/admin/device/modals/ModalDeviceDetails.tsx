@@ -1,4 +1,5 @@
 import { Collapse, Descriptions, Drawer, Spin, Tag, Typography } from 'antd';
+import { Link } from 'react-router';
 import type { IDevice } from '../../../../types/device';
 import { formatInstant } from '../../../../utils/format/localdatetime';
 import { DEVICE_STATUS_META, DEVICE_TYPE_META } from '../../../../utils/constants/device.constants';
@@ -33,9 +34,23 @@ const ModalDeviceDetails = (props: IProps) => {
                             children: (
                                 <Descriptions bordered column={1} size="small">
                                     <Descriptions.Item label="ID">{device?.id ?? 'N/A'}</Descriptions.Item>
-                                    <Descriptions.Item label="ID tài sản">{device?.assetId ?? 'N/A'}</Descriptions.Item>
+                                    <Descriptions.Item label="ID tài sản">
+                                        {device?.assetId != null ? (
+                                            <Link to={`/admin/asset?openAssetId=${device.assetId}`}>{device.assetId}</Link>
+                                        ) : (
+                                            'N/A'
+                                        )}
+                                    </Descriptions.Item>
                                     <Descriptions.Item label="Tên tài sản">
-                                        {device?.assetName ?? 'N/A'}
+                                        {device?.assetId != null ? (
+                                            <Link to={`/admin/asset?openAssetId=${device.assetId}`}>
+                                                {device.assetName?.trim()
+                                                    ? device.assetName
+                                                    : `Tài sản #${device.assetId}`}
+                                            </Link>
+                                        ) : (
+                                            'N/A'
+                                        )}
                                     </Descriptions.Item>
                                     <Descriptions.Item label="Tên thiết bị">
                                         {device?.deviceName ?? 'N/A'}

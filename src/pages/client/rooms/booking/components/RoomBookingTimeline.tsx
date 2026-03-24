@@ -7,6 +7,7 @@ import type { SlotStatus } from '../../../../../types/timeline';
 
 const { Text } = Typography;
 
+/** Timeline chỉ để xem — không click chọn; tiết/giờ đặt chọn ở form bên phải. */
 interface IProps {
     timelineLoading: boolean;
     timeline: IAssetRoomTimeline | null;
@@ -22,22 +23,42 @@ const slotVariants: Variants = {
     visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
 };
 
-const slotClass = (status: SlotStatus) => {
-    if (status === 'BUSY') return 'booked';
-    if (status === 'PAST') return 'past';
+/** Màu nền/viền slot — tách BẬN / ĐÃ ĐẶT / ĐANG MƯỢN cho cả tiết và linh hoạt. */
+const slotModifier = (slot: { status: SlotStatus; busyUsageStatus?: string | null }) => {
+    if (slot.status === 'PAST') return 'past';
+    if (slot.status === 'FREE') return 'free';
+    if (slot.status === 'BUSY') {
+        if (slot.busyUsageStatus === 'IN_PROGRESS') return 'booked-inprogress';
+        if (slot.busyUsageStatus === 'APPROVED') return 'booked-approved';
+        return 'booked-pending';
+    }
     return 'free';
 };
 
-const slotLabel = (status: SlotStatus) => {
-    if (status === 'BUSY') return 'ĐÃ ĐẶT';
-    if (status === 'PAST') return 'ĐÃ QUA';
+const slotLabel = (slot: { status: SlotStatus; busyUsageStatus?: string | null }) => {
+    if (slot.status === 'BUSY') {
+        if (slot.busyUsageStatus === 'IN_PROGRESS') return 'ĐANG MƯỢN';
+        if (slot.busyUsageStatus === 'APPROVED') return 'ĐÃ ĐẶT';
+        return 'BẬN';
+    }
+    if (slot.status === 'PAST') return 'ĐÃ QUA';
     return 'TRỐNG';
 };
 
+const flexLegend = (timeline: IAssetRoomTimeline) => {
+    const hasInProgress = (timeline.slots ?? []).some((it) => it.busyUsageStatus === 'IN_PROGRESS');
+    const hasApproved = (timeline.slots ?? []).some((it) => it.busyUsageStatus === 'APPROVED');
+    const hasPending = (timeline.slots ?? []).some((it) => it.busyUsageStatus === 'PENDING');
+    const parts: string[] = [];
+    if (hasPending) parts.push('BẬN (chờ duyệt)');
+    if (hasApproved) parts.push('ĐÃ ĐẶT');
+    if (hasInProgress) parts.push('ĐANG MƯỢN');
+    return parts.length ? `Trạng thái có trong ngày: ${parts.join(' • ')}` : '';
+};
+
 const RoomBookingTimeline = ({ timelineLoading, timeline }: IProps) => {
-    const viewStart = timeline?.flexibleViewStart ?? '07:00';
-    const viewEnd = timeline?.flexibleViewEnd ?? '22:00';
-    const totalMinutes = Math.max(dayjs(`2000-01-01T${viewEnd}`).diff(dayjs(`2000-01-01T${viewStart}`), 'minute'), 1);
+    const viewStart = (timeline?.flexibleViewStart ?? '07:00').slice(0, 5);
+    const viewEnd = (timeline?.flexibleViewEnd ?? '22:00').slice(0, 5);
 
     return (
         <AnimatePresence mode="wait">
@@ -58,50 +79,55 @@ const RoomBookingTimeline = ({ timelineLoading, timeline }: IProps) => {
                             Chưa có dữ liệu timeline phòng
                         </motion.p>
                     ) : timeline.mode === 'PERIODS' ? (
-                        <div className="bk__time-grid">
-                            {timeline.periods.map((slot) => {
-                                const st = slot.status;
-                                return (
-                                    <motion.div
-                                        key={slot.periodIndex}
-                                        variants={slotVariants}
-                                        className={`bk__slot bk__slot--${slotClass(st)}`}
-                                    >
-                                        <div className="bk__slot__inner">
-                                            <div className="bk__slot__time">
-                                                {dayjs(slot.start).format('HH:mm')} - {dayjs(slot.end).format('HH:mm')}
-                                            </div>
-                                            <div className="bk__slot__label">{slotLabel(st)}</div>
-                                        </div>
-                                    </motion.div>
-                                );
-                            })}
-                        </div>
-                    ) : (
                         <div>
-                            <div className="room-timeline-panel__flex-track">
-                                {(timeline.busyIntervals ?? []).map((it, idx) => {
-                                    const start = dayjs(it.start);
-                                    const end = dayjs(it.end);
-                                    const leftMinutes = Math.max(start.diff(dayjs(`2000-01-01T${viewStart}`), 'minute'), 0);
-                                    const widthMinutes = Math.max(end.diff(start, 'minute'), 1);
-                                    const leftPct = (leftMinutes / totalMinutes) * 100;
-                                    const widthPct = (widthMinutes / totalMinutes) * 100;
+                            <Text type="secondary" style={{ display: 'block', marginBottom: 10, fontSize: 12 }}>
+                                Xem nhanh tiết trống / đã đặt. Chọn tiết đặt phòng ở form &quot;Thông tin đặt phòng&quot; bên phải.
+                            </Text>
+                            <div className="bk__time-grid">
+                                {timeline.periods.map((slot) => {
                                     return (
-                                        <div
-                                            key={`${it.start}-${it.end}-${idx}`}
-                                            className="room-timeline-panel__flex-busy"
-                                            style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
-                                        />
+                                        <motion.div
+                                            key={slot.periodIndex}
+                                            variants={slotVariants}
+                                            className={`bk__slot bk__slot--${slotModifier(slot)}`}
+                                        >
+                                            <div className="bk__slot__inner">
+                                                <div className="bk__slot__time">
+                                                    {dayjs(slot.start).format('HH:mm')} - {dayjs(slot.end).format('HH:mm')}
+                                                </div>
+                                                <div className="bk__slot__label">{slotLabel(slot)}</div>
+                                            </div>
+                                        </motion.div>
                                     );
                                 })}
                             </div>
-                            <div className="room-timeline-panel__flex-labels">
-                                <span>{viewStart}</span>
-                                <span>{viewEnd}</span>
+                        </div>
+                    ) : (
+                        <div>
+                            <Text type="secondary" style={{ display: 'block', marginBottom: 10, fontSize: 12 }}>
+                                Timeline theo giờ linh hoạt ({timeline.slotMinutes || 5} phút/slot). Chọn giờ ở form bên phải.
+                            </Text>
+                            <div className="bk__time-grid">
+                                {(timeline.slots ?? []).map((slot) => {
+                                    return (
+                                        <motion.div
+                                            key={`${slot.start}-${slot.end}`}
+                                            variants={slotVariants}
+                                            className={`bk__slot bk__slot--${slotModifier(slot)}`}
+                                        >
+                                            <div className="bk__slot__inner">
+                                                <div className="bk__slot__time">
+                                                    {dayjs(slot.start).format('HH:mm')} - {dayjs(slot.end).format('HH:mm')}
+                                                </div>
+                                                <div className="bk__slot__label">{slotLabel(slot)}</div>
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })}
                             </div>
                             <Text type="secondary">
-                                Thanh màu đỏ là khoảng đã có đăng ký. Phần còn lại là khung giờ có thể đặt.
+                                Khung giờ mở: {viewStart} - {viewEnd}.{' '}
+                                {timeline ? flexLegend(timeline) : ''}
                             </Text>
                         </div>
                     )}

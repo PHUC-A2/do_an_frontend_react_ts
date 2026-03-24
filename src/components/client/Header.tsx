@@ -61,7 +61,7 @@ const { useBreakpoint } = Grid;
 const { Header: AntHeader } = Layout;
 
 interface NavItem {
-    key: 'home' | 'pitch' | 'rooms' | 'booking' | 'about';
+    key: 'home' | 'pitch' | 'booking' | 'rooms' | 'bookingRooms' | 'about';
     label: string;
     to: string;
     matches: string[];
@@ -71,8 +71,10 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
     { key: 'home', label: 'Trang chủ', to: '/', matches: ['/'], icon: FiHome },
     { key: 'pitch', label: 'Sân bóng', to: '/pitch', matches: ['/pitch'], icon: FiMapPin },
-    { key: 'rooms', label: 'Phòng tin học', to: '/rooms', matches: ['/rooms'], icon: FiMonitor },
     { key: 'booking', label: 'Đặt sân', to: '/pitch', matches: ['/booking'], icon: FiBookOpen },
+    { key: 'rooms', label: 'Phòng tin', to: '/rooms', matches: ['/rooms'], icon: FiMonitor },
+    // Đặt phòng: vào danh sách phòng chọn phòng; icon lịch để khác "Phòng tin" (màn hình)
+    { key: 'bookingRooms', label: 'Đặt phòng', to: '/rooms', matches: ['/rooms/booking'], icon: FiCalendar },
     { key: 'about', label: 'Giới thiệu', to: '/about', matches: ['/about'], icon: FiInfo },
 ];
 
@@ -827,11 +829,24 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
     };
 
     const isActiveLink = (item: NavItem) => {
+        const path = location.pathname;
         if (item.key === 'home') {
-            return location.pathname === '/';
+            return path === '/';
         }
-
-        return item.matches.some((match) => location.pathname.startsWith(match));
+        // Phòng tin: /rooms, /rooms/:id — không coi là active khi đang ở luồng đặt phòng /rooms/booking/...
+        if (item.key === 'rooms') {
+            if (path.startsWith('/rooms/booking')) return false;
+            return path.startsWith('/rooms');
+        }
+        // Đặt phòng: chỉ active trên trang đặt (có assetId)
+        if (item.key === 'bookingRooms') {
+            return path.startsWith('/rooms/booking');
+        }
+        // Đặt sân: /booking/:pitchId
+        if (item.key === 'booking') {
+            return path.startsWith('/booking');
+        }
+        return item.matches.some((match) => path.startsWith(match));
     };
 
     return (

@@ -44,7 +44,7 @@ const ModalEquipmentDetails = ({ open, setOpen, equipment, isLoading }: IProps) 
         : undefined;
 
     return (
-        <Drawer title="Chi tiết thiết bị" placement="right" width={420} onClose={() => setOpen(false)} open={open}>
+        <Drawer title="Chi tiết thiết bị" placement="right" size={420} onClose={() => setOpen(false)} open={open}>
             <Spin spinning={isLoading || loadingAssignments}>
                 <Collapse
                     defaultActiveKey={['general', 'pitches', 'meta']}

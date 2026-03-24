@@ -1,6 +1,7 @@
 import { Descriptions, Drawer, Spin, Tag } from 'antd';
 import type { IAssetUsage } from '../../../../types/assetUsage';
 import { formatInstant } from '../../../../utils/format/localdatetime';
+import { ASSET_ROOM_FEE_MODE_OPTIONS } from '../../../../utils/constants/asset.constants';
 import { ASSET_USAGE_STATUS_META, ASSET_USAGE_TYPE_META } from '../../../../utils/constants/assetUsage.constants';
 
 interface IProps {
@@ -37,6 +38,10 @@ const ModalAssetUsageDetails = (props: IProps) => {
                         ) : (
                             <Tag>N/A</Tag>
                         )}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Phí đăng ký (thuê/mượn)">
+                        {ASSET_ROOM_FEE_MODE_OPTIONS.find((o) => o.value === (usage?.usageFeeMode === 'PAID' ? 'PAID' : 'FREE'))
+                            ?.label ?? 'Miễn phí'}
                     </Descriptions.Item>
                     <Descriptions.Item label="Ngày sử dụng">{usage?.date ?? 'N/A'}</Descriptions.Item>
                     <Descriptions.Item label="Khung giờ">

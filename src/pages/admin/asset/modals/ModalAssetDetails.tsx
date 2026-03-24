@@ -1,5 +1,6 @@
 import { Collapse, Descriptions, Drawer, Image, Spin, Typography } from 'antd';
 import type { IAsset } from '../../../../types/asset';
+import { ASSET_ROOM_FEE_MODE_OPTIONS } from '../../../../utils/constants/asset.constants';
 import { formatInstant } from '../../../../utils/format/localdatetime';
 
 const { Text } = Typography;
@@ -51,6 +52,15 @@ const ModalAssetDetails = (props: IProps) => {
                                     <Descriptions.Item label="Vị trí">{asset?.location ?? 'N/A'}</Descriptions.Item>
                                     <Descriptions.Item label="Sức chứa">
                                         {asset?.capacity != null ? <Text>{asset.capacity}</Text> : 'N/A'}
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="Khung giờ mở đặt phòng">
+                                        {asset?.open24h
+                                            ? '24/24'
+                                            : `${asset?.openTime?.slice(0, 5) ?? '--:--'} - ${asset?.closeTime?.slice(0, 5) ?? '--:--'}`}
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="Phí đặt phòng">
+                                        {ASSET_ROOM_FEE_MODE_OPTIONS.find((o) => o.value === (asset?.roomFeeMode === 'PAID' ? 'PAID' : 'FREE'))
+                                            ?.label ?? 'Miễn phí'}
                                     </Descriptions.Item>
                                 </Descriptions>
                             ),

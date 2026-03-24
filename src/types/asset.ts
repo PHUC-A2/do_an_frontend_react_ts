@@ -1,3 +1,6 @@
+/** Khớp enum backend AssetRoomFeeMode. */
+export type AssetRoomFeeMode = 'FREE' | 'PAID';
+
 /** Bản ghi tài sản — đồng bộ field với ResAssetListDTO / ResAssetDetailDTO backend */
 export interface IAsset {
     id: number;
@@ -6,6 +9,11 @@ export interface IAsset {
     responsibleName?: string | null;
     location?: string | null;
     capacity?: number | null;
+    openTime?: string | null;
+    closeTime?: string | null;
+    open24h?: boolean | null;
+    /** Miễn phí / có phí khi đặt phòng — admin cấu hình (AssetRoomFeeMode). */
+    roomFeeMode?: AssetRoomFeeMode | null;
     /** URL ảnh tài sản (upload giống avatar user) */
     assetsUrl?: string | null;
     createdAt: string;
@@ -21,6 +29,10 @@ export interface ICreateAssetReq {
     responsibleName?: string | null;
     location?: string | null;
     capacity?: number | null;
+    openTime?: string | null;
+    closeTime?: string | null;
+    open24h?: boolean | null;
+    roomFeeMode?: AssetRoomFeeMode | null;
     assetsUrl?: string | null;
 }
 
@@ -31,5 +43,9 @@ export interface IUpdateAssetReq {
     responsibleName?: string | null;
     location?: string | null;
     capacity?: number | null;
+    openTime?: string | null;
+    closeTime?: string | null;
+    open24h?: boolean | null;
+    roomFeeMode?: AssetRoomFeeMode | null;
     assetsUrl?: string | null;
 }

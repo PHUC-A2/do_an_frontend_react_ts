@@ -13,7 +13,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import type { TableProps } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import RBButton from 'react-bootstrap/Button';
 import { IoIosAddCircle } from 'react-icons/io';
 import { FaDownload } from 'react-icons/fa';
@@ -257,13 +257,27 @@ const AdminDevicePage = () => {
             dataIndex: 'assetId',
             key: 'asset.id',
             sorter: true,
+            // Điều hướng mở chi tiết tài sản (AdminAssetPage đọc query openAssetId).
+            render: (_: number | undefined, record: IDevice) =>
+                record.assetId ? (
+                    <Link to={`/admin/asset?openAssetId=${record.assetId}`}>{record.assetId}</Link>
+                ) : (
+                    '-'
+                ),
         },
         {
             title: 'Tên tài sản',
             dataIndex: 'assetName',
             key: 'asset.assetName',
             sorter: true,
-            render: (text?: string | null) => text || '-',
+            render: (_: string | null | undefined, record: IDevice) =>
+                record.assetId ? (
+                    <Link to={`/admin/asset?openAssetId=${record.assetId}`}>
+                        {record.assetName?.trim() ? record.assetName : `Tài sản #${record.assetId}`}
+                    </Link>
+                ) : (
+                    '-'
+                ),
         },
         {
             title: 'Tên thiết bị',

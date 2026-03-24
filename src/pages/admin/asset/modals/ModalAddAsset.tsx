@@ -1,10 +1,12 @@
 import { Image, Modal, Upload, type GetProp, type UploadFile, type UploadProps } from 'antd';
-import { Form, Input, InputNumber } from 'antd';
-import { useState } from 'react';
+import { Form, Input, InputNumber, Select, Switch, TimePicker } from 'antd';
+import { useEffect, useState } from 'react';
+import dayjs from 'dayjs';
 import { PlusOutlined } from '@ant-design/icons';
 import { toast } from 'react-toastify';
 import { createAsset, uploadImageAsset } from '../../../../config/Api';
 import type { ICreateAssetReq } from '../../../../types/asset';
+import { ASSET_ROOM_FEE_MODE_OPTIONS } from '../../../../utils/constants/asset.constants';
 import { useAppDispatch, useAppSelector } from '../../../../redux/hooks';
 import { fetchAssets, selectAssetLastListQuery } from '../../../../redux/features/assetSlice';
 import { DEFAULT_ADMIN_LIST_QUERY } from '../../../../utils/pagination/defaultListQuery';
@@ -33,6 +35,9 @@ const ModalAddAsset = (props: IProps) => {
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState('');
     const [fileList, setFileList] = useState<UploadFile[]>([]);
+    const open24h = Form.useWatch('open24h', form);
+    const openTime = Form.useWatch('openTime', form);
+    const closeTime = Form.useWatch('closeTime', form);
 
     const handlePreview = async (file: UploadFile) => {
         if (!file.url && !file.preview) {
@@ -82,10 +87,15 @@ const ModalAddAsset = (props: IProps) => {
         setPreviewOpen(false);
     };
 
-    const handleAdd = async (data: ICreateAssetReq) => {
+    const handleAdd = async (data: any) => {
         try {
             setSubmitting(true);
-            const res = await createAsset(data);
+            const payload: ICreateAssetReq = {
+                ...data,
+                openTime: data.openTime ? dayjs(data.openTime).format('HH:mm') : null,
+                closeTime: data.closeTime ? dayjs(data.closeTime).format('HH:mm') : null,
+            };
+            const res = await createAsset(payload);
             if (res.data.statusCode === 201) {
                 await dispatch(fetchAssets(listQuery || DEFAULT_ADMIN_LIST_QUERY));
                 setOpenModalAddAsset(false);
@@ -105,6 +115,18 @@ const ModalAddAsset = (props: IProps) => {
         }
     };
 
+    useEffect(() => {
+        if (open24h) {
+            form.setFieldsValue({ openTime: null, closeTime: null });
+        }
+    }, [form, open24h]);
+
+    useEffect(() => {
+        if (openTime || closeTime) {
+            form.setFieldValue('open24h', false);
+        }
+    }, [closeTime, form, openTime]);
+
     return (
         <Modal
             title="Thêm mới tài sản"
@@ -122,7 +144,7 @@ const ModalAddAsset = (props: IProps) => {
         >
             <div>
                 <hr />
-                <Form form={form} onFinish={handleAdd} layout="vertical" autoComplete="off">
+                <Form form={form} onFinish={handleAdd} layout="vertical" autoComplete="off" initialValues={{ roomFeeMode: 'FREE', open24h: true }}>
                     <Form.Item
                         label="Tên tài sản"
                         name="assetName"
@@ -141,6 +163,38 @@ const ModalAddAsset = (props: IProps) => {
 
                     <Form.Item label="Sức chứa" name="capacity">
                         <InputNumber min={0} style={{ width: '100%' }} placeholder="Số nguyên ≥ 0" />
+                    </Form.Item>
+
+                    <Form.Item label="Mở 24h" name="open24h" valuePropName="checked">
+                        <Switch />
+                    </Form.Item>
+
+                    {!open24h && (
+                        <>
+                            <Form.Item
+                                label="Giờ mở cửa"
+                                name="openTime"
+                                rules={[{ required: true, message: 'Vui lòng chọn giờ mở cửa' }]}
+                            >
+                                <TimePicker format="HH:mm" style={{ width: '100%' }} />
+                            </Form.Item>
+                            <Form.Item
+                                label="Giờ đóng cửa"
+                                name="closeTime"
+                                rules={[{ required: true, message: 'Vui lòng chọn giờ đóng cửa' }]}
+                            >
+                                <TimePicker format="HH:mm" style={{ width: '100%' }} />
+                            </Form.Item>
+                        </>
+                    )}
+
+                    <Form.Item
+                        label="Phí đặt phòng"
+                        name="roomFeeMode"
+                        rules={[{ required: true, message: 'Chọn loại phí' }]}
+                        tooltip="Ảnh hưởng nhãn tạm tính trên trang đặt phòng của user."
+                    >
+                        <Select options={ASSET_ROOM_FEE_MODE_OPTIONS} placeholder="Chọn miễn phí / có phí" />
                     </Form.Item>
 
                     <Form.Item label="Ảnh tài sản">

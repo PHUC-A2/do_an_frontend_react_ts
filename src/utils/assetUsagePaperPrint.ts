@@ -109,7 +109,12 @@ ${usage.bookingNote ? `<div class="meta"><strong>Ghi chú booking:</strong> ${es
 </thead>
 <tbody>
 <tr><td>Biên bản nhận</td><td>${checkout ? `Nhận lúc ${dayjs(checkout.receiveTime).format('HH:mm DD/MM/YYYY')} - ${esc(checkout.conditionNote)}` : 'Chưa có'}</td></tr>
-<tr><td>Biên bản trả</td><td>${deviceReturn ? `Trả lúc ${dayjs(deviceReturn.returnTime).format('HH:mm DD/MM/YYYY')} - Tình trạng: ${esc((DEVICE_CONDITION_META as any)[deviceReturn.deviceStatus]?.label ?? deviceReturn.deviceStatus)}` : 'Chưa có'}</td></tr>
+<tr><td>Biên bản trả</td><td>${deviceReturn ? `Trả lúc ${dayjs(deviceReturn.returnTime).format('HH:mm DD/MM/YYYY')} - Tình trạng: ${esc((DEVICE_CONDITION_META as any)[deviceReturn.deviceStatus]?.label ?? deviceReturn.deviceStatus)}
+<br/>Kiểm đếm: Trả tốt ${esc(String(deviceReturn.quantityReturnedGood ?? 0))} - Mất ${esc(String(deviceReturn.quantityLost ?? 0))} - Hỏng ${esc(String(deviceReturn.quantityDamaged ?? 0))}
+${deviceReturn.returnerNameSnapshot || deviceReturn.returnerPhoneSnapshot ? `<br/>Người trả: ${esc(deviceReturn.returnerNameSnapshot ?? '—')}${deviceReturn.returnerPhoneSnapshot ? ` - ${esc(deviceReturn.returnerPhoneSnapshot)}` : ''}` : ''}
+${deviceReturn.receiverNameSnapshot || deviceReturn.receiverPhoneSnapshot ? `<br/>Người nhận: ${esc(deviceReturn.receiverNameSnapshot ?? '—')}${deviceReturn.receiverPhoneSnapshot ? ` - ${esc(deviceReturn.receiverPhoneSnapshot)}` : ''}` : ''}
+${deviceReturn.borrowerSignName || deviceReturn.staffSignName ? `<br/>Ký xác nhận: ${(esc(deviceReturn.borrowerSignName ?? '—'))} / ${(esc(deviceReturn.staffSignName ?? '—'))}` : ''}
+${deviceReturn.returnConditionNote ? `<br/>Ghi chú trả: ${esc(deviceReturn.returnConditionNote)}` : ''}` : 'Chưa có'}</td></tr>
 </tbody>
 </table>
 

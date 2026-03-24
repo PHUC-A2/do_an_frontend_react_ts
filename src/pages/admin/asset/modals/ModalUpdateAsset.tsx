@@ -1,13 +1,15 @@
 import { Image, Modal, Upload, type GetProp, type UploadFile, type UploadProps } from 'antd';
-import { Form, Input, InputNumber } from 'antd';
+import { Form, Input, InputNumber, Select, Switch, TimePicker } from 'antd';
 import { useEffect, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { toast } from 'react-toastify';
+import dayjs from 'dayjs';
 import { updateAsset, uploadImageAsset } from '../../../../config/Api';
 import { useAppDispatch, useAppSelector } from '../../../../redux/hooks';
 import { fetchAssets, selectAssetLastListQuery } from '../../../../redux/features/assetSlice';
 import { DEFAULT_ADMIN_LIST_QUERY } from '../../../../utils/pagination/defaultListQuery';
 import type { IUpdateAssetReq, IAsset } from '../../../../types/asset';
+import { ASSET_ROOM_FEE_MODE_OPTIONS } from '../../../../utils/constants/asset.constants';
 
 interface IProps {
     openModalUpdateAsset: boolean;
@@ -34,6 +36,9 @@ const ModalUpdateAsset = (props: IProps) => {
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState('');
     const [fileList, setFileList] = useState<UploadFile[]>([]);
+    const open24h = Form.useWatch('open24h', form);
+    const openTime = Form.useWatch('openTime', form);
+    const closeTime = Form.useWatch('closeTime', form);
 
     const handlePreview = async (file: UploadFile) => {
         if (!file.url && !file.preview) {
@@ -76,14 +81,19 @@ const ModalUpdateAsset = (props: IProps) => {
         }
     };
 
-    const handleEdit = async (values: IUpdateAssetReq) => {
+    const handleEdit = async (values: any) => {
         try {
             if (!assetEdit?.id) {
                 toast.error('ID tài sản không hợp lệ');
                 return;
             }
             setSubmitting(true);
-            const res = await updateAsset(assetEdit.id, values);
+            const payload: IUpdateAssetReq = {
+                ...values,
+                openTime: values.openTime ? dayjs(values.openTime).format('HH:mm') : null,
+                closeTime: values.closeTime ? dayjs(values.closeTime).format('HH:mm') : null,
+            };
+            const res = await updateAsset(assetEdit.id, payload);
 
             if (res.data.statusCode === 200) {
                 toast.success('Cập nhật tài sản thành công');
@@ -106,6 +116,18 @@ const ModalUpdateAsset = (props: IProps) => {
     };
 
     useEffect(() => {
+        if (open24h) {
+            form.setFieldsValue({ openTime: null, closeTime: null });
+        }
+    }, [form, open24h]);
+
+    useEffect(() => {
+        if (openTime || closeTime) {
+            form.setFieldValue('open24h', false);
+        }
+    }, [closeTime, form, openTime]);
+
+    useEffect(() => {
         if (!assetEdit) return;
 
         form.resetFields();
@@ -114,6 +136,10 @@ const ModalUpdateAsset = (props: IProps) => {
             responsibleName: assetEdit.responsibleName ?? undefined,
             location: assetEdit.location ?? undefined,
             capacity: assetEdit.capacity ?? undefined,
+            open24h: assetEdit.open24h ?? true,
+            openTime: assetEdit.openTime ? dayjs(assetEdit.openTime, 'HH:mm') : null,
+            closeTime: assetEdit.closeTime ? dayjs(assetEdit.closeTime, 'HH:mm') : null,
+            roomFeeMode: assetEdit.roomFeeMode === 'PAID' ? 'PAID' : 'FREE',
             assetsUrl: assetEdit.assetsUrl ?? undefined,
         });
 
@@ -164,6 +190,38 @@ const ModalUpdateAsset = (props: IProps) => {
 
                     <Form.Item label="Sức chứa" name="capacity">
                         <InputNumber min={0} style={{ width: '100%' }} placeholder="Số nguyên ≥ 0" />
+                    </Form.Item>
+
+                    <Form.Item label="Mở 24h" name="open24h" valuePropName="checked">
+                        <Switch />
+                    </Form.Item>
+
+                    {!open24h && (
+                        <>
+                            <Form.Item
+                                label="Giờ mở cửa"
+                                name="openTime"
+                                rules={[{ required: true, message: 'Vui lòng chọn giờ mở cửa' }]}
+                            >
+                                <TimePicker format="HH:mm" style={{ width: '100%' }} />
+                            </Form.Item>
+                            <Form.Item
+                                label="Giờ đóng cửa"
+                                name="closeTime"
+                                rules={[{ required: true, message: 'Vui lòng chọn giờ đóng cửa' }]}
+                            >
+                                <TimePicker format="HH:mm" style={{ width: '100%' }} />
+                            </Form.Item>
+                        </>
+                    )}
+
+                    <Form.Item
+                        label="Phí đặt phòng"
+                        name="roomFeeMode"
+                        rules={[{ required: true, message: 'Chọn loại phí' }]}
+                        tooltip="Ảnh hưởng nhãn tạm tính trên trang đặt phòng của user."
+                    >
+                        <Select options={ASSET_ROOM_FEE_MODE_OPTIONS} placeholder="Chọn miễn phí / có phí" />
                     </Form.Item>
 
                     <Form.Item label="Ảnh tài sản">

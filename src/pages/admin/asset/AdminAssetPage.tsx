@@ -7,6 +7,7 @@ import {
     type PopconfirmProps,
     Space,
     Table,
+    Tag,
     Input,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -29,6 +30,7 @@ import {
     selectAssets,
 } from '../../../redux/features/assetSlice';
 import type { IAsset } from '../../../types/asset';
+import { resolveAssetRoomFeeMode } from '../../../utils/constants/asset.constants';
 import { deleteAsset, getAssetById } from '../../../config/Api';
 import { toast } from 'react-toastify';
 import ModalAddAsset from './modals/ModalAddAsset';
@@ -232,6 +234,16 @@ const AdminAssetPage = () => {
             key: 'capacity',
             sorter: true,
             render: (c: number | null | undefined) => (c != null ? String(c) : '-'),
+        },
+        {
+            title: 'Phí phòng',
+            key: 'roomFeeMode',
+            render: (_: unknown, r: IAsset) =>
+                resolveAssetRoomFeeMode(r.roomFeeMode) === 'PAID' ? (
+                    <Tag color="gold">Có phí</Tag>
+                ) : (
+                    <Tag color="green">Miễn phí</Tag>
+                ),
         },
         {
             title: 'Hành động',

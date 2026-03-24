@@ -48,6 +48,7 @@ import { exportTableToExcel } from '../../../utils/export/exportExcelFromTable';
 import { buildSpringListQuery, type SpringSortItem } from '../../../utils/pagination/buildSpringPageQuery';
 import { orFieldsInsensitiveLike } from '../../../utils/pagination/springFilterText';
 import { tableSorterToSortItems } from '../../../utils/pagination/tableSorterToSpringSort';
+import { resolveAssetRoomFeeMode } from '../../../utils/constants/asset.constants';
 import {
     ASSET_USAGE_STATUS_META,
     ASSET_USAGE_STATUS_OPTIONS,
@@ -331,6 +332,7 @@ const AdminAssetUsagePage = () => {
                 userId: record.userId,
                 assetId: record.assetId,
                 usageType: record.usageType,
+                usageFeeMode: resolveAssetRoomFeeMode(record.usageFeeMode),
                 date: record.date,
                 startTime: record.startTime.length === 5 ? `${record.startTime}:00` : record.startTime,
                 endTime: record.endTime.length === 5 ? `${record.endTime}:00` : record.endTime,
@@ -378,6 +380,16 @@ const AdminAssetUsagePage = () => {
             render: (t: AssetUsageType) => (
                 <Tag color={ASSET_USAGE_TYPE_META[t]?.color}>{ASSET_USAGE_TYPE_META[t]?.label ?? t}</Tag>
             ),
+        },
+        {
+            title: 'Phí đăng ký',
+            key: 'usageFeeMode',
+            render: (_: unknown, r: IAssetUsage) =>
+                resolveAssetRoomFeeMode(r.usageFeeMode) === 'PAID' ? (
+                    <Tag color="gold">Có phí</Tag>
+                ) : (
+                    <Tag color="green">Miễn phí</Tag>
+                ),
         },
         { title: 'Ngày', dataIndex: 'date', key: 'usageDate', sorter: true },
         { title: 'Bắt đầu', dataIndex: 'startTime', key: 'startTime', sorter: true },

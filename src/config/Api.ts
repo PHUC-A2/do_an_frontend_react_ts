@@ -130,7 +130,22 @@ export const createClientRoomBookingCheckout = (id: number, data?: { receiveTime
     instance.post<IBackendRes<ICheckout>>(`/api/v1/client/room-bookings/${id}/checkout`, data ?? {});
 export const createClientRoomBookingReturn = (
     id: number,
-    data: Pick<ICreateDeviceReturnReq, "returnTime" | "deviceStatus">
+    data: Pick<
+        ICreateDeviceReturnReq,
+        | "returnTime"
+        | "deviceStatus"
+        | "quantityReturnedGood"
+        | "quantityLost"
+        | "quantityDamaged"
+        | "returnerName"
+        | "returnerPhone"
+        | "receiverName"
+        | "receiverPhone"
+        | "returnConditionNote"
+        | "returnReportPrintOptIn"
+        | "borrowerSignName"
+        | "staffSignName"
+    >
 ) =>
     instance.post<IBackendRes<IDeviceReturn>>(`/api/v1/client/room-bookings/${id}/return`, data);
 export const createClientRoomBookingIssue = (id: number, data: Pick<ICreateDeviceIssueReq, 'deviceId' | 'description'>) =>
@@ -350,6 +365,17 @@ export const adminGetEquipmentBorrowLogs = () =>
     instance.get<IBackendRes<IEquipmentBorrowLog[]>>(`/api/v1/equipment-borrow-logs`);
 export const adminGetEquipmentUsageStats = () =>
     instance.get<IBackendRes<IEquipmentUsageStats>>(`/api/v1/equipment-usage-stats`);
+
+/* api booking equipment — admin (rooms: dòng mượn/trả theo AssetUsage) */
+export const getAllRoomBookingDevices = () => instance.get<IBackendRes<IBookingEquipment[]>>(`/api/v1/room-booking-devices`);
+export const updateRoomBookingDeviceStatus = (id: number, data: IUpdateBookingEquipmentStatusReq) =>
+    instance.patch<IBackendRes<IBookingEquipment>>(`/api/v1/room-booking-devices/${id}/status`, data);
+export const adminConfirmRoomBookingDeviceReturn = (id: number) =>
+    instance.post<IBackendRes<IBookingEquipment>>(`/api/v1/room-booking-devices/${id}/confirm-return`);
+export const adminGetRoomEquipmentBorrowLogs = () =>
+    instance.get<IBackendRes<IEquipmentBorrowLog[]>>(`/api/v1/room-equipment-borrow-logs`);
+export const adminGetRoomEquipmentUsageStats = () =>
+    instance.get<IBackendRes<IEquipmentUsageStats>>(`/api/v1/room-equipment-usage-stats`);
 
 /* api booking equipment — client */
 export const clientBorrowEquipment = (data: ICreateBookingEquipmentReq) => instance.post<IBackendRes<IBookingEquipment>>(`/api/v1/client/booking-equipments`, data);

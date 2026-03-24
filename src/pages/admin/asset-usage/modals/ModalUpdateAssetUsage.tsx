@@ -3,8 +3,9 @@ import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { getAllAssets, getAllUsers, updateAssetUsage } from '../../../../config/Api';
-import type { IAsset } from '../../../../types/asset';
+import type { AssetRoomFeeMode, IAsset } from '../../../../types/asset';
 import type { AssetUsageType, IAssetUsage, IUpdateAssetUsageReq } from '../../../../types/assetUsage';
+import { ASSET_ROOM_FEE_MODE_OPTIONS } from '../../../../utils/constants/asset.constants';
 import type { IUser } from '../../../../types/user';
 import { useAppDispatch, useAppSelector } from '../../../../redux/hooks';
 import { fetchAssetUsages, selectAssetUsageLastListQuery } from '../../../../redux/features/assetUsageSlice';
@@ -25,6 +26,7 @@ type FormVals = {
     userId: number;
     assetId: number;
     usageType: AssetUsageType;
+    usageFeeMode: AssetRoomFeeMode;
     date: Dayjs;
     startTime: Dayjs;
     endTime: Dayjs;
@@ -76,6 +78,7 @@ const ModalUpdateAssetUsage = (props: IProps) => {
             userId: values.userId,
             assetId: values.assetId,
             usageType: values.usageType,
+            usageFeeMode: values.usageFeeMode,
             date: values.date.format('YYYY-MM-DD'),
             startTime: values.startTime.format('HH:mm:ss'),
             endTime: values.endTime.format('HH:mm:ss'),
@@ -111,6 +114,7 @@ const ModalUpdateAssetUsage = (props: IProps) => {
             userId: usageEdit.userId,
             assetId: usageEdit.assetId,
             usageType: usageEdit.usageType,
+            usageFeeMode: usageEdit.usageFeeMode === 'PAID' ? 'PAID' : 'FREE',
             date: dayjs(usageEdit.date),
             startTime: parseTimeToDayjs(usageEdit.startTime),
             endTime: parseTimeToDayjs(usageEdit.endTime),
@@ -165,7 +169,20 @@ const ModalUpdateAssetUsage = (props: IProps) => {
                                 value: a.id,
                                 label: `${a.id} — ${a.assetName}`,
                             }))}
+                            onChange={(id) => {
+                                const a = assets.find((x) => x.id === id);
+                                form.setFieldValue('usageFeeMode', a?.roomFeeMode === 'PAID' ? 'PAID' : 'FREE');
+                            }}
                         />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Phí đăng ký (thuê/mượn)"
+                        name="usageFeeMode"
+                        rules={[{ required: true, message: 'Chọn loại phí' }]}
+                        tooltip="Áp dụng cho bản ghi đăng ký này; mặc định miễn phí."
+                    >
+                        <Select options={ASSET_ROOM_FEE_MODE_OPTIONS} />
                     </Form.Item>
 
                     <Form.Item label="Loại sử dụng" name="usageType" rules={[{ required: true }]}>

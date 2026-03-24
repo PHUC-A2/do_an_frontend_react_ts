@@ -1,3 +1,5 @@
+import type { AssetRoomFeeMode } from './asset';
+
 /** Trạng thái / loại — khớp enum Java AssetUsage (bảng asset_usages), khác booking sân. */
 export type AssetUsageStatus =
     | 'PENDING'
@@ -20,7 +22,11 @@ export interface IAssetUsage {
     assetResponsibleName?: string | null;
     /** Ảnh minh họa phòng/tài sản (Asset.assetsUrl). */
     assetAssetsUrl?: string | null;
+    /** Miễn phí / có phí theo cấu hình phòng — backend ResAssetUsage*. */
+    assetRoomFeeMode?: AssetRoomFeeMode | null;
     usageType: AssetUsageType;
+    /** Phí ghi trên bản ghi đăng ký (thuê/mượn) — ưu tiên khi hiển thị. */
+    usageFeeMode?: AssetRoomFeeMode | null;
     /** SĐT liên hệ của user (để ghi vào biên bản). */
     contactPhone?: string | null;
     date: string;
@@ -51,6 +57,8 @@ export interface ICreateAssetUsageReq {
     userId: number;
     assetId: number;
     usageType: AssetUsageType;
+    /** Mặc định FREE nếu không gửi — backend có thể lấy theo phòng. */
+    usageFeeMode?: AssetRoomFeeMode | null;
     date: string;
     startTime: string;
     endTime: string;
@@ -62,6 +70,8 @@ export interface IUpdateAssetUsageReq {
     userId: number;
     assetId: number;
     usageType: AssetUsageType;
+    /** Giữ nguyên nếu không gửi (quick duyệt gửi giá trị hiện có). */
+    usageFeeMode?: AssetRoomFeeMode | null;
     date: string;
     startTime: string;
     endTime: string;

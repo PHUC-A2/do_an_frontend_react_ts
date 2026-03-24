@@ -117,6 +117,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         payment: 'Thanh toán',
         equipment: 'Thiết bị',
         'booking-equipment': 'Mượn thiết bị',
+        'room-booking-equipment': 'Mượn / trả phòng',
         support: 'Hỗ trợ & Bảo trì',
     };
 
@@ -147,7 +148,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     };
 
     // Đặt '/admin' cuối cùng để khớp con (/admin/asset, ...) trước, tránh mọi URL bị coi là Dashboard
-    const routeMenuKeys = ['/admin/user', '/admin/asset', '/admin/device', '/admin/device-issues', '/admin/asset-usage', '/admin/checkouts', '/admin/returns', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/ai', '/admin/support', '/admin'];
+    const routeMenuKeys = ['/admin/user', '/admin/asset', '/admin/device', '/admin/device-issues', '/admin/asset-usage', '/admin/checkouts', '/admin/returns', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/room-booking-equipment', '/admin/ai', '/admin/support', '/admin'];
 
     const selectedMenuKey = useMemo(() => {
         const currentPath = location.pathname;
@@ -390,6 +391,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                         ...(canViewBookingEquipments ? [{
                             key: '/admin/booking-equipment',
                             label: <Link to="/admin/booking-equipment" className={styles.menuLink}>Mượn thiết bị</Link>,
+                            icon: <GiReturnArrow />,
+                        }] : []),
+
+                        ...(canViewBookingEquipments ? [{
+                            key: '/admin/room-booking-equipment',
+                            label: <Link to="/admin/room-booking-equipment" className={styles.menuLink}>Mượn / trả phòng</Link>,
                             icon: <GiReturnArrow />,
                         }] : []),
 

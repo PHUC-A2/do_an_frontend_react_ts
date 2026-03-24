@@ -1,9 +1,46 @@
-import {  Button, Checkbox, Collapse, Drawer, Empty, Input, Modal, Popconfirm, Select, Space, Spin, Tabs, Tag, Typography, type CollapseProps, type PopconfirmProps } from 'antd';
-import { ClockCircleOutlined, DeleteOutlined, EditOutlined, ExclamationCircleOutlined, HistoryOutlined, PrinterOutlined, ToolOutlined } from '@ant-design/icons';
+import {
+    Button,
+    Checkbox,
+    Col,
+    Collapse,
+    Drawer,
+    Divider,
+    Empty,
+    Input,
+    InputNumber,
+    Modal,
+    Popconfirm,
+    Row,
+    Select,
+    Space,
+    Spin,
+    Tabs,
+    Typography,
+    theme,
+    type CollapseProps,
+    type PopconfirmProps,
+} from 'antd';
+import {
+    ClockCircleOutlined,
+    CloseCircleOutlined,
+    DeleteOutlined,
+    DollarCircleOutlined,
+    EditOutlined,
+    EnvironmentOutlined,
+    ExclamationCircleOutlined,
+    HistoryOutlined,
+    PhoneOutlined,
+    PrinterOutlined,
+    ToolOutlined,
+    UserOutlined,
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'react-toastify';
+
+import { formatDateTimeRange, formatInstant } from '../../../../../utils/format/localdatetime';
 
 import {
     cancelClientRoomBooking,
@@ -21,7 +58,7 @@ import type { IAssetUsage } from '../../../../../types/assetUsage';
 import type { ICheckout } from '../../../../../types/checkout';
 import type { IDevice } from '../../../../../types/device';
 import type { IDeviceReturn } from '../../../../../types/deviceReturn';
-import { ASSET_USAGE_STATUS_META } from '../../../../../utils/constants/assetUsage.constants';
+import { ASSET_ROOM_FEE_MODE_META, resolveUsageBookingFeeMode } from '../../../../../utils/constants/asset.constants';
 import { DEVICE_CONDITION_META } from '../../../../../utils/constants/deviceReturn.constants';
 import { openAssetUsagePaperPrint } from '../../../../../utils/assetUsagePaperPrint';
 
@@ -32,7 +69,27 @@ interface IProps {
 
 const { Text } = Typography;
 
+/** Parse borrowDevicesJson thành dòng — layout thẻ giống ModalBookingHistory (đặt sân). */
+const parseBorrowDeviceLines = (borrowDevicesJson?: string | null): Array<{ name: string; qty: number }> => {
+    if (!borrowDevicesJson) return [];
+    try {
+        const arr = JSON.parse(borrowDevicesJson);
+        if (!Array.isArray(arr)) return [];
+        return arr
+            .filter((x: any) => Number(x?.quantity ?? 0) > 0)
+            .map((x: any) => ({
+                name:
+                    (typeof x?.deviceName === 'string' && x.deviceName.trim()) ||
+                    (x?.deviceId != null ? `Thiết bị #${x.deviceId}` : 'Thiết bị'),
+                qty: Number(x.quantity),
+            }));
+    } catch {
+        return [];
+    }
+};
+
 const ModalRoomBookingHistory = ({ open, onClose }: IProps) => {
+    const { token } = theme.useToken();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [list, setList] = useState<IAssetUsage[]>([]);
@@ -43,7 +100,17 @@ const ModalRoomBookingHistory = ({ open, onClose }: IProps) => {
     const [openReturnModal, setOpenReturnModal] = useState(false);
     const [returnUsage, setReturnUsage] = useState<IAssetUsage | null>(null);
     const [returnStatus, setReturnStatus] = useState<'GOOD' | 'DAMAGED' | 'BROKEN' | 'LOST'>('GOOD');
+    const [returnQtyGood, setReturnQtyGood] = useState(0);
+    const [returnQtyLost, setReturnQtyLost] = useState(0);
+    const [returnQtyDamaged, setReturnQtyDamaged] = useState(0);
     const [returnPrintOptIn, setReturnPrintOptIn] = useState(false);
+    const [returnerName, setReturnerName] = useState('');
+    const [returnerPhone, setReturnerPhone] = useState('');
+    const [receiverName, setReceiverName] = useState('');
+    const [receiverPhone, setReceiverPhone] = useState('');
+    const [borrowerSign, setBorrowerSign] = useState('');
+    const [staffSign, setStaffSign] = useState('');
+    const [returnConditionNote, setReturnConditionNote] = useState('');
     const [openCheckoutModal, setOpenCheckoutModal] = useState(false);
     const [checkoutUsage, setCheckoutUsage] = useState<IAssetUsage | null>(null);
     const [checkoutAck, setCheckoutAck] = useState(false);
@@ -211,18 +278,72 @@ const ModalRoomBookingHistory = ({ open, onClose }: IProps) => {
     const handleOpenReturnModal = (usage: IAssetUsage) => {
         setReturnUsage(usage);
         setReturnStatus('GOOD');
+        const totalBorrowed = (() => {
+            try {
+                const arr = JSON.parse(usage.borrowDevicesJson ?? '[]');
+                if (!Array.isArray(arr)) return 1;
+                const total = arr.reduce((s: number, it: any) => s + Number(it?.quantity ?? 0), 0);
+                return total > 0 ? total : 1;
+            } catch {
+                return 1;
+            }
+        })();
+        setReturnQtyGood(totalBorrowed);
+        setReturnQtyLost(0);
+        setReturnQtyDamaged(0);
         setReturnPrintOptIn(false);
+        // Mặc định tên/người nhận lấy từ thông tin booking để giảm thao tác.
+        setReturnerName(usage.userName ?? usage.userEmail ?? '');
+        setReturnerPhone(usage.contactPhone ?? '');
+        setReceiverName(usage.userName ?? usage.userEmail ?? '');
+        setReceiverPhone(usage.contactPhone ?? '');
+        setBorrowerSign('');
+        setStaffSign('');
+        setReturnConditionNote('');
         setOpenReturnModal(true);
     };
 
     const handleCreateReturn = async () => {
         if (!returnUsage) return;
         const usage = returnUsage;
+        const qTotal = (() => {
+            try {
+                const arr = JSON.parse(usage.borrowDevicesJson ?? '[]');
+                if (!Array.isArray(arr)) return 1;
+                const total = arr.reduce((s: number, it: any) => s + Number(it?.quantity ?? 0), 0);
+                return total > 0 ? total : 1;
+            } catch {
+                return 1;
+            }
+        })();
+        if (returnQtyGood + returnQtyLost + returnQtyDamaged !== qTotal) {
+            toast.error(`Tổng (trả tốt + mất + hỏng) phải bằng ${qTotal}.`);
+            return;
+        }
+        if (returnQtyLost + returnQtyDamaged > 0 && (!borrowerSign.trim() || !staffSign.trim())) {
+            toast.error('Khi có mất hoặc hỏng, vui lòng nhập họ tên người mượn và nhân viên ký xác nhận.');
+            return;
+        }
+        if (!receiverName.trim() || !receiverPhone.trim()) {
+            toast.error('Vui lòng nhập họ tên và số điện thoại người nhận tại phòng.');
+            return;
+        }
         setSubmittingId(usage.id);
         try {
             await createClientRoomBookingReturn(usage.id, {
                 deviceStatus: returnStatus,
                 returnTime: dayjs().toISOString(),
+                quantityReturnedGood: returnQtyGood,
+                quantityLost: returnQtyLost,
+                quantityDamaged: returnQtyDamaged,
+                returnerName: returnerName.trim() || null,
+                returnerPhone: returnerPhone.trim() || null,
+                receiverName: receiverName.trim(),
+                receiverPhone: receiverPhone.trim(),
+                returnConditionNote: returnConditionNote.trim() || null,
+                returnReportPrintOptIn: returnPrintOptIn,
+                borrowerSignName: returnQtyLost + returnQtyDamaged > 0 ? borrowerSign.trim() || null : null,
+                staffSignName: returnQtyLost + returnQtyDamaged > 0 ? staffSign.trim() || null : null,
             });
             toast.success('Đã tạo biên bản trả phòng');
             // Nếu user chọn in thì mở lại giấy in sau khi đã tạo return xong.
@@ -281,137 +402,234 @@ const ModalRoomBookingHistory = ({ open, onClose }: IProps) => {
             const canCheckout = usage.status === 'APPROVED';
             const canReturn = usage.status === 'IN_PROGRESS';
             const canIssue = usage.status === 'IN_PROGRESS' || usage.status === 'COMPLETED';
-            // Điều kiện giống luồng booking sân: chỉ cho phép xóa khỏi lịch sử khi đã kết thúc/hủy/từ chối.
             const canDelete =
                 usage.status === 'COMPLETED' || usage.status === 'CANCELLED' || usage.status === 'REJECTED';
+            const isPending = usage.status === 'PENDING';
+            const borrowLines = parseBorrowDeviceLines(usage.borrowDevicesJson);
+            const durationMin = dayjs(`${usage.date}T${usage.endTime}`).diff(dayjs(`${usage.date}T${usage.startTime}`), 'minute');
+            const roomFeeModeResolved = resolveUsageBookingFeeMode(usage);
+
             return {
                 key: usage.id,
                 label: (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                         <Space>
-                            <ClockCircleOutlined />
+                            <EnvironmentOutlined style={{ color: token.colorPrimary }} />
                             <Text strong>{usage.assetName}</Text>
                         </Space>
-                        <Tag color={ASSET_USAGE_STATUS_META[usage.status].color}>
-                            {ASSET_USAGE_STATUS_META[usage.status].label}
-                        </Tag>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                            {dayjs(`${usage.date}T${usage.startTime}`).format(' HH:mm DD/MM/YYYY')}
+                        </Text>
                     </div>
                 ),
                 children: (
-                    <Space orientation="vertical" style={{ width: '100%' }}>
-                        <Text>
-                            Người đặt: <Text strong>{usage.userName || usage.userEmail || 'Không xác định'}</Text>
-                        </Text>
-                        <Text>
-                            Thời gian: {usage.startTime} - {usage.endTime} ngày {dayjs(usage.date).format('DD/MM/YYYY')}
-                        </Text>
-                        <Text>Mục đích: {usage.subject}</Text>
-                        <Text>
-                            Trạng thái:{' '}
-                            <Tag color={ASSET_USAGE_STATUS_META[usage.status].color}>
-                                {ASSET_USAGE_STATUS_META[usage.status].label}
-                            </Tag>
-                        </Text>
-                        <Space wrap>
-                            <Button
-                                size="small"
-                                onClick={() => {
-                                    onClose();
-                                    navigate(`/rooms/${usage.assetId}`);
-                                }}
-                            >
-                                Xem phòng
-                            </Button>
-                            <Button
-                                size="small"
-                                icon={<PrinterOutlined />}
-                                loading={loadingPaperId === usage.id}
-                                onClick={() => handlePrintPaper(usage)}
-                            >
-                                In biên bản
-                            </Button>
-                            {canUpdate ? (
-                                <Button
-                                    size="small"
-                                    icon={<EditOutlined />}
-                                    onClick={() => {
-                                        onClose();
-                                        navigate(`/rooms/booking/${usage.assetId}`, {
-                                            state: { mode: 'UPDATE', roomBookingId: usage.id },
-                                        });
-                                    }}
+                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '4px 0' }}>
+                        <Row gutter={[0, 12]}>
+                            <Col span={24}>
+                                <Space
+                                    orientation="vertical"
+                                    style={{ width: '100%', background: token.colorFillAlter, padding: 12, borderRadius: 8 }}
+                                    size={8}
                                 >
-                                    Sửa
-                                </Button>
-                            ) : null}
-                            {canCancel ? (
-                                <Popconfirm
-                                    title="Hủy đặt phòng?"
-                                    onConfirm={() => handleCancel(usage.id)}
-                                    okText="Có"
-                                    cancelText="Không"
-                                    onCancel={cancel}
-                                    okButtonProps={{ danger: true, loading: submittingId === usage.id }}
-                                >
-                                    <Button size="small" danger icon={<DeleteOutlined />}>
-                                        Hủy
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Text type="secondary">
+                                            <UserOutlined /> Người đặt:
+                                        </Text>
+                                        <Text strong>{usage.userName || usage.userEmail || 'Không xác định'}</Text>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Text type="secondary">
+                                            <ClockCircleOutlined /> Thời gian:
+                                        </Text>
+                                        <Text>{formatDateTimeRange(`${usage.date}T${usage.startTime}`, `${usage.date}T${usage.endTime}`)}</Text>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Text type="secondary">
+                                            <ClockCircleOutlined /> Thời lượng:
+                                        </Text>
+                                        <Text>{Number.isFinite(durationMin) && durationMin >= 0 ? `${durationMin} phút` : '—'}</Text>
+                                    </div>
+                                    <div style={{ width: '100%' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                            <Text type="secondary">
+                                                <ToolOutlined /> Thiết bị mượn (kèm booking)
+                                            </Text>
+                                            {borrowLines.length > 0 ? (
+                                                <Button
+                                                    type="link"
+                                                    size="small"
+                                                    icon={<PrinterOutlined />}
+                                                    onClick={() => handlePrintPaper(usage)}
+                                                    style={{ padding: 0, height: 'auto' }}
+                                                    loading={loadingPaperId === usage.id}
+                                                >
+                                                    In
+                                                </Button>
+                                            ) : null}
+                                        </div>
+                                        {borrowLines.length === 0 ? (
+                                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                                Không có thiết bị mượn qua hệ thống
+                                            </Text>
+                                        ) : (
+                                            <Space orientation="vertical" size={6} style={{ width: '100%' }}>
+                                                {borrowLines.map((line, idx) => (
+                                                    <div
+                                                        key={`${line.name}-${idx}`}
+                                                        style={{
+                                                            fontSize: 12,
+                                                            padding: '6px 8px',
+                                                            borderRadius: 6,
+                                                            background: 'rgba(0,0,0,0.04)',
+                                                        }}
+                                                    >
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                                                            <Text strong style={{ fontSize: 12 }}>
+                                                                {line.name}
+                                                            </Text>
+                                                        </div>
+                                                        <Text type="secondary" style={{ fontSize: 11 }}>
+                                                            SL: {line.qty}
+                                                        </Text>
+                                                    </div>
+                                                ))}
+                                            </Space>
+                                        )}
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Text type="secondary">Mục đích:</Text>
+                                        <Text style={{ maxWidth: '62%', textAlign: 'right' }}>{usage.subject}</Text>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Text type="secondary">
+                                            <PhoneOutlined /> Liên hệ:
+                                        </Text>
+                                        <Text copyable={!!usage.contactPhone?.trim()}>{usage.contactPhone?.trim() || '—'}</Text>
+                                    </div>
+                                    <Divider style={{ margin: '4px 0' }} dashed />
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Text type="secondary">
+                                            <DollarCircleOutlined /> Tổng tiền:
+                                        </Text>
+                                        <Text
+                                            strong
+                                            style={{
+                                                color: roomFeeModeResolved === 'PAID' ? token.colorWarning : token.colorSuccess,
+                                                fontSize: 16,
+                                            }}
+                                        >
+                                            {ASSET_ROOM_FEE_MODE_META[roomFeeModeResolved].historyTotal}
+                                        </Text>
+                                    </div>
+                                </Space>
+                            </Col>
+
+                            <Col span={24}>
+                                <Row justify="space-between" align="middle">
+                                    <Button
+                                        type="link"
+                                        size="small"
+                                        onClick={() => {
+                                            onClose();
+                                            navigate(`/rooms/${usage.assetId}`);
+                                        }}
+                                    >
+                                        Xem phòng
                                     </Button>
-                                </Popconfirm>
-                            ) : null}
-                            {canDelete ? (
-                                <Popconfirm
-                                    title="Xóa lịch sử?"
-                                    okText="Có"
-                                    cancelText="Không"
-                                    onCancel={cancel}
-                                    placement="topLeft"
-                                    okButtonProps={{ loading: deletingId === usage.id }}
-                                    onConfirm={() => handleDelete(usage.id)}
-                                >
-                                    <Button size="small" type="text" danger icon={<DeleteOutlined />}>
-                                        Xóa
-                                    </Button>
-                                </Popconfirm>
-                            ) : null}
-                            {canCheckout ? (
-                                <Button
-                                    size="small"
-                                    loading={submittingId === usage.id}
-                                    onClick={() => handleOpenCheckoutModal(usage)}
-                                >
-                                    Nhận phòng
-                                </Button>
-                            ) : null}
-                            {canReturn ? (
-                                <Button
-                                    size="small"
-                                    loading={submittingId === usage.id}
-                                    onClick={() => handleOpenReturnModal(usage)}
-                                >
-                                    Trả phòng
-                                </Button>
-                            ) : null}
-                            {canIssue ? (
-                                <Button
-                                    size="small"
-                                    danger
-                                    icon={<ExclamationCircleOutlined />}
-                                    loading={submittingId === usage.id}
-                                    onClick={() => handleOpenIssueModal(usage)}
-                                >
-                                    Báo sự cố thiết bị phòng
-                                </Button>
-                            ) : null}
-                        </Space>
-                        <Space style={{ justifyContent: 'space-between', width: '100%' }}>
-                            <Text type="secondary" style={{ fontSize: 11 }}>
-                                Tạo: {dayjs(usage.createdAt).format('HH:mm DD/MM/YYYY')}
-                            </Text>
-                            <Text type="secondary" style={{ fontSize: 11 }}>
-                                Cập nhật: {usage.updatedAt ? dayjs(usage.updatedAt).format('HH:mm DD/MM/YYYY') : '-'}
-                            </Text>
-                        </Space>
-                    </Space>
+                                    <Space wrap>
+                                        <Button
+                                            size="small"
+                                            icon={<PrinterOutlined />}
+                                            loading={loadingPaperId === usage.id}
+                                            onClick={() => handlePrintPaper(usage)}
+                                        >
+                                            In biên bản
+                                        </Button>
+                                        {canUpdate ? (
+                                            <Button
+                                                size="small"
+                                                icon={<EditOutlined />}
+                                                onClick={() => {
+                                                    onClose();
+                                                    navigate(`/rooms/booking/${usage.assetId}`, {
+                                                        state: { mode: 'UPDATE', roomBookingId: usage.id },
+                                                    });
+                                                }}
+                                            >
+                                                Sửa
+                                            </Button>
+                                        ) : null}
+                                        {canCancel ? (
+                                            <Popconfirm
+                                                title="Hủy đặt phòng?"
+                                                onConfirm={() => handleCancel(usage.id)}
+                                                okButtonProps={{ danger: true, loading: submittingId === usage.id }}
+                                                cancelText="Không"
+                                                okText="Có"
+                                                placement="topLeft"
+                                                onCancel={cancel}
+                                            >
+                                                <Button size="small" danger icon={<CloseCircleOutlined />}>
+                                                    Hủy
+                                                </Button>
+                                            </Popconfirm>
+                                        ) : null}
+                                        {canDelete ? (
+                                            <Popconfirm
+                                                title="Xóa lịch sử?"
+                                                onConfirm={() => handleDelete(usage.id)}
+                                                okButtonProps={{ loading: deletingId === usage.id }}
+                                                cancelText="Không"
+                                                okText="Có"
+                                                placement="topLeft"
+                                                onCancel={cancel}
+                                            >
+                                                <Button size="small" type="text" danger icon={<DeleteOutlined />}>
+                                                    Xóa
+                                                </Button>
+                                            </Popconfirm>
+                                        ) : null}
+                                        {canCheckout ? (
+                                            <Button size="small" loading={submittingId === usage.id} onClick={() => handleOpenCheckoutModal(usage)}>
+                                                Nhận phòng
+                                            </Button>
+                                        ) : null}
+                                        {canReturn ? (
+                                            <Button size="small" loading={submittingId === usage.id} onClick={() => handleOpenReturnModal(usage)}>
+                                                Trả phòng
+                                            </Button>
+                                        ) : null}
+                                        {canIssue ? (
+                                            <Button
+                                                size="small"
+                                                danger
+                                                icon={<ExclamationCircleOutlined />}
+                                                loading={submittingId === usage.id}
+                                                onClick={() => handleOpenIssueModal(usage)}
+                                            >
+                                                Báo sự cố thiết bị phòng
+                                            </Button>
+                                        ) : null}
+                                    </Space>
+                                </Row>
+                                {isPending ? (
+                                    <Text type="warning" style={{ fontSize: 12 }}>
+                                        ⏳ Đang chờ admin xác nhận
+                                    </Text>
+                                ) : null}
+                            </Col>
+                            <Col span={24}>
+                                <Row justify="space-between">
+                                    <Text type="secondary" style={{ fontSize: 10 }}>
+                                        Tạo: {formatInstant(usage.createdAt)}
+                                    </Text>
+                                    <Text type="secondary" style={{ fontSize: 10 }}>
+                                        Cập nhật: {usage.updatedAt ? formatInstant(usage.updatedAt) : 'N/A'}
+                                    </Text>
+                                </Row>
+                            </Col>
+                        </Row>
+                    </motion.div>
                 ),
             };
         });
@@ -429,8 +647,8 @@ const ModalRoomBookingHistory = ({ open, onClose }: IProps) => {
             <Drawer
                 title={
                     <Space>
-                        <HistoryOutlined />
-                        <span>Quản lý lịch đặt phòng</span>
+                        <HistoryOutlined style={{ color: token.colorPrimary }} />
+                        <span style={{ fontWeight: 700 }}>Quản lý lịch đặt phòng</span>
                     </Space>
                 }
                 open={open}
@@ -456,7 +674,7 @@ const ModalRoomBookingHistory = ({ open, onClose }: IProps) => {
                                 label: (
                                     <Space>
                                         <ClockCircleOutlined /> Sắp diễn ra
-                                        <BadgeCount count={upcoming.length} color="#1677ff" />
+                                        <BadgeCount count={upcoming.length} color={token.colorPrimary} />
                                     </Space>
                                 ),
                                 children: (
@@ -491,7 +709,7 @@ const ModalRoomBookingHistory = ({ open, onClose }: IProps) => {
                                 label: (
                                     <Space>
                                         <ToolOutlined /> Nhận trả phòng
-                                        <BadgeCount count={roomDeviceHistory.length} color="#faad14" />
+                                        <BadgeCount count={roomDeviceHistory.length} color={token.colorWarning} />
                                     </Space>
                                 ),
                                 children: (
@@ -604,6 +822,7 @@ const ModalRoomBookingHistory = ({ open, onClose }: IProps) => {
                 <Select
                     value={returnStatus}
                     style={{ width: '100%', marginTop: 8 }}
+                    // Status tổng quát không được reset breakdown; user có thể nhập linh hoạt tốt/mất/hỏng.
                     onChange={(v) => setReturnStatus(v)}
                     options={[
                         { label: DEVICE_CONDITION_META.GOOD.label, value: 'GOOD' },
@@ -611,6 +830,102 @@ const ModalRoomBookingHistory = ({ open, onClose }: IProps) => {
                         { label: DEVICE_CONDITION_META.BROKEN.label, value: 'BROKEN' },
                         { label: DEVICE_CONDITION_META.LOST.label, value: 'LOST' },
                     ]}
+                />
+
+                <Text type="secondary" style={{ display: 'block', marginTop: 12 }}>
+                    Kiểm đếm trả (tổng phải bằng{' '}
+                    {(() => {
+                        if (!returnUsage) return 1;
+                        try {
+                            const arr = JSON.parse(returnUsage.borrowDevicesJson ?? '[]');
+                            if (!Array.isArray(arr)) return 1;
+                            const total = arr.reduce((s: number, it: any) => s + Number(it?.quantity ?? 0), 0);
+                            return total > 0 ? total : 1;
+                        } catch {
+                            return 1;
+                        }
+                    })()}
+                    ):
+                </Text>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 8 }}>
+                    <div>
+                        <div style={{ fontSize: 12, marginBottom: 4 }}>Trả tốt</div>
+                        <InputNumber min={0} style={{ width: '100%' }} value={returnQtyGood} onChange={(v) => setReturnQtyGood(v ?? 0)} />
+                    </div>
+                    <div>
+                        <div style={{ fontSize: 12, marginBottom: 4 }}>Mất</div>
+                        <InputNumber min={0} style={{ width: '100%' }} value={returnQtyLost} onChange={(v) => setReturnQtyLost(v ?? 0)} />
+                    </div>
+                    <div>
+                        <div style={{ fontSize: 12, marginBottom: 4 }}>Hỏng</div>
+                        <InputNumber min={0} style={{ width: '100%' }} value={returnQtyDamaged} onChange={(v) => setReturnQtyDamaged(v ?? 0)} />
+                    </div>
+                </div>
+                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 6 }}>
+                    Có thể nhập linh hoạt (ví dụ: 9 tốt, 10 hỏng, 1 mất), miễn tổng đúng số lượng mượn.
+                </Text>
+
+                <Text type="secondary" style={{ display: 'block', marginTop: 12 }}>
+                    Người trả (snapshot):
+                </Text>
+                <Input
+                    placeholder="Tên người trả"
+                    value={returnerName}
+                    onChange={(e) => setReturnerName(e.target.value)}
+                    style={{ marginTop: 8, marginBottom: 8 }}
+                />
+                <Input
+                    placeholder="Số điện thoại người trả"
+                    value={returnerPhone}
+                    onChange={(e) => setReturnerPhone(e.target.value)}
+                    style={{ marginBottom: 8 }}
+                />
+
+                <Text type="secondary" style={{ display: 'block', marginTop: 10 }}>
+                    Người nhận tại phòng (bắt buộc):
+                </Text>
+                <Input
+                    placeholder="Tên người nhận"
+                    value={receiverName}
+                    onChange={(e) => setReceiverName(e.target.value)}
+                    style={{ marginTop: 8, marginBottom: 8 }}
+                />
+                <Input
+                    placeholder="Số điện thoại người nhận"
+                    value={receiverPhone}
+                    onChange={(e) => setReceiverPhone(e.target.value)}
+                    style={{ marginBottom: 8 }}
+                />
+
+                {returnQtyLost + returnQtyDamaged > 0 && (
+                    <>
+                        <Text type="secondary" style={{ display: 'block', marginTop: 10 }}>
+                            Ký xác nhận khi có mất / hỏng:
+                        </Text>
+                        <Input
+                            placeholder="Họ tên người mượn ký xác nhận"
+                            value={borrowerSign}
+                            onChange={(e) => setBorrowerSign(e.target.value)}
+                            style={{ marginTop: 8, marginBottom: 8 }}
+                        />
+                        <Input
+                            placeholder="Họ tên nhân viên / bên giao nhận ký xác nhận"
+                            value={staffSign}
+                            onChange={(e) => setStaffSign(e.target.value)}
+                            style={{ marginBottom: 8 }}
+                        />
+                    </>
+                )}
+
+                <Text type="secondary" style={{ display: 'block', marginTop: 10 }}>
+                    Ghi chú biên bản trả phòng:
+                </Text>
+                <Input.TextArea
+                    rows={3}
+                    value={returnConditionNote}
+                    onChange={(e) => setReturnConditionNote(e.target.value)}
+                    placeholder="Ví dụ: đủ phụ kiện, có trầy nhẹ…"
+                    style={{ marginTop: 8, marginBottom: 8 }}
                 />
 
                 <Checkbox
@@ -661,6 +976,9 @@ const ModalRoomBookingHistory = ({ open, onClose }: IProps) => {
                                     receiveTime: checkout?.receiveTime ?? null,
                                     returnTime: dayjs().toISOString(),
                                     deviceStatus: returnStatus,
+                                    quantityReturnedGood: returnQtyGood,
+                                    quantityLost: returnQtyLost,
+                                    quantityDamaged: returnQtyDamaged,
                                     createdAt: dayjs().toISOString(),
                                     createdBy: '',
                                 };

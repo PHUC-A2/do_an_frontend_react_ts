@@ -31,6 +31,7 @@ import RoomBookingPage from '../pages/client/rooms/booking/RoomBookingPage';
 import AdminPaymentPage from '../pages/admin/payment/AdminPaymentPage';
 import AdminEquipmentPage from '../pages/admin/equipment/AdminEquipmentPage';
 import AdminBookingEquipmentPage from '../pages/admin/bookingequipment/AdminBookingEquipmentPage';
+import AdminRoomBookingEquipmentPage from '../pages/admin/bookingequipment/AdminRoomBookingEquipmentPage';
 import AdminAiPage from '../pages/admin/ai/AdminAiPage';
 import AdminSupportPage from '../pages/admin/support/AdminSupportPage';
 import TermsOfService from '../pages/client/terms-of-service/TermsOfService';
@@ -135,6 +136,7 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
                         { path: "/admin/payment", element: <AdminPaymentPage /> },
                         { path: "/admin/equipment", element: <AdminEquipmentPage /> },
                         { path: "/admin/booking-equipment", element: <AdminBookingEquipmentPage /> },
+                        { path: "/admin/room-booking-equipment", element: <AdminRoomBookingEquipmentPage /> },
                         { path: "/admin/ai", element: <AdminAiPage /> },
                         { path: "/admin/support", element: <AdminSupportPage /> },
                     ]

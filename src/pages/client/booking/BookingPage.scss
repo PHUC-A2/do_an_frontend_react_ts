@@ -882,6 +882,87 @@ $bp-lg  : 1024px;
         }
     }
 
+    // Timeline đặt phòng: BẬN (chờ duyệt) — vàng cam
+    &--booked-pending {
+        opacity: 0.38;
+        cursor : not-allowed;
+
+        &::before {
+            background: linear-gradient(180deg, transparent, rgba(245, 158, 11, 0.85), rgba(251, 191, 36, 1), rgba(245, 158, 11, 0.85), transparent);
+        }
+
+        &::after {
+            background: rgba(7, 14, 28, 0.86);
+        }
+
+        .bk__slot__time {
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        .bk__slot__label {
+            color: #fbbf24;
+        }
+
+        &:hover {
+            transform : none;
+            box-shadow: none;
+        }
+    }
+
+    // Timeline đặt phòng: ĐÃ ĐẶT (đã duyệt) — đỏ
+    &--booked-approved {
+        opacity: 0.36;
+        cursor : not-allowed;
+
+        &::before {
+            background: linear-gradient(180deg, transparent, rgba(239, 68, 68, 0.85), rgba(220, 38, 38, 1), rgba(239, 68, 68, 0.85), transparent);
+        }
+
+        &::after {
+            background: rgba(7, 14, 28, 0.86);
+        }
+
+        .bk__slot__time {
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .bk__slot__label {
+            color: #f87171;
+        }
+
+        &:hover {
+            transform : none;
+            box-shadow: none;
+        }
+    }
+
+    // Timeline đặt phòng: ĐANG MƯỢN (đã nhận phòng) — xanh dương / cyan
+    &--booked-inprogress {
+        opacity: 0.38;
+        cursor : not-allowed;
+
+        &::before {
+            background: linear-gradient(180deg, transparent, rgba(6, 182, 212, 0.82), rgba(14, 165, 233, 1), rgba(6, 182, 212, 0.82), transparent);
+        }
+
+        &::after {
+            background: rgba(7, 14, 28, 0.86);
+        }
+
+        .bk__slot__time {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .bk__slot__label {
+            color: #22d3ee;
+        }
+
+        &:hover {
+            transform : none;
+            box-shadow: none;
+        }
+    }
+
     &--past {
         opacity: 0.42;
         cursor : not-allowed;
@@ -907,6 +988,16 @@ $bp-lg  : 1024px;
             box-shadow: none;
         }
     }
+
+    // Tiết được chọn trên timeline phòng (chọn khoảng đặt) — viền vàng nổi bật, chỉ dùng kèm --free.
+    &--selected {
+        border-color: rgba(250, 173, 20, 0.75) !important;
+        box-shadow   : 0 0 14px rgba(250, 173, 20, 0.35);
+
+        .bk__slot__label {
+            color: $gold !important;
+        }
+    }
 }
 
 @keyframes bkSlotSpin {
@@ -921,6 +1012,9 @@ $bp-lg  : 1024px;
 
 .bk--light .bk__slot--free::after,
 .bk--light .bk__slot--booked::after,
+.bk--light .bk__slot--booked-pending::after,
+.bk--light .bk__slot--booked-approved::after,
+.bk--light .bk__slot--booked-inprogress::after,
 .bk--light .bk__slot--past::after {
     background: rgba(240, 246, 255, 0.90);
 }
@@ -931,6 +1025,30 @@ $bp-lg  : 1024px;
 
 .bk--light .bk__slot--booked .bk__slot__time {
     color: #3a0a0a;
+}
+
+.bk--light .bk__slot--booked-pending .bk__slot__time {
+    color: #78350f;
+}
+
+.bk--light .bk__slot--booked-pending .bk__slot__label {
+    color: #b45309;
+}
+
+.bk--light .bk__slot--booked-approved .bk__slot__time {
+    color: #3a0a0a;
+}
+
+.bk--light .bk__slot--booked-approved .bk__slot__label {
+    color: #b91c1c;
+}
+
+.bk--light .bk__slot--booked-inprogress .bk__slot__time {
+    color: #0c4a6e;
+}
+
+.bk--light .bk__slot--booked-inprogress .bk__slot__label {
+    color: #0284c7;
 }
 
 .bk--light .bk__slot--past .bk__slot__time {
@@ -945,6 +1063,29 @@ $bp-lg  : 1024px;
 .bk__pitch-panel {
     padding : 0;
     overflow: hidden;
+}
+
+// Hàng tiêu đề phòng: accordion + nút làm mới (đặt phòng tin học).
+.bk__pitch-accordion-row {
+    display    : flex;
+    align-items: center;
+    gap        : 4px;
+    width      : 100%;
+
+    .bk__pitch-accordion {
+        flex     : 1;
+        min-width: 0;
+    }
+
+    .bk__pitch-refresh.ant-btn {
+        flex-shrink : 0;
+        margin-right: 10px;
+        color       : var(--text-muted);
+
+        &:hover {
+            color: var(--gold);
+        }
+    }
 }
 
 .bk__pitch-accordion {
@@ -1067,6 +1208,18 @@ $bp-lg  : 1024px;
         color      : var(--text) !important;
         font-weight: 400;
         word-break : break-word;
+    }
+
+    // Danh sách thiết bị — mỗi dòng một mục (không gộp một hàng bằng dấu ;).
+    .bk__pitch-meta-value--equipment-lines {
+        display       : flex;
+        flex-direction: column;
+        gap           : 5px;
+    }
+
+    .bk__pitch-equipment-line {
+        display    : block;
+        line-height: 1.45;
     }
 }
 
