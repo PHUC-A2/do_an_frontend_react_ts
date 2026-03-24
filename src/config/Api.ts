@@ -10,6 +10,7 @@ import type { ICreatePaymentReq, IPayment, IPaymentRes } from "../types/payment"
 import type { ICreatePermissionReq, IPermission, IUpdatePermissionReq } from "../types/permission";
 import type { ICreatePitchReq, IPitch, IUpdatePitchReq } from "../types/pitch";
 import type { IEquipmentPitchAssignment, IPitchEquipment, IUpsertPitchEquipmentReq } from "../types/pitchEquipment";
+import type { IAdminSystemOverview } from "../types/adminDashboardOverview";
 import type { IRevenueRes } from "../types/revenue";
 import type { ICreateReviewReq, IReview, IReviewMessage, IReviewMessageReq, IUpdateReviewStatusReq } from "../types/review";
 import type { IAssignPermissionReq, ICreateRoleReq, IRole, IUpdateRoleReq } from "../types/role";
@@ -150,6 +151,10 @@ export const getRevenue = (from?: string, to?: string) =>
             to,
         },
     });
+
+/** Thống kê tổng quan toàn hệ thống (dashboard admin). */
+export const getAdminSystemOverview = () =>
+    instance.get<IBackendRes<IAdminSystemOverview>>(`/api/v1/admin/dashboard/system-overview`);
 
 
 // upload avatar

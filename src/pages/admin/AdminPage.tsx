@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
     Card,
     Row,
@@ -11,6 +11,7 @@ import {
     DatePicker,
     Space,
     Button,
+    Collapse,
 } from "antd";
 import {
     DollarOutlined,
@@ -20,13 +21,22 @@ import {
     CloseCircleOutlined,
     UserOutlined,
     HomeOutlined,
+    TeamOutlined,
+    CreditCardOutlined,
+    BellOutlined,
+    SafetyCertificateOutlined,
+    RobotOutlined,
+    ContainerOutlined,
+    CommentOutlined,
+    ToolOutlined,
 } from "@ant-design/icons";
 import ReactECharts from "echarts-for-react";
 import * as echarts from "echarts";
 import { motion } from "framer-motion";
 import RoleWrapper from "../../components/wrapper/AdminWrapper";
 import PermissionWrapper from "../../components/wrapper/PermissionWrapper";
-import { getRevenue } from "../../config/Api";
+import { getAdminSystemOverview, getRevenue } from "../../config/Api";
+import type { IAdminSystemOverview } from "../../types/adminDashboardOverview";
 import type { IRevenueRes } from "../../types/revenue";
 import { formatVND } from "../../utils/format/price";
 import { formatLocalDate } from "../../utils/format/localdatetime";
@@ -38,7 +48,7 @@ import { exportRevenueReport } from "../../utils/export/exportRevenueReport";
 import { useAppSelector } from "../../redux/hooks";
 import { usePermission } from "../../hooks/common/usePermission";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
 
 const AdminPage = () => {
@@ -58,6 +68,7 @@ const AdminPage = () => {
 
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<IRevenueRes | null>(null);
+    const [overview, setOverview] = useState<IAdminSystemOverview | null>(null);
     const [hasFetched, setHasFetched] = useState(false);
     const [forbiddenByApi, setForbiddenByApi] = useState(false);
 
@@ -66,12 +77,13 @@ const AdminPage = () => {
     const canViewRevenue = usePermission(["REVENUE_VIEW_DETAIL"]);
 
     useEffect(() => {
-        const fetchRevenue = async () => {
+        const loadDashboard = async () => {
             if (!isAuthenticated || !canViewRevenue) {
                 setLoading(false);
                 setHasFetched(false);
                 setForbiddenByApi(false);
                 setData(null);
+                setOverview(null);
                 return;
             }
 
@@ -83,36 +95,56 @@ const AdminPage = () => {
                 const from = range?.[0]?.format("YYYY-MM-DD");
                 const to = range?.[1]?.format("YYYY-MM-DD");
 
-                const res = await getRevenue(from, to);
+                const [revResult, ovResult] = await Promise.allSettled([
+                    getRevenue(from, to),
+                    getAdminSystemOverview(),
+                ]);
 
-                if (res.data.statusCode === 200) {
-                    setData(res.data.data ?? null);
+                if (revResult.status === "fulfilled") {
+                    const res = revResult.value;
+                    if (res.data.statusCode === 200) {
+                        setData(res.data.data ?? null);
+                    } else {
+                        setData(null);
+                    }
                 } else {
-                    setData(null);
+                    const error: any = revResult.reason;
+                    const status = error?.response?.status;
+                    if (status === 401 || status === 403) {
+                        setForbiddenByApi(true);
+                        setData(null);
+                    } else {
+                        setData(null);
+                        const m = error?.response?.data?.message ?? "Không xác định";
+                        toast.error(
+                            <div>
+                                <div>Có lỗi xảy ra khi tải doanh thu</div>
+                                <div>{m}</div>
+                            </div>
+                        );
+                    }
                 }
-            } catch (error: any) {
-                const status = error?.response?.status;
 
-                if (status === 401 || status === 403) {
-                    setForbiddenByApi(true);
-                    setData(null);
-                    return;
+                if (ovResult.status === "fulfilled") {
+                    const res = ovResult.value;
+                    if (res.data.statusCode === 200) {
+                        setOverview(res.data.data ?? null);
+                    } else {
+                        setOverview(null);
+                    }
+                } else {
+                    setOverview(null);
+                    if (revResult.status === "fulfilled") {
+                        toast.warning("Không tải được thống kê tổng quan hệ thống.");
+                    }
                 }
-
-                const m = error?.response?.data?.message ?? "Không xác định";
-                toast.error(
-                    <div>
-                        <div>Có lỗi xảy ra</div>
-                        <div>{m}</div>
-                    </div>
-                );
             } finally {
                 setLoading(false);
                 setHasFetched(true);
             }
         };
 
-        fetchRevenue();
+        void loadDashboard();
     }, [canViewRevenue, isAuthenticated, range]);
 
     /* ================= GROUP PITCH ================= */
@@ -138,6 +170,73 @@ const AdminPage = () => {
         if (!data || data.paidBookings === 0) return 0;
         return data.totalRevenue / data.paidBookings;
     }, [data]);
+
+    /** Thẻ số liệu tổng quan hệ thống — dùng khi API overview trả về. */
+    const systemStatCards = useMemo(() => {
+        if (!overview) {
+            return [] as {
+                title: string;
+                value: number;
+                icon: ReactNode;
+                color: string;
+                isCurrency?: boolean;
+            }[];
+        }
+        const o = overview;
+        return [
+            { title: "Tài khoản (tổng)", value: o.usersTotal, icon: <TeamOutlined />, color: "#722ed1" },
+            { title: "User hoạt động", value: o.usersActive, icon: <UserOutlined />, color: "#52c41a" },
+            { title: "User không hoạt động", value: o.usersInactive, icon: <UserOutlined />, color: "#8c8c8c" },
+            { title: "Chờ xác minh", value: o.usersPendingVerification, icon: <UserOutlined />, color: "#faad14" },
+            { title: "Bị cấm", value: o.usersBanned, icon: <UserOutlined />, color: "#ff4d4f" },
+            { title: "Đã xóa / lưu trữ", value: o.usersDeleted, icon: <UserOutlined />, color: "#595959" },
+            { title: "Vai trò", value: o.rolesTotal, icon: <SafetyCertificateOutlined />, color: "#2f54eb" },
+            { title: "Quyền (permission)", value: o.permissionsTotal, icon: <SafetyCertificateOutlined />, color: "#13c2c2" },
+            { title: "Booking (hiển thị)", value: o.bookingsTotalVisible, icon: <ShoppingOutlined />, color: "#1677ff" },
+            { title: "Booking chờ", value: o.bookingsPending, icon: <ShoppingOutlined />, color: "#faad14" },
+            { title: "Booking đang đặt", value: o.bookingsActive, icon: <ShoppingOutlined />, color: "#52c41a" },
+            { title: "Booking đã trả (trạng thái)", value: o.bookingsPaidStatus, icon: <CheckCircleOutlined />, color: "#389e0d" },
+            { title: "Booking hủy", value: o.bookingsCancelled, icon: <CloseCircleOutlined />, color: "#ff4d4f" },
+            { title: "Giao dịch TT (tổng)", value: o.paymentsTotal, icon: <CreditCardOutlined />, color: "#1677ff" },
+            { title: "TT chờ xác nhận", value: o.paymentsPendingCount, icon: <CreditCardOutlined />, color: "#faad14" },
+            { title: "TT đã thanh toán", value: o.paymentsPaidCount, icon: <CreditCardOutlined />, color: "#52c41a" },
+            { title: "TT đã hủy", value: o.paymentsCancelledCount, icon: <CreditCardOutlined />, color: "#ff4d4f" },
+            {
+                title: "Số tiền đang chờ TT",
+                value: Number(o.paymentsPendingAmount ?? 0),
+                icon: <DollarOutlined />,
+                color: "#fa8c16",
+                isCurrency: true,
+            },
+            { title: "Sân (tổng)", value: o.pitchesTotal, icon: <HomeOutlined />, color: "#13c2c2" },
+            { title: "Sân hoạt động", value: o.pitchesActive, icon: <HomeOutlined />, color: "#52c41a" },
+            { title: "Sân bảo trì", value: o.pitchesMaintenance, icon: <HomeOutlined />, color: "#faad14" },
+            { title: "Thiết bị kho (dòng)", value: o.equipmentsTotal, icon: <ContainerOutlined />, color: "#722ed1" },
+            { title: "TB kho ACTIVE", value: o.equipmentsActive, icon: <ToolOutlined />, color: "#52c41a" },
+            { title: "TB kho bảo trì", value: o.equipmentsMaintenance, icon: <ToolOutlined />, color: "#faad14" },
+            { title: "TB kho ngưng", value: o.equipmentsInactive, icon: <ToolOutlined />, color: "#8c8c8c" },
+            { title: "TB kho hỏng", value: o.equipmentsBroken, icon: <ToolOutlined />, color: "#ff7a45" },
+            { title: "TB kho mất", value: o.equipmentsLost, icon: <ToolOutlined />, color: "#ff4d4f" },
+            { title: "Gán TB ↔ sân (dòng)", value: o.pitchEquipmentLinks, icon: <HomeOutlined />, color: "#2f54eb" },
+            { title: "Dòng mượn TB booking", value: o.bookingEquipmentsTotal, icon: <ShoppingOutlined />, color: "#1677ff" },
+            { title: "Đang mượn", value: o.bookingEquipmentsBorrowed, icon: <ShoppingOutlined />, color: "#faad14" },
+            { title: "Đã trả", value: o.bookingEquipmentsReturned, icon: <CheckCircleOutlined />, color: "#52c41a" },
+            { title: "Mất", value: o.bookingEquipmentsLost, icon: <CloseCircleOutlined />, color: "#ff4d4f" },
+            { title: "Hỏng khi trả", value: o.bookingEquipmentsDamaged, icon: <ToolOutlined />, color: "#d46b08" },
+            { title: "Chờ admin xác nhận trả", value: o.bookingEquipmentsAwaitingAdminConfirm, icon: <BellOutlined />, color: "#eb2f96" },
+            { title: "Nhật ký mượn/trả TB", value: o.equipmentBorrowLogsTotal, icon: <CommentOutlined />, color: "#13c2c2" },
+            { title: "Đánh giá (tổng)", value: o.reviewsTotal, icon: <CommentOutlined />, color: "#faad14" },
+            { title: "ĐG chờ duyệt", value: o.reviewsPending, icon: <CommentOutlined />, color: "#fa8c16" },
+            { title: "ĐG đã duyệt", value: o.reviewsApproved, icon: <CommentOutlined />, color: "#52c41a" },
+            { title: "ĐG đã ẩn", value: o.reviewsHidden, icon: <CommentOutlined />, color: "#8c8c8c" },
+            { title: "Tin nhắn chat đánh giá", value: o.reviewMessagesTotal, icon: <CommentOutlined />, color: "#1677ff" },
+            { title: "Thông báo (tổng)", value: o.notificationsTotal, icon: <BellOutlined />, color: "#2f54eb" },
+            { title: "TB chưa đọc", value: o.notificationsUnread, icon: <BellOutlined />, color: "#ff4d4f" },
+            { title: "Khóa API AI", value: o.aiApiKeysTotal, icon: <RobotOutlined />, color: "#722ed1" },
+            { title: "Khóa AI đang bật", value: o.aiApiKeysActive, icon: <RobotOutlined />, color: "#52c41a" },
+            { title: "Phiên chat AI", value: o.aiChatSessionsTotal, icon: <RobotOutlined />, color: "#13c2c2" },
+        ];
+    }, [overview]);
 
     if (forbiddenByApi) {
         return <Forbidden />;
@@ -333,37 +432,289 @@ const AdminPage = () => {
 
 
 
-                    {/* KPI */}
-                    <Row gutter={[16, 16]}>
-                        {kpis.map((item, index) => (
-                            <Col xs={12} md={8} lg={4} key={index}>
-                                <motion.div
-                                    initial={{ opacity: 0, y: 15 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.05 }}
-                                >
-                                    <Card size="small" variant="borderless">
-                                        <Statistic
-                                            title={item.title}
-                                            value={
-                                                item.isCurrency
-                                                    ? formatVND(item.value)
-                                                    : item.value
-                                            }
-                                            prefix={
-                                                <span style={{ color: item.color }}>
-                                                    {item.icon}
-                                                </span>
-                                            }
+                    <Collapse
+                        bordered={false}
+                        style={{ marginTop: 8, background: "transparent" }}
+                        defaultActiveKey={["kpi", "revenue-charts"]}
+                        items={[
+                            {
+                                key: "kpi",
+                                label: "Chỉ số KPI — doanh thu & đặt sân",
+                                children: (
+                                    <Row gutter={[16, 16]}>
+                                        {kpis.map((item, index) => (
+                                            <Col xs={12} md={8} lg={4} key={index}>
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: 15 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: index * 0.05 }}
+                                                >
+                                                    <Card size="small" variant="borderless">
+                                                        <Statistic
+                                                            title={item.title}
+                                                            value={
+                                                                item.isCurrency
+                                                                    ? formatVND(item.value)
+                                                                    : item.value
+                                                            }
+                                                            prefix={
+                                                                <span style={{ color: item.color }}>
+                                                                    {item.icon}
+                                                                </span>
+                                                            }
+                                                        />
+                                                    </Card>
+                                                </motion.div>
+                                            </Col>
+                                        ))}
+                                    </Row>
+                                ),
+                            },
+                            ...(overview && systemStatCards.length > 0
+                                ? [
+                                      {
+                                          key: "system-stats",
+                                          label: (
+                                              <span>
+                                                  Bảng số liệu tổng quan hệ thống{" "}
+                                                  <Text type="secondary" style={{ fontSize: 12, fontWeight: 400 }}>
+                                                      (cập nhật{" "}
+                                                      {new Date(overview.generatedAt).toLocaleString("vi-VN", {
+                                                          hour12: false,
+                                                      })}
+                                                      )
+                                                  </Text>
+                                              </span>
+                                          ),
+                                          children: (
+                                              <Row gutter={[12, 12]}>
+                                                  {systemStatCards.map((item, index) => (
+                                                      <Col xs={12} sm={8} md={6} lg={4} key={`sys-${index}`}>
+                                                          <Card size="small" variant="borderless">
+                                                              <Statistic
+                                                                  title={item.title}
+                                                                  value={
+                                                                      item.isCurrency
+                                                                          ? formatVND(item.value)
+                                                                          : item.value
+                                                                  }
+                                                                  prefix={
+                                                                      <span style={{ color: item.color }}>
+                                                                          {item.icon}
+                                                                      </span>
+                                                                  }
+                                                              />
+                                                          </Card>
+                                                      </Col>
+                                                  ))}
+                                              </Row>
+                                          ),
+                                      },
+                                      {
+                                          key: "system-charts",
+                                          label:
+                                              "Biểu đồ phân bổ hệ thống (user, booking, thanh toán, đánh giá, thiết bị…)",
+                                          children: (
+                                              <Row gutter={[16, 16]}>
+                                <Col xs={24} md={12}>
+                                    <Card title="Người dùng theo trạng thái" size="small" variant="borderless">
+                                        <ReactECharts
+                                            option={{
+                                                color: chartColors,
+                                                backgroundColor: "transparent",
+                                                tooltip: {
+                                                    trigger: "item",
+                                                    ...tooltipStyle,
+                                                    formatter: (p: { name: string; value: number; percent: number }) =>
+                                                        `<b>${p.name}</b><br/>${p.value} (${p.percent}%)`,
+                                                },
+                                                series: [
+                                                    {
+                                                        type: "pie",
+                                                        radius: ["36%", "62%"],
+                                                        center: ["50%", "50%"],
+                                                        label: { color: labelColor, fontSize: 11 },
+                                                        data: [
+                                                            { value: overview.usersActive, name: "Hoạt động" },
+                                                            { value: overview.usersInactive, name: "Không HĐ" },
+                                                            {
+                                                                value: overview.usersPendingVerification,
+                                                                name: "Chờ xác minh",
+                                                            },
+                                                            { value: overview.usersBanned, name: "Bị cấm" },
+                                                            { value: overview.usersDeleted, name: "Đã xóa" },
+                                                        ].filter((d) => d.value > 0),
+                                                    },
+                                                ],
+                                            }}
+                                            style={{ height: isMobile ? 260 : chartHeight }}
                                         />
                                     </Card>
-                                </motion.div>
-                            </Col>
-                        ))}
-                    </Row>
-
-                    {/* CHARTS */}
-                    <Row gutter={[16, 16]} style={{ marginTop: 32 }}>
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <Card title="Booking (chưa ẩn bởi user) theo trạng thái" size="small" variant="borderless">
+                                        <ReactECharts
+                                            option={{
+                                                color: chartColors,
+                                                backgroundColor: "transparent",
+                                                tooltip: {
+                                                    trigger: "item",
+                                                    ...tooltipStyle,
+                                                    formatter: (p: { name: string; value: number; percent: number }) =>
+                                                        `<b>${p.name}</b><br/>${p.value} (${p.percent}%)`,
+                                                },
+                                                series: [
+                                                    {
+                                                        type: "pie",
+                                                        radius: ["36%", "62%"],
+                                                        center: ["50%", "50%"],
+                                                        label: { color: labelColor, fontSize: 11 },
+                                                        data: [
+                                                            { value: overview.bookingsPending, name: "Chờ" },
+                                                            { value: overview.bookingsActive, name: "Đang đặt" },
+                                                            { value: overview.bookingsPaidStatus, name: "Đã TT (status)" },
+                                                            { value: overview.bookingsCancelled, name: "Đã hủy" },
+                                                        ].filter((d) => d.value > 0),
+                                                    },
+                                                ],
+                                            }}
+                                            style={{ height: isMobile ? 260 : chartHeight }}
+                                        />
+                                    </Card>
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <Card title="Thanh toán theo trạng thái" size="small" variant="borderless">
+                                        <ReactECharts
+                                            option={{
+                                                color: ["#faad14", "#52c41a", "#ff4d4f"],
+                                                backgroundColor: "transparent",
+                                                tooltip: {
+                                                    trigger: "item",
+                                                    ...tooltipStyle,
+                                                    formatter: (p: { name: string; value: number; percent: number }) =>
+                                                        `<b>${p.name}</b><br/>${p.value} (${p.percent}%)`,
+                                                },
+                                                series: [
+                                                    {
+                                                        type: "pie",
+                                                        radius: ["36%", "62%"],
+                                                        center: ["50%", "50%"],
+                                                        label: { color: labelColor, fontSize: 11 },
+                                                        data: [
+                                                            { value: overview.paymentsPendingCount, name: "Chờ xác nhận" },
+                                                            { value: overview.paymentsPaidCount, name: "Đã thanh toán" },
+                                                            { value: overview.paymentsCancelledCount, name: "Đã hủy" },
+                                                        ].filter((d) => d.value > 0),
+                                                    },
+                                                ],
+                                            }}
+                                            style={{ height: isMobile ? 260 : chartHeight }}
+                                        />
+                                    </Card>
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <Card title="Đánh giá theo trạng thái" size="small" variant="borderless">
+                                        <ReactECharts
+                                            option={{
+                                                color: ["#faad14", "#52c41a", "#8c8c8c"],
+                                                backgroundColor: "transparent",
+                                                tooltip: {
+                                                    trigger: "item",
+                                                    ...tooltipStyle,
+                                                    formatter: (p: { name: string; value: number; percent: number }) =>
+                                                        `<b>${p.name}</b><br/>${p.value} (${p.percent}%)`,
+                                                },
+                                                series: [
+                                                    {
+                                                        type: "pie",
+                                                        radius: ["36%", "62%"],
+                                                        center: ["50%", "50%"],
+                                                        label: { color: labelColor, fontSize: 11 },
+                                                        data: [
+                                                            { value: overview.reviewsPending, name: "Chờ duyệt" },
+                                                            { value: overview.reviewsApproved, name: "Đã duyệt" },
+                                                            { value: overview.reviewsHidden, name: "Đã ẩn" },
+                                                        ].filter((d) => d.value > 0),
+                                                    },
+                                                ],
+                                            }}
+                                            style={{ height: isMobile ? 260 : chartHeight }}
+                                        />
+                                    </Card>
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <Card title="Thiết bị kho theo trạng thái" size="small" variant="borderless">
+                                        <ReactECharts
+                                            option={{
+                                                color: chartColors,
+                                                backgroundColor: "transparent",
+                                                tooltip: {
+                                                    trigger: "item",
+                                                    ...tooltipStyle,
+                                                    formatter: (p: { name: string; value: number; percent: number }) =>
+                                                        `<b>${p.name}</b><br/>${p.value} (${p.percent}%)`,
+                                                },
+                                                series: [
+                                                    {
+                                                        type: "pie",
+                                                        radius: ["36%", "62%"],
+                                                        center: ["50%", "50%"],
+                                                        label: { color: labelColor, fontSize: 11 },
+                                                        data: [
+                                                            { value: overview.equipmentsActive, name: "ACTIVE" },
+                                                            { value: overview.equipmentsMaintenance, name: "Bảo trì" },
+                                                            { value: overview.equipmentsInactive, name: "Ngưng" },
+                                                            { value: overview.equipmentsBroken, name: "Hỏng" },
+                                                            { value: overview.equipmentsLost, name: "Mất" },
+                                                        ].filter((d) => d.value > 0),
+                                                    },
+                                                ],
+                                            }}
+                                            style={{ height: isMobile ? 260 : chartHeight }}
+                                        />
+                                    </Card>
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <Card title="Dòng mượn thiết bị (booking) theo trạng thái" size="small" variant="borderless">
+                                        <ReactECharts
+                                            option={{
+                                                color: chartColors,
+                                                backgroundColor: "transparent",
+                                                tooltip: {
+                                                    trigger: "item",
+                                                    ...tooltipStyle,
+                                                    formatter: (p: { name: string; value: number; percent: number }) =>
+                                                        `<b>${p.name}</b><br/>${p.value} (${p.percent}%)`,
+                                                },
+                                                series: [
+                                                    {
+                                                        type: "pie",
+                                                        radius: ["36%", "62%"],
+                                                        center: ["50%", "50%"],
+                                                        label: { color: labelColor, fontSize: 11 },
+                                                        data: [
+                                                            { value: overview.bookingEquipmentsBorrowed, name: "Đang mượn" },
+                                                            { value: overview.bookingEquipmentsReturned, name: "Đã trả" },
+                                                            { value: overview.bookingEquipmentsLost, name: "Mất" },
+                                                            { value: overview.bookingEquipmentsDamaged, name: "Hỏng" },
+                                                        ].filter((d) => d.value > 0),
+                                                    },
+                                                ],
+                                            }}
+                                            style={{ height: isMobile ? 260 : chartHeight }}
+                                        />
+                                    </Card>
+                                </Col>
+                                              </Row>
+                                          ),
+                                      },
+                                  ]
+                                : []),
+                            {
+                                key: "revenue-charts",
+                                label: "Biểu đồ doanh thu & tình trạng booking (theo khoảng ngày đã chọn)",
+                                children: (
+                                    <Row gutter={[16, 16]}>
                         {/* LINE CHART */}
                         <Col xs={24}>
                             <Card title="Doanh thu theo ngày" size="small" variant="borderless">
@@ -591,7 +942,11 @@ const AdminPage = () => {
                                 />
                             </Card>
                         </Col>
-                    </Row>
+                                    </Row>
+                                ),
+                            },
+                        ]}
+                    />
                 </div>
             </PermissionWrapper>
         </RoleWrapper>

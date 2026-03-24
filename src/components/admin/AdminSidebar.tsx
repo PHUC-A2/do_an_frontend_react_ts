@@ -238,6 +238,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                         PAYMENT_PROOF_UPLOADED: '🧾 Đã tải minh chứng thanh toán',
                         PAYMENT_CONFIRMED: '💳 Thanh toán xác nhận',
                         MATCH_REMINDER: '⏰ Sắp đến giờ đá!',
+                        AI_KEY_EXPIRED: '🔑 Key AI cần thay',
                     };
 
                     if (bellSoundEnabledRef.current) {
@@ -247,6 +248,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
 
                     if (notif.type === 'BOOKING_PENDING_CONFIRMATION') {
                         toast.info(notif.message, { autoClose: 6000 });
+                    }
+                    if (notif.type === 'AI_KEY_EXPIRED') {
+                        toast.error(notif.message, { autoClose: 12000 });
                     }
                 } else if (payload.event === 'ring' && bellSoundEnabledRef.current) {
                     playNotificationSound(audioCtxRef, soundPresetRef.current);

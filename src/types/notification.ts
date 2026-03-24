@@ -10,7 +10,8 @@ export type NotificationTypeEnum =
     | 'PAYMENT_REQUESTED'
     | 'PAYMENT_PROOF_UPLOADED'
     | 'PAYMENT_CONFIRMED'
-    | 'MATCH_REMINDER';
+    | 'MATCH_REMINDER'
+    | 'AI_KEY_EXPIRED';
 
 export interface INotification {
     id: number;

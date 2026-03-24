@@ -422,6 +422,7 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
                             PAYMENT_PROOF_UPLOADED: '🧾 Đã tải minh chứng thanh toán',
                             PAYMENT_CONFIRMED: '💳 Thanh toán xác nhận',
                             MATCH_REMINDER: '⏰ Sắp đến giờ đá!',
+                            AI_KEY_EXPIRED: '🔑 Key AI cần thay',
                         };
                         const title = titleMap[notif.type] ?? 'UTB Sport';
 
@@ -431,6 +432,9 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
                         sendBrowserNotif(title, notif.message);
                         if (notif.type === 'MATCH_REMINDER') {
                             toast.info(notif.message, { autoClose: 6000 });
+                        }
+                        if (notif.type === 'AI_KEY_EXPIRED') {
+                            toast.error(notif.message, { autoClose: 12000 });
                         }
                     } else if (payload.event === 'ring' && bellSoundEnabledRef.current) {
                         playNotificationSound(audioCtxRef, soundPresetRef.current);
