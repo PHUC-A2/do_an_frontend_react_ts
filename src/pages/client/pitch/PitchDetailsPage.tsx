@@ -379,7 +379,7 @@ const PitchDetailsPage: React.FC = () => {
                                 ) : (
                                     <Space size={6}>
                                         <StarFilled style={{ color: "#94a3b8" }} />
-                                        <Text type="secondary">Chưa có đánh giá được duyệt</Text>
+                                        <Text type="secondary">Hiện chưa có đánh giá</Text>
                                     </Space>
                                 )}
                                 <Tag color={PITCH_STATUS_META[pitch.status].color} className="status-tag-vip status-tag-inline">
@@ -392,7 +392,7 @@ const PitchDetailsPage: React.FC = () => {
                                 <Card className="booking-card-glass">
                                     <Row align="middle" justify="space-between">
                                         <Col>
-                                            <Text strong className="price-label">GIÁ THUÊ CHỈ TỪ</Text>
+                                            <Text strong className="price-label">Giá mỗi giờ</Text>
                                             <div className="price-value-big">
                                                 {formatVND(pitch.pricePerHour)}<small>/giờ</small>
                                             </div>
@@ -403,7 +403,7 @@ const PitchDetailsPage: React.FC = () => {
                                                 className="btn-book-now"
                                                 onClick={() => navigate(`/booking/${pitch.id}`, { state: { mode: "CREATE" } })}
                                             >
-                                                ĐẶT SÂN NGAY <ArrowRightOutlined />
+                                                Đặt sân ngay <ArrowRightOutlined />
                                             </RBButton>
                                         </Col>
                                     </Row>
@@ -421,7 +421,7 @@ const PitchDetailsPage: React.FC = () => {
                                     >
                                         <span className="bk__pitch-accordion__title">
                                             <CalendarOutlined />
-                                            Timeline lịch sân (chỉ xem)
+                                            Lịch sân trong ngày (xem nhanh)
                                         </span>
                                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                             <div className="bk__cal-nav" onClick={(e) => e.stopPropagation()}>
@@ -534,7 +534,7 @@ const PitchDetailsPage: React.FC = () => {
                                                                 preview={{
                                                                     cover: (
                                                                         <div className="mask-content">
-                                                                            <GlobalOutlined /> Xem toàn cảnh
+                                                                            <GlobalOutlined /> Xem ảnh lớn
                                                                         </div>
                                                                     ),
                                                                 }}
@@ -655,7 +655,7 @@ const PitchDetailsPage: React.FC = () => {
                                                 label: (
                                                     <Space>
                                                         <StarFilled style={{ color: "#faad14" }} />
-                                                        <span>Đánh giá & nhận xét</span>
+                                                        <span>Đánh giá của bạn</span>
                                                     </Space>
                                                 ),
                                                 extra: (
@@ -668,7 +668,7 @@ const PitchDetailsPage: React.FC = () => {
                                                             setReviewModalOpen(true);
                                                         }}
                                                     >
-                                                        Đánh giá sân này
+                                                        Viết đánh giá
                                                     </Button>
                                                 ),
                                                 children: myReviews.slice(0, 6).length === 0 ? (
@@ -822,7 +822,7 @@ const PitchDetailsPage: React.FC = () => {
             </div>
 
             <Modal
-                title="Đánh giá sân bóng"
+                title="Gửi đánh giá về sân"
                 open={reviewModalOpen}
                 onCancel={() => setReviewModalOpen(false)}
                 onOk={handleCreateReview}

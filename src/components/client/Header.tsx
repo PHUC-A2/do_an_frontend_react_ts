@@ -764,7 +764,7 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
                         <LogoGlow variant="header" />
                         <Flex vertical className={styles.brandText}>
                             <Text className={styles.brandTitle}>UTB <Text className={styles.brandTitleAccent} italic>Sport</Text></Text>
-                            <Text className={styles.brandSubtitle}>Đặt sân chuyên nghiệp</Text>
+                            <Text className={styles.brandSubtitle}>Đặt sân trực tuyến</Text>
                         </Flex>
                     </Link>
 

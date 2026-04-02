@@ -158,7 +158,7 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                             variants={fadeInUp}
                         >
                             <StarFilled style={{ color: '#faad14', fontSize: 11 }} />
-                            <span>{currentKeyword ? `Kết quả cho “${currentKeyword}”` : 'Tất cả sân bóng · TBU Sport'}</span>
+                            <span>{currentKeyword ? `Kết quả cho “${currentKeyword}”` : 'Sân trong trường · TBU Sport'}</span>
                         </motion.div>
                         <motion.div
                             initial="hidden"
@@ -166,10 +166,10 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                             variants={fadeInUp}
                         >
                             <Title className="hero-title">
-                                <span className="gold-text">Danh sách sân bóng</span>
+                                <span className="gold-text">Danh sách sân</span>
                             </Title>
                             <Paragraph className="hero-paragraph">
-                                {currentKeyword ? `Kết quả theo từ khóa: ${currentKeyword}` : 'Chọn sân và đặt ngay.'}
+                                {currentKeyword ? `Đang lọc theo: ${currentKeyword}` : 'Chọn sân rồi đặt giờ phù hợp với bạn.'}
                             </Paragraph>
                         </motion.div>
                     </div>
@@ -182,7 +182,7 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                             <div>
                                 <p className="pitch-summaryLabel">Danh sách sân</p>
                                 <h2 className="pitch-summaryTitle">
-                                    {currentKeyword ? `Kết quả tìm kiếm cho “${currentKeyword}”` : 'Khám phá sân phù hợp'}
+                                    {currentKeyword ? `Kết quả cho “${currentKeyword}”` : 'Tìm sân phù hợp'}
                                 </h2>
                             </div>
                             <div
@@ -196,10 +196,10 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                             >
                                 <div className="pitch-summaryMeta">
                                     {currentKeyword
-                                        ? `${meta.total} sân khớp (theo tên / địa chỉ)`
+                                        ? `${meta.total} sân trùng từ khóa (tên hoặc địa chỉ)`
                                         : meta.total > 0
-                                            ? `${meta.total} sân khả dụng`
-                                            : "Không có kết quả phù hợp"}
+                                            ? `${meta.total} sân đang mở đặt`
+                                            : "Chưa có sân nào khớp"}
                                 </div>
                                 <Select
                                     size="middle"
@@ -219,7 +219,7 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                             </div>
                         ) : !loading && pitches.length === 0 && meta.total === 0 ? (
                             <div className="pitch-emptyState">
-                                <Empty description={currentKeyword ? 'Không tìm thấy sân phù hợp với từ khóa hiện tại' : 'Chưa có sân nào để hiển thị'} />
+                                <Empty description={currentKeyword ? 'Không có sân nào khớp từ khóa này' : 'Hiện chưa có sân để hiển thị'} />
                             </div>
                         ) : (
                             <>

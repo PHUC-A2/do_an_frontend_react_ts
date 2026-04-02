@@ -111,7 +111,7 @@ const Footer = ({ theme }: FooterProps) => {
                             marginBottom: 20,
                             maxWidth: 280,
                         }}>
-                            Nền tảng đặt sân bóng đá hiện đại — kết nối người chơi, quản lý lịch thi đấu và đặt sân nhanh chóng, tiện lợi.
+                            Nền tảng đặt sân bóng đá trực tuyến — kết nối người chơi, quản lý lịch thi đấu và đặt sân nhanh chóng, tiện lợi.
                         </Paragraph>
 
                         <Space size={14}>

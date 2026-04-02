@@ -51,37 +51,37 @@ const features = [
     {
         icon: <CalendarOutlined />,
         title: "Đặt sân tức thì",
-        desc: "Xem lịch trống theo thời gian thực, xác nhận trong vài giây. Không chờ đợi, không gọi điện.",
+        desc: "Xem lịch trống và đặt sân ngay khi bạn cần.",
         color: "#007b3d",
     },
     {
         icon: <ThunderboltOutlined />,
         title: "Quản lý thông minh",
-        desc: "Bảng điều khiển trực quan theo dõi doanh thu, lịch đặt sân và hiệu suất hoạt động.",
+        desc: "Theo dõi lịch đặt sân, doanh thu và hoạt động một cách rõ ràng, dễ hiểu.",
         color: "#0064a8",
     },
     {
         icon: <TeamOutlined />,
         title: "Kết nối cộng đồng",
-        desc: "Tìm đội bóng, kết nối đối thủ, tổ chức giải đấu ngay trên nền tảng.",
+        desc: "Dễ dàng tìm người chơi cùng, lập đội hoặc tham gia các trận đấu.",
         color: "#da251c",
     },
 ];
 
 const stats = [
-    { value: "50+", label: "Sân bóng" },
+    { value: "50+", label: "Sân đang hoạt động" },
     { value: "2K+", label: "Người dùng" },
     { value: "98%", label: "Hài lòng" },
-    { value: "24/7", label: "Hỗ trợ" },
+    { value: "24/7", label: "Luôn sẵn sàng" },
 ];
 
 const benefits = [
-    "Xác nhận đặt sân qua email & SMS",
-    "Thanh toán an toàn, nhiều hình thức",
-    "Lịch sử đặt sân chi tiết",
-    "Hủy & hoàn tiền linh hoạt",
-    "Giao diện tối / sáng theo sở thích",
-    "Hỗ trợ cả mobile và desktop",
+    "Nhận xác nhận qua email hoặc SMS",
+    "Thanh toán an toàn và dễ sử dụng",
+    "Xem lại lịch sử đặt sân bất cứ lúc nào",
+    "Hủy hoặc đổi lịch khi cần",
+    "Giao diện sáng / tối tùy chọn",
+    "Dùng tốt trên cả điện thoại và máy tính",
 ];
 
 const slides = [
@@ -126,7 +126,7 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                                 className="hp__hero-badge"
                             >
                                 <StarFilled style={{ color: '#faad14', fontSize: 11 }} />
-                                <span>Nền tảng thể thao #1 Tây Bắc</span>
+                                <span>Đặt sân bóng dễ hơn mỗi ngày</span>
                             </motion.div>
 
                             <motion.h1
@@ -135,7 +135,7 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                                 variants={fadeUp} custom={1}
                             >
                                 Đặt sân bóng<br />
-                                <em className="hp__gold-text">nhanh &amp; dễ dàng</em>
+                                <em className="hp__gold-text">nhanh và tiện hơn</em>
                             </motion.h1>
 
                             <motion.p
@@ -143,8 +143,8 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                                 initial="hidden" animate="visible"
                                 variants={fadeUp} custom={2}
                             >
-                                Quản lý lịch thi đấu, kết nối cộng đồng và trải nghiệm đặt sân
-                                hiện đại chưa từng có tại Trường Đại học Tây Bắc.
+                                Xem lịch trống, đặt sân và tham gia trận đấu chỉ trong vài bước.
+                                Không cần gọi điện hay chờ đợi.
                             </motion.p>
 
                             <motion.div
@@ -225,8 +225,8 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                                 >
                                     <CalendarOutlined style={{ color: '#faad14' }} />
                                     <div>
-                                        <p className="hp__float-title">Lịch đặt theo thời gian thực</p>
-                                        <span className="hp__float-sub">Cập nhật trạng thái tức thì</span>
+                                        <p className="hp__float-title">Lịch trống cập nhật liên tục</p>
+                                        <span className="hp__float-sub">Dễ chọn giờ phù hợp</span>
                                     </div>
                                 </motion.div>
                             </div>
@@ -246,8 +246,8 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                             viewport={{ once: true, margin: "-60px" }}
                             variants={fadeUp}
                         >
-                            <p className="hp__section-label">Tính năng nổi bật</p>
-                            <h2 className="hp__section-title">Mọi thứ bạn cần<br /><em>trong một nền tảng</em></h2>
+                            <p className="hp__section-label">Tiện ích</p>
+                            <h2 className="hp__section-title">Những điều hữu ích<br /><em>khi bạn dùng app</em></h2>
                         </motion.div>
 
                         <div className="hp__features-grid">
@@ -296,7 +296,7 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                                     />
                                     <div className="hp__why-badge">
                                         <ThunderboltOutlined />
-                                        <span>Xác nhận &lt; 5 giây</span>
+                                        <span>Xác nhận trong vài giây</span>
                                     </div>
                                 </motion.div>
 
@@ -309,7 +309,7 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                                         viewport={{ once: true }}
                                         variants={fadeUp} custom={0}
                                     >
-                                        Tại sao chọn chúng tôi
+                                        Tại sao dùng hệ thống này
                                     </motion.p>
                                     <motion.h2
                                         className="hp__section-title"
@@ -318,7 +318,7 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                                         viewport={{ once: true }}
                                         variants={fadeUp} custom={1}
                                     >
-                                        Trải nghiệm đặt sân<br /><em>hoàn toàn mới</em>
+                                        Đặt sân<br /><em>đơn giản hơn</em>
                                     </motion.h2>
                                     <motion.p
                                         className="hp__why-desc"
@@ -327,7 +327,7 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                                         viewport={{ once: true }}
                                         variants={fadeUp} custom={2}
                                     >
-                                        Chúng tôi xây dựng hệ thống tập trung vào trải nghiệm người dùng — từ lúc chọn sân đến khi bước vào thi đấu, mọi bước đều mượt mà và minh bạch.
+                                        Chúng tôi muốn việc đặt sân trở nên đơn giản nhất có thể — từ lúc chọn sân đến lúc vào chơi, mọi thứ đều rõ ràng và nhanh gọn.
                                     </motion.p>
 
                                     <motion.div
@@ -361,7 +361,7 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                                             size="large"
                                             onClick={() => navigate("/pitch")}
                                         >
-                                            Khám phá sân bóng
+                                            Xem danh sách sân
                                         </Button>
                                     </motion.div>
                                 </div>
@@ -389,21 +389,21 @@ const HomePage: React.FC<HomePageProps> = ({ theme }) => {
                                 variants={fadeUp} initial="hidden"
                                 whileInView="visible" viewport={{ once: true }}
                             >
-                                Bắt đầu ngay hôm nay
+                                Tham gia cùng mọi người
                             </motion.p>
                             <motion.h2
                                 className="hp__cta-title"
                                 variants={fadeUp} custom={1}
                                 initial="hidden" whileInView="visible" viewport={{ once: true }}
                             >
-                                Sẵn sàng thi đấu?
+                                Sẵn sàng chơi chưa?
                             </motion.h2>
                             <motion.p
                                 className="hp__cta-sub"
                                 variants={fadeUp} custom={2}
                                 initial="hidden" whileInView="visible" viewport={{ once: true }}
                             >
-                                Đăng ký miễn phí, đặt sân trong 30 giây.
+                                Tạo tài khoản miễn phí và đặt sân trong vài bước đơn giản.
                             </motion.p>
                             <motion.div
                                 variants={fadeUp} custom={3}

@@ -154,20 +154,20 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                         <motion.div className="bk__hero-badge"
                             initial="hidden" animate="visible" variants={fadeIn} custom={0}>
                             <StarFilled style={{ color: "#faad14", fontSize: 11 }} />
-                            <span>TBU Sport · Đặt sân trực tuyến</span>
+                            <span>TBU Sport · Đặt sân trong trường</span>
                         </motion.div>
 
                         <motion.h1 className="bk__hero-title"
                             initial="hidden" animate="visible" variants={fadeUp} custom={1}>
                             {mode === "CREATE"
-                                ? <>Đặt lịch sân bóng <em className="bk__gold-text">tức thì</em></>
+                                ? <>Đặt lịch sân bóng <em className="bk__gold-text">theo giờ bạn chọn</em></>
                                 : <>Cập nhật <em className="bk__gold-text">lịch đặt sân</em></>}
                         </motion.h1>
 
                         <motion.p className="bk__hero-sub"
                             initial="hidden" animate="visible" variants={fadeUp} custom={2}>
-                            Chọn ngày, xem khung giờ trống và hoàn tất đặt sân trong vài giây.
-                            Mượt mà trên mọi thiết bị.
+                            Chọn ngày, xem khung giờ còn trống rồi gửi yêu cầu đặt sân.
+                            Làm trên điện thoại hay máy tính đều được.
                         </motion.p>
 
                         <motion.div className="bk__legend"
@@ -202,7 +202,7 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                             >
                                 <span className="bk__pitch-accordion__title">
                                     <CalendarOutlined />
-                                    Chọn ngày xem lịch
+                                    Chọn ngày để xem lịch
                                 </span>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                     {/* Nav always visible */}
