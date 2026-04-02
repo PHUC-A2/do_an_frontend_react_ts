@@ -62,6 +62,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const [openModalAccount, setOpenModalAccount] = useState(false);
     const [openModalForget, setOpenModalForget] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
+    const [deleteAllNotificationsOpen, setDeleteAllNotificationsOpen] = useState(false);
     const [notifications, setNotifications] = useState<INotification[]>([]);
     const [bellSoundEnabled, setBellSoundEnabled] = useState<boolean>(() => {
         if (typeof window === 'undefined') return true;
@@ -458,23 +459,20 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         }
     };
 
-    const handleDeleteAllNotifications = () => {
+    const handleOpenDeleteAllNotifications = () => {
         if (notifications.length === 0) return;
-        Modal.confirm({
-            title: 'Xóa tất cả thông báo?',
-            content: 'Các mục sẽ được ẩn khỏi danh sách của bạn.',
-            okText: 'Xóa tất cả',
-            cancelText: 'Hủy',
-            okButtonProps: { danger: true },
-            onOk: async () => {
-                try {
-                    await clientDeleteAllNotifications();
-                    setNotifications([]);
-                } catch {
-                    toast.error('Không thể xóa thông báo');
-                }
-            },
-        });
+        setDeleteAllNotificationsOpen(true);
+    };
+
+    const handleConfirmDeleteAllNotifications = async () => {
+        try {
+            await clientDeleteAllNotifications();
+            setNotifications([]);
+            setDeleteAllNotificationsOpen(false);
+        } catch {
+            toast.error('Không thể xóa thông báo');
+            throw new Error('keep-open');
+        }
     };
 
     const extractBookingId = (message: string): string | null => {
@@ -627,7 +625,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                         </button>
                     )}
                     {notifications.length > 0 && (
-                        <button type="button" className={styles.notifDeleteAll} onClick={handleDeleteAllNotifications}>
+                        <button type="button" className={styles.notifDeleteAll} onClick={handleOpenDeleteAllNotifications}>
                             Xóa tất cả
                         </button>
                     )}
@@ -926,6 +924,21 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                     <Outlet />
                 </Content>
             </Layout>
+
+            <Modal
+                title="Xóa tất cả thông báo?"
+                open={deleteAllNotificationsOpen}
+                onCancel={() => setDeleteAllNotificationsOpen(false)}
+                onOk={handleConfirmDeleteAllNotifications}
+                okText="Xóa tất cả"
+                cancelText="Hủy"
+                okButtonProps={{ danger: true }}
+                destroyOnHidden
+            >
+                <Typography.Paragraph style={{ marginBottom: 0 }}>
+                    Các mục sẽ được ẩn khỏi danh sách của bạn.
+                </Typography.Paragraph>
+            </Modal>
 
             <ModalAccount
                 openModalAccount={openModalAccount}

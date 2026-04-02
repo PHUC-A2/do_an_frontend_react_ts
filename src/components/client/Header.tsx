@@ -64,7 +64,7 @@ interface HeaderProps {
     mobileNavPortalEl: HTMLDivElement | null;
 }
 
-const { Text } = Typography;
+const { Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
 const { Header: AntHeader } = Layout;
 
@@ -153,6 +153,7 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
     const [notifSoundPopoverOpen, setNotifSoundPopoverOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
     const [drawerNotifOpen, setDrawerNotifOpen] = useState(false);
+    const [deleteAllNotificationsOpen, setDeleteAllNotificationsOpen] = useState(false);
     const notifRef = useRef<HTMLDivElement | null>(null);
     const notifCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const notificationWsRef = useRef<WebSocket | null>(null);
@@ -639,23 +640,20 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
         } catch { /* ignore */ }
     };
 
-    const handleDeleteAllNotifications = () => {
+    const handleOpenDeleteAllNotifications = () => {
         if (notifications.length === 0) return;
-        Modal.confirm({
-            title: 'Xóa tất cả thông báo?',
-            content: 'Các mục sẽ được ẩn khỏi danh sách của bạn.',
-            okText: 'Xóa tất cả',
-            cancelText: 'Hủy',
-            okButtonProps: { danger: true },
-            onOk: async () => {
-                try {
-                    await clientDeleteAllNotifications();
-                    setNotifications([]);
-                } catch {
-                    toast.error('Không thể xóa thông báo');
-                }
-            },
-        });
+        setDeleteAllNotificationsOpen(true);
+    };
+
+    const handleConfirmDeleteAllNotifications = async () => {
+        try {
+            await clientDeleteAllNotifications();
+            setNotifications([]);
+            setDeleteAllNotificationsOpen(false);
+        } catch {
+            toast.error('Không thể xóa thông báo');
+            throw new Error('keep-open');
+        }
     };
 
     const handleDeleteNotif = async (id: number) => {
@@ -839,7 +837,7 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
                                             </Button>
                                         )}
                                         {notifications.length > 0 && (
-                                            <Button type="text" className={styles.notifDeleteAll} onClick={handleDeleteAllNotifications}>
+                                            <Button type="text" className={styles.notifDeleteAll} onClick={handleOpenDeleteAllNotifications}>
                                                 Xóa tất cả
                                             </Button>
                                         )}
@@ -1119,7 +1117,7 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
                                             </Button>
                                         )}
                                         {notifications.length > 0 && (
-                                            <Button type="text" className={styles.notifDeleteAll} onClick={handleDeleteAllNotifications}>
+                                            <Button type="text" className={styles.notifDeleteAll} onClick={handleOpenDeleteAllNotifications}>
                                                 Xóa tất cả
                                             </Button>
                                         )}
@@ -1214,6 +1212,21 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
                     mobileNavPortalEl,
                 )
                 : null}
+
+            <Modal
+                title="Xóa tất cả thông báo?"
+                open={deleteAllNotificationsOpen}
+                onCancel={() => setDeleteAllNotificationsOpen(false)}
+                onOk={handleConfirmDeleteAllNotifications}
+                okText="Xóa tất cả"
+                cancelText="Hủy"
+                okButtonProps={{ danger: true }}
+                destroyOnHidden
+            >
+                <Paragraph style={{ marginBottom: 0 }}>
+                    Các mục sẽ được ẩn khỏi danh sách của bạn.
+                </Paragraph>
+            </Modal>
 
             <ModalAccount
                 openModalAccount={openModalAccount}

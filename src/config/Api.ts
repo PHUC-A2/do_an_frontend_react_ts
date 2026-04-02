@@ -25,6 +25,16 @@ import type {
     IPublicMessengerConfig,
     ISecuritySettings,
 } from "../types/systemConfig";
+import type {
+    IReqSupportContact,
+    IReqSupportIssueGuide,
+    IReqSupportMaintenanceItem,
+    IReqSupportResourceLink,
+    ISupportContact,
+    ISupportIssueGuide,
+    ISupportMaintenanceItem,
+    ISupportResourceLink,
+} from "../types/supportPage";
 import instance from "./customAxios";
 
 export const register = (data: IRegister) => instance.post("/api/v1/auth/register", data);
@@ -339,6 +349,43 @@ export const adminPatchSecuritySettings = (data: { paymentConfirmationPinRequire
     instance.patch<IBackendRes<ISecuritySettings>>("/api/v1/admin/system-config/security", data);
 export const getPublicMessengerConfig = () =>
     instance.get<IBackendRes<IPublicMessengerConfig>>('/api/v1/client/public/system-config/messenger');
+
+/* api admin — trang Hỗ trợ & Bảo trì */
+export const adminGetSupportContacts = () =>
+    instance.get<IBackendRes<ISupportContact[]>>('/api/v1/admin/support/contacts');
+export const adminCreateSupportContact = (data: IReqSupportContact) =>
+    instance.post<IBackendRes<ISupportContact>>('/api/v1/admin/support/contacts', data);
+export const adminUpdateSupportContact = (id: number, data: IReqSupportContact) =>
+    instance.put<IBackendRes<ISupportContact>>(`/api/v1/admin/support/contacts/${id}`, data);
+export const adminDeleteSupportContact = (id: number) =>
+    instance.delete<IBackendRes<void>>(`/api/v1/admin/support/contacts/${id}`);
+
+export const adminGetSupportIssueGuides = () =>
+    instance.get<IBackendRes<ISupportIssueGuide[]>>('/api/v1/admin/support/issue-guides');
+export const adminCreateSupportIssueGuide = (data: IReqSupportIssueGuide) =>
+    instance.post<IBackendRes<ISupportIssueGuide>>('/api/v1/admin/support/issue-guides', data);
+export const adminUpdateSupportIssueGuide = (id: number, data: IReqSupportIssueGuide) =>
+    instance.put<IBackendRes<ISupportIssueGuide>>(`/api/v1/admin/support/issue-guides/${id}`, data);
+export const adminDeleteSupportIssueGuide = (id: number) =>
+    instance.delete<IBackendRes<void>>(`/api/v1/admin/support/issue-guides/${id}`);
+
+export const adminGetSupportResourceLinks = () =>
+    instance.get<IBackendRes<ISupportResourceLink[]>>('/api/v1/admin/support/resource-links');
+export const adminCreateSupportResourceLink = (data: IReqSupportResourceLink) =>
+    instance.post<IBackendRes<ISupportResourceLink>>('/api/v1/admin/support/resource-links', data);
+export const adminUpdateSupportResourceLink = (id: number, data: IReqSupportResourceLink) =>
+    instance.put<IBackendRes<ISupportResourceLink>>(`/api/v1/admin/support/resource-links/${id}`, data);
+export const adminDeleteSupportResourceLink = (id: number) =>
+    instance.delete<IBackendRes<void>>(`/api/v1/admin/support/resource-links/${id}`);
+
+export const adminGetSupportMaintenanceItems = () =>
+    instance.get<IBackendRes<ISupportMaintenanceItem[]>>('/api/v1/admin/support/maintenance-items');
+export const adminCreateSupportMaintenanceItem = (data: IReqSupportMaintenanceItem) =>
+    instance.post<IBackendRes<ISupportMaintenanceItem>>('/api/v1/admin/support/maintenance-items', data);
+export const adminUpdateSupportMaintenanceItem = (id: number, data: IReqSupportMaintenanceItem) =>
+    instance.put<IBackendRes<ISupportMaintenanceItem>>(`/api/v1/admin/support/maintenance-items/${id}`, data);
+export const adminDeleteSupportMaintenanceItem = (id: number) =>
+    instance.delete<IBackendRes<void>>(`/api/v1/admin/support/maintenance-items/${id}`);
 
 /* api review */
 export const clientCreateReview = (data: ICreateReviewReq) =>

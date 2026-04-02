@@ -71,7 +71,10 @@ export type PermissionKey =
     | "SYSTEM_CONFIG_MESSENGER_DELETE"
     // SYSTEM CONFIG - SECURITY
     | "SYSTEM_CONFIG_SECURITY_VIEW_LIST"
-    | "SYSTEM_CONFIG_SECURITY_UPDATE";
+    | "SYSTEM_CONFIG_SECURITY_UPDATE"
+    // SUPPORT (trang hỗ trợ & bảo trì)
+    | "SUPPORT_VIEW_LIST"
+    | "SUPPORT_MANAGE";
 
 export interface IPermission {
     id: number;
