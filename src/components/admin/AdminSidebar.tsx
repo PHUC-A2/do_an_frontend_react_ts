@@ -118,6 +118,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         'room-booking-equipment': 'Mượn / trả phòng',
         support: 'Hỗ trợ & Bảo trì',
         review: 'Đánh giá & Chat',
+        'system-config': 'Cấu hình hệ thống',
     };
 
     const cssVars = useMemo(() => ({
@@ -147,7 +148,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     };
 
     // Đặt '/admin' cuối cùng để khớp con (/admin/asset, ...) trước, tránh mọi URL bị coi là Dashboard
-    const routeMenuKeys = ['/admin/user', '/admin/asset', '/admin/device', '/admin/device-issues', '/admin/asset-usage', '/admin/checkouts', '/admin/returns', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/room-booking-equipment', '/admin/ai', '/admin/review', '/admin/support', '/admin'];
+    const routeMenuKeys = ['/admin/user', '/admin/asset', '/admin/device', '/admin/device-issues', '/admin/asset-usage', '/admin/checkouts', '/admin/returns', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/room-booking-equipment', '/admin/ai', '/admin/review', '/admin/support', '/admin/system-config', '/admin'];
 
     const selectedMenuKey = useMemo(() => {
         const currentPath = location.pathname;
@@ -246,9 +247,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                     }
                     sendBrowserNotif(titleMap[notif.type] ?? 'TUB Sport', notif.message);
 
-                    if (notif.type === 'BOOKING_PENDING_CONFIRMATION') {
-                        toast.info(notif.message, { autoClose: 6000 });
-                    }
+                    // Giống Header client: không toast từng booking pending — tránh chồng với toast form + trùng nội dung; vẫn có chuông + browser + danh sách
                     if (notif.type === 'AI_KEY_EXPIRED') {
                         toast.error(notif.message, { autoClose: 12000 });
                     }
@@ -347,6 +346,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                             key: '/admin/support',
                             label: <Link to="/admin/support" className={styles.menuLink}>Hỗ trợ & Bảo trì</Link>,
                             icon: <MdOutlineSupportAgent />,
+                        },
+                        {
+                            key: '/admin/system-config',
+                            label: <Link to="/admin/system-config" className={styles.menuLink}>Cấu hình hệ thống</Link>,
+                            icon: <SettingOutlined />,
                         },
 
                     ]

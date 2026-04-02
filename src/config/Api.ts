@@ -18,6 +18,13 @@ import type { INotification } from "../types/notification";
 import type { IPitchTimeline } from "../types/timeline";
 import type { IGetUploadResponse } from "../types/upload";
 import type { IAssignRoleReq, ICreateUserReq, IUpdateUserReq, IUser, IUpdateUserStatusReq, IUpdateUserStatusRes } from "../types/user";
+import type {
+    IAdminBankAccountConfig,
+    IAdminEmailSenderConfig,
+    IAdminMessengerConfig,
+    IPublicMessengerConfig,
+    ISecuritySettings,
+} from "../types/systemConfig";
 import instance from "./customAxios";
 
 export const register = (data: IRegister) => instance.post("/api/v1/auth/register", data);
@@ -36,6 +43,15 @@ export const logout = async () => {
 };
 export const getAccount = () => instance.get("/api/v1/auth/account");
 export const updateAccount = (data: IUpdateAccountReq) => instance.patch<IBackendRes<IUpdateAccountRes>>("/api/v1/auth/account/me", data);
+/** Đặt hoặc đổi PIN 6 số cho xác nhận thanh toán (currentPin khi đã có PIN). */
+export const setAccountPaymentPin = (data: { pin: string; currentPin?: string }) =>
+    instance.put<IBackendRes<null>>("/api/v1/auth/account/payment-pin", data);
+/** Gửi OTP về email đăng nhập để đặt lại PIN (đã từng có PIN). */
+export const requestForgotPaymentPinOtp = () =>
+    instance.post<IBackendRes<unknown>>("/api/v1/auth/account/payment-pin/forgot-otp");
+/** Đặt lại PIN 6 số sau khi nhập OTP từ email. */
+export const resetPaymentPinWithOtp = (data: { otp: string; newPin: string; confirmPin: string }) =>
+    instance.patch<IBackendRes<unknown>>("/api/v1/auth/account/payment-pin/reset-with-otp", data);
 export const getRefreshToken = () => instance.get("/api/v1/auth/refresh");
 export const forgetPassword = (email: string) => {
     return instance.post("/api/v1/auth/forgot-password", {
@@ -116,7 +132,10 @@ export const rejectBooking = (id: number) => instance.patch<IBackendRes<void>>(`
 
 /* api payment */
 export const getAllPayments = (query: string) => instance.get<IBackendRes<IModelPaginate<IPayment>>>(`/api/v1/payments?${query}`);
-export const confirmPayment = (id: number) => instance.put<IBackendRes<IPayment>>(`/api/v1/payments/${id}/confirm`);
+export const confirmPayment = (id: number, body?: { pin?: string }) =>
+    instance.put<IBackendRes<IPayment>>(`/api/v1/payments/${id}/confirm`, body ?? {});
+export const rejectPayment = (id: number) => instance.patch<IBackendRes<void>>(`/api/v1/payments/${id}/reject`);
+export const deleteBookingFromPayment = (id: number) => instance.put<IBackendRes<void>>(`/api/v1/payments/${id}/delete-booking`);
 export const createPayment = (data: ICreatePaymentReq) => instance.post<IBackendRes<IPaymentRes>>(`/api/v1/client/payments`, data);
 export const getQR = (paymentCode: string) => instance.get<IBackendRes<IPaymentRes>>(`/api/v1/client/payments/${paymentCode}/qr`);
 // gắn ảnh minh chứng cho payment
@@ -287,6 +306,39 @@ export const adminToggleAiKey = (id: number) =>
     instance.patch<IBackendRes<IAiKey>>(`/api/v1/admin/ai/keys/${id}/toggle`);
 export const adminDeleteAiKey = (id: number) =>
     instance.delete<IBackendRes<void>>(`/api/v1/admin/ai/keys/${id}`);
+
+export const adminGetEmailSenderConfigs = () =>
+    instance.get<IBackendRes<IAdminEmailSenderConfig[]>>('/api/v1/admin/system-config/email-senders');
+export const adminCreateEmailSenderConfig = (data: { email: string; password: string; active?: boolean }) =>
+    instance.post<IBackendRes<IAdminEmailSenderConfig>>('/api/v1/admin/system-config/email-senders', data);
+export const adminUpdateEmailSenderConfig = (id: number, data: { email: string; password: string; active?: boolean }) =>
+    instance.put<IBackendRes<IAdminEmailSenderConfig>>(`/api/v1/admin/system-config/email-senders/${id}`, data);
+export const adminDeleteEmailSenderConfig = (id: number) =>
+    instance.delete<IBackendRes<void>>(`/api/v1/admin/system-config/email-senders/${id}`);
+
+export const adminGetBankAccountConfigs = () =>
+    instance.get<IBackendRes<IAdminBankAccountConfig[]>>('/api/v1/admin/system-config/bank-accounts');
+export const adminCreateBankAccountConfig = (data: { bankCode: string; accountNo: string; accountName: string; active?: boolean }) =>
+    instance.post<IBackendRes<IAdminBankAccountConfig>>('/api/v1/admin/system-config/bank-accounts', data);
+export const adminUpdateBankAccountConfig = (id: number, data: { bankCode: string; accountNo: string; accountName: string; active?: boolean }) =>
+    instance.put<IBackendRes<IAdminBankAccountConfig>>(`/api/v1/admin/system-config/bank-accounts/${id}`, data);
+export const adminDeleteBankAccountConfig = (id: number) =>
+    instance.delete<IBackendRes<void>>(`/api/v1/admin/system-config/bank-accounts/${id}`);
+
+export const adminGetMessengerConfigs = () =>
+    instance.get<IBackendRes<IAdminMessengerConfig[]>>('/api/v1/admin/system-config/messenger');
+export const adminCreateMessengerConfig = (data: { pageId: string; active?: boolean }) =>
+    instance.post<IBackendRes<IAdminMessengerConfig>>('/api/v1/admin/system-config/messenger', data);
+export const adminUpdateMessengerConfig = (id: number, data: { pageId: string; active?: boolean }) =>
+    instance.put<IBackendRes<IAdminMessengerConfig>>(`/api/v1/admin/system-config/messenger/${id}`, data);
+export const adminDeleteMessengerConfig = (id: number) =>
+    instance.delete<IBackendRes<void>>(`/api/v1/admin/system-config/messenger/${id}`);
+export const adminGetSecuritySettings = () =>
+    instance.get<IBackendRes<ISecuritySettings>>("/api/v1/admin/system-config/security");
+export const adminPatchSecuritySettings = (data: { paymentConfirmationPinRequired: boolean }) =>
+    instance.patch<IBackendRes<ISecuritySettings>>("/api/v1/admin/system-config/security", data);
+export const getPublicMessengerConfig = () =>
+    instance.get<IBackendRes<IPublicMessengerConfig>>('/api/v1/client/public/system-config/messenger');
 
 /* api review */
 export const clientCreateReview = (data: ICreateReviewReq) =>

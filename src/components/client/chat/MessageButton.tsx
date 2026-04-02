@@ -3,11 +3,13 @@ import { Tooltip } from "antd";
 import { motion } from "framer-motion";
 import { FaFacebookMessenger } from "react-icons/fa";
 import { useAppSelector } from "../../../redux/hooks";
+import { getPublicMessengerConfig } from "../../../config/Api";
 
 const MotionButton = motion.button;
 
 const MessageButton = () => {
     const [visible, setVisible] = useState<boolean>(false);
+    const [pageId, setPageId] = useState<string>("");
 
     // đọc state ẩn/hiện
     const hidden = useAppSelector(
@@ -27,12 +29,25 @@ const MessageButton = () => {
         };
     }, []);
 
+    useEffect(() => {
+        const loadConfig = async () => {
+            try {
+                const res = await getPublicMessengerConfig();
+                setPageId(res.data?.data?.pageId ?? "");
+            } catch {
+                setPageId("");
+            }
+        };
+        void loadConfig();
+    }, []);
+
     if (hidden) return null; // DÒNG QUYẾT ĐỊNH
     if (!visible) return null;
+    if (!pageId) return null;
 
     const onClick = () => {
         window.open(
-            `https://m.me/${import.meta.env.VITE_PAGE_ID}`,
+            `https://m.me/${pageId}`,
             "_blank"
         );
     };
