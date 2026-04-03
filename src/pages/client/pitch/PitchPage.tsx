@@ -17,6 +17,7 @@ import { fetchPitches, selectPitchError, selectPitchLoading, selectPitchMeta, se
 import type { IPitch } from "../../../types/pitch";
 import { getPitchTypeLabel, PITCH_STATUS_META } from "../../../utils/constants/pitch.constants";
 import { formatVND } from "../../../utils/format/price";
+import { getPitchPricingDisplayLines } from "../../../utils/pitch/pitchPricing";
 import RBButton from 'react-bootstrap/Button';
 import {
     buildSpringListQuery,
@@ -277,7 +278,21 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                                                 </div>
 
                                                 <Text strong type="warning" className="pitch-card-price" style={{ display: "block" }}>
-                                                    <Tag color={"success"}>{formatVND(pitch.pricePerHour)} / giờ</Tag>
+                                                    {(() => {
+                                                        const pricingLines = getPitchPricingDisplayLines(pitch);
+                                                        if (pricingLines.length > 0) {
+                                                            return (
+                                                                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                                                                    {pricingLines.slice(0, 2).map((line) => (
+                                                                        <Tag key={line} color={"success"} style={{ width: "fit-content", marginInlineEnd: 0 }}>
+                                                                            {line}
+                                                                        </Tag>
+                                                                    ))}
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return <Tag color={"success"}>{`${formatVND(pitch.pricePerHour)} / giờ`}</Tag>;
+                                                    })()}
                                                 </Text>
 
                                                 <Text type="warning" className="pitch-card-time" style={{ display: "block", marginTop: 4 }}>

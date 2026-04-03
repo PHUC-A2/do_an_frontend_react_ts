@@ -7,7 +7,6 @@ import {
     TimePicker,
     Switch,
     Divider,
-    List,
     Button,
     Popconfirm,
     Popover,
@@ -15,6 +14,7 @@ import {
     Tooltip,
     Radio,
     Tag,
+    Empty,
     type GetProp,
     type UploadFile,
     type UploadProps,
@@ -51,9 +51,17 @@ interface IProps {
     pitchEdit: IPitch | null;
 }
 
-type IUpdatePitchForm = Omit<IUpdatePitchReq, 'openTime' | 'closeTime'> & {
+type IUpdatePitchForm = Omit<IUpdatePitchReq, 'openTime' | 'closeTime' | 'hourlyPrices'> & {
     openTime?: dayjs.Dayjs | null;
     closeTime?: dayjs.Dayjs | null;
+    useHourlyPricing?: boolean;
+    // Tách riêng khung sáng/chiều cho form quản trị
+    morningStartTime?: dayjs.Dayjs | null;
+    morningEndTime?: dayjs.Dayjs | null;
+    morningPricePerHour?: number | null;
+    afternoonStartTime?: dayjs.Dayjs | null;
+    afternoonEndTime?: dayjs.Dayjs | null;
+    afternoonPricePerHour?: number | null;
 };
 
 type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
@@ -88,6 +96,7 @@ const ModalUpdatePitch = (props: IProps) => {
     const [deletingEquipmentId, setDeletingEquipmentId] = useState<number | null>(null);
 
     const open24h = Form.useWatch('open24h', form);
+    const useHourlyPricing = Form.useWatch('useHourlyPricing', form);
     const openTime = Form.useWatch('openTime', form);
     const closeTime = Form.useWatch('closeTime', form);
     const pitchLength = Form.useWatch('length', form);
@@ -149,15 +158,38 @@ const ModalUpdatePitch = (props: IProps) => {
             return;
         }
 
+        const normalizedHourlyPrices = [
+            {
+                startTime: values?.morningStartTime ? dayjs(values.morningStartTime).format('HH:mm') : undefined,
+                endTime: values?.morningEndTime ? dayjs(values.morningEndTime).format('HH:mm') : undefined,
+                pricePerHour: Number(values?.morningPricePerHour),
+            },
+            {
+                startTime: values?.afternoonStartTime ? dayjs(values.afternoonStartTime).format('HH:mm') : undefined,
+                endTime: values?.afternoonEndTime ? dayjs(values.afternoonEndTime).format('HH:mm') : undefined,
+                pricePerHour: Number(values?.afternoonPricePerHour),
+            },
+        ].filter((hp) => hp.startTime && hp.endTime && Number.isFinite(hp.pricePerHour) && hp.pricePerHour > 0);
+
         const payload: IUpdatePitchReq = {
-            ...values,
+            ...(values as any),
             openTime: values.openTime
                 ? dayjs(values.openTime).format('HH:mm')
                 : null,
             closeTime: values.closeTime
                 ? dayjs(values.closeTime).format('HH:mm')
                 : null,
+            // Khi bật giá theo khung giờ: gửi danh sách khung giá và set base price theo khung đầu tiên.
+            pricePerHour: (values as any).useHourlyPricing
+                ? Number(normalizedHourlyPrices[0]?.pricePerHour ?? (values as any).pricePerHour)
+                : (values as any).pricePerHour,
+            hourlyPrices: (values as any).useHourlyPricing ? normalizedHourlyPrices : [],
         };
+
+        if ((values as any).useHourlyPricing && normalizedHourlyPrices.length === 0) {
+            toast.error("Vui lòng thêm ít nhất 1 khung giờ giá khi bật giá theo khung giờ.");
+            return;
+        }
 
         try {
             const res = await updatePitch(pitchEdit.id, payload);
@@ -287,6 +319,14 @@ const ModalUpdatePitch = (props: IProps) => {
             name: pitchEdit.name,
             pitchType: pitchEdit.pitchType,
             pricePerHour: pitchEdit.pricePerHour,
+            useHourlyPricing: (pitchEdit.hourlyPrices?.length ?? 0) > 0,
+            // Map 2 khung đầu tiên sang sáng/chiều để UI rõ ràng
+            morningStartTime: pitchEdit.hourlyPrices?.[0]?.startTime ? dayjs(pitchEdit.hourlyPrices[0].startTime, ["HH:mm:ss", "HH:mm"]) : null,
+            morningEndTime: pitchEdit.hourlyPrices?.[0]?.endTime ? dayjs(pitchEdit.hourlyPrices[0].endTime, ["HH:mm:ss", "HH:mm"]) : null,
+            morningPricePerHour: pitchEdit.hourlyPrices?.[0]?.pricePerHour ?? null,
+            afternoonStartTime: pitchEdit.hourlyPrices?.[1]?.startTime ? dayjs(pitchEdit.hourlyPrices[1].startTime, ["HH:mm:ss", "HH:mm"]) : null,
+            afternoonEndTime: pitchEdit.hourlyPrices?.[1]?.endTime ? dayjs(pitchEdit.hourlyPrices[1].endTime, ["HH:mm:ss", "HH:mm"]) : null,
+            afternoonPricePerHour: pitchEdit.hourlyPrices?.[1]?.pricePerHour ?? null,
             open24h: pitchEdit.open24h,
             openTime: pitchEdit.openTime
                 ? dayjs(pitchEdit.openTime, 'HH:mm')
@@ -364,9 +404,55 @@ const ModalUpdatePitch = (props: IProps) => {
                     <Select options={PITCH_TYPE_OPTIONS} />
                 </Form.Item>
 
-                <Form.Item label="Giá / giờ" name="pricePerHour">
-                    <InputNumber style={{ width: '100%' }} min={1} />
+                <Form.Item label="Bật giá theo khung giờ" name="useHourlyPricing" valuePropName="checked">
+                    <Switch />
                 </Form.Item>
+
+                {!useHourlyPricing && (
+                    <Form.Item label="Giá / giờ" name="pricePerHour">
+                        <InputNumber style={{ width: '100%' }} min={1} />
+                    </Form.Item>
+                )}
+
+                {useHourlyPricing && (
+                    <>
+                        <Divider titlePlacement="left">Giá theo khung giờ</Divider>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                            <div style={{ border: "1px solid #f0f0f0", borderRadius: 8, padding: 12 }}>
+                                <div style={{ fontWeight: 600, marginBottom: 8 }}>Khung sáng</div>
+                                <Form.Item label="Giờ bắt đầu sáng" name="morningStartTime" rules={[{ required: true, message: "Vui lòng chọn giờ bắt đầu sáng" }]}>
+                                    <TimePicker format="HH:mm" style={{ width: "100%" }} />
+                                </Form.Item>
+                                <Form.Item label="Giờ kết thúc sáng" name="morningEndTime" rules={[{ required: true, message: "Vui lòng chọn giờ kết thúc sáng" }]}>
+                                    <TimePicker format="HH:mm" style={{ width: "100%" }} />
+                                </Form.Item>
+                                <Form.Item
+                                    label="Giá sáng / giờ"
+                                    name="morningPricePerHour"
+                                    rules={[{ required: true, message: "Vui lòng nhập giá sáng" }, { type: "number", min: 1, message: "Giá phải lớn hơn 0" }]}
+                                >
+                                    <InputNumber style={{ width: "100%" }} min={0} formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} />
+                                </Form.Item>
+                            </div>
+                            <div style={{ border: "1px solid #f0f0f0", borderRadius: 8, padding: 12 }}>
+                                <div style={{ fontWeight: 600, marginBottom: 8 }}>Khung chiều</div>
+                                <Form.Item label="Giờ bắt đầu chiều" name="afternoonStartTime" rules={[{ required: true, message: "Vui lòng chọn giờ bắt đầu chiều" }]}>
+                                    <TimePicker format="HH:mm" style={{ width: "100%" }} />
+                                </Form.Item>
+                                <Form.Item label="Giờ kết thúc chiều" name="afternoonEndTime" rules={[{ required: true, message: "Vui lòng chọn giờ kết thúc chiều" }]}>
+                                    <TimePicker format="HH:mm" style={{ width: "100%" }} />
+                                </Form.Item>
+                                <Form.Item
+                                    label="Giá chiều / giờ"
+                                    name="afternoonPricePerHour"
+                                    rules={[{ required: true, message: "Vui lòng nhập giá chiều" }, { type: "number", min: 1, message: "Giá phải lớn hơn 0" }]}
+                                >
+                                    <InputNumber style={{ width: "100%" }} min={0} formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} />
+                                </Form.Item>
+                            </div>
+                        </div>
+                    </>
+                )}
 
                 <Form.Item
                     label="Mở 24h"
@@ -604,51 +690,70 @@ const ModalUpdatePitch = (props: IProps) => {
                         Thêm/Cập nhật thiết bị sân
                     </Button>
 
-                    <List
-                        bordered
-                        loading={loadingPitchEquipments}
-                        dataSource={pitchEquipments}
-                        locale={{ emptyText: 'Sân này chưa có thiết bị được gắn' }}
-                        renderItem={(item) => (
-                            <List.Item
-                                actions={[
-                                    <Popconfirm
-                                        key={`delete-${item.equipmentId}`}
-                                        title="Xóa thiết bị khỏi sân?"
-                                        onConfirm={() => handleDeletePitchEquipment(item.equipmentId)}
-                                        okText="Xóa"
-                                        cancelText="Hủy"
+                    <div
+                        style={{
+                            border: '1px solid var(--ant-color-border)',
+                            borderRadius: 8,
+                            overflow: 'hidden',
+                        }}
+                    >
+                        {loadingPitchEquipments ? (
+                            <div style={{ padding: 16 }}>Đang tải thiết bị sân...</div>
+                        ) : pitchEquipments.length === 0 ? (
+                            <div style={{ padding: 16 }}>
+                                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Sân này chưa có thiết bị được gắn" />
+                            </div>
+                        ) : (
+                            <div>
+                                {pitchEquipments.map((item, idx) => (
+                                    <div
+                                        key={`${item.equipmentId}-${idx}`}
+                                        style={{
+                                            padding: 12,
+                                            borderBottom: idx < pitchEquipments.length - 1 ? '1px solid var(--ant-color-border-secondary)' : 'none',
+                                        }}
                                     >
-                                        <Button
-                                            danger
-                                            type="link"
-                                            loading={deletingEquipmentId === item.equipmentId}
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                gap: 8,
+                                                alignItems: 'flex-start',
+                                                flexWrap: 'wrap',
+                                            }}
                                         >
-                                            Xóa
-                                        </Button>
-                                    </Popconfirm>,
-                                ]}
-                            >
-                                <List.Item.Meta
-                                    title={
-                                        <Space wrap size={6}>
-                                            <span>{`${item.equipmentName} × ${item.quantity}`}</span>
-                                            <Tag color={item.equipmentMobility === 'MOVABLE' ? 'blue' : 'default'}>
-                                                {item.equipmentMobility === 'MOVABLE' ? 'Cho mượn' : 'Cố định sân'}
-                                            </Tag>
-                                        </Space>
-                                    }
-                                    description={
-                                        <>
-                                            {item.specification ? `Thông số: ${item.specification}` : 'Không có thông số'}
-                                            <br />
-                                            {item.note ? `Ghi chú hiển thị: ${item.note}` : 'Không có ghi chú'}
-                                        </>
-                                    }
-                                />
-                            </List.Item>
+                                            <div>
+                                                <Space wrap size={6}>
+                                                    <span>{`${item.equipmentName} × ${item.quantity}`}</span>
+                                                    <Tag color={item.equipmentMobility === 'MOVABLE' ? 'blue' : 'default'}>
+                                                        {item.equipmentMobility === 'MOVABLE' ? 'Cho mượn' : 'Cố định sân'}
+                                                    </Tag>
+                                                </Space>
+                                                <div style={{ marginTop: 6, color: 'rgba(0,0,0,0.65)' }}>
+                                                    <div>{item.specification ? `Thông số: ${item.specification}` : 'Không có thông số'}</div>
+                                                    <div>{item.note ? `Ghi chú hiển thị: ${item.note}` : 'Không có ghi chú'}</div>
+                                                </div>
+                                            </div>
+                                            <Popconfirm
+                                                title="Xóa thiết bị khỏi sân?"
+                                                onConfirm={() => handleDeletePitchEquipment(item.equipmentId)}
+                                                okText="Xóa"
+                                                cancelText="Hủy"
+                                            >
+                                                <Button
+                                                    danger
+                                                    type="link"
+                                                    loading={deletingEquipmentId === item.equipmentId}
+                                                >
+                                                    Xóa
+                                                </Button>
+                                            </Popconfirm>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         )}
-                    />
+                    </div>
                 </Space>
             </Form>
         </Modal>

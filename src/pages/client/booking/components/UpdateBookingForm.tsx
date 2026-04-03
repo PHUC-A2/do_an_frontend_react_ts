@@ -8,6 +8,7 @@ import { useSelector } from "react-redux";
 import { getBookingById, updateBookingClient, clientBorrowEquipment, clientGetBookingEquipments } from "../../../../config/Api";
 import type { IPitch } from "../../../../types/pitch";
 import { formatVND } from "../../../../utils/format/price";
+import { calculatePitchTotalPrice } from "../../../../utils/pitch/pitchPricing";
 import EquipmentBorrowSection, { type IBorrowLinePayload, type IBorrowPlanOptions } from "./EquipmentBorrowSection";
 import {
     fetchPitches,
@@ -172,7 +173,7 @@ const UpdateBookingForm = ({
     const isValid = minutes > 0;
 
     const preview = currentPitch && isValid
-        ? Math.round((currentPitch.pricePerHour / 60) * minutes)
+        ? calculatePitchTotalPrice(currentPitch, startDj, endDj)
         : 0;
 
     const dtError = touched && !isValid ? "Giờ kết thúc phải sau giờ bắt đầu" : null;

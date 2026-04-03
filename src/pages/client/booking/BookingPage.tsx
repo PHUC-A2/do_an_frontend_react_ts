@@ -27,6 +27,7 @@ import type { IPitchEquipment } from "../../../types/pitchEquipment";
 import { useBookingTimeline } from "./hook/useBookingTimeline";
 import { useAppSelector } from "../../../redux/hooks";
 import { formatVND } from "../../../utils/format/price";
+import { getPitchPricingDisplayLines } from "../../../utils/pitch/pitchPricing";
 import { getPitchTypeLabel, PITCH_STATUS_META } from "../../../utils/constants/pitch.constants";
 import BookingTime from "./components/BookingTimeline";
 import CreateBookingForm from "./components/CreateBookingForm";
@@ -413,7 +414,13 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                                                         <div className="bk__pitch-footer">
                                                             <div className="bk__pitch-price">
                                                                 <MdPriceChange size={15} />
-                                                                {formatVND(pitch.pricePerHour)} / giờ
+                                                                {(() => {
+                                                                    const pricingLines = getPitchPricingDisplayLines(pitch);
+                                                                    if (pricingLines.length > 0) {
+                                                                        return pricingLines.slice(0, 2).join(" | ");
+                                                                    }
+                                                                    return `${formatVND(pitch.pricePerHour)} / giờ`;
+                                                                })()}
                                                             </div>
                                                             <Tooltip title="Chỉ đường Google Maps">
                                                                 <button

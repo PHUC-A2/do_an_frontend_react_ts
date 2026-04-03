@@ -1,11 +1,20 @@
 export type PitchStatusEnum = "ACTIVE" | "MAINTENANCE";// đang HD, đang bảo trì
 export type PitchTypeEnum = "THREE" | "SEVEN"; // 3 hoặc 7
 
+// Khung giá theo giờ áp dụng lặp lại theo ngày (startTime/endTime theo định dạng HH:mm hoặc HH:mm:ss)
+export interface IPitchHourlyPrice {
+    startTime: string;
+    endTime: string;
+    pricePerHour: number;
+}
+
 export interface IPitch {
     id: number;
     name?: string | null;
     pitchType: PitchTypeEnum;
     pricePerHour: number;
+    // Danh sách khung giờ giá (nếu không có thì dùng `pricePerHour` cố định)
+    hourlyPrices?: IPitchHourlyPrice[];
     pitchUrl?: string | null;
     openTime?: string | null;
     closeTime?: string | null;
@@ -30,6 +39,8 @@ export interface ICreatePitchReq {
     name?: string | null;
     pitchType: PitchTypeEnum;
     pricePerHour: number;
+    // Danh sách khung giờ giá (tùy chọn)
+    hourlyPrices?: Array<IPitchHourlyPrice>;
     pitchUrl?: string | null;
     openTime?: string | null;
     closeTime?: string | null;
@@ -47,6 +58,8 @@ export interface IUpdatePitchReq {
     name?: string | null;
     pitchType: PitchTypeEnum;
     pricePerHour: number;
+    // Danh sách khung giờ giá (tùy chọn)
+    hourlyPrices?: Array<IPitchHourlyPrice>;
     pitchUrl?: string | null;
     openTime?: string | null;
     closeTime?: string | null;

@@ -8,6 +8,7 @@ import type { ICreateBookingClientReq } from "../../../../types/booking";
 import { createBookingClient, clientBorrowEquipment } from "../../../../config/Api";
 import type { IPitch } from "../../../../types/pitch";
 import { formatVND } from "../../../../utils/format/price";
+import { calculatePitchTotalPrice } from "../../../../utils/pitch/pitchPricing";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 import { fetchBookingsClient } from "../../../../redux/features/bookingClientSlice";
 import { TbSoccerField } from "react-icons/tb";
@@ -71,7 +72,8 @@ const CreateBookingForm = ({ pitchIdNumber, pitch, pitchLoading, bookingDate, is
     const endDj = useMemo(() => dayjs(`${endDate}T${endTime}`), [endDate, endTime]);
     const minutes = endDj.diff(startDj, "minute");
     const isValid = minutes > 0;
-    const preview = pitch && isValid ? Math.round((pitch.pricePerHour / 60) * minutes) : 0;
+    // Tính tạm tính theo khung giờ giá (hourlyPrices) để khớp backend
+    const preview = pitch && isValid ? calculatePitchTotalPrice(pitch, startDj, endDj) : 0;
     const dtError = touched && !isValid ? "Giờ kết thúc phải sau giờ bắt đầu" : null;
 
     const handleBooking = async (values: FormValues) => {

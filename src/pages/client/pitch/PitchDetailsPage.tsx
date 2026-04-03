@@ -63,6 +63,7 @@ import BookingTime from "../booking/components/BookingTimeline";
 import { useAppSelector } from "../../../redux/hooks";
 import ReviewChatMessageRow from "../../../components/common/ReviewChatMessageRow";
 import { toast } from "react-toastify";
+import { getPitchPricingDisplayLines } from "../../../utils/pitch/pitchPricing";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -393,9 +394,21 @@ const PitchDetailsPage: React.FC = () => {
                                     <Row align="middle" justify="space-between">
                                         <Col>
                                             <Text strong className="price-label">Giá mỗi giờ</Text>
-                                            <div className="price-value-big">
-                                                {formatVND(pitch.pricePerHour)}<small>/giờ</small>
-                                            </div>
+                                            {(() => {
+                                                const pricingLines = getPitchPricingDisplayLines(pitch);
+                                                if (pricingLines.length === 0) {
+                                                    return <div className="price-value-big">{`${formatVND(pitch.pricePerHour)} / giờ`}</div>;
+                                                }
+                                                return (
+                                                    <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+                                                        {pricingLines.slice(0, 2).map((line) => (
+                                                            <div key={line} className="price-value-big" style={{ fontSize: 38, lineHeight: 1.15 }}>
+                                                                {line}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                );
+                                            })()}
                                         </Col>
                                         <Col>
                                             <RBButton

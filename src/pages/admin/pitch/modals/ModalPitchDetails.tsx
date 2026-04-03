@@ -9,6 +9,7 @@ import { formatInstant } from '../../../../utils/format/localdatetime';
 import { Button } from 'react-bootstrap';
 import { FaMapMarkerAlt } from 'react-icons/fa';
 import { formatVND } from '../../../../utils/format/price';
+import { getPitchPricingDisplayLines } from '../../../../utils/pitch/pitchPricing';
 
 const { Text } = Typography;
 
@@ -88,7 +89,14 @@ const ModalPitchDetails = (props: IProps) => {
                                         {pitch?.pitchType ? getPitchTypeLabel(pitch.pitchType) : 'N/A'}
                                     </Descriptions.Item>
                                     <Descriptions.Item label="Giá / giờ">
-                                        {pitch?.pricePerHour ? formatVND(pitch.pricePerHour) : 'N/A'}
+                                        {(() => {
+                                            if (!pitch) return 'N/A';
+                                            const lines = getPitchPricingDisplayLines(pitch);
+                                            if (lines.length > 0) {
+                                                return lines.join(' | ');
+                                            }
+                                            return pitch.pricePerHour ? `${formatVND(pitch.pricePerHour)} / giờ` : 'N/A';
+                                        })()}
                                     </Descriptions.Item>
                                     <Descriptions.Item label="Trạng thái">
                                         {pitch?.status ? (

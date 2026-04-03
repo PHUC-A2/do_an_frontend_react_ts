@@ -5,6 +5,7 @@ import {
     Select,
     Switch,
     TimePicker,
+    Divider,
     type UploadFile,
     type UploadProps,
     type GetProp,
@@ -45,6 +46,7 @@ const ModalAddPitch = ({ openModalAddPitch, setOpenModalAddPitch }: IProps) => {
     const dispatch = useAppDispatch();
     const pitchListQuery = useAppSelector(selectPitchLastListQuery);
     const open24h = Form.useWatch('open24h', form);
+    const useHourlyPricing = Form.useWatch('useHourlyPricing', form);
     const openTime = Form.useWatch('openTime', form);
     const closeTime = Form.useWatch('closeTime', form);
     const pitchLength = Form.useWatch('length', form);
@@ -102,6 +104,20 @@ const ModalAddPitch = ({ openModalAddPitch, setOpenModalAddPitch }: IProps) => {
     };
 
     const handleAddPitch = async (values: any) => {
+        // Tách riêng 2 khung giá: Sáng và Chiều (không dùng list chung)
+        const normalizedHourlyPrices = [
+            {
+                startTime: values?.morningStartTime ? dayjs(values.morningStartTime).format("HH:mm") : undefined,
+                endTime: values?.morningEndTime ? dayjs(values.morningEndTime).format("HH:mm") : undefined,
+                pricePerHour: Number(values?.morningPricePerHour),
+            },
+            {
+                startTime: values?.afternoonStartTime ? dayjs(values.afternoonStartTime).format("HH:mm") : undefined,
+                endTime: values?.afternoonEndTime ? dayjs(values.afternoonEndTime).format("HH:mm") : undefined,
+                pricePerHour: Number(values?.afternoonPricePerHour),
+            },
+        ].filter((hp: any) => hp.startTime && hp.endTime && Number.isFinite(hp.pricePerHour) && hp.pricePerHour > 0);
+
         const payload: ICreatePitchReq = {
             ...values,
             openTime: values.openTime
@@ -110,7 +126,18 @@ const ModalAddPitch = ({ openModalAddPitch, setOpenModalAddPitch }: IProps) => {
             closeTime: values.closeTime
                 ? dayjs(values.closeTime).format('HH:mm')
                 : null,
+            // Khi bật giá theo khung giờ: gửi danh sách khung giá, đồng thời set giá base theo khung đầu tiên
+            // để backend luôn có giá fallback hợp lệ.
+            pricePerHour: values.useHourlyPricing
+                ? Number(normalizedHourlyPrices[0]?.pricePerHour ?? values.pricePerHour)
+                : values.pricePerHour,
+            hourlyPrices: values.useHourlyPricing ? normalizedHourlyPrices : [],
         };
+
+        if (values.useHourlyPricing && normalizedHourlyPrices.length === 0) {
+            toast.error("Vui lòng thêm ít nhất 1 khung giờ giá khi bật giá theo khung giờ.");
+            return;
+        }
 
         try {
             const res = await createPitch(payload);
@@ -163,6 +190,7 @@ const ModalAddPitch = ({ openModalAddPitch, setOpenModalAddPitch }: IProps) => {
                 layout="vertical"
                 onFinish={handleAddPitch}
                 autoComplete="off"
+                initialValues={{ useHourlyPricing: false, open24h: false }}
             >
                 <Form.Item label="Tên sân" name="name"
                     rules={[{ required: true, message: 'Vui lòng nhập tên sân' }]}
@@ -176,26 +204,66 @@ const ModalAddPitch = ({ openModalAddPitch, setOpenModalAddPitch }: IProps) => {
                     <Select options={PITCH_TYPE_OPTIONS} />
                 </Form.Item>
 
-                <Form.Item
-                    label="Giá / giờ"
-                    name="pricePerHour"
-                    rules={[
-                        { required: true, message: 'Vui lòng nhập giá thuê sân' },
-                        {
-                            type: 'number',
-                            min: 1,
-                            message: 'Giá phải lớn hơn 0',
-                        },
-                    ]}
-                >
-                    <InputNumber
-                        style={{ width: '100%' }}
-                        min={0}
-                        formatter={(v) =>
-                            `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                        }
-                    />
+                <Form.Item label="Bật giá theo khung giờ" name="useHourlyPricing" valuePropName="checked">
+                    <Switch />
                 </Form.Item>
+
+                {!useHourlyPricing && (
+                    <Form.Item
+                        label="Giá / giờ"
+                        name="pricePerHour"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập giá thuê sân' },
+                            { type: 'number', min: 1, message: 'Giá phải lớn hơn 0' },
+                        ]}
+                    >
+                        <InputNumber
+                            style={{ width: '100%' }}
+                            min={0}
+                            formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                        />
+                    </Form.Item>
+                )}
+
+                {useHourlyPricing && (
+                    <>
+                        <Divider titlePlacement="left">Giá theo khung giờ</Divider>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                            <div style={{ border: "1px solid #f0f0f0", borderRadius: 8, padding: 12 }}>
+                                <div style={{ fontWeight: 600, marginBottom: 8 }}>Khung sáng</div>
+                                <Form.Item label="Giờ bắt đầu sáng" name="morningStartTime" rules={[{ required: true, message: "Vui lòng chọn giờ bắt đầu sáng" }]}>
+                                    <TimePicker format="HH:mm" style={{ width: "100%" }} />
+                                </Form.Item>
+                                <Form.Item label="Giờ kết thúc sáng" name="morningEndTime" rules={[{ required: true, message: "Vui lòng chọn giờ kết thúc sáng" }]}>
+                                    <TimePicker format="HH:mm" style={{ width: "100%" }} />
+                                </Form.Item>
+                                <Form.Item
+                                    label="Giá sáng / giờ"
+                                    name="morningPricePerHour"
+                                    rules={[{ required: true, message: "Vui lòng nhập giá sáng" }, { type: "number", min: 1, message: "Giá phải lớn hơn 0" }]}
+                                >
+                                    <InputNumber style={{ width: "100%" }} min={0} formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} />
+                                </Form.Item>
+                            </div>
+                            <div style={{ border: "1px solid #f0f0f0", borderRadius: 8, padding: 12 }}>
+                                <div style={{ fontWeight: 600, marginBottom: 8 }}>Khung chiều</div>
+                                <Form.Item label="Giờ bắt đầu chiều" name="afternoonStartTime" rules={[{ required: true, message: "Vui lòng chọn giờ bắt đầu chiều" }]}>
+                                    <TimePicker format="HH:mm" style={{ width: "100%" }} />
+                                </Form.Item>
+                                <Form.Item label="Giờ kết thúc chiều" name="afternoonEndTime" rules={[{ required: true, message: "Vui lòng chọn giờ kết thúc chiều" }]}>
+                                    <TimePicker format="HH:mm" style={{ width: "100%" }} />
+                                </Form.Item>
+                                <Form.Item
+                                    label="Giá chiều / giờ"
+                                    name="afternoonPricePerHour"
+                                    rules={[{ required: true, message: "Vui lòng nhập giá chiều" }, { type: "number", min: 1, message: "Giá phải lớn hơn 0" }]}
+                                >
+                                    <InputNumber style={{ width: "100%" }} min={0} formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} />
+                                </Form.Item>
+                            </div>
+                        </div>
+                    </>
+                )}
 
                 {!openTime && !closeTime && (
                     <Form.Item label="Mở 24h" name="open24h" valuePropName="checked">
