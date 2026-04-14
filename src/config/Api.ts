@@ -41,6 +41,9 @@ export const register = (data: IRegister) => instance.post("/api/v1/auth/registe
 export const login = (username: string, password: string) => instance.post("/api/v1/auth/login", { username, password });
 export const verifyEmail = (data: IVerifyEmailReq) => instance.post("/api/v1/auth/verify-email", data);
 export const resendOtp = (data: IResendOtpReq) => instance.post("/api/v1/auth/resend-otp", data);
+/** Gửi lại OTP xác thực email chỉ cần biết email (tài khoản PENDING_VERIFICATION). */
+export const resendOtpByEmail = (email: string) =>
+    instance.post("/api/v1/auth/resend-otp-by-email", { email });
 // export const logout = () => instance.post("/api/v1/auth/logout");
 export const logout = async () => {
     try {

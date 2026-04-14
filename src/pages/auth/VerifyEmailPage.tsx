@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
-import { resendOtp, verifyEmail } from '../../config/Api';
+import { resendOtp, resendOtpByEmail, verifyEmail } from '../../config/Api';
 import './VerifyEmail.scss';
 
 const { Text } = Typography;
@@ -12,11 +12,13 @@ const PENDING_VERIFICATION_KEY = 'pending_verification';
 
 const VerifyEmailPage = () => {
     const [form] = Form.useForm();
+    const [emailForm] = Form.useForm();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
     const [loadingVerify, setLoadingVerify] = useState(false);
     const [loadingResend, setLoadingResend] = useState(false);
+    const [loadingResendByEmail, setLoadingResendByEmail] = useState(false);
     const [cooldownSeconds, setCooldownSeconds] = useState(0);
     const [otpExpiry, setOtpExpiry] = useState(300);
     const otpExpiryStarted = useRef(false);
@@ -151,6 +153,41 @@ const VerifyEmailPage = () => {
         }
     };
 
+    const handleResendOtpByEmailOnly = async (values: { email: string }) => {
+        const emailTrim = values.email?.trim() ?? '';
+        try {
+            setLoadingResendByEmail(true);
+            const res = await resendOtpByEmail(emailTrim);
+            if (res?.data?.statusCode === 200) {
+                const payload = res?.data?.data?.message as
+                    | { userId?: number; email?: string }
+                    | string
+                    | undefined;
+                const obj = typeof payload === 'object' && payload !== null ? payload : null;
+                const userId = obj?.userId != null ? Number(obj.userId) : NaN;
+                const emailOut = typeof obj?.email === 'string' ? obj.email : emailTrim;
+
+                if (Number.isFinite(userId) && userId > 0 && emailOut) {
+                    localStorage.setItem(
+                        PENDING_VERIFICATION_KEY,
+                        JSON.stringify({ userId, email: emailOut }),
+                    );
+                    toast.success('Đã gửi OTP xác thực. Vui lòng kiểm tra email.');
+                    emailForm.resetFields();
+                    navigate(
+                        `/verify-email?userId=${userId}&email=${encodeURIComponent(emailOut)}`,
+                        { replace: true },
+                    );
+                }
+            }
+        } catch (error: unknown) {
+            const e = error as { response?: { data?: { message?: string } } };
+            toast.error(e?.response?.data?.message ?? 'Không thể gửi OTP xác thực');
+        } finally {
+            setLoadingResendByEmail(false);
+        }
+    };
+
     return (
         <div className="verify-email-container">
             <div className="overlay" />
@@ -233,7 +270,40 @@ const VerifyEmailPage = () => {
                     </>
                 ) : (
                     <div className="missing-context">
-                        <Text>Không tìm thấy thông tin xác thực. Vui lòng đăng ký lại tài khoản.</Text>
+                        <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+                            Nhập email đã đăng ký (tài khoản chưa xác thực) để gửi lại OTP. Sau khi gửi thành công,
+                            trang sẽ chuyển về cùng bước nhập mã trên URL dạng /verify-email?userId=…&email=… giống
+                            sau khi đăng ký.
+                        </Text>
+                        <Form
+                            form={emailForm}
+                            layout="vertical"
+                            onFinish={handleResendOtpByEmailOnly}
+                            className="verify-form"
+                        >
+                            <Form.Item
+                                name="email"
+                                label="Email đã đăng ký"
+                                normalize={(value) => value?.trim()}
+                                rules={[
+                                    { required: true, message: 'Vui lòng nhập email' },
+                                    { type: 'email', message: 'Email không hợp lệ' },
+                                ]}
+                            >
+                                <Input size="large" placeholder="Nhập email đã đăng ký..." />
+                            </Form.Item>
+                            <Form.Item>
+                                <Button
+                                    type="primary"
+                                    htmlType="submit"
+                                    block
+                                    className="btn-verify"
+                                    loading={loadingResendByEmail}
+                                >
+                                    Gửi OTP xác thực
+                                </Button>
+                            </Form.Item>
+                        </Form>
                         <div className="missing-context-actions">
                             <Link to="/register">Đi tới đăng ký</Link>
                             <Link to="/login">Đi tới đăng nhập</Link>

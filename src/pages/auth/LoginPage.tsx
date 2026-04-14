@@ -142,6 +142,9 @@ const LoginPage = () => {
                             <Link to="/register">Tạo tài khoản!</Link>
                             <Link to="#" onClick={() => setOpen(true)}>Quên mật khẩu?</Link>
                         </Flex>
+                        <Flex justify="start" className="mt-2">
+                            <Link to="/verify-email">Chưa xác thực tài khoản?</Link>
+                        </Flex>
                     </Form.Item>
                 </Form>
             </motion.div>
