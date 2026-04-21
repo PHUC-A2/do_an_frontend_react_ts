@@ -151,6 +151,9 @@ export const rejectPayment = (id: number) => instance.patch<IBackendRes<void>>(`
 export const deleteBookingFromPayment = (id: number) => instance.put<IBackendRes<void>>(`/api/v1/payments/${id}/delete-booking`);
 export const createPayment = (data: ICreatePaymentReq) => instance.post<IBackendRes<IPaymentRes>>(`/api/v1/client/payments`, data);
 export const getQR = (paymentCode: string) => instance.get<IBackendRes<IPaymentRes>>(`/api/v1/client/payments/${paymentCode}/qr`);
+/** Lấy QR của payment PENDING theo bookingId (dùng khi tải lại trang). data = null nếu chưa có. */
+export const getPendingPaymentByBooking = (bookingId: number) =>
+    instance.get<IBackendRes<IPaymentRes | null>>(`/api/v1/client/payments/booking/${bookingId}`);
 // gắn ảnh minh chứng cho payment
 export const attachPaymentProof = (paymentId: number, proofUrl: string) =>
     instance.patch<IBackendRes<void>>(

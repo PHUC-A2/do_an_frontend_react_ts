@@ -5,14 +5,22 @@ import {
     Select,
     Button,
     Divider,
+    Spin,
 } from "antd";
 import {
-    DollarCircleOutlined
+    DollarCircleOutlined,
+    LoadingOutlined,
 } from "@ant-design/icons";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import type { IPaymentRes, PaymentMethodEnum } from "../../../../types/payment";
-import { attachPaymentProof, createPayment, getQR } from "../../../../config/Api";
+import {
+    attachPaymentProof,
+    createPayment,
+    getQR,
+    getPendingPaymentByBooking,
+    uploadImagePayment,
+} from "../../../../config/Api";
 import { PAYMENT_METHOD_OPTIONS } from "../../../../utils/constants/payment.constanst";
 import { formatVND } from "../../../../utils/format/price";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
@@ -20,7 +28,6 @@ import { fetchBookingsClient, selectBookingsClient } from "../../../../redux/fea
 import type { UploadFile, UploadProps, GetProp } from "antd";
 import { Upload, Image } from "antd";
 import { CameraOutlined } from "@ant-design/icons";
-import { uploadImagePayment } from "../../../../config/Api";
 
 type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
 
@@ -35,17 +42,22 @@ interface Props {
 const PaymentDrawer = ({ open, bookingId, onClose }: Props) => {
     const [method, setMethod] = useState<PaymentMethodEnum>("BANK_TRANSFER");
     const [loading, setLoading] = useState(false);
+    const [loadingExisting, setLoadingExisting] = useState(false);
     const [qr, setQr] = useState<IPaymentRes | null>(null);
     const bookings = useAppSelector(selectBookingsClient);
     const dispatch = useAppDispatch();
 
     const booking = bookings.find(b => b.id === bookingId);
-    const canPay = booking?.status === "ACTIVE";
+    const canPay = booking?.status === "ACTIVE" || booking?.status === "CONFIRMED";
 
     const [fileList, setFileList] = useState<UploadFile[]>([]);
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState("");
+    const [paidNotified, setPaidNotified] = useState(false);
+    const openRef = useRef(open);
+    openRef.current = open;
 
+    // ── Helpers ──────────────────────────────────────────────────────────────
     const getBase64 = (file: FileType): Promise<string> =>
         new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -62,27 +74,13 @@ const PaymentDrawer = ({ open, bookingId, onClose }: Props) => {
         setPreviewOpen(true);
     };
 
-
     const handleUploadProof = async ({ file, onSuccess, onError }: any) => {
         try {
             const res = await uploadImagePayment(file);
             const url = res.data?.url;
-
-            if (!url || !qr) {
-                throw new Error("Thiếu url hoặc payment");
-            }
-
+            if (!url || !qr) throw new Error("Thiếu url hoặc payment");
             await attachPaymentProof(qr.paymentId, url);
-
-            setFileList([
-                {
-                    uid: file.uid,
-                    name: file.name,
-                    status: "done",
-                    url,
-                },
-            ]);
-
+            setFileList([{ uid: file.uid, name: file.name, status: "done", url }]);
             onSuccess?.("ok");
             toast.success("Tải ảnh minh chứng thành công");
         } catch (err) {
@@ -91,22 +89,15 @@ const PaymentDrawer = ({ open, bookingId, onClose }: Props) => {
         }
     };
 
-    const paymentKey = (bookingId: number) =>
-        `PAYMENT_CODE_BOOKING_${bookingId}`;
-
+    // ── Load QR từ paymentCode ────────────────────────────────────────────────
     const loadQR = async (paymentCode: string) => {
         const res = await getQR(paymentCode);
-        if (!open) return;
-
-        if (res.data.statusCode !== 200) {
-            throw new Error("Không lấy được QR");
-        }
-
+        if (!openRef.current) return;
+        if (res.data.statusCode !== 200) throw new Error("Không lấy được QR");
         setQr(res.data.data ?? null);
     };
 
-
-
+    // ── Tạo / lấy lại payment ─────────────────────────────────────────────────
     const handlePay = async () => {
         if (!bookingId || booking?.status === "PAID") return;
         if (booking?.status === "PENDING") {
@@ -119,83 +110,83 @@ const PaymentDrawer = ({ open, bookingId, onClose }: Props) => {
             setQr(null);
 
             const res = await createPayment({ bookingId, method });
-
             const paymentCode = res.data.data?.paymentCode;
-            if (res.data.statusCode !== 201 || !paymentCode) {
+
+            // Backend trả 201 (tạo mới) hoặc 200 (lấy lại) — đều hợp lệ
+            if (!paymentCode) {
                 toast.error(res.data.message || "Không tạo được payment");
                 return;
             }
 
-            localStorage.setItem(paymentKey(bookingId), paymentCode);
-            await loadQR(paymentCode);
-
-            toast.success("Tạo thanh toán thành công");
-        } catch (err: any) {
-            const message = err?.response?.data?.message;
-
-            // CASH: backend trả 400 nhưng là hợp lệ
-            if (method === "CASH" && message === "Thanh toán tiền mặt không hỗ trợ QR") {
+            if (method === "CASH") {
                 toast.success("Đã ghi nhận thanh toán tiền mặt");
                 return;
             }
 
+            await loadQR(paymentCode);
+            toast.success("Mã QR đã sẵn sàng");
+        } catch (err: any) {
+            const message = err?.response?.data?.message;
+            if (method === "CASH" && message === "Thanh toán tiền mặt không hỗ trợ QR") {
+                toast.success("Đã ghi nhận thanh toán tiền mặt");
+                return;
+            }
             toast.error(message || "Thanh toán thất bại");
-        }
-        finally {
+        } finally {
             setLoading(false);
         }
     };
 
-    const [paidNotified, setPaidNotified] = useState(false);
+    // ── Auto-load QR khi mở drawer ────────────────────────────────────────────
+    // Gọi endpoint mới để phục hồi QR của payment PENDING (nếu có)
+    // Không còn phụ thuộc localStorage — đáng tin cậy hơn
+    useEffect(() => {
+        if (!bookingId || !open || !canPay) return;
 
+        let cancelled = false;
+        setLoadingExisting(true);
+
+        getPendingPaymentByBooking(bookingId)
+            .then(res => {
+                if (cancelled || !openRef.current) return;
+                const data = res.data.data;
+                if (data?.vietQrUrl) {
+                    setQr(data);
+                    // Đồng bộ method selector với payment đang chờ
+                    setMethod("BANK_TRANSFER");
+                }
+            })
+            .catch(() => { /* silent — không có payment pending */ })
+            .finally(() => { if (!cancelled) setLoadingExisting(false); });
+
+        return () => { cancelled = true; };
+    }, [bookingId, open, canPay]);
+
+    // ── Reset khi đổi booking ─────────────────────────────────────────────────
     useEffect(() => {
         setPaidNotified(false);
     }, [bookingId]);
 
-
+    // ── Theo dõi PAID ─────────────────────────────────────────────────────────
     useEffect(() => {
         if (!bookingId || !booking) return;
-
         if (booking.status === "PAID" && !paidNotified) {
-            localStorage.removeItem(paymentKey(bookingId));
             setQr(null);
             toast.success("Thanh toán đã được xác nhận");
             setPaidNotified(true);
         }
     }, [booking?.status, bookingId, paidNotified]);
 
-
+    // ── Poll mỗi 15s khi đang hiển thị QR ────────────────────────────────────
     useEffect(() => {
-        if (!bookingId) return;
-
-        setQr(null);
-        setMethod("BANK_TRANSFER");
-
-        if (!open) return;
-
-        const storedPaymentCode = localStorage.getItem(paymentKey(bookingId));
-        if (storedPaymentCode && canPay) {
-            loadQR(storedPaymentCode);
-        }
-    }, [bookingId, open, canPay]);
-
-    useEffect(() => {
-        if (!open) return;
-        if (!qr) return;
-        if (booking?.status === "PAID") return;
-
+        if (!open || !qr || booking?.status === "PAID") return;
         const interval = setInterval(() => {
             dispatch(fetchBookingsClient(""));
-        }, 15000); // 15s
-
+        }, 15000);
         return () => clearInterval(interval);
     }, [open, qr, booking?.status, dispatch]);
 
-    // const handleClose = () => {
-    //     setQr(null);
-    //     onClose();
-    // };
-
+    // ── Close ─────────────────────────────────────────────────────────────────
     const handleClose = () => {
         setQr(null);
         setFileList([]);
@@ -212,32 +203,45 @@ const PaymentDrawer = ({ open, bookingId, onClose }: Props) => {
             placement="right"
             size={360}
         >
-            <Space orientation="vertical" style={{ width: "100%" }} size={16}>
+            <Space direction="vertical" style={{ width: "100%" }} size={16}>
+
+                {/* Đang tải QR cũ */}
+                {loadingExisting && (
+                    <div style={{ textAlign: "center", padding: "16px 0" }}>
+                        <Spin indicator={<LoadingOutlined />} />
+                        <div style={{ marginTop: 8, fontSize: 12, color: "#888" }}>
+                            Đang kiểm tra thanh toán...
+                        </div>
+                    </div>
+                )}
+
                 {/* Phương thức */}
-                <div>
-                    <Text strong>Phương thức thanh toán</Text>
-                    <Select
-                        disabled={!!qr || booking?.status === "PAID" || !canPay}
-                        style={{ width: "100%", marginTop: 8 }}
-                        options={PAYMENT_METHOD_OPTIONS}
-                        value={method}
-                        onChange={setMethod}
-                    />
-                    {booking?.status === "PENDING" && (
-                        <Text type="warning" style={{ fontSize: 12 }}>
-                            ⏳ Booking đang chờ admin xác nhận. Bạn chỉ có thể thanh toán sau khi được duyệt.
-                        </Text>
-                    )}
-                    {method === "CASH" && (
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                            💵 Thanh toán tiền mặt tại sân, không cần quét QR
-                        </Text>
-                    )}
+                {!loadingExisting && (
+                    <div>
+                        <Text strong>Phương thức thanh toán</Text>
+                        <Select
+                            // Khóa khi đã có QR, đã thanh toán, hoặc không thể thanh toán
+                            disabled={!!qr || booking?.status === "PAID" || !canPay}
+                            style={{ width: "100%", marginTop: 8 }}
+                            options={PAYMENT_METHOD_OPTIONS}
+                            value={method}
+                            onChange={setMethod}
+                        />
+                        {booking?.status === "PENDING" && (
+                            <Text type="warning" style={{ fontSize: 12 }}>
+                                ⏳ Booking đang chờ admin xác nhận. Bạn chỉ có thể thanh toán sau khi được duyệt.
+                            </Text>
+                        )}
+                        {method === "CASH" && !qr && (
+                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                💵 Thanh toán tiền mặt tại sân, không cần quét QR
+                            </Text>
+                        )}
+                    </div>
+                )}
 
-                </div>
-
-                {/* Button */}
-                {!qr && booking?.status !== "PAID" && canPay && (
+                {/* Nút thanh toán — chỉ hiện khi chưa có QR và chưa thanh toán */}
+                {!loadingExisting && !qr && booking?.status !== "PAID" && canPay && (
                     <Button
                         icon={<DollarCircleOutlined />}
                         size="small"
@@ -250,29 +254,20 @@ const PaymentDrawer = ({ open, bookingId, onClose }: Props) => {
                     </Button>
                 )}
 
-
                 {booking?.status === "PAID" && (
                     <Text type="success">✅ Đã thanh toán</Text>
                 )}
 
-
                 {/* QR */}
-                {qr && method === "BANK_TRANSFER" && (
+                {qr && (
                     <>
                         <Divider />
-                        <Space orientation="vertical" align="center" style={{ width: "100%" }}>
+                        <Space direction="vertical" align="center" style={{ width: "100%" }}>
                             <Text strong>Quét QR để thanh toán</Text>
-
-                            <Image
-                                src={qr.vietQrUrl}
-                                width={220}
-                                preview={false}
-                            />
-
+                            <Image src={qr.vietQrUrl} width={220} preview={false} />
                             <Text type="secondary">
                                 Nội dung: <b>{qr.content}</b>
                             </Text>
-
                             <Text type="secondary">
                                 Số tiền: <b>{formatVND(qr.amount)}</b>
                             </Text>
@@ -288,7 +283,6 @@ const PaymentDrawer = ({ open, bookingId, onClose }: Props) => {
                     <>
                         <Divider />
                         <Text strong>Ảnh minh chứng thanh toán (không bắt buộc)</Text>
-
                         <Upload
                             listType="picture-card"
                             fileList={fileList}
@@ -301,30 +295,21 @@ const PaymentDrawer = ({ open, bookingId, onClose }: Props) => {
                             {fileList.length >= 1 ? null : (
                                 <div>
                                     <CameraOutlined />
-                                    <div style={{ marginTop: 8, fontSize: 12 }}>
-                                        Upload ảnh
-                                    </div>
+                                    <div style={{ marginTop: 8, fontSize: 12 }}>Upload ảnh</div>
                                 </div>
                             )}
                         </Upload>
-
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                            Có thể upload sau
-                        </Text>
+                        <Text type="secondary" style={{ fontSize: 12 }}>Có thể upload sau</Text>
                     </>
                 )}
 
                 {previewImage && (
                     <Image
                         style={{ display: "none" }}
-                        preview={{
-                            open: previewOpen,
-                            onOpenChange: setPreviewOpen,
-                        }}
+                        preview={{ open: previewOpen, onOpenChange: setPreviewOpen }}
                         src={previewImage}
                     />
                 )}
-
 
             </Space>
         </Drawer>
