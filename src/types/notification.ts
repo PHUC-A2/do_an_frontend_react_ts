@@ -20,6 +20,7 @@ export interface INotification {
     senderId?: number | null;
     senderName?: string | null;
     senderAvatarUrl?: string | null;
+    referenceId?: number | null;
     isRead: boolean;
     deletedByUser: boolean;
     createdAt: string;
