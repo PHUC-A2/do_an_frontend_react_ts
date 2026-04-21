@@ -264,10 +264,17 @@ const ModalBookingHistory = (props: IProps) => {
             const isPending = booking.status === "PENDING";
             const isPaid = booking.status === "PAID";
             const isCancelled = booking.status === "CANCELLED";
+            const isActive = booking.status === "ACTIVE" || booking.status === "CONFIRMED";
 
-            const canPay = booking.status === "ACTIVE" && !isEnded && !isPaid;
-            const canUpdate = (booking.status === "ACTIVE" || isPending) && !isEnded && !isPaid;
-            const canCancel = (booking.status === "ACTIVE" || isPending) && !isEnded && !isPaid;
+            // Đang trong khung giờ đá
+            const isPlaying = dayjs(booking.startDateTime).isBefore(dayjs())
+                && dayjs(booking.endDateTime).isAfter(dayjs())
+                && !isCancelled && booking.status !== "NO_SHOW";
+
+            // Bỏ !isEnded → lịch sử ACTIVE/CONFIRMED chưa thanh toán vẫn hiện nút thanh toán
+            const canPay = isActive && !isPaid;
+            const canUpdate = isActive && !isEnded && !isPaid;
+            const canCancel = isActive && !isEnded && !isPaid;
             const canDelete = isPaid || isCancelled || isEnded;
 
             return {
@@ -275,8 +282,13 @@ const ModalBookingHistory = (props: IProps) => {
                 label: (
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: '100%' }}>
                         <Space>
-                            <EnvironmentOutlined style={{ color: token.colorPrimary }} />
-                            <Text strong>{booking.pitchName}</Text>
+                            <EnvironmentOutlined style={{ color: isPlaying ? '#16A34A' : token.colorPrimary }} />
+                            <Text strong style={{ color: isPlaying ? '#15803D' : undefined }}>{booking.pitchName}</Text>
+                            {isPlaying && (
+                                <Tag color="success" style={{ margin: 0, fontSize: 11, fontWeight: 600 }}>
+                                    ⚽ Đang đá
+                                </Tag>
+                            )}
                         </Space>
                         <Text type="secondary" style={{ fontSize: 12 }}>
                             {dayjs(booking.startDateTime).format(" HH:mm DD/MM/YYYY")}
@@ -360,6 +372,25 @@ const ModalBookingHistory = (props: IProps) => {
                                         <Text type="secondary"><DollarCircleOutlined /> Tổng tiền:</Text>
                                         <Text strong style={{ color: token.colorSuccess, fontSize: 16 }}>{formatVND(booking.totalPrice)}</Text>
                                     </div>
+                                    {isPlaying && (
+                                        <div style={{
+                                            display: 'flex', alignItems: 'center', gap: 8,
+                                            background: '#DCFCE7', borderRadius: 6, padding: '6px 10px',
+                                        }}>
+                                            <motion.span
+                                                animate={{ opacity: [1, 0.2, 1] }}
+                                                transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+                                                style={{
+                                                    width: 8, height: 8, borderRadius: '50%',
+                                                    background: '#16A34A', display: 'inline-block',
+                                                    flexShrink: 0,
+                                                }}
+                                            />
+                                            <Text style={{ color: '#15803D', fontWeight: 600, fontSize: 13 }}>
+                                                ⚽ Đang trong khung giờ đá
+                                            </Text>
+                                        </div>
+                                    )}
                                 </Space>
                             </Col>
 

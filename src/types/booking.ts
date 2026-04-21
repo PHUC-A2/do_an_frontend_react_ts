@@ -1,4 +1,4 @@
-export type BookingStatusEnum = "PENDING" | "ACTIVE" | "PAID" | "CANCELLED";
+export type BookingStatusEnum = "PENDING" | "ACTIVE" | "CONFIRMED" | "PAID" | "CHECKIN" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
 export interface IBooking {
     id: number;
     userId: number;
