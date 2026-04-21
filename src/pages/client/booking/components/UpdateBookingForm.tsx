@@ -216,7 +216,7 @@ const UpdateBookingForm = ({
                 startDateTime: startDj.format("YYYY-MM-DDTHH:mm:ss"),
                 endDateTime: endDj.format("YYYY-MM-DDTHH:mm:ss"),
             });
-            toast.success("Cập nhật lịch đặt thành công!");
+            toast.success("Lịch đặt đã được cập nhật và đang chờ admin xác nhận lại!");
 
             // Chỉ borrow khi user chủ động thay đổi equipment
             if (equipmentTouched && borrowLines.length > 0) {

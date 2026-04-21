@@ -427,9 +427,6 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
                         };
                         const title = titleMap[notif.type] ?? 'UTB Sport';
 
-                        if (bellSoundEnabledRef.current) {
-                            playNotificationSound(audioCtxRef, soundPresetRef.current);
-                        }
                         sendBrowserNotif(title, notif.message);
                         if (notif.type === 'MATCH_REMINDER') {
                             toast.info(notif.message, { autoClose: 6000 });
