@@ -78,8 +78,24 @@ const buildFiveMinuteTimeline = (timeline: IPitchTimeline | null): IDisplaySlot[
     });
 };
 
+/** Kiểm tra một ISO string có thuộc ngày hôm nay không */
+const isSameDay = (iso: string, ref: Date): boolean => {
+    const d = new Date(iso);
+    return (
+        d.getFullYear() === ref.getFullYear() &&
+        d.getMonth() === ref.getMonth() &&
+        d.getDate() === ref.getDate()
+    );
+};
+
 const BookingTime = ({ timelineLoading, timeline }: IProps) => {
-    const displaySlots = buildFiveMinuteTimeline(timeline);
+    const allSlots = buildFiveMinuteTimeline(timeline);
+
+    // Ẩn slot "ĐÃ QUA" chỉ khi đang xem ngày hôm nay
+    const today = new Date();
+    const displaySlots = allSlots.filter(
+        s => !(s.status === "PAST" && isSameDay(s.start, today))
+    );
 
     return (
         <AnimatePresence mode="wait">
@@ -105,7 +121,9 @@ const BookingTime = ({ timelineLoading, timeline }: IProps) => {
                             variants={slotVariants}
                             className="bk__time-empty"
                         >
-                            Không có dữ liệu khung giờ cho ngày này
+                            {allSlots.length > 0
+                                ? "Hôm nay không còn khung giờ nào"
+                                : "Không có dữ liệu khung giờ cho ngày này"}
                         </motion.p>
                     ) : (
                         <div className="bk__time-grid">
