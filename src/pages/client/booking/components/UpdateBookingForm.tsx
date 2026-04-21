@@ -41,6 +41,16 @@ const TIME_OPTIONS = Array.from({ length: 24 * 12 }, (_, i) => {
     return `${h}:${m}`;
 });
 
+/** Giờ bắt đầu = mốc 5p tiếp theo sau thời điểm hiện tại, giờ kết thúc = start + 30p */
+function getDefaultBookingTimes(): { startTime: string; endTime: string } {
+    const now = dayjs();
+    const totalMins = now.hour() * 60 + now.minute();
+    const startMins = Math.ceil((totalMins + 1) / 5) * 5;
+    const start = dayjs().startOf("day").add(startMins, "minute");
+    const end = start.add(30, "minute");
+    return { startTime: start.format("HH:mm"), endTime: end.format("HH:mm") };
+}
+
 const UpdateBookingForm = ({
     bookingId,
     pitchIdNumber,
@@ -66,9 +76,9 @@ const UpdateBookingForm = ({
     const [touched, setTouched] = useState(false);
 
     const [startDate, setStartDate] = useState(bookingDate.format("YYYY-MM-DD"));
-    const [startTime, setStartTime] = useState("07:00");
+    const [startTime, setStartTime] = useState(() => getDefaultBookingTimes().startTime);
     const [endDate, setEndDate] = useState(bookingDate.format("YYYY-MM-DD"));
-    const [endTime, setEndTime] = useState("08:00");
+    const [endTime, setEndTime] = useState(() => getDefaultBookingTimes().endTime);
 
     const [borrowLines, setBorrowLines] = useState<IBorrowLinePayload[]>([]);
     const [borrowNote, setBorrowNote] = useState("");

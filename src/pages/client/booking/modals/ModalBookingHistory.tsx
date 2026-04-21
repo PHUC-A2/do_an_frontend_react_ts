@@ -273,8 +273,8 @@ const ModalBookingHistory = (props: IProps) => {
 
             // Bỏ !isEnded → lịch sử ACTIVE/CONFIRMED chưa thanh toán vẫn hiện nút thanh toán
             const canPay = isActive && !isPaid;
-            const canUpdate = isActive && !isEnded && !isPaid;
-            const canCancel = isActive && !isEnded && !isPaid;
+            const canUpdate = (isActive || isPending) && !isEnded && !isPaid;
+            const canCancel = (isActive || isPending) && !isEnded && !isPaid;
             const canDelete = isPaid || isCancelled || isEnded;
 
             return {
