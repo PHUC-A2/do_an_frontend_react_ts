@@ -20,7 +20,7 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
 import { fetchBookingsClient, selectBookingsClient } from "../../../../redux/features/bookingClientSlice";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { BOOKING_EQUIPMENT_STATUS_META } from "../../../../utils/constants/bookingEquipment.constants";
 import { openBookingEquipmentHandoverPrint } from "../../../../utils/bookingEquipmentHandoverPrint";
 import { normalizeBookingEquipmentFromApi, normalizeBookingEquipmentListFromApi } from "../../../../utils/bookingEquipmentNormalize";
@@ -71,7 +71,7 @@ const ModalBookingHistory = (props: IProps) => {
 
     const [allMyEquips, setAllMyEquips] = useState<IBookingEquipment[]>([]);
     const [returnModal, setReturnModal] = useState<{
-        booking: IBooking;
+        booking: IBooking | null;
         record: IBookingEquipment;
         preset: "full" | "lost" | "damaged";
     } | null>(null);
@@ -86,8 +86,12 @@ const ModalBookingHistory = (props: IProps) => {
     const [equipList, setEquipList] = useState<IBookingEquipment[]>([]);
     const [equipLoading, setEquipLoading] = useState(false);
     const [activeTab, setActiveTab] = useState("1");
+    const [activeCollapseKey, setActiveCollapseKey] = useState<string | string[]>();
+    const [targetEquipmentId, setTargetEquipmentId] = useState<number | null>(null);
+    const [highlightedEquipmentId, setHighlightedEquipmentId] = useState<number | null>(null);
     const [updatingEquipId, setUpdatingEquipId] = useState<number | null>(null);
     const [deletingEquipId, setDeletingEquipId] = useState<number | null>(null);
+    const equipmentTabRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         if (isAuthenticated && openModalBookingHistory) {
@@ -133,7 +137,7 @@ const ModalBookingHistory = (props: IProps) => {
     };
 
     const openClientReturnModal = (
-        booking: IBooking,
+        booking: IBooking | null,
         record: IBookingEquipment,
         preset: "full" | "lost" | "damaged"
     ) => {
@@ -141,7 +145,7 @@ const ModalBookingHistory = (props: IProps) => {
     };
 
     const handleClientReturnSubmit = async (
-        booking: IBooking,
+        booking: IBooking | null,
         record: IBookingEquipment,
         req: IUpdateBookingEquipmentStatusReq,
         meta: {
@@ -158,7 +162,7 @@ const ModalBookingHistory = (props: IProps) => {
         if (!updated) {
             throw new Error("keep-open");
         }
-        if (meta.returnReportPrintOptIn) {
+        if (meta.returnReportPrintOptIn && booking) {
             const { g, l, d, returnNote } = meta;
             const bSign = l + d > 0 ? meta.borrowerSign : "";
             const sSign = l + d > 0 ? meta.staffSign : "";
@@ -255,6 +259,42 @@ const ModalBookingHistory = (props: IProps) => {
         return m;
     }, [allMyEquips]);
 
+    const openBookingFromEquipment = useCallback((bookingId: number) => {
+        const booking = listBookingsClient.find(item => item.id === bookingId && !item.deletedByUser);
+        if (!booking) {
+            toast.error("Không tìm thấy lịch đặt tương ứng");
+            return;
+        }
+
+        const isHistory = booking.status === "CANCELLED" || dayjs(booking.endDateTime).isBefore(dayjs());
+        setActiveTab(isHistory ? "2" : "1");
+        setActiveCollapseKey(String(bookingId));
+    }, [listBookingsClient]);
+
+    const openEquipmentFromBooking = useCallback((equipmentId: number) => {
+        setTargetEquipmentId(equipmentId);
+        setActiveTab("3");
+    }, []);
+
+    useEffect(() => {
+        if (activeTab !== "3" || equipLoading || targetEquipmentId == null) return;
+
+        const timer = window.setTimeout(() => {
+            const row = equipmentTabRef.current?.querySelector(`tr[data-row-key="${targetEquipmentId}"]`) as HTMLElement | null;
+            if (!row) return;
+            row.scrollIntoView({ behavior: "smooth", block: "center" });
+            setHighlightedEquipmentId(targetEquipmentId);
+        }, 120);
+
+        return () => window.clearTimeout(timer);
+    }, [activeTab, equipLoading, targetEquipmentId, equipList.length]);
+
+    useEffect(() => {
+        if (highlightedEquipmentId == null) return;
+        const timer = window.setTimeout(() => setHighlightedEquipmentId(null), 1800);
+        return () => window.clearTimeout(timer);
+    }, [highlightedEquipmentId]);
+
     // --- Render Items cho Collapse ---
     const renderCollapseItems = (bookings: any[]): CollapseProps["items"] => {
         return bookings.map((booking: IBooking) => {
@@ -338,11 +378,13 @@ const ModalBookingHistory = (props: IProps) => {
                                                 {bookingEquips.map(eq => (
                                                     <div
                                                         key={eq.id}
+                                                        onClick={() => openEquipmentFromBooking(eq.id)}
                                                         style={{
                                                             fontSize: 12,
                                                             padding: '6px 8px',
                                                             borderRadius: 6,
                                                             background: 'rgba(0,0,0,0.04)',
+                                                            cursor: 'pointer',
                                                         }}
                                                     >
                                                         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
@@ -572,76 +614,69 @@ const ModalBookingHistory = (props: IProps) => {
         {
             title: "Cập nhật",
             key: "action",
-            render: (_: any, record: IBookingEquipment) =>
-                record.status === "BORROWED" ? (
-                    <Space size={4}>
-                        {/* Trả bình thường */}
-                        <Button
-                            size="small"
-                            type="primary"
-                            loading={updatingEquipId === record.id}
-                            onClick={() => {
-                                const b = listBookingsClient.find(x => x.id === record.bookingId);
-                                if (!b) {
-                                    toast.error("Không tìm thấy booking");
-                                    return;
-                                }
-                                openClientReturnModal(b, record, "full");
-                            }}
-                        >
-                            Trả
-                        </Button>
+            render: (_: any, record: IBookingEquipment) => (
+                <Space size={4} wrap>
+                    <Button size="small" onClick={() => openBookingFromEquipment(record.bookingId)}>
+                        Xem lịch đặt
+                    </Button>
+                    {record.status === "BORROWED" ? (
+                        <>
+                            <Button
+                                size="small"
+                                type="primary"
+                                loading={updatingEquipId === record.id}
+                                onClick={() => {
+                                    const b = listBookingsClient.find(x => x.id === record.bookingId);
+                                    openClientReturnModal(b ?? null, record, "full");
+                                }}
+                            >
+                                Trả
+                            </Button>
 
-                        <Button
-                            size="small"
-                            danger
-                            loading={updatingEquipId === record.id}
-                            onClick={() => {
-                                const b = listBookingsClient.find(x => x.id === record.bookingId);
-                                if (!b) {
-                                    toast.error("Không tìm thấy booking");
-                                    return;
-                                }
-                                openClientReturnModal(b, record, "damaged");
-                            }}
-                        >
-                            Hỏng
-                        </Button>
+                            <Button
+                                size="small"
+                                danger
+                                loading={updatingEquipId === record.id}
+                                onClick={() => {
+                                    const b = listBookingsClient.find(x => x.id === record.bookingId);
+                                    openClientReturnModal(b ?? null, record, "damaged");
+                                }}
+                            >
+                                Hỏng
+                            </Button>
 
-                        <Button
-                            size="small"
-                            danger
-                            loading={updatingEquipId === record.id}
-                            onClick={() => {
-                                const b = listBookingsClient.find(x => x.id === record.bookingId);
-                                if (!b) {
-                                    toast.error("Không tìm thấy booking");
-                                    return;
-                                }
-                                openClientReturnModal(b, record, "lost");
-                            }}
+                            <Button
+                                size="small"
+                                danger
+                                loading={updatingEquipId === record.id}
+                                onClick={() => {
+                                    const b = listBookingsClient.find(x => x.id === record.bookingId);
+                                    openClientReturnModal(b ?? null, record, "lost");
+                                }}
+                            >
+                                Mất
+                            </Button>
+                        </>
+                    ) : (
+                        <Popconfirm
+                            title="Xóa khỏi danh sách?"
+                            description="Bản ghi sẽ bị xóa khỏi lịch sử của bạn, admin vẫn lưu trữ."
+                            okText="Xóa"
+                            cancelText="Huỷ"
+                            okButtonProps={{ danger: true }}
+                            onConfirm={() => handleDeleteEquip(record.id)}
                         >
-                            Mất
-                        </Button>
-                    </Space>
-                ) : (
-                    <Popconfirm
-                        title="Xóa khỏi danh sách?"
-                        description="Bản ghi sẽ bị xóa khỏi lịch sử của bạn, admin vẫn lưu trữ."
-                        okText="Xóa"
-                        cancelText="Huỷ"
-                        okButtonProps={{ danger: true }}
-                        onConfirm={() => handleDeleteEquip(record.id)}
-                    >
-                        <Button
-                            size="small"
-                            danger
-                            loading={deletingEquipId === record.id}
-                        >
-                            Xóa
-                        </Button>
-                    </Popconfirm>
-                ),
+                            <Button
+                                size="small"
+                                danger
+                                loading={deletingEquipId === record.id}
+                            >
+                                Xóa
+                            </Button>
+                        </Popconfirm>
+                    )}
+                </Space>
+            ),
         },
     ];
 
@@ -678,7 +713,13 @@ const ModalBookingHistory = (props: IProps) => {
                             children: (
                                 <div style={{ paddingTop: 12 }}>
                                     {upcomingBookings.length > 0 ? (
-                                        <Collapse accordion ghost items={renderCollapseItems(upcomingBookings)} />
+                                        <Collapse
+                                            accordion
+                                            ghost
+                                            activeKey={activeTab === "1" ? activeCollapseKey : undefined}
+                                            onChange={(key) => setActiveCollapseKey(key)}
+                                            items={renderCollapseItems(upcomingBookings)}
+                                        />
                                     ) : <Empty description="Không có lịch sắp tới" />}
                                 </div>
                             )
@@ -693,7 +734,13 @@ const ModalBookingHistory = (props: IProps) => {
                             children: (
                                 <div style={{ paddingTop: 12 }}>
                                     {historyBookings.length > 0 ? (
-                                        <Collapse accordion ghost items={renderCollapseItems(historyBookings)} />
+                                        <Collapse
+                                            accordion
+                                            ghost
+                                            activeKey={activeTab === "2" ? activeCollapseKey : undefined}
+                                            onChange={(key) => setActiveCollapseKey(key)}
+                                            items={renderCollapseItems(historyBookings)}
+                                        />
                                     ) : <Empty description="Chưa có lịch sử" />}
                                 </div>
                             )
@@ -707,7 +754,7 @@ const ModalBookingHistory = (props: IProps) => {
                                 </Space>
                             ),
                             children: (
-                                <div style={{ paddingTop: 12 }}>
+                                <div ref={equipmentTabRef} style={{ paddingTop: 12 }}>
                                     {equipList.length > 0 ? (
                                         <Table<IBookingEquipment>
                                             columns={equipColumns}
@@ -717,6 +764,15 @@ const ModalBookingHistory = (props: IProps) => {
                                             loading={equipLoading}
                                             pagination={false}
                                             scroll={{ x: 'max-content' }}
+                                            onRow={(record) => ({
+                                                style: record.id === highlightedEquipmentId
+                                                    ? {
+                                                        background: 'rgba(22, 163, 74, 0.12)',
+                                                        boxShadow: `inset 3px 0 0 ${token.colorPrimary}`,
+                                                        transition: 'background-color 0.3s ease',
+                                                    }
+                                                    : {},
+                                            })}
                                         />
                                     ) : (
                                         <Empty description={equipLoading ? "Đang tải..." : "Chưa có thiết bị mượn"} />

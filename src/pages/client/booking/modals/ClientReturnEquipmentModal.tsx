@@ -19,7 +19,7 @@ export interface ClientReturnEquipmentModalProps {
      * Gọi khi hợp lệ. Trả về Promise reject (hoặc throw) để giữ modal mở khi lỗi.
      */
     onSubmit: (
-        booking: IBooking,
+        booking: IBooking | null,
         record: IBookingEquipment,
         req: IUpdateBookingEquipmentStatusReq,
         meta: {
@@ -92,7 +92,7 @@ function ClientReturnEquipmentModalInner({
     }, [open]);
 
     const handleOk = async () => {
-        if (!booking || !record) return;
+        if (!record) return;
         const note = returnNote.trim();
         const q = record.quantity;
         const g = returnQtyGood;
