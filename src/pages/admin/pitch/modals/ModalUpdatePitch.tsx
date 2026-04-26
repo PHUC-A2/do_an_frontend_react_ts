@@ -28,6 +28,7 @@ import { toast } from 'react-toastify';
 import {
     updatePitch,
     uploadImagePitch,
+    getPitchTypes,
     adminGetPitchEquipments,
     adminUpsertPitchEquipment,
     adminDeletePitchEquipment,
@@ -42,8 +43,8 @@ import type { IEquipment } from '../../../../types/equipment';
 import type { EquipmentMobilityEnum, IPitchEquipment } from '../../../../types/pitchEquipment';
 import {
     PITCH_STATUS_OPTIONS,
-    PITCH_TYPE_OPTIONS,
 } from '../../../../utils/constants/pitch.constants';
+import type { DefaultOptionType } from 'antd/es/select';
 
 interface IProps {
     openModalUpdatePitch: boolean;
@@ -94,6 +95,7 @@ const ModalUpdatePitch = (props: IProps) => {
     const [loadingPitchEquipments, setLoadingPitchEquipments] = useState(false);
     const [savingPitchEquipment, setSavingPitchEquipment] = useState(false);
     const [deletingEquipmentId, setDeletingEquipmentId] = useState<number | null>(null);
+    const [pitchTypeOptions, setPitchTypeOptions] = useState<DefaultOptionType[]>([]);
 
     const open24h = Form.useWatch('open24h', form);
     const useHourlyPricing = Form.useWatch('useHourlyPricing', form);
@@ -237,6 +239,19 @@ const ModalUpdatePitch = (props: IProps) => {
         }
     };
 
+    const loadPitchTypes = async () => {
+        try {
+            const res = await getPitchTypes();
+            const options = (res.data?.data ?? []).map((item) => ({
+                label: item.name,
+                value: item.id,
+            }));
+            setPitchTypeOptions(options);
+        } catch {
+            setPitchTypeOptions([]);
+        }
+    };
+
     useEffect(() => {
         if (!selectedEquipmentId) {
             setPeQuantity(1);
@@ -317,7 +332,7 @@ const ModalUpdatePitch = (props: IProps) => {
 
         form.setFieldsValue({
             name: pitchEdit.name,
-            pitchType: pitchEdit.pitchType,
+            pitchTypeId: pitchEdit.pitchTypeId ?? undefined,
             pricePerHour: pitchEdit.pricePerHour,
             useHourlyPricing: (pitchEdit.hourlyPrices?.length ?? 0) > 0,
             // Map 2 khung đầu tiên sang sáng/chiều để UI rõ ràng
@@ -365,6 +380,11 @@ const ModalUpdatePitch = (props: IProps) => {
     }, [openModalUpdatePitch, pitchEdit?.id]);
 
     useEffect(() => {
+        if (!openModalUpdatePitch) return;
+        loadPitchTypes();
+    }, [openModalUpdatePitch]);
+
+    useEffect(() => {
         if (open24h) {
             form.setFieldsValue({
                 openTime: null,
@@ -400,8 +420,8 @@ const ModalUpdatePitch = (props: IProps) => {
                     <Input />
                 </Form.Item>
 
-                <Form.Item label="Loại sân" name="pitchType">
-                    <Select options={PITCH_TYPE_OPTIONS} />
+                <Form.Item label="Loại sân" name="pitchTypeId">
+                    <Select options={pitchTypeOptions} />
                 </Form.Item>
 
                 <Form.Item label="Bật giá theo khung giờ" name="useHourlyPricing" valuePropName="checked">

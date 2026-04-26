@@ -17,7 +17,7 @@ import {
     selectPitches,
 } from '../../../redux/features/pitchSlice';
 
-import type { IPitch, PitchTypeEnum } from '../../../types/pitch';
+import type { IPitch } from '../../../types/pitch';
 import {
     PITCH_STATUS_META,
     getPitchTypeLabel,
@@ -38,6 +38,7 @@ import {
 } from '../../../utils/pagination/buildSpringPageQuery';
 import { orFieldsInsensitiveLike } from '../../../utils/pagination/springFilterText';
 import { tableSorterToSortItems } from '../../../utils/pagination/tableSorterToSpringSort';
+import ModalManagePitchTypes from './modals/ModalManagePitchTypes';
 
 const AdminPitchPage = () => {
     const dispatch = useAppDispatch();
@@ -48,6 +49,7 @@ const AdminPitchPage = () => {
     const [openModalAddPitch, setOpenModalAddPitch] = useState<boolean>(false);
     const [openModalPitchDetails, setOpenModalPitchDetails] = useState<boolean>(false);
     const [openModalUpdatePitch, setOpenModalUpdatePitch] = useState<boolean>(false);
+    const [openModalManagePitchTypes, setOpenModalManagePitchTypes] = useState<boolean>(false);
     const [deletingId, setDeletingId] = useState<number | null>(null);
 
     const [pitch, setPitch] = useState<IPitch | null>(null);
@@ -202,10 +204,10 @@ const AdminPitchPage = () => {
         },
         {
             title: 'Loại sân',
-            dataIndex: 'pitchType',
-            key: 'pitchType',
+            dataIndex: 'pitchTypeName',
+            key: 'pitchTypeName',
             sorter: true,
-            render: (type: PitchTypeEnum) => getPitchTypeLabel(type),
+            render: (typeName?: string | null) => getPitchTypeLabel(typeName),
         },
         {
             title: 'Giá / giờ',
@@ -337,6 +339,15 @@ const AdminPitchPage = () => {
                                     Thêm mới
                                 </RBButton>
                             </PermissionWrapper>
+                            <PermissionWrapper required={"PITCH_UPDATE"}>
+                                <RBButton
+                                    variant="outline-secondary"
+                                    size="sm"
+                                    onClick={() => setOpenModalManagePitchTypes(true)}
+                                >
+                                    Quản lý loại sân
+                                </RBButton>
+                            </PermissionWrapper>
 
                             <Button
                                 icon={<FaDownload />}
@@ -395,6 +406,10 @@ const AdminPitchPage = () => {
                     openModalUpdatePitch={openModalUpdatePitch}
                     setOpenModalUpdatePitch={setOpenModalUpdatePitch}
                     pitchEdit={pitchEdit}
+                />
+                <ModalManagePitchTypes
+                    open={openModalManagePitchTypes}
+                    onClose={() => setOpenModalManagePitchTypes(false)}
                 />
             </AdminWrapper>
 
