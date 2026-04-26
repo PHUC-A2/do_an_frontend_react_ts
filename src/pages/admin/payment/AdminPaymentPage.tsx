@@ -716,8 +716,8 @@ const AdminPaymentPage = () => {
                                 </Tooltip>
                             ) : null}
                             {canUpdatePayment &&
-                            account?.paymentConfirmationPinRequiredBySystem &&
-                            account?.paymentPinConfigured ? (
+                                account?.paymentConfirmationPinRequiredBySystem &&
+                                account?.paymentPinConfigured ? (
                                 <Tooltip title="Quên PIN — nhận OTP qua email để đặt PIN mới">
                                     <Button
                                         type="text"

@@ -24,7 +24,11 @@ import AdminAiPage from '../pages/admin/ai/AdminAiPage';
 import AdminSupportPage from '../pages/admin/support/AdminSupportPage';
 import AdminReviewPage from '../pages/admin/review/AdminReviewPage';
 import AdminSystemConfigPage from '../pages/admin/system-config/AdminSystemConfigPage';
+import AdminTenantsPage from '../pages/admin/tenants/AdminTenantsPage';
+import AdminPlansPage from '../pages/admin/plans/AdminPlansPage';
+import AdminSubscriptionsPage from '../pages/admin/subscriptions/AdminSubscriptionsPage';
 import TermsOfService from '../pages/client/terms-of-service/TermsOfService';
+import BecomeOwnerPage from '../pages/client/become-owner/BecomeOwnerPage';
 import { useTopProgress } from '../hooks/common/useTopProgress';
 
 interface AppRouterProps {
@@ -100,6 +104,7 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
                         { path: "/booking/:pitchId", element: <BookingPage theme={theme} /> },
                         { path: "/about", element: <AboutPage theme={theme} /> },
                         { path: "/terms", element: <TermsOfService theme={theme} /> },
+                        { path: "/become-owner", element: <BecomeOwnerPage theme={theme} /> },
                     ]
                 },
                 {
@@ -107,6 +112,9 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
                     element: <AdminLayout theme={theme} toggleTheme={toggleTheme} />,
                     children: [
                         { index: true, element: <AdminPage /> },
+                        { path: "/admin/tenants", element: <AdminTenantsPage /> },
+                        { path: "/admin/plans", element: <AdminPlansPage /> },
+                        { path: "/admin/subscriptions", element: <AdminSubscriptionsPage /> },
                         { path: "/admin/user", element: <AdminUserPage /> },
                         { path: "/admin/role", element: <AdminRolePage /> },
                         { path: "/admin/permission", element: <AdminPermissionPage /> },

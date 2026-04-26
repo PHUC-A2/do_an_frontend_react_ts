@@ -9,6 +9,8 @@ export const useAdminAccess = () => {
     if (!account || !account.roles?.length)
         return { loading: false, canAccess: false };
 
-    const canAccess = account.roles.some(r => r.name !== "VIEW");
+    const hasNonViewRole = account.roles.some((r) => r.name !== "VIEW");
+    const linkedToAtLeastOneTenant = (account.linkedTenantCount ?? 0) > 0;
+    const canAccess = hasNonViewRole || linkedToAtLeastOneTenant;
     return { loading: false, canAccess };
 };

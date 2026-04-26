@@ -34,13 +34,25 @@ const ModalRoleDetails = (props: IProps) => {
                     <Descriptions.Item label="Tên vai trò">
                         {role?.name ? (
                             <Tag
-                                color={role.name === "ADMIN" ? "warning" : "blue"}
+                                color={
+                                    role.name === "ADMIN" &&
+                                    (role.tenantId == null || role.tenantId === undefined)
+                                        ? "warning"
+                                        : "blue"
+                                }
                             >
                                 {role.name}
                             </Tag>
                         ) : (
                             "N/A"
                         )}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Phạm vi">
+                        {role == null
+                            ? "N/A"
+                            : role.tenantId == null || role.tenantId === undefined
+                              ? "Toàn hệ thống"
+                              : `Shop (tenant) #${role.tenantId}`}
                     </Descriptions.Item>
 
                     <Descriptions.Item label="Mô tả">

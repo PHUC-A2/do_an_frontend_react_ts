@@ -11,7 +11,7 @@ import { MdDelete } from 'react-icons/md';
 
 import { useAppDispatch, useAppSelector } from '../../../redux/hooks';
 import {
-    fetchPitches,
+    fetchPitchesAdmin,
     selectPitchLoading,
     selectPitchMeta,
     selectPitches,
@@ -120,7 +120,7 @@ const AdminPitchPage = () => {
             const res = await deletePitch(id);
             if (res.data.statusCode === 200) {
                 await dispatch(
-                    fetchPitches(
+                    fetchPitchesAdmin(
                         buildSpringListQuery({
                             page: meta.page,
                             pageSize: meta.pageSize,
@@ -161,7 +161,7 @@ const AdminPitchPage = () => {
     const fetchPage = useCallback(
         (page: number, pageSize: number, sort: SpringSortItem[]) => {
             dispatch(
-                fetchPitches(
+                fetchPitchesAdmin(
                     buildSpringListQuery({ page, pageSize, filter: filterStr, sort })
                 )
             );

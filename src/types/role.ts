@@ -7,6 +7,8 @@ export type RoleKey =
 
 export interface IRole {
     id: number;
+    /** null/undefined: role hệ thống; số: role của shop. */
+    tenantId?: number | null;
     name: string;
     description?: string | null;
     createdAt: string;

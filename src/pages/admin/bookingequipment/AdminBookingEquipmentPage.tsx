@@ -909,15 +909,15 @@ const AdminBookingEquipmentPage = () => {
                             {borrowRowDetail.borrowConditionAcknowledged == null
                                 ? '—'
                                 : borrowRowDetail.borrowConditionAcknowledged
-                                  ? 'Có'
-                                  : 'Không'}
+                                    ? 'Có'
+                                    : 'Không'}
                         </Descriptions.Item>
                         <Descriptions.Item label="In biên bản mượn">
                             {borrowRowDetail.borrowReportPrintOptIn == null
                                 ? '—'
                                 : borrowRowDetail.borrowReportPrintOptIn
-                                  ? 'Có'
-                                  : 'Không'}
+                                    ? 'Có'
+                                    : 'Không'}
                         </Descriptions.Item>
                         <Descriptions.Item label="Kiểm đếm trả">
                             {borrowRowDetail.status === 'BORROWED'
@@ -940,8 +940,8 @@ const AdminBookingEquipmentPage = () => {
                             {borrowRowDetail.returnReportPrintOptIn == null
                                 ? '—'
                                 : borrowRowDetail.returnReportPrintOptIn
-                                  ? 'Có'
-                                  : 'Không'}
+                                    ? 'Có'
+                                    : 'Không'}
                         </Descriptions.Item>
                         <Descriptions.Item label="Admin xác nhận biên bản trả">
                             {borrowRowDetail.returnAdminConfirmed ? (
@@ -996,8 +996,8 @@ const AdminBookingEquipmentPage = () => {
                             {logDetail.borrowConditionAcknowledged == null
                                 ? '—'
                                 : logDetail.borrowConditionAcknowledged
-                                  ? 'Có'
-                                  : 'Không'}
+                                    ? 'Có'
+                                    : 'Không'}
                         </Descriptions.Item>
                         <Descriptions.Item label="Biên bản mượn — in">
                             {logDetail.borrowReportPrintOptIn == null ? '—' : logDetail.borrowReportPrintOptIn ? 'Có' : 'Không'}
@@ -1017,8 +1017,8 @@ const AdminBookingEquipmentPage = () => {
                             {logDetail.returnAdminConfirmed == null
                                 ? '—'
                                 : logDetail.returnAdminConfirmed
-                                  ? 'Đã xác nhận'
-                                  : 'Chờ xác nhận'}
+                                    ? 'Đã xác nhận'
+                                    : 'Chờ xác nhận'}
                         </Descriptions.Item>
                         <Descriptions.Item label="Ghi chú log">{logDetail.notes || '—'}</Descriptions.Item>
                     </Descriptions>

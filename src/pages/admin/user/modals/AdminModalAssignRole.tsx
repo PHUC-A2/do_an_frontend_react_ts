@@ -143,9 +143,22 @@ const AdminModalAssignRole = (props: IProps) => {
                                     />
                                     <div>
                                         <Text strong style={{ fontSize: 13, display: 'block', lineHeight: '1.2' }}>
-                                            <Tag color={role.name === 'ADMIN' ? 'warning' : 'blue'} style={{ margin: 0 }}>
+                                            <Tag
+                                                color={
+                                                    role.name === 'ADMIN' &&
+                                                    (role.tenantId == null || role.tenantId === undefined)
+                                                        ? 'warning'
+                                                        : 'blue'
+                                                }
+                                                style={{ margin: 0 }}
+                                            >
                                                 {role.name}
                                             </Tag>
+                                        </Text>
+                                        <Text type="secondary" style={{ fontSize: 10, display: 'block' }}>
+                                            {role.tenantId == null || role.tenantId === undefined
+                                                ? 'Phạm vi: toàn hệ thống'
+                                                : `Phạm vi: shop #${role.tenantId}`}
                                         </Text>
                                         {role.description && (
                                             <Text type="secondary" style={{ fontSize: 11 }}>

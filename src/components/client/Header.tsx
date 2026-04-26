@@ -242,7 +242,10 @@ const Header = ({ theme, toggleTheme, mobileNavOpen, onMobileNavOpenChange, mobi
 
     const isDark = theme === 'dark';
     const displayName = account?.fullName || account?.name || 'Tài khoản của bạn';
-    const canOpenAdmin = Boolean(account?.roles?.some((role) => role.name !== 'VIEW'));
+    const canOpenAdmin = Boolean(
+        account?.roles?.some((role) => role.name !== "VIEW") ||
+            (account && (account.linkedTenantCount ?? 0) > 0),
+    );
     const initials = (displayName.trim()[0] || 'U').toUpperCase();
 
     useOutsideClick(accountMenuRef, () => setAccountMenuOpen(false), accountMenuOpen);

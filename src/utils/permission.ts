@@ -1,5 +1,6 @@
 import type { IAccount } from "../types/account";
 import type { PermissionKey } from "../types/permission";
+import { isSystemAllAccount } from "./role";
 
 export const hasPermission = (
     account: IAccount | null,
@@ -9,19 +10,20 @@ export const hasPermission = (
 
     const requiredPerms = Array.isArray(required) ? required : [required];
 
-    // ADMIN = full quyền
-    const isAdmin = account.roles?.some(role => role.name === "ADMIN");
-    if (isAdmin) return true;
+    if (isSystemAllAccount(account)) return true;
 
-    // Gom permission từ tất cả roles
+    const fromApi = account.effectivePermissionNames;
+    if (Array.isArray(fromApi) && fromApi.length > 0) {
+        if (fromApi.includes("ALL")) return true;
+        return requiredPerms.some((p) => fromApi!.includes(p as string));
+    }
+
     const userPermissions = new Set<string>();
-
     account.roles?.forEach(role => {
-        role.permissions?.forEach(p => {
-            userPermissions.add(p.name);
+        role.permissions?.forEach(perm => {
+            userPermissions.add(perm.name);
         });
     });
 
-    //  Chỉ cần có 1 permission là đủ
-    return requiredPerms.some(p => userPermissions.has(p));
+    return requiredPerms.some(p => userPermissions.has(p as string));
 };

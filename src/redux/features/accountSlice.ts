@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/tool
 import type { IAccount } from "../../types/account";
 import { setLogout } from "./authSlice";
 import { getAccount } from "../../config/Api";
+import { setSubscriptionContext } from "./tenantSlice";
 
 interface AccountState {
     account: IAccount | null;
@@ -20,12 +21,21 @@ export const fetchAccount = createAsyncThunk<
     { rejectValue: string }
 >(
     "account/fetchAccount",
-    async (_, { rejectWithValue }) => {
+    async (_, { dispatch, rejectWithValue }) => {
         try {
             const res = await getAccount();
 
             if (res.data?.statusCode === 200 && res.data.data?.user) {
-                return res.data.data.user as IAccount;
+                const u = res.data.data.user as IAccount;
+                dispatch(
+                    setSubscriptionContext({
+                        plan: u.currentPlan ?? null,
+                        permissions: u.effectivePermissionNames ?? [],
+                        subscriptionActive: u.subscriptionActive !== false,
+                        subscriptionEndAt: u.subscriptionEndAt != null ? String(u.subscriptionEndAt) : null,
+                    }),
+                );
+                return u;
             }
 
             return rejectWithValue("Không lấy được thông tin tài khoản");

@@ -18,7 +18,7 @@ import { toast } from 'react-toastify';
 
 import { createPitch, uploadImagePitch } from '../../../../config/Api';
 import { useAppDispatch, useAppSelector } from '../../../../redux/hooks';
-import { fetchPitches, selectPitchLastListQuery } from '../../../../redux/features/pitchSlice';
+import { fetchPitchesAdmin, selectPitchLastListQuery } from '../../../../redux/features/pitchSlice';
 import { DEFAULT_ADMIN_LIST_QUERY } from '../../../../utils/pagination/defaultListQuery';
 
 import type { ICreatePitchReq } from '../../../../types/pitch';
@@ -143,7 +143,7 @@ const ModalAddPitch = ({ openModalAddPitch, setOpenModalAddPitch }: IProps) => {
             const res = await createPitch(payload);
             if (res.data.statusCode === 201) {
                 toast.success('Tạo sân mới thành công');
-                await dispatch(fetchPitches(pitchListQuery || DEFAULT_ADMIN_LIST_QUERY));
+                await dispatch(fetchPitchesAdmin(pitchListQuery || DEFAULT_ADMIN_LIST_QUERY));
                 form.resetFields();
                 setFileList([]);
                 setOpenModalAddPitch(false);

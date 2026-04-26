@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
-import { getAllPitches } from '../../config/Api';
+import { getAllPitches, getAllPitchesForAdmin } from '../../config/Api';
 import type { IPitch } from '../../types/pitch';
 import type { IBackendRes, IModelPaginate } from '../../types/common';
 import { isApiSuccess } from '../../utils/api/isApiSuccess';
@@ -61,6 +61,30 @@ export const fetchPitches = createAsyncThunk<
     }
 );
 
+/** Danh sách sân theo tenant (trang quản trị) */
+export const fetchPitchesAdmin = createAsyncThunk<
+    IModelPaginate<IPitch>,
+    string,
+    { rejectValue: string }
+>(
+    'pitch/fetchPitchesAdmin',
+    async (query, { rejectWithValue }) => {
+        try {
+            const res = await getAllPitchesForAdmin(query);
+            const apiResponse: IBackendRes<IModelPaginate<IPitch>> = res.data;
+            if (isApiSuccess(apiResponse.statusCode) && !apiResponse.error && apiResponse.data) {
+                return apiResponse.data;
+            }
+            const errorMessage = apiResponse.error
+                ? (Array.isArray(apiResponse.error) ? apiResponse.error.join(', ') : apiResponse.error)
+                : apiResponse.message || "Lấy danh sách sân thất bại";
+            return rejectWithValue(errorMessage);
+        } catch (error: any) {
+            return rejectWithValue(error?.response?.data?.message || error?.message || "Lỗi hệ thống");
+        }
+    }
+);
+
 export const pitchSlice = createSlice({
     name: 'pitch',
     initialState,
@@ -79,6 +103,22 @@ export const pitchSlice = createSlice({
                 state.error = undefined;
             })
             .addCase(fetchPitches.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || "Lỗi không xác định";
+                state.result = [];
+            })
+            .addCase(fetchPitchesAdmin.pending, (state) => {
+                state.loading = true;
+                state.error = undefined;
+            })
+            .addCase(fetchPitchesAdmin.fulfilled, (state, action) => {
+                state.loading = false;
+                state.result = Array.isArray(action.payload.result) ? action.payload.result : [];
+                state.meta = normalizePaginationMeta(action.payload.meta);
+                state.lastListQuery = action.meta.arg;
+                state.error = undefined;
+            })
+            .addCase(fetchPitchesAdmin.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload || "Lỗi không xác định";
                 state.result = [];

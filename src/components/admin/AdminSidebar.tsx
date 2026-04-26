@@ -1,13 +1,16 @@
-import { Layout, Menu, Breadcrumb, Button, Grid, Drawer, Switch, Tooltip, Typography, Avatar, Popover, Badge, Space, Modal } from 'antd';
+import { Layout, Menu, Breadcrumb, Button, Grid, Drawer, Switch, Tooltip, Typography, Avatar, Popover, Badge, Space, Modal, Select } from 'antd';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type TouchEvent } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import {
     BellOutlined,
+    CreditCardOutlined,
     DeleteOutlined,
     UserOutlined,
     SettingOutlined,
     LogoutOutlined,
     LoginOutlined,
+    ShopOutlined,
+    TeamOutlined,
 } from '@ant-design/icons';
 import { LockOutlined } from '@ant-design/icons';
 import { MdFeaturedPlayList, MdOutlineSecurity, MdPayments, MdSportsHandball, MdOutlineSupportAgent, MdRateReview } from 'react-icons/md';
@@ -18,17 +21,23 @@ import ModalAccount from '../../pages/auth/modal/ModalAccount';
 import ModalForget from '../../pages/auth/modal/ModalForget';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import {
+    type IAdminTenantRow,
     clientDeleteAllNotifications,
     clientDeleteNotification,
     clientGetNotifications,
     clientMarkAllNotificationsRead,
     clientMarkNotificationRead,
+    getAdminTenants,
+    getMyTenants,
     logout,
+    postAdminSwitchTenant,
+    switchTenant,
     updateAccount,
 } from '../../config/Api';
 import { toast } from 'react-toastify';
-import { setLogout } from '../../redux/features/authSlice';
+import { setLogout, setToken } from '../../redux/features/authSlice';
 import { setAccount } from '../../redux/features/accountSlice';
+import { clearTenant, setCurrentTenantId, setTenantsList, type ITenantInfo } from '../../redux/features/tenantSlice';
 import { IoMenu, IoSunny, IoChevronBackOutline, IoChevronForwardOutline } from 'react-icons/io5';
 import { LuMoon } from 'react-icons/lu';
 import { PiSoccerBallBold } from 'react-icons/pi';
@@ -50,6 +59,28 @@ const { Sider, Header, Content } = Layout;
 const { useBreakpoint } = Grid;
 const { Text } = Typography;
 const ADMIN_SOUND_PREF_KEY = 'tub_sport_admin_notification_sound';
+
+const DEFAULT_SYSTEM_TENANT_ID = 1;
+const LS_SKIPPED_TENANT_AUTOFIX = 'tenant_autofix_skip_v1';
+
+function mapAdminRowsToImpersonationList(rows: IAdminTenantRow[]): ITenantInfo[] {
+    const rest = rows.filter((r) => r.id !== DEFAULT_SYSTEM_TENANT_ID);
+    const def: ITenantInfo = {
+        id: DEFAULT_SYSTEM_TENANT_ID,
+        slug: 'system',
+        name: 'Mặc định (hệ thống)',
+        status: 'APPROVED',
+    };
+    return [
+        def,
+        ...rest.map((t) => ({
+            id: t.id,
+            slug: t.slug,
+            name: t.name,
+            status: t.status,
+        })),
+    ];
+}
 
 interface AdminSidebarProps {
     theme: 'light' | 'dark';
@@ -76,11 +107,15 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     const screens = useBreakpoint();
     const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
     const account = useAppSelector(state => state.account.account);
+    const tenantList = useAppSelector(state => state.tenant.tenants);
+    const currentTenantId = useAppSelector(state => state.tenant.currentTenantId);
+    const [tenantSwitching, setTenantSwitching] = useState(false);
     const notificationWsRef = useRef<WebSocket | null>(null);
     const reconnectRef = useRef<number | null>(null);
     const audioCtxRef = useRef<AudioContext | null>(null);
     const notifTouchRef = useRef<{ id: number | null; x: number; y: number }>({ id: null, x: 0, y: 0 });
     const swipedDeleteRef = useRef<{ id: number | null; at: number }>({ id: null, at: 0 });
+    const adminInvalidTenantAutofixRef = useRef(false);
     const bellSoundEnabledRef = useRef(bellSoundEnabled);
     const soundPresetRef = useRef<NotificationSoundPreset>('DEFAULT');
 
@@ -88,6 +123,48 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
 
     const isDark = theme === 'dark';
     const isViewRole = useRole("VIEW");
+    /** VIEW thuần (không gắn tenant) → ẩn menu quản trị chi tiết; có ≥1 tenant thì vẫn mở giống chủ sân. */
+    const isViewOnlyClient = isViewRole && (account?.linkedTenantCount ?? 0) === 0;
+    const isSystemAdmin = useRole("ADMIN");
+    const subscriptionBlocked = useMemo(() => {
+        if (!account) {
+            return false;
+        }
+        if (isSystemAdmin) {
+            return false;
+        }
+        if (currentTenantId == null || currentTenantId === 1) {
+            return false;
+        }
+        return account.subscriptionActive === false;
+    }, [account, currentTenantId, isSystemAdmin]);
+
+    /** Chủ sân / nhân sự: không hiển thị tenant hệ thống (id 1) trong dropdown; chỉ quản trị hệ thống mới có "Mặc định (hệ thống)". */
+    const tenantSwitcherOptions = useMemo(() => {
+        if (isSystemAdmin) {
+            return tenantList.map((t) => {
+                const base = t.status && t.status !== 'APPROVED' ? `${t.name} (${t.status})` : t.name;
+                const label = t.id === DEFAULT_SYSTEM_TENANT_ID ? 'Mặc định (hệ thống)' : base;
+                return { value: t.id, label };
+            });
+        }
+        return tenantList
+            .filter((t) => t.id !== DEFAULT_SYSTEM_TENANT_ID)
+            .map((t) => {
+                const base = t.status && t.status !== 'APPROVED' ? `${t.name} (${t.status})` : t.name;
+                return { value: t.id, label: base };
+            });
+    }, [isSystemAdmin, tenantList]);
+
+    const showTenantSwitcher =
+        (isSystemAdmin && tenantList.length > 0) || (!isSystemAdmin && tenantSwitcherOptions.length > 1);
+
+    const tenantSelectValue = isSystemAdmin
+        ? (currentTenantId ?? DEFAULT_SYSTEM_TENANT_ID)
+        : tenantSwitcherOptions.some((o) => o.value === currentTenantId)
+            ? currentTenantId
+            : undefined;
+
     const canViewUsers = usePermission("USER_VIEW_LIST");
     const canViewRoles = usePermission("ROLE_VIEW_LIST");
     const canViewPermissions = usePermission("PERMISSION_VIEW_LIST");
@@ -120,6 +197,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
         support: 'Hỗ trợ & Bảo trì',
         review: 'Đánh giá & Chat',
         'system-config': 'Cấu hình hệ thống',
+        tenants: 'Cửa hàng (chủ sân)',
+        plans: 'Gói dịch vụ',
+        subscriptions: 'Thuê bao dịch vụ',
     };
 
     const cssVars = useMemo(() => ({
@@ -140,6 +220,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
             const res = await logout();
             if (res?.data?.statusCode === 200) {
                 dispatch(setLogout());
+                dispatch(clearTenant());
                 toast.success('Đăng xuất thành công');
                 navigate('/');
             }
@@ -149,7 +230,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     };
 
     // Đặt '/admin' cuối cùng để khớp con (/admin/asset, ...) trước, tránh mọi URL bị coi là Dashboard
-    const routeMenuKeys = ['/admin/user', '/admin/asset', '/admin/device', '/admin/device-issues', '/admin/asset-usage', '/admin/checkouts', '/admin/returns', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/room-booking-equipment', '/admin/ai', '/admin/review', '/admin/support', '/admin/system-config', '/admin'];
+    const routeMenuKeys = ['/admin/user', '/admin/asset', '/admin/device', '/admin/device-issues', '/admin/asset-usage', '/admin/checkouts', '/admin/returns', '/admin/role', '/admin/permission', '/admin/pitch', '/admin/booking', '/admin/payment', '/admin/equipment', '/admin/booking-equipment', '/admin/room-booking-equipment', '/admin/ai', '/admin/review', '/admin/support', '/admin/system-config', '/admin/tenants', '/admin/plans', '/admin/subscriptions', '/admin'];
 
     const selectedMenuKey = useMemo(() => {
         const currentPath = location.pathname;
@@ -199,6 +280,107 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
     useEffect(() => {
         soundPresetRef.current = soundPreset;
     }, [soundPreset]);
+
+    useEffect(() => {
+        if (!isAuthenticated || isSystemAdmin) {
+            return;
+        }
+        if (tenantList.length > 0) {
+            return;
+        }
+        void getMyTenants()
+            .then((tr) => {
+                const list = tr.data?.data;
+                if (Array.isArray(list)) {
+                    dispatch(
+                        setTenantsList(
+                            list.map((t) => ({
+                                id: t.id,
+                                slug: t.slug,
+                                name: t.name,
+                                status: t.status,
+                            })),
+                        ),
+                    );
+                }
+            })
+            .catch(() => { /* no-op */ });
+    }, [isAuthenticated, isSystemAdmin, tenantList.length, dispatch]);
+
+    useEffect(() => {
+        if (!isAuthenticated || !isSystemAdmin) {
+            return;
+        }
+        void getAdminTenants()
+            .then((tr) => {
+                const list = tr.data?.data;
+                const rows = Array.isArray(list) ? (list as IAdminTenantRow[]) : [];
+                dispatch(setTenantsList(mapAdminRowsToImpersonationList(rows)));
+            })
+            .catch(() => {
+                dispatch(setTenantsList(mapAdminRowsToImpersonationList([])));
+            });
+    }, [isAuthenticated, isSystemAdmin, dispatch]);
+
+    useEffect(() => {
+        if (!isAuthenticated || !isSystemAdmin) {
+            adminInvalidTenantAutofixRef.current = false;
+            return;
+        }
+        if (typeof window !== 'undefined' && localStorage.getItem(LS_SKIPPED_TENANT_AUTOFIX) === '1') {
+            return;
+        }
+        if (tenantList.length === 0) {
+            return;
+        }
+        const ids = new Set(tenantList.map((t) => t.id));
+        const effective = currentTenantId ?? DEFAULT_SYSTEM_TENANT_ID;
+        if (ids.has(effective)) {
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem(LS_SKIPPED_TENANT_AUTOFIX);
+            }
+            adminInvalidTenantAutofixRef.current = false;
+            return;
+        }
+        if (adminInvalidTenantAutofixRef.current) {
+            return;
+        }
+        adminInvalidTenantAutofixRef.current = true;
+        setTenantSwitching(true);
+        void (async () => {
+            try {
+                const res = await postAdminSwitchTenant({ tenantId: null });
+                const d = res.data?.data as
+                    | { access_token?: string; currentTenantId?: number }
+                    | undefined;
+                if (d?.access_token) {
+                    localStorage.setItem('access_token', d.access_token);
+                    dispatch(setToken(d.access_token));
+                }
+                if (d?.currentTenantId != null) {
+                    dispatch(setCurrentTenantId(d.currentTenantId));
+                } else {
+                    dispatch(setCurrentTenantId(DEFAULT_SYSTEM_TENANT_ID));
+                }
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem(LS_SKIPPED_TENANT_AUTOFIX);
+                }
+                toast.info('Cửa hàng đã chọn không còn hợp lệ. Đã về mặc định hệ thống.');
+                window.location.reload();
+            } catch (e: unknown) {
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem(LS_SKIPPED_TENANT_AUTOFIX, '1');
+                }
+                adminInvalidTenantAutofixRef.current = false;
+                toast.error(
+                    (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+                        'Không thể tự về mặc định hệ thống. Thử tải lại trang.',
+                );
+            } finally {
+                setTenantSwitching(false);
+            }
+        })();
+    }, [isAuthenticated, isSystemAdmin, tenantList, currentTenantId, dispatch]);
 
     // Mở khóa Web Audio sau lần chạm đầu — thông báo realtime qua WebSocket không kế thừa gesture từ thao tác khác
     useEffect(() => attachNotificationAudioUserGestureUnlock(audioCtxRef), []);
@@ -284,8 +466,39 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
             label: 'Tính năng',
             icon: <MdFeaturedPlayList />,
             children: [
-                ...(!isViewRole
+                ...(!isViewOnlyClient
                     ? [
+                        ...(isSystemAdmin
+                            ? [
+                                {
+                                    key: '/admin/tenants',
+                                    label: (
+                                        <Link to="/admin/tenants" className={styles.menuLink}>
+                                            Chủ sân (Tenant)
+                                        </Link>
+                                    ),
+                                    icon: <ShopOutlined />,
+                                },
+                                {
+                                    key: '/admin/plans',
+                                    label: (
+                                        <Link to="/admin/plans" className={styles.menuLink}>
+                                            Gói dịch vụ
+                                        </Link>
+                                    ),
+                                    icon: <CreditCardOutlined />,
+                                },
+                                {
+                                    key: '/admin/subscriptions',
+                                    label: (
+                                        <Link to="/admin/subscriptions" className={styles.menuLink}>
+                                            Thuê bao dịch vụ
+                                        </Link>
+                                    ),
+                                    icon: <TeamOutlined />,
+                                },
+                            ]
+                            : []),
                         ...(canViewUsers ? [{
                             key: '/admin/user',
                             label: <Link to="/admin/user" className={styles.menuLink}>Người dùng</Link>,
@@ -811,6 +1024,106 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
                                 className={styles.breadcrumb}
                             />
                         </div>
+                        {showTenantSwitcher && (
+                            <Select
+                                size="small"
+                                style={{ minWidth: 200, maxWidth: 280 }}
+                                loading={tenantSwitching}
+                                value={tenantSelectValue}
+                                options={tenantSwitcherOptions}
+                                onChange={async (v) => {
+                                    if (isSystemAdmin) {
+                                        if (v === currentTenantId) {
+                                            return;
+                                        }
+                                        if (
+                                            (currentTenantId == null || currentTenantId === DEFAULT_SYSTEM_TENANT_ID) &&
+                                            v === DEFAULT_SYSTEM_TENANT_ID
+                                        ) {
+                                            return;
+                                        }
+                                    } else {
+                                        if (v === currentTenantId) {
+                                            return;
+                                        }
+                                    }
+                                    setTenantSwitching(true);
+                                    try {
+                                        if (isSystemAdmin) {
+                                            if (typeof window !== 'undefined') {
+                                                localStorage.removeItem(LS_SKIPPED_TENANT_AUTOFIX);
+                                            }
+                                            const res = await postAdminSwitchTenant({
+                                                tenantId: v === DEFAULT_SYSTEM_TENANT_ID ? null : v,
+                                            });
+                                            const d = res.data?.data as
+                                                | { access_token?: string; currentTenantId?: number }
+                                                | undefined;
+                                            if (d?.access_token) {
+                                                localStorage.setItem('access_token', d.access_token);
+                                                dispatch(setToken(d.access_token));
+                                            }
+                                            if (d?.currentTenantId != null) {
+                                                dispatch(setCurrentTenantId(d.currentTenantId));
+                                            } else {
+                                                dispatch(
+                                                    setCurrentTenantId(
+                                                        v === DEFAULT_SYSTEM_TENANT_ID ? DEFAULT_SYSTEM_TENANT_ID : v,
+                                                    ),
+                                                );
+                                            }
+                                            const tr = await getAdminTenants();
+                                            const list = tr.data?.data;
+                                            const rows = Array.isArray(list) ? (list as IAdminTenantRow[]) : [];
+                                            dispatch(setTenantsList(mapAdminRowsToImpersonationList(rows)));
+                                            toast.success('Đã chuyển ngữ cảnh cửa hàng');
+                                            window.location.reload();
+                                        } else {
+                                            const res = await switchTenant(v);
+                                            const d = res.data?.data as
+                                                | { access_token?: string; currentTenantId?: number }
+                                                | undefined;
+                                            if (d?.access_token) {
+                                                localStorage.setItem('access_token', d.access_token);
+                                                dispatch(setToken(d.access_token));
+                                            }
+                                            if (d?.currentTenantId != null) {
+                                                dispatch(setCurrentTenantId(d.currentTenantId));
+                                            } else {
+                                                dispatch(setCurrentTenantId(v));
+                                            }
+                                            const tr = await getMyTenants();
+                                            const list = tr.data?.data;
+                                            if (Array.isArray(list)) {
+                                                dispatch(
+                                                    setTenantsList(
+                                                        list.map((t) => ({
+                                                            id: t.id,
+                                                            slug: t.slug,
+                                                            name: t.name,
+                                                            status: t.status,
+                                                        })),
+                                                    ),
+                                                );
+                                            }
+                                            toast.success('Đã chuyển cửa hàng');
+                                            window.location.reload();
+                                        }
+                                    } catch (error: unknown) {
+                                        const err = error as { response?: { data?: { message?: string } } };
+                                        toast.error(err?.response?.data?.message ?? 'Không thể đổi cửa hàng');
+                                    } finally {
+                                        setTenantSwitching(false);
+                                    }
+                                }}
+                                placeholder={isSystemAdmin ? 'Cửa hàng / ngữ cảnh' : 'Cửa hàng'}
+                                aria-label={
+                                    isSystemAdmin
+                                        ? 'Chọn cửa hàng (tenant) hoặc ngữ cảnh hệ thống'
+                                        : 'Chọn cửa hàng (tenant)'
+                                }
+                            />
+                        )}
                     </div>
 
                     <div className={styles.headerRight}>
@@ -920,10 +1233,25 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ theme, toggleTheme }) => {
 
                 <Content
                     className={styles.adminContent}
+                    style={subscriptionBlocked ? { pointerEvents: 'none', opacity: 0.5 } : undefined}
                 >
                     <Outlet />
                 </Content>
             </Layout>
+
+            <Modal
+                title="Gói dịch vụ đã hết hạn"
+                open={subscriptionBlocked}
+                closable={false}
+                maskClosable={false}
+                keyboard={false}
+                footer={null}
+                centered
+            >
+                <Typography.Paragraph style={{ marginBottom: 0 }}>
+                    Gói dịch vụ đã hết hạn. Vui lòng gia hạn hoặc liên hệ quản trị hệ thống.
+                </Typography.Paragraph>
+            </Modal>
 
             <Modal
                 title="Xóa tất cả thông báo?"

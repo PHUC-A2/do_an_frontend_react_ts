@@ -9,15 +9,34 @@ export const BOOKING_STATUS_META = {
         label: "Đang hoạt động",
         color: "processing",
     },
+    CONFIRMED: {
+        label: "Đã xác nhận",
+        color: "cyan",
+    },
     PAID: {
         label: "Đã thanh toán",
         color: "green",
+    },
+    CHECKIN: {
+        label: "Đã check-in",
+        color: "blue",
+    },
+    COMPLETED: {
+        label: "Hoàn tất",
+        color: "success",
     },
     CANCELLED: {
         label: "Đã hủy",
         color: "error",
     },
-} as const;
+    NO_SHOW: {
+        label: "Vắng mặt",
+        color: "default",
+    },
+} as const satisfies Record<
+    BookingStatusEnum,
+    { label: string; color: "gold" | "processing" | "cyan" | "green" | "blue" | "success" | "error" | "default" }
+>;
 
 export const BOOKING_STATUS_OPTIONS = Object.entries(BOOKING_STATUS_META).map(
     ([value, meta]) => ({

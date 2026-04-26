@@ -55,6 +55,127 @@ export const logout = async () => {
     }
 };
 export const getAccount = () => instance.get("/api/v1/auth/account");
+export const getMyTenants = () =>
+    instance.get<IBackendRes<{ id: number; slug: string; name: string; status?: string }[]>>("/api/v1/auth/tenants");
+
+export interface IOwnerTenantRequest {
+    shopName: string;
+    contactPhone?: string;
+    /** Bắt buộc; email đăng ký chủ sân — thuộc tài khoản đã đăng ký, đang hoạt động (xác minh trên server). */
+    contactEmail: string;
+    description?: string;
+}
+
+export const postOwnerTenantRequest = (data: IOwnerTenantRequest) =>
+    instance.post<IBackendRes<unknown>>("/api/v1/tenant/owner-request", data);
+
+export interface IAdminTenantRow {
+    id: number;
+    slug: string;
+    name: string;
+    status: string;
+    contactPhone?: string | null;
+    contactEmail?: string | null;
+    description?: string | null;
+    ownerUserId?: number | null;
+    ownerEmail?: string | null;
+    ownerName?: string | null;
+}
+
+export const getAdminTenants = () => instance.get<IBackendRes<IAdminTenantRow[]>>("/api/v1/admin/tenants");
+export const getAdminTenant = (id: number) => instance.get<IBackendRes<IAdminTenantRow>>(`/api/v1/admin/tenants/${id}`);
+
+export interface ICreateAdminTenantBody {
+    name: string;
+    slug?: string;
+    contactPhone?: string;
+    contactEmail?: string;
+    description?: string;
+    status?: "PENDING" | "APPROVED" | "REJECTED";
+    ownerUserId: number;
+}
+
+export const createAdminTenant = (data: ICreateAdminTenantBody) =>
+    instance.post<IBackendRes<IAdminTenantRow>>("/api/v1/admin/tenants", data);
+
+export interface IUpdateAdminTenantBody {
+    name: string;
+    slug: string;
+    contactPhone?: string;
+    contactEmail?: string;
+    description?: string;
+    status: "PENDING" | "APPROVED" | "REJECTED";
+}
+
+export const updateAdminTenant = (id: number, data: IUpdateAdminTenantBody) =>
+    instance.put<IBackendRes<IAdminTenantRow>>(`/api/v1/admin/tenants/${id}`, data);
+
+export const deleteAdminTenant = (id: number) => instance.delete<IBackendRes<unknown>>(`/api/v1/admin/tenants/${id}`);
+
+export const approveAdminTenant = (id: number) =>
+    instance.post<IBackendRes<unknown>>(`/api/v1/admin/tenants/${id}/approve`);
+export const rejectAdminTenant = (id: number) =>
+    instance.post<IBackendRes<unknown>>(`/api/v1/admin/tenants/${id}/reject`);
+export const switchTenant = (tenantId: number) =>
+    instance.post<IBackendRes<{ access_token: string; user: unknown; currentTenantId: number }>>("/api/v1/auth/switch-tenant", {
+        tenantId,
+    });
+
+/** Chỉ quản trị hệ thống (ALL). tenantId null → ngữ cảnh mặc định (id 1). */
+export const postAdminSwitchTenant = (data: { tenantId: number | null }) =>
+    instance.post<IBackendRes<{ access_token: string; user: unknown; currentTenantId: number }>>(
+        "/api/v1/admin/switch-tenant",
+        data,
+    );
+
+export interface IAdminPlanRow {
+    id: number;
+    name: string;
+    description?: string | null;
+    price: number;
+    durationDays: number;
+    status: "ACTIVE" | "DISABLED";
+}
+
+export const getAdminPlans = () => instance.get<IBackendRes<IAdminPlanRow[]>>("/api/v1/admin/plans");
+export const createAdminPlan = (data: {
+    name: string;
+    description?: string;
+    price: number;
+    durationDays: number;
+    status?: "ACTIVE" | "DISABLED";
+}) => instance.post<IBackendRes<IAdminPlanRow>>("/api/v1/admin/plans", data);
+export const updateAdminPlan = (
+    id: number,
+    data: { name: string; description?: string; price: number; durationDays: number; status: "ACTIVE" | "DISABLED" },
+) => instance.put<IBackendRes<IAdminPlanRow>>(`/api/v1/admin/plans/${id}`, data);
+export const deleteAdminPlan = (id: number) => instance.delete<IBackendRes<unknown>>(`/api/v1/admin/plans/${id}`);
+export const assignPlanPermissions = (id: number, data: { permissionIds: number[] }) =>
+    instance.post<IBackendRes<unknown>>(`/api/v1/admin/plans/${id}/permissions`, data);
+export const getAdminPlanPermissionNames = (id: number) =>
+    instance.get<IBackendRes<string[]>>(`/api/v1/admin/plans/${id}/permission-names`);
+
+export interface IAdminSubscriptionRow {
+    id: number;
+    tenantId: number;
+    tenantName: string;
+    planId: number;
+    planName: string;
+    startDate: string;
+    endDate: string;
+    status: "ACTIVE" | "EXPIRED" | "PENDING";
+}
+
+export const getAdminSubscriptions = () =>
+    instance.get<IBackendRes<IAdminSubscriptionRow[]>>("/api/v1/admin/subscriptions");
+export const assignAdminSubscription = (data: { tenantId: number; planId: number; startDate?: string }) =>
+    instance.post<IBackendRes<unknown>>("/api/v1/admin/subscriptions/assign", data);
+export const renewAdminSubscription = (data: { subscriptionId: number }) =>
+    instance.post<IBackendRes<unknown>>("/api/v1/admin/subscriptions/renew", data);
+export const upgradeAdminSubscription = (data: { tenantId: number; newPlanId: number }) =>
+    instance.post<IBackendRes<unknown>>("/api/v1/admin/subscriptions/upgrade", data);
+export const downgradeAdminSubscription = (data: { tenantId: number; newPlanId: number }) =>
+    instance.post<IBackendRes<unknown>>("/api/v1/admin/subscriptions/downgrade", data);
 export const updateAccount = (data: IUpdateAccountReq) => instance.patch<IBackendRes<IUpdateAccountRes>>("/api/v1/auth/account/me", data);
 /** Đặt hoặc đổi PIN 6 số cho xác nhận thanh toán (currentPin khi đã có PIN). */
 export const setAccountPaymentPin = (data: { pin: string; currentPin?: string }) =>
@@ -93,8 +214,11 @@ export const getUserById = (id: number) => instance.get<IBackendRes<IUser>>(`/ap
 export const updateUser = (id: number, data: IUpdateUserReq) => instance.put<IBackendRes<IUser>>(`/api/v1/users/${id}`, data);
 export const updateUserStatus = (id: number, data: IUpdateUserStatusReq) => instance.patch<IBackendRes<IUpdateUserStatusRes>>(`/api/v1/users/${id}/status`, data);
 
-/* api pitch */
+/* api pitch — marketplace: toàn bộ sân (không lọc tenant) */
 export const getAllPitches = (query: string) => instance.get<IBackendRes<IModelPaginate<IPitch>>>(`/api/v1/pitches?${query}`);
+/** Danh sách sân theo tenant hiện tại (admin dashboard) */
+export const getAllPitchesForAdmin = (query: string) =>
+    instance.get<IBackendRes<IModelPaginate<IPitch>>>(`/api/v1/admin/pitches?${query}`);
 export const createPitch = (data: ICreatePitchReq) => instance.post<IBackendRes<IPitch>>(`/api/v1/pitches`, data);
 export const getPitchById = (id: number) => instance.get<IBackendRes<IPitch>>(`/api/v1/pitches/${id}`);
 export const updatePitch = (id: number, data: IUpdatePitchReq) => instance.put<IBackendRes<IPitch>>(`/api/v1/pitches/${id}`, data);

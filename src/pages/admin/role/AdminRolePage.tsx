@@ -221,13 +221,27 @@ const RolesTab = () => {
         },
         { title: 'ID', dataIndex: 'id', key: 'id', width: 60, sorter: true },
         {
+            title: 'Phạm vi',
+            key: 'scope',
+            width: 120,
+            render: (_: unknown, r: IRole) =>
+                r.tenantId == null || r.tenantId === undefined ? (
+                    <Tag color="gold">Hệ thống</Tag>
+                ) : (
+                    <Tag color="geekblue">Shop #{r.tenantId}</Tag>
+                ),
+        },
+        {
             title: 'Vai trò', dataIndex: 'name', key: 'name',
             sorter: true,
-            render: (name: string) => (
-                <Tag color={name === 'ADMIN' ? 'warning' : 'blue'} style={{ fontWeight: 600 }}>
-                    {name}
-                </Tag>
-            ),
+            render: (name: string, r: IRole) => {
+                const globalAdmin = name === 'ADMIN' && (r.tenantId == null || r.tenantId === undefined);
+                return (
+                    <Tag color={globalAdmin ? 'warning' : 'blue'} style={{ fontWeight: 600 }}>
+                        {name}
+                    </Tag>
+                );
+            },
         },
         { title: 'Mô tả', dataIndex: 'description', key: 'description', sorter: true, render: (t) => t || <Text type="secondary">—</Text> },
         {
@@ -345,7 +359,7 @@ const RolesTab = () => {
                 title={
                     <Space>
                         <EyeOutlined />
-                        <span>Chi tiết vai trò: <Tag color={viewRole?.name === 'ADMIN' ? 'warning' : 'blue'}>{viewRole?.name}</Tag></span>
+                        <span>Chi tiết vai trò: <Tag color={viewRole?.name === 'ADMIN' && (viewRole.tenantId == null || viewRole.tenantId === undefined) ? 'warning' : 'blue'}>{viewRole?.name}</Tag></span>
                     </Space>
                 }
                 styles={{ body: { padding: '16px 20px' }, wrapper: { width: 480 } }}

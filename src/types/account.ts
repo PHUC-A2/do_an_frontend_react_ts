@@ -13,8 +13,16 @@ export interface IAccount {
     paymentPinConfigured?: boolean | null;
     /** Hệ thống có bắt buộc PIN khi xác nhận thanh toán hay không. */
     paymentConfirmationPinRequiredBySystem?: boolean | null;
+    /** Quyền hiệu lực (JWT / gói theo tenant), ưu tiên trước gộp từ roles. */
+    effectivePermissionNames?: string[] | null;
+    currentPlan?: string | null;
+    subscriptionEndAt?: string | null;
+    /** false khi thuê bao hết hạn (tenant > 1). */
+    subscriptionActive?: boolean | null;
     roles?: {
         id: number;
+        /** null/undefined: role toàn hệ thống; số: thuộc shop (đặt sân thuê). */
+        tenantId?: number | null;
         name: string;
         description?: string;
         permissions?: {
@@ -23,6 +31,8 @@ export interface IAccount {
             description?: string;
         }[];
     }[];
+    /** Số tenant đang gắn; &gt;0 thì mở /admin dù global role là VIEW. */
+    linkedTenantCount?: number | null;
 }
 
 export interface IUpdateAccountReq {

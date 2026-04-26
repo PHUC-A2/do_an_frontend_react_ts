@@ -34,7 +34,7 @@ import {
     getAllEquipments,
 } from '../../../../config/Api';
 import { useAppDispatch, useAppSelector } from '../../../../redux/hooks';
-import { fetchPitches, selectPitchLastListQuery } from '../../../../redux/features/pitchSlice';
+import { fetchPitchesAdmin, selectPitchLastListQuery } from '../../../../redux/features/pitchSlice';
 import { DEFAULT_ADMIN_LIST_QUERY } from '../../../../utils/pagination/defaultListQuery';
 
 import type { IPitch, IUpdatePitchReq } from '../../../../types/pitch';
@@ -198,7 +198,7 @@ const ModalUpdatePitch = (props: IProps) => {
                 toast.success('Cập nhật sân thành công');
                 form.resetFields();
                 setFileList([]);
-                await dispatch(fetchPitches(pitchListQuery || DEFAULT_ADMIN_LIST_QUERY));
+                await dispatch(fetchPitchesAdmin(pitchListQuery || DEFAULT_ADMIN_LIST_QUERY));
                 setOpenModalUpdatePitch(false);
             }
         } catch (error: any) {

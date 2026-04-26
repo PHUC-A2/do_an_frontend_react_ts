@@ -3,7 +3,7 @@ import { AiFillTikTok, AiFillYoutube } from "react-icons/ai";
 import { BiLogoFacebookCircle } from "react-icons/bi";
 import { SiZalo } from "react-icons/si";
 import { MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
-import { FiHome, FiMapPin, FiInfo, FiFileText } from "react-icons/fi";
+import { FiHome, FiMapPin, FiInfo, FiFileText, FiUsers } from "react-icons/fi";
 import { Link } from "react-router";
 import LogoGlow from "../logo-glow/LogoGlow";
 
@@ -55,6 +55,7 @@ const Footer = ({ theme }: FooterProps) => {
     const quickLinks = [
         { to: '/', label: 'Trang chủ', icon: <FiHome size={14} /> },
         { to: '/pitch', label: 'Sân bóng', icon: <FiMapPin size={14} /> },
+        { to: '/become-owner', label: 'Đăng ký làm chủ sân', icon: <FiUsers size={14} /> },
         { to: '/about', label: 'Về chúng tôi', icon: <FiInfo size={14} /> },
         { to: '/terms', label: 'Điều khoản dịch vụ', icon: <FiFileText size={14} /> },
     ];
