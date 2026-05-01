@@ -8,7 +8,7 @@ import type { IBackendRes, IModelPaginate } from "../types/common";
 import type { IEquipment, ICreateEquipmentReq, IUpdateEquipmentReq } from "../types/equipment";
 import type { ICreatePaymentReq, IPayment, IPaymentRes } from "../types/payment";
 import type { ICreatePermissionReq, IPermission, IUpdatePermissionReq } from "../types/permission";
-import type { ICreatePitchReq, IPitch, IUpdatePitchReq } from "../types/pitch";
+import type { ICreatePitchReq, IPitch, IPitchType, IUpdatePitchReq, IUpsertPitchTypeReq } from "../types/pitch";
 import type { IEquipmentPitchAssignment, IPitchEquipment, IUpsertPitchEquipmentReq } from "../types/pitchEquipment";
 import type { IAdminSystemOverview } from "../types/adminDashboardOverview";
 import type { IRevenueRes } from "../types/revenue";
@@ -95,6 +95,10 @@ export const updateUserStatus = (id: number, data: IUpdateUserStatusReq) => inst
 
 /* api pitch */
 export const getAllPitches = (query: string) => instance.get<IBackendRes<IModelPaginate<IPitch>>>(`/api/v1/pitches?${query}`);
+export const getPitchTypes = () => instance.get<IBackendRes<IPitchType[]>>(`/api/v1/pitch-types`);
+export const createPitchType = (data: IUpsertPitchTypeReq) => instance.post<IBackendRes<IPitchType>>(`/api/v1/pitch-types`, data);
+export const updatePitchType = (id: number, data: IUpsertPitchTypeReq) => instance.put<IBackendRes<IPitchType>>(`/api/v1/pitch-types/${id}`, data);
+export const deletePitchType = (id: number) => instance.delete<IBackendRes<void>>(`/api/v1/pitch-types/${id}`);
 export const createPitch = (data: ICreatePitchReq) => instance.post<IBackendRes<IPitch>>(`/api/v1/pitches`, data);
 export const getPitchById = (id: number) => instance.get<IBackendRes<IPitch>>(`/api/v1/pitches/${id}`);
 export const updatePitch = (id: number, data: IUpdatePitchReq) => instance.put<IBackendRes<IPitch>>(`/api/v1/pitches/${id}`, data);

@@ -87,7 +87,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ theme }) => {
                             variants={fadeUp} custom={1}
                         >
                             Hệ thống đặt sân<br />
-                            <em className="hp__gold-text">hiện đại &amp; thông minh</em>
+                            <em className="hp__gold-text">hiện nhanh chóng và tiện lợi</em>
                         </motion.h1>
 
                         <motion.p

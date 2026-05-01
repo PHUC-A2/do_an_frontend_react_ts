@@ -351,7 +351,7 @@ const BookingPage: React.FC<BookingPageProps> = ({ theme }) => {
                                                     <div className="bk__pitch-body">
                                                         <div className="bk__pitch-tags">
                                                             <Tag color="blue">
-                                                                <MdMergeType /> {getPitchTypeLabel(pitch.pitchType)}
+                                                                <MdMergeType /> {getPitchTypeLabel(pitch.pitchTypeName)}
                                                             </Tag>
                                                             <Tag color={PITCH_STATUS_META[pitch.status].color}>
                                                                 <GrStatusGood /> {PITCH_STATUS_META[pitch.status].label}

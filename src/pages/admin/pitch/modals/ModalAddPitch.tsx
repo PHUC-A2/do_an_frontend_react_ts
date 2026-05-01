@@ -16,15 +16,13 @@ import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
 
-import { createPitch, uploadImagePitch } from '../../../../config/Api';
+import { createPitch, createPitchType, getPitchTypes, uploadImagePitch } from '../../../../config/Api';
 import { useAppDispatch, useAppSelector } from '../../../../redux/hooks';
 import { fetchPitches, selectPitchLastListQuery } from '../../../../redux/features/pitchSlice';
 import { DEFAULT_ADMIN_LIST_QUERY } from '../../../../utils/pagination/defaultListQuery';
 
 import type { ICreatePitchReq } from '../../../../types/pitch';
-import {
-    PITCH_TYPE_OPTIONS,
-} from '../../../../utils/constants/pitch.constants';
+import type { DefaultOptionType } from 'antd/es/select';
 
 interface IProps {
     openModalAddPitch: boolean;
@@ -43,6 +41,7 @@ const getBase64 = (file: FileType): Promise<string> =>
 
 const ModalAddPitch = ({ openModalAddPitch, setOpenModalAddPitch }: IProps) => {
     const [form] = Form.useForm();
+    const [quickTypeForm] = Form.useForm<{ name: string; code?: string }>();
     const dispatch = useAppDispatch();
     const pitchListQuery = useAppSelector(selectPitchLastListQuery);
     const open24h = Form.useWatch('open24h', form);
@@ -60,6 +59,22 @@ const ModalAddPitch = ({ openModalAddPitch, setOpenModalAddPitch }: IProps) => {
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState('');
     const [fileList, setFileList] = useState<UploadFile[]>([]);
+    const [pitchTypeOptions, setPitchTypeOptions] = useState<DefaultOptionType[]>([]);
+    const [openQuickAddTypeModal, setOpenQuickAddTypeModal] = useState(false);
+    const [creatingPitchType, setCreatingPitchType] = useState(false);
+
+    const loadPitchTypes = async () => {
+        try {
+            const res = await getPitchTypes();
+            const options = (res.data?.data ?? []).map((item) => ({
+                label: item.name,
+                value: item.id,
+            }));
+            setPitchTypeOptions(options);
+        } catch {
+            setPitchTypeOptions([]);
+        }
+    };
 
     const handlePreview = async (file: UploadFile) => {
         if (!file.url && !file.preview) {
@@ -174,6 +189,30 @@ const ModalAddPitch = ({ openModalAddPitch, setOpenModalAddPitch }: IProps) => {
         }
     }, [openTime, closeTime]);
 
+    useEffect(() => {
+        if (!openModalAddPitch) return;
+        loadPitchTypes();
+    }, [openModalAddPitch]);
+
+    const handleQuickAddPitchType = async (values: { name: string; code?: string }) => {
+        setCreatingPitchType(true);
+        try {
+            const res = await createPitchType(values);
+            toast.success('Đã thêm loại sân');
+            await loadPitchTypes();
+            const created = res.data?.data;
+            if (created?.id) {
+                form.setFieldValue('pitchTypeId', created.id);
+            }
+            quickTypeForm.resetFields();
+            setOpenQuickAddTypeModal(false);
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message ?? 'Không thể thêm loại sân');
+        } finally {
+            setCreatingPitchType(false);
+        }
+    };
+
     return (
         <Modal
             title="Thêm mới sân"
@@ -198,10 +237,20 @@ const ModalAddPitch = ({ openModalAddPitch, setOpenModalAddPitch }: IProps) => {
                     <Input />
                 </Form.Item>
 
-                <Form.Item label="Loại sân" name="pitchType"
+                <Form.Item label="Loại sân" name="pitchTypeId"
                     rules={[{ required: true, message: 'Vui lòng chọn loại sân' }]}
                 >
-                    <Select options={PITCH_TYPE_OPTIONS} />
+                    <Select
+                        options={pitchTypeOptions}
+                        dropdownRender={(menu) => (
+                            <>
+                                {menu}
+                                <div style={{ padding: 8, borderTop: '1px solid #f0f0f0' }}>
+                                    <a onClick={() => setOpenQuickAddTypeModal(true)}>+ Thêm loại sân</a>
+                                </div>
+                            </>
+                        )}
+                    />
                 </Form.Item>
 
                 <Form.Item label="Bật giá theo khung giờ" name="useHourlyPricing" valuePropName="checked">
@@ -368,6 +417,28 @@ const ModalAddPitch = ({ openModalAddPitch, setOpenModalAddPitch }: IProps) => {
                     <Input />
                 </Form.Item>
             </Form>
+            <Modal
+                title="Thêm loại sân"
+                open={openQuickAddTypeModal}
+                onOk={() => quickTypeForm.submit()}
+                confirmLoading={creatingPitchType}
+                onCancel={() => setOpenQuickAddTypeModal(false)}
+                okText="Lưu"
+                cancelText="Hủy"
+            >
+                <Form form={quickTypeForm} layout="vertical" onFinish={handleQuickAddPitchType}>
+                    <Form.Item
+                        label="Tên loại sân"
+                        name="name"
+                        rules={[{ required: true, message: 'Vui lòng nhập tên loại sân' }]}
+                    >
+                        <Input placeholder="Ví dụ: Sân 9 người" />
+                    </Form.Item>
+                    <Form.Item label="Mã" name="code">
+                        <Input placeholder="Ví dụ: NINE" />
+                    </Form.Item>
+                </Form>
+            </Modal>
         </Modal>
     );
 };

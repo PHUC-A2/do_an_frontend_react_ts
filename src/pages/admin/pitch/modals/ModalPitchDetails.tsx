@@ -86,7 +86,7 @@ const ModalPitchDetails = (props: IProps) => {
                                     <Descriptions.Item label="ID">{pitch?.id ?? 'N/A'}</Descriptions.Item>
                                     <Descriptions.Item label="Tên sân">{pitch?.name ?? 'N/A'}</Descriptions.Item>
                                     <Descriptions.Item label="Loại sân">
-                                        {pitch?.pitchType ? getPitchTypeLabel(pitch.pitchType) : 'N/A'}
+                                        {pitch ? getPitchTypeLabel(pitch.pitchTypeName) : 'N/A'}
                                     </Descriptions.Item>
                                     <Descriptions.Item label="Giá / giờ">
                                         {(() => {

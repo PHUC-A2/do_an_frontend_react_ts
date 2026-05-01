@@ -69,26 +69,9 @@ const normalizeKeyword = (value: string) =>
         .toLowerCase()
         .trim();
 
-const detectPitchTypeFilter = (keyword: string): "THREE" | "SEVEN" | undefined => {
-    const normalized = normalizeKeyword(keyword);
-    if (!normalized) return undefined;
-
-    if (/\b3\b/.test(normalized) || /\bthree\b/.test(normalized) || /\bsan 3\b/.test(normalized)) {
-        return "THREE";
-    }
-    if (/\b7\b/.test(normalized) || /\bseven\b/.test(normalized) || /\bsan 7\b/.test(normalized)) {
-        return "SEVEN";
-    }
-    return undefined;
-};
-
 const combinePitchFilter = (keyword: string): string | undefined => {
-    const textFilter = orFieldsInsensitiveLike(["name", "address"], keyword);
-    const pitchType = detectPitchTypeFilter(keyword);
-    const pitchTypeFilter = pitchType ? `pitchType : '${pitchType}'` : undefined;
-
-    if (textFilter && pitchTypeFilter) return `(${textFilter} or ${pitchTypeFilter})`;
-    return textFilter ?? pitchTypeFilter;
+    const normalized = normalizeKeyword(keyword);
+    return orFieldsInsensitiveLike(["name", "address", "pitchType.name"], normalized);
 };
 
 const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
@@ -251,7 +234,7 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
 
                                                 <div className="pitch-card-tags" style={{ marginBottom: 8 }}>
                                                     <Tag color="blue">
-                                                        <AppstoreOutlined className="pitch-inlineIcon" /> {getPitchTypeLabel(pitch.pitchType)}
+                                                        <AppstoreOutlined className="pitch-inlineIcon" /> {getPitchTypeLabel(pitch.pitchTypeName)}
                                                     </Tag>
                                                     <Tag color={PITCH_STATUS_META[pitch.status].color}>
                                                         <CheckCircleOutlined className="pitch-inlineIcon" /> {PITCH_STATUS_META[pitch.status].label}

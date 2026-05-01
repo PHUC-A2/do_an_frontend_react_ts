@@ -1,5 +1,16 @@
 export type PitchStatusEnum = "ACTIVE" | "MAINTENANCE";// đang HD, đang bảo trì
-export type PitchTypeEnum = "THREE" | "SEVEN"; // 3 hoặc 7
+export interface IPitchType {
+    id: number;
+    name: string;
+    code?: string | null;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface IUpsertPitchTypeReq {
+    name: string;
+    code?: string | null;
+}
 
 // Khung giá theo giờ áp dụng lặp lại theo ngày (startTime/endTime theo định dạng HH:mm hoặc HH:mm:ss)
 export interface IPitchHourlyPrice {
@@ -11,7 +22,8 @@ export interface IPitchHourlyPrice {
 export interface IPitch {
     id: number;
     name?: string | null;
-    pitchType: PitchTypeEnum;
+    pitchTypeId: number | null;
+    pitchTypeName?: string | null;
     pricePerHour: number;
     // Danh sách khung giờ giá (nếu không có thì dùng `pricePerHour` cố định)
     hourlyPrices?: IPitchHourlyPrice[];
@@ -37,7 +49,7 @@ export interface IPitch {
 
 export interface ICreatePitchReq {
     name?: string | null;
-    pitchType: PitchTypeEnum;
+    pitchTypeId: number;
     pricePerHour: number;
     // Danh sách khung giờ giá (tùy chọn)
     hourlyPrices?: Array<IPitchHourlyPrice>;
@@ -56,7 +68,7 @@ export interface ICreatePitchReq {
 
 export interface IUpdatePitchReq {
     name?: string | null;
-    pitchType: PitchTypeEnum;
+    pitchTypeId: number;
     pricePerHour: number;
     // Danh sách khung giờ giá (tùy chọn)
     hourlyPrices?: Array<IPitchHourlyPrice>;
@@ -77,8 +89,8 @@ export interface IUpdatePitchReq {
 /**
  * 
  * {
-  "name": "Sân bóng mini 3 người",
-  "pitchType": "THREE",
+  "name": "Sân bóng mini 5 người",
+  "pitchTypeId": 2,
   "pricePerHour": 250000,
   "pitchUrl": "https://example.com/pitch-24h.jpg",
   "open24h": true,
@@ -91,8 +103,9 @@ export interface IUpdatePitchReq {
     "message": "Tạo sân mới",
     "data": {
         "id": 4,
-        "name": "Sân bóng mini 3 người",
-        "pitchType": "THREE",
+        "name": "Sân bóng mini 5 người",
+        "pitchTypeId": 2,
+        "pitchTypeName": "Sân 5 người",
         "pricePerHour": 250000,
         "pitchUrl": "https://example.com/pitch-24h.jpg",
         "openTime": null,
@@ -105,8 +118,8 @@ export interface IUpdatePitchReq {
     }
 }
     {
-  "name": "Sân bóng mini 3 người",
-  "pitchType": "THREE",
+  "name": "Sân bóng mini 5 người",
+  "pitchTypeId": 2,
   "pricePerHour": 250000,
   "pitchUrl": "https://example.com/pitch-24h.jpg",
 //   "open24h": true,
@@ -121,8 +134,9 @@ export interface IUpdatePitchReq {
     "message": "Tạo sân mới",
     "data": {
         "id": 7,
-        "name": "Sân bóng mini 3 người",
-        "pitchType": "THREE",
+        "name": "Sân bóng mini 5 người",
+        "pitchTypeId": 2,
+        "pitchTypeName": "Sân 5 người",
         "pricePerHour": 250000,
         "pitchUrl": "https://example.com/pitch-24h.jpg",
         "openTime": "06:00:00",
