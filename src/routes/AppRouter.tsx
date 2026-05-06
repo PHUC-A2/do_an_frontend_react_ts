@@ -30,6 +30,13 @@ import AdminSubscriptionsPage from '../pages/admin/subscriptions/AdminSubscripti
 import TermsOfService from '../pages/client/terms-of-service/TermsOfService';
 import BecomeOwnerPage from '../pages/client/become-owner/BecomeOwnerPage';
 import { useTopProgress } from '../hooks/common/useTopProgress';
+import { TenantProtectedRoute } from '../components/TenantProtectedRoute';
+import TenantLayout from '../layouts/TenantLayout';
+import TenantDashboardPage from '../pages/tenant/dashboard/TenantDashboardPage';
+import TenantUsersPage from '../pages/tenant/users/TenantUsersPage';
+import TenantRolesPage from '../pages/tenant/roles/TenantRolesPage';
+import TenantSettingsPage from '../pages/tenant/settings/TenantSettingsPage';
+import TenantBillingPage from '../pages/tenant/billing/TenantBillingPage';
 
 interface AppRouterProps {
     theme: 'light' | 'dark';
@@ -96,7 +103,11 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
             children: [
                 {
                     path: "/",
-                    element: <ClientLayout theme={theme} toggleTheme={toggleTheme} />,
+                    element: (
+                        <TenantProtectedRoute>
+                            <ClientLayout theme={theme} toggleTheme={toggleTheme} />
+                        </TenantProtectedRoute>
+                    ),
                     children: [
                         { index: true, element: <HomePage theme={theme} /> },
                         { path: "/pitch", element: <PitchPage theme={theme} /> },
@@ -109,7 +120,11 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
                 },
                 {
                     path: "/admin",
-                    element: <AdminLayout theme={theme} toggleTheme={toggleTheme} />,
+                    element: (
+                        <TenantProtectedRoute>
+                            <AdminLayout theme={theme} toggleTheme={toggleTheme} />
+                        </TenantProtectedRoute>
+                    ),
                     children: [
                         { index: true, element: <AdminPage /> },
                         { path: "/admin/tenants", element: <AdminTenantsPage /> },
@@ -127,6 +142,22 @@ const AppRouter = ({ theme, toggleTheme }: AppRouterProps) => {
                         { path: "/admin/review", element: <AdminReviewPage /> },
                         { path: "/admin/support", element: <AdminSupportPage /> },
                         { path: "/admin/system-config", element: <AdminSystemConfigPage /> },
+                    ]
+                },
+                {
+                    path: "/app",
+                    element: (
+                        <TenantProtectedRoute>
+                            <TenantLayout />
+                        </TenantProtectedRoute>
+                    ),
+                    children: [
+                        { index: true, element: <TenantDashboardPage /> },
+                        { path: "/app/dashboard", element: <TenantDashboardPage /> },
+                        { path: "/app/users", element: <TenantUsersPage /> },
+                        { path: "/app/roles", element: <TenantRolesPage /> },
+                        { path: "/app/settings", element: <TenantSettingsPage /> },
+                        { path: "/app/billing", element: <TenantBillingPage /> },
                     ]
                 },
                 { path: "/login", element: <LoginPage /> },

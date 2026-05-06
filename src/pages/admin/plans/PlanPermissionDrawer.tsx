@@ -103,7 +103,7 @@ const PlanPermissionDrawer = ({ open, onClose, planId, planName, onSaved }: Prop
                     </span>
                 </Space>
             }
-            width={480}
+            size={480}
             styles={{ body: { padding: '12px 20px' } }}
             extra={
                 <Button type="primary" loading={saving} onClick={() => void handleSave()} disabled={!planId}>

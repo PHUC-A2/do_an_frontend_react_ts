@@ -1,5 +1,5 @@
 import axios, { type InternalAxiosRequestConfig } from "axios";
-import { setLogout } from "../redux/features/authSlice";
+import { setLogout, setToken } from "../redux/features/authSlice";
 import { clearTenant } from "../redux/features/tenantSlice";
 import { store } from "../redux/store";
 import { topProgress } from "../hooks/common/useTopProgress";
@@ -44,11 +44,6 @@ instance.interceptors.request.use((config) => {
     const token = localStorage.getItem("access_token");
     if (token) {
         trackedConfig.headers.Authorization = `Bearer ${token}`;
-    }
-
-    const tid = localStorage.getItem("current_tenant_id");
-    if (tid && tid.trim() !== "") {
-        (trackedConfig.headers as Record<string, string>)["X-Tenant-Id"] = tid.trim();
     }
 
     return trackedConfig;
@@ -128,6 +123,7 @@ instance.interceptors.response.use(
 
                 // Refresh thành công
                 localStorage.setItem("access_token", newToken);
+                store.dispatch(setToken(newToken));
                 originalRequest.headers.Authorization = `Bearer ${newToken}`;
                 originalRequest.__topProgressSettled = false;
 

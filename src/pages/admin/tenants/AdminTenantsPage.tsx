@@ -540,7 +540,7 @@ const AdminTenantsPage = () => {
                 cancelText="Đóng"
                 confirmLoading={modalLoading}
                 width={640}
-                destroyOnClose
+                destroyOnHidden
             >
                 <Form form={formModal} layout="vertical" style={{ marginTop: 8 }}>
                     {modalMode === 'edit' && editingId != null && (

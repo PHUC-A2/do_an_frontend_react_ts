@@ -354,7 +354,7 @@ const AdminPlansPage = () => {
                 confirmLoading={saving}
                 okText="Lưu"
                 cancelText="Đóng"
-                destroyOnClose
+                destroyOnHidden
                 width={560}
             >
                 <Form form={form} layout="vertical" style={{ marginTop: 8 }}>
