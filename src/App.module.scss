@@ -1,0 +1,18 @@
+// Entrance sau boot — chỉ opacity (KHÔNG dùng transform: làm hỏng Header position:fixed)
+.appShell {
+    opacity: 0;
+    transition: none;
+}
+
+.appShellReady {
+    opacity: 1;
+    transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .appShell,
+    .appShellReady {
+        opacity: 1;
+        transition: none;
+    }
+}

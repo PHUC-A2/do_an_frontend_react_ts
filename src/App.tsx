@@ -8,10 +8,14 @@ import { useAuthInit } from "./hooks/init/useAuthInit";
 import { useAccountInit } from "./hooks/init/useAccountInit";
 import { useAppSelector } from "./redux/hooks";
 import { useFcmToken } from "./hooks/common/useFcmToken";
+import { useAppBootSplash } from "./hooks/common/useAppBootSplash";
+import LoadingScreen from "./components/common/LoadingScreen/LoadingScreen";
+import appStyles from "./App.module.scss";
 
 const App = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
+  const { showSplash } = useAppBootSplash();
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
@@ -26,9 +30,12 @@ const App = () => {
 
   return (
     <>
-      <TopProgressBar />
-      <BackToTop theme={theme} />
-      <AppRouter theme={theme} toggleTheme={toggleTheme} />
+      <LoadingScreen visible={showSplash} fadeOutMs={480} />
+      <div className={`${appStyles.appShell} ${!showSplash ? appStyles.appShellReady : ''}`}>
+        <TopProgressBar />
+        <BackToTop theme={theme} />
+        <AppRouter theme={theme} toggleTheme={toggleTheme} />
+      </div>
       <ToastContainer
         position="top-right"
         autoClose={1800}

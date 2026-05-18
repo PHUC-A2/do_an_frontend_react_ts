@@ -76,7 +76,7 @@ const stats = [
 ];
 
 const benefits = [
-    "Nhận xác nhận qua email hoặc SMS",
+    "Nhận xác nhận qua hệ thống",
     "Thanh toán an toàn và dễ sử dụng",
     "Xem lại lịch sử đặt sân bất cứ lúc nào",
     "Hủy hoặc đổi lịch khi cần",

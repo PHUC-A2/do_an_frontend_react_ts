@@ -331,7 +331,7 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                             <motion.div className="pp__stat-divider" aria-hidden />
                             <div className="pp__stat">
                                 <strong>Xác nhận</strong>
-                                <span>Qua hệ thống & email</span>
+                                <span>Qua hệ thống</span>
                             </div>
                         </motion.div>
                     </div>

@@ -1,0 +1,97 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.55s ease, visibility 0.55s ease;
+}
+
+.overlay.hiding {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.backdrop {
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(14px) saturate(1.1);
+    -webkit-backdrop-filter: blur(14px) saturate(1.1);
+}
+
+.overlay.light .backdrop {
+    background: rgba(248, 250, 252, 0.82);
+}
+
+.overlay.dark .backdrop {
+    background: rgba(2, 6, 23, 0.78);
+}
+
+.content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 28px 36px;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow:
+        0 24px 64px rgba(0, 0, 0, 0.28),
+        0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+    animation: splashContentIn 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.overlay.light .content {
+    background: rgba(255, 255, 255, 0.55);
+}
+
+.overlay.dark .content {
+    background: rgba(15, 23, 42, 0.45);
+}
+
+.brand {
+    margin: 4px 0 0;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #faad14;
+}
+
+.hint {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: rgba(226, 232, 240, 0.88);
+    letter-spacing: 0.02em;
+}
+
+.overlay.light .hint {
+    color: rgba(51, 65, 85, 0.82);
+}
+
+@keyframes splashContentIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.94);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .overlay,
+    .content {
+        animation: none !important;
+        transition-duration: 0.01ms !important;
+    }
+}

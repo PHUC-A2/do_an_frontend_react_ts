@@ -145,3 +145,28 @@
         mask        : radial-gradient(farthest-side, transparent calc(100% - 2px), black calc(100% - 2px));
     }
 }
+
+// ── Variant: Splash — màn loading F5 / boot app ───────────────
+.logoGlowWrapper.splash {
+    .logoGlowImg {
+        width : 108px;
+        height: 108px;
+    }
+
+    .logoRing {
+        inset       : -12px;
+        -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 4px));
+        mask        : radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 4px));
+        animation   : ringRotate 2.2s linear infinite;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .logoRing {
+        animation: none !important;
+    }
+
+    .logoGlowImg {
+        animation: logoGlowCycle 6s ease-in-out infinite !important;
+    }
+}
