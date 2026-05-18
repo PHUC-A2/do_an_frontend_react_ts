@@ -1,678 +1,722 @@
-.pitch-page {
-    --gold-main: #faad14;
-    overflow-x : hidden; // Khóa chết cuộn ngang ở cấp độ page
-    width      : 100%;
+// PitchPage — luxury booking listing (aligned with HomePage visual language)
+$gold  : #faad14;
+$green : #007b3d;
+$bp-md : 768px;
+$bp-lg : 1024px;
 
+.pitch-page.pp {
+    --gold: #{$gold};
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+
+    &.ant-layout {
+        width: 100%;
+        max-width: 100%;
+        background: transparent !important;
+    }
+
+    /* Nền trong suốt: thấy ảnh ClientBackground + veil; kính mờ chỉ trên từng khối UI */
+    &.pp--light,
     &.light {
-        background-color: transparent;
-        --card-bg       : rgba(255, 255, 255, 0.52);
-        --text-main     : #0f172a;
-        --border        : rgba(255, 255, 255, 0.52);
-        --glass-shadow  : 0 18px 42px rgba(15, 23, 42, 0.12);
-        --orb-1         : rgba(0, 123, 61, 0.12);
-        --orb-2         : rgba(0, 100, 168, 0.10);
-        --orb-3         : rgba(250, 173, 20, 0.08);
-        color           : var(--text-main);
+        --bg          : transparent;
+        --bg-card     : rgba(255, 255, 255, 0.52);
+        --bg-card-2   : rgba(255, 255, 255, 0.4);
+        --card-bg     : rgba(255, 255, 255, 0.52);
+        --text        : #0f172a;
+        --text-main   : #0f172a;
+        --text-muted  : #64748b;
+        --border      : rgba(255, 255, 255, 0.52);
+        --glass-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
+        --orb-1       : rgba(0, 123, 61, 0.12);
+        --orb-2       : rgba(0, 100, 168, 0.1);
+        --orb-3       : rgba(250, 173, 20, 0.08);
+        --chip-bg     : rgba(15, 23, 42, 0.72);
+        --price-bg    : rgba(0, 123, 61, 0.1);
+        color         : var(--text);
+        background    : var(--bg);
     }
 
+    &.pp--dark,
     &.dark {
-        background-color: transparent;
-        --card-bg       : rgba(255, 255, 255, 0.08);
-        --text-main     : #f1f5f9;
-        --border        : rgba(255, 255, 255, 0.16);
-        --glass-shadow  : 0 20px 46px rgba(2, 6, 23, 0.42);
-        --orb-1         : rgba(0, 123, 61, 0.18);
-        --orb-2         : rgba(0, 100, 168, 0.16);
-        --orb-3         : rgba(250, 173, 20, 0.10);
-        color           : var(--text-main);
+        --bg          : transparent;
+        --bg-card     : rgba(255, 255, 255, 0.08);
+        --bg-card-2   : rgba(255, 255, 255, 0.05);
+        --card-bg     : rgba(255, 255, 255, 0.08);
+        --text        : #f1f5f9;
+        --text-main   : #f1f5f9;
+        --text-muted  : #94a3b8;
+        --border      : rgba(255, 255, 255, 0.16);
+        --glass-shadow: 0 20px 46px rgba(2, 6, 23, 0.42);
+        --orb-1       : rgba(0, 123, 61, 0.18);
+        --orb-2       : rgba(0, 100, 168, 0.16);
+        --orb-3       : rgba(250, 173, 20, 0.1);
+        --chip-bg     : rgba(2, 6, 23, 0.78);
+        --price-bg    : rgba(0, 123, 61, 0.22);
+        color         : var(--text);
+        background    : var(--bg);
+    }
+}
+
+.pp__content {
+    padding: 0;
+    width: 100%;
+    background: transparent !important;
+
+    &:global(.ant-layout-content) {
+        background: transparent !important;
+    }
+}
+
+.pp__container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    box-sizing: border-box;
+
+    @media (max-width: $bp-md) {
+        padding: 0 16px;
+    }
+}
+
+// ── Hero ──────────────────────────────────────────────────────
+.pp__hero {
+    position: relative;
+    padding: 88px 0 56px;
+    overflow: hidden;
+
+    @media (max-width: $bp-md) {
+        padding: 64px 0 40px;
+    }
+}
+
+.pp__hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.pp__hero-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(88px);
+    pointer-events: none;
+
+    &--1 {
+        width: 520px;
+        height: 520px;
+        top: -140px;
+        left: -100px;
+        background: var(--orb-1);
+        animation: ppOrb1 16s ease-in-out infinite;
     }
 
-    .pitch-content {
-        padding : 0;
-        width   : 100%;
-        overflow: hidden; // Chống tràn từ các phần tử con
+    &--2 {
+        width: 400px;
+        height: 400px;
+        top: 10%;
+        right: -80px;
+        background: var(--orb-2);
+        animation: ppOrb2 20s ease-in-out infinite;
     }
 
-    .container-custom {
-        max-width : 1200px;
-        margin    : 0 auto;
-        padding   : 0 16px;
-        width     : 100%;
-        box-sizing: border-box; // Đảm bảo padding không làm tăng chiều rộng
+    &--3 {
+        width: 320px;
+        height: 320px;
+        bottom: -60px;
+        left: 42%;
+        background: var(--orb-3);
+        animation: ppOrb3 14s ease-in-out infinite;
     }
+}
 
-    // --- Hero Section ---
-    .hero-section {
-        position: relative;
-        overflow: hidden;
-        padding : 40px 0 28px;
+@keyframes ppOrb1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(24px, 32px) scale(1.06); }
+}
 
-        @media (max-width: 768px) {
-            padding: 28px 0 20px;
-        }
+@keyframes ppOrb2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-20px, -24px) scale(1.05); }
+}
+
+@keyframes ppOrb3 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(12px, -16px) scale(1.08); }
+}
+
+.pp__hero-inner {
+    position: relative;
+    z-index: 1;
+}
+
+.pp__hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(250, 173, 20, 0.35);
+    background: rgba(250, 173, 20, 0.1);
+    color: $gold;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    margin-bottom: 18px;
+
+    .anticon {
+        font-size: 12px;
     }
+}
 
-    // Orb background (full-width behind content)
-    .pitch-hero-bg {
-        position: absolute;
-        inset   : 0;
-        z-index : 0;
-        overflow: hidden;
+.pp__hero-title {
+    margin: 0 0 16px !important;
+    font-size: clamp(2rem, 4.2vw, 3.2rem) !important;
+    font-weight: 800 !important;
+    line-height: 1.1 !important;
+    letter-spacing: -0.03em;
+    color: var(--text) !important;
+}
+
+.pp__gold-text {
+    font-style: normal;
+    background: linear-gradient(120deg, #faad14 0%, #ffec3d 55%, #faad14 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.pp__hero-break {
+    @media (max-width: 480px) {
+        display: none;
     }
+}
 
-    .pitch-hero-orb {
-        position      : absolute;
-        border-radius : 50%;
-        filter        : blur(80px);
-        pointer-events: none;
+.pp__hero-desc {
+    max-width: 640px;
+    margin: 0 0 28px !important;
+    font-size: 1.02rem !important;
+    line-height: 1.65 !important;
+    color: var(--text-muted) !important;
+}
 
-        &--1 {
-            width     : 480px;
-            height    : 480px;
-            top       : -120px;
-            left      : -80px;
-            background: var(--orb-1);
-            animation : pitchOrbFloat1 14s ease-in-out infinite;
-        }
+.pp__hero-stats {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+    padding: 14px 22px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--card-bg, var(--bg-card));
+    backdrop-filter: blur(16px) saturate(1.12);
+    -webkit-backdrop-filter: blur(16px) saturate(1.12);
+    box-shadow: var(--glass-shadow);
+}
 
-        &--2 {
-            width     : 360px;
-            height    : 360px;
-            top       : 20%;
-            right     : -60px;
-            background: var(--orb-2);
-            animation : pitchOrbFloat2 18s ease-in-out infinite;
-        }
+.pp__stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 18px;
+    min-width: 120px;
 
-        &--3 {
-            width     : 300px;
-            height    : 300px;
-            bottom    : -40px;
-            left      : 38%;
-            background: var(--orb-3);
-            animation : pitchOrbFloat3 12s ease-in-out infinite;
-        }
-    }
-
-    @keyframes pitchOrbFloat1 {
-
-        0%,
-        100% {
-            transform: translate(0, 0) scale(1);
-        }
-
-        50% {
-            transform: translate(28px, 36px) scale(1.08);
-        }
-    }
-
-    @keyframes pitchOrbFloat2 {
-
-        0%,
-        100% {
-            transform: translate(0, 0) scale(1);
-        }
-
-        50% {
-            transform: translate(-18px, -28px) scale(1.06);
-        }
-    }
-
-    @keyframes pitchOrbFloat3 {
-
-        0%,
-        100% {
-            transform: translate(0, 0) scale(1);
-        }
-
-        50% {
-            transform: translate(14px, -18px) scale(1.1);
-        }
-    }
-
-    // Hero content sits above orbs
-    .hero-inner {
-        position: relative;
-        z-index : 1;
-    }
-
-    // Badge — matches hp__hero-badge style
-    .hero-badge {
-        display       : inline-flex;
-        align-items   : center;
-        gap           : 7px;
-        padding       : 6px 14px;
-        border-radius : 100px;
-        border        : 1px solid rgba(250, 173, 20, 0.3);
-        background    : rgba(250, 173, 20, 0.08);
-        font-size     : 0.75rem;
-        font-weight   : 600;
-        color         : #faad14;
-        width         : fit-content;
-        margin-bottom : 10px;
-        letter-spacing: 0.02em;
-
-        span {
-            color: #faad14;
-        }
-    }
-
-    .hero-title {
-        font-size     : clamp(1.8rem, 3.8vw, 3rem);
-        font-weight   : 800;
-        line-height   : 1.08;
-        color         : var(--text-main) !important;
+    strong {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: var(--text);
         letter-spacing: -0.02em;
+    }
 
-        .gold-text {
-            color     : var(--gold-main);
-            background: linear-gradient(135deg, #faad14, #ffec3d);
+    span {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+    }
 
-            // --- Cấu hình background-clip chuẩn và tương thích ---
-            background-clip        : text; // Standard property
-            -webkit-background-clip: text; // Vendor prefix cho Chrome/Safari
-            -webkit-text-fill-color: transparent;
+    @media (max-width: $bp-md) {
+        min-width: 96px;
+        padding: 4px 12px;
+    }
+}
 
-            display: inline-block; // Đảm bảo gradient bao phủ đúng diện tích chữ
+.pp__stat-divider {
+    width: 1px;
+    height: 36px;
+    background: var(--border);
+}
+
+// ── Toolbar ─────────────────────────────────────────────────
+.pp__list {
+    padding-bottom: 72px;
+}
+
+.pp__toolbar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    padding: 22px 24px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--card-bg, var(--bg-card));
+    backdrop-filter: blur(16px) saturate(1.12);
+    -webkit-backdrop-filter: blur(16px) saturate(1.12);
+    box-shadow: var(--glass-shadow);
+
+    @media (max-width: $bp-md) {
+        padding: 18px 16px;
+    }
+}
+
+.pp__section-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: $gold;
+}
+
+.pp__section-title {
+    margin: 0 0 6px;
+    font-size: clamp(1.35rem, 2.6vw, 1.85rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    line-height: 1.15;
+}
+
+.pp__toolbar-meta {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.pp__toolbar-actions {
+    flex-shrink: 0;
+}
+
+.pp__sort {
+    min-width: 220px;
+
+    :global(.ant-select-selector) {
+        border-radius: 12px !important;
+        border-color: var(--border) !important;
+        background: var(--bg-card-2) !important;
+        backdrop-filter: blur(12px) saturate(1.08);
+        -webkit-backdrop-filter: blur(12px) saturate(1.08);
+        height: 44px !important;
+        align-items: center;
+    }
+}
+
+// ── Grid ────────────────────────────────────────────────────
+.pp__grid {
+    &--loading {
+        opacity: 0.72;
+        pointer-events: none;
+    }
+}
+
+.pp__empty {
+    padding: 56px 24px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--card-bg, var(--bg-card));
+    backdrop-filter: blur(16px) saturate(1.12);
+    -webkit-backdrop-filter: blur(16px) saturate(1.12);
+    box-shadow: var(--glass-shadow);
+    text-align: center;
+}
+
+.pp__pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+    padding-top: 8px;
+
+    :global(.ant-pagination-item),
+    :global(.ant-pagination-prev .ant-pagination-item-link),
+    :global(.ant-pagination-next .ant-pagination-item-link) {
+        border-radius: 10px;
+        border-color: var(--border);
+        background: color-mix(in srgb, var(--card-bg, var(--bg-card)) 94%, transparent);
+        backdrop-filter: blur(12px) saturate(1.08);
+        -webkit-backdrop-filter: blur(12px) saturate(1.08);
+    }
+
+    :global(.ant-pagination-item-active) {
+        border-color: rgba(250, 173, 20, 0.45);
+        background: rgba(250, 173, 20, 0.12);
+        backdrop-filter: blur(12px) saturate(1.08);
+        -webkit-backdrop-filter: blur(12px) saturate(1.08);
+
+        a {
+            color: $gold;
         }
     }
 
-    .hero-paragraph {
-        font-size: 0.95rem;
-        margin   : 8px 0 8px;
-        color    : var(--text-main) !important;
-        opacity  : 0.82;
+    :global(.ant-select-selector) {
+        border-radius: 10px !important;
+        border-color: var(--border) !important;
+        background: var(--bg-card-2) !important;
+        backdrop-filter: blur(12px) saturate(1.08);
+        -webkit-backdrop-filter: blur(12px) saturate(1.08);
+    }
+}
 
-        @media (max-width: 768px) {
-            font-size: 1rem;
+// ── Pitch card ──────────────────────────────────────────────
+.pp-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--card-bg, var(--bg-card));
+    backdrop-filter: blur(16px) saturate(1.12);
+    -webkit-backdrop-filter: blur(16px) saturate(1.12);
+    box-shadow: var(--glass-shadow);
+    overflow: hidden;
+    transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+
+    &:hover {
+        border-color: rgba(250, 173, 20, 0.32);
+        box-shadow: 0 28px 60px rgba(15, 23, 42, 0.16);
+    }
+
+    &--skeleton {
+        .pp-card__skMedia {
+            width: 100% !important;
+            height: 200px !important;
+            border-radius: 0 !important;
         }
     }
+}
 
-    .pitch-list-section {
-        padding-bottom: 40px;
+.pp-card__media {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--bg-card-2);
+
+    :global(.ant-image),
+    :global(.ant-image-img) {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.45s ease;
     }
 
-    .pitch-summaryBar {
-        display                : flex;
-        align-items            : center;
-        justify-content        : space-between;
-        gap                    : 16px;
-        flex-wrap              : wrap;
-        margin-bottom          : 18px;
-        padding                : 16px 18px;
-        border                 : 1px solid var(--border);
-        border-radius          : 24px;
-        background             : var(--card-bg);
-        box-shadow             : var(--glass-shadow);
-        backdrop-filter        : blur(16px) saturate(1.12);
-        -webkit-backdrop-filter: blur(16px) saturate(1.12);
+    &:hover :global(.ant-image-img) {
+        transform: scale(1.05);
+    }
+}
 
-        @media (max-width: 768px) {
-            padding: 20px;
+.pp-card__mediaShade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        180deg,
+        rgba(2, 6, 23, 0.08) 0%,
+        rgba(2, 6, 23, 0) 38%,
+        rgba(2, 6, 23, 0.55) 100%
+    );
+    pointer-events: none;
+}
+
+.pp-card__mediaTop {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    z-index: 2;
+}
+
+.pp-card__mediaBottom {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 2;
+}
+
+.pp-card__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    backdrop-filter: blur(8px);
+    background: var(--chip-bg);
+    color: #f8fafc;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+
+    &--type {
+        background: rgba(0, 123, 61, 0.85);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    &--active {
+        background: rgba(0, 123, 61, 0.88);
+    }
+
+    &--maintenance {
+        background: rgba(250, 173, 20, 0.88);
+        color: #1a1a1a;
+    }
+
+    &--inactive,
+    &--closed {
+        background: rgba(100, 116, 139, 0.9);
+    }
+}
+
+.pp-card__rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(2, 6, 23, 0.72);
+    border: 1px solid rgba(250, 173, 20, 0.28);
+    color: #f8fafc;
+    font-size: 0.72rem;
+    font-weight: 600;
+
+    &--muted {
+        color: rgba(248, 250, 252, 0.85);
+        border-color: rgba(255, 255, 255, 0.12);
+
+        .anticon {
+            color: $gold;
         }
     }
+}
 
-    .pitch-summaryLabel {
-        margin        : 0 0 10px;
-        color         : var(--gold-main);
-        font-size     : 0.76rem;
-        font-weight   : 800;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
+.pp-card__ratingStars {
+    font-size: 11px !important;
+    line-height: 1;
+
+    :global(.ant-rate-star-first),
+    :global(.ant-rate-star-second) {
+        color: $gold !important;
     }
+}
 
-    .pitch-summaryTitle {
-        margin        : 0;
-        color         : var(--text-main);
-        font-size     : clamp(1.35rem, 2.8vw, 1.9rem);
-        font-weight   : 800;
-        letter-spacing: -0.03em;
-        line-height   : 1.14;
-    }
+.pp-card__ratingText {
+    white-space: nowrap;
+}
 
-    .pitch-summaryMeta {
-        padding      : 8px 14px;
-        border-radius: 999px;
-        background   : rgba(250, 173, 20, 0.12);
-        color        : var(--gold-main);
-        font-size    : 0.88rem;
-        font-weight  : 700;
-    }
+.pp-card__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 10px;
+    padding: 16px 16px 14px;
+}
 
-    .pitch-emptyState {
-        padding                : 36px 20px;
-        border                 : 1px solid var(--border);
-        border-radius          : 24px;
-        background             : var(--card-bg);
-        box-shadow             : var(--glass-shadow);
-        backdrop-filter        : blur(16px) saturate(1.12);
-        -webkit-backdrop-filter: blur(16px) saturate(1.12);
-    }
+.pp-card__title {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.7em;
+}
 
-    .pitch-card {
-        height       : 100%;
-        border-radius: 16px;
-        overflow     : hidden;
+.pp-card__pricing {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
 
-        :global(.ant-card-cover img) {
-            height: 180px !important;
-        }
+.pp-card__priceTag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: var(--price-bg);
+    color: $green;
+    border: 1px solid rgba(0, 123, 61, 0.2);
 
-        :global(.ant-card-body) {
-            padding       : 14px 14px 12px;
-            display       : flex;
-            flex-direction: column;
-            gap           : 6px;
-        }
-    }
+    &--primary {
+        font-size: 0.88rem;
+        font-weight: 800;
+        color: $gold;
+        background: rgba(250, 173, 20, 0.12);
+        border-color: rgba(250, 173, 20, 0.28);
 
-    .pitch-card-title {
-        margin-bottom: 4px !important;
-        font-size    : 0.95rem !important;
-        line-height  : 1.25 !important;
-        min-height   : 36px;
-
-        :global(.ant-typography) {
-            margin-bottom: 0;
-        }
-    }
-
-    .pitch-card-tags {
-        display   : flex;
-        flex-wrap : wrap;
-        gap       : 6px;
-        min-height: 32px;
-
-        :global(.ant-tag) {
-            margin-inline-end: 0;
-            font-size        : 0.74rem;
-        }
-
-        :global(.pitch-rating-stars.ant-rate-disabled .ant-rate-star-first),
-        :global(.pitch-rating-stars.ant-rate-disabled .ant-rate-star-second),
-        :global(.pitch-rating-stars .ant-rate-star-first),
-        :global(.pitch-rating-stars .ant-rate-star-second) {
-            color: #faad14 !important;
+        small {
+            font-weight: 600;
+            opacity: 0.85;
         }
     }
+}
 
-    .pitch-inlineIcon {
-        font-size     : 0.72rem;
-        margin-right  : 2px;
-        vertical-align: 0;
-    }
+.pp--dark .pp-card__priceTag {
+  color: #86efac;
 
-    .pitch-inlineIcon--gold {
-        color: #faad14 !important;
-    }
+  &--primary {
+    color: $gold;
+  }
+}
 
-    .pitch-rating-tag {
-        background: rgba(15, 23, 42, 0.55) !important;
-        border    : 1px solid rgba(250, 173, 20, 0.24) !important;
-        color     : #f8fafc !important;
-    }
+.pp-card__meta {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
 
-    .pitch-card-price,
-    .pitch-card-time,
-    .pitch-card-address {
-        font-size  : 0.86rem;
-        line-height: 1.4;
-    }
+    li {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        font-size: 0.82rem;
+        line-height: 1.45;
+        color: var(--text-muted);
 
-    .pitch-card-address {
-        display        : flex;
-        align-items    : center;
-        justify-content: space-between;
-        width          : 100%;
-        gap            : 8px;
-
-        >span {
-            min-width    : 0;
-            overflow     : hidden;
-            text-overflow: ellipsis;
-            white-space  : nowrap;
-        }
-
-        :global(.ant-btn-link) {
-            padding        : 0 !important;
-            height         : auto;
-            font-size      : 0.8rem;
-            white-space    : nowrap;
-            color          : #1677ff !important;
-            text-decoration: none;
-            transition     : color 0.2s ease, text-decoration-color 0.2s ease;
-
-            &:hover {
-                color          : #4096ff !important;
-                text-decoration: underline;
-            }
-
-            &:focus-visible {
-                color          : #4096ff !important;
-                text-decoration: underline;
-                outline        : none;
-            }
-        }
-    }
-
-    .pitch-card-actions {
-        align-items          : stretch;
-        display              : grid !important;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap                  : 6px !important;
-        margin-top           : 8px !important;
-
-        .pitch-card-actionButton {
-            display        : inline-flex;
-            align-items    : center;
-            justify-content: center;
-            gap            : 6px;
-            border-radius  : 10px;
-        }
-
-        .pitch-card-actionIcon {
+        .anticon {
+            margin-top: 3px;
+            color: $gold;
             flex-shrink: 0;
         }
+    }
+}
 
-        :global(.btn) {
-            min-height : 32px;
-            padding    : 0.28rem 0.4rem;
-            font-size  : 0.72rem;
-            font-weight: 600;
-            line-height: 1.1;
+.pp-card__metaAddress {
+    flex-wrap: wrap;
+    align-items: center !important;
+    gap: 6px 8px;
+
+    .pp-card__metaAddressIcon {
+        margin-top: 0 !important;
+        align-self: flex-start;
+    }
+}
+
+.pp-card__addressText {
+    flex: 1;
+    min-width: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.pp-card__footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.pp-card__btn {
+    height: 40px !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    font-size: 0.82rem !important;
+
+    &--ghost {
+        border-color: var(--border) !important;
+        color: var(--text) !important;
+        background: transparent !important;
+
+        &:hover {
+            border-color: rgba(250, 173, 20, 0.45) !important;
+            color: $gold !important;
         }
     }
 
-    .pitch-paginationWrap {
-        display        : flex;
-        justify-content: center;
-        margin-top     : 32px;
+    &--primary {
+        background: linear-gradient(135deg, #faad14 0%, #f59e0b 100%) !important;
+        border: none !important;
+        color: #1a1200 !important;
+        box-shadow: 0 8px 20px rgba(250, 173, 20, 0.28);
 
-        :global(.ant-pagination-item),
-        :global(.ant-pagination-prev .ant-pagination-item-link),
-        :global(.ant-pagination-next .ant-pagination-item-link) {
-            background: color-mix(in srgb, var(--card-bg) 94%, transparent);
-            border    : 1px solid var(--border);
-            color     : var(--text-main);
-        }
-
-        :global(.ant-pagination-item-active) {
-            border-color: rgba(250, 173, 20, 0.38);
-            box-shadow  : 0 10px 22px rgba(250, 173, 20, 0.14);
-        }
-
-        :global(.ant-pagination-item-active a) {
-            color: var(--gold-main);
-        }
-
-        :global(.ant-select-selector) {
-            background: color-mix(in srgb, var(--card-bg) 94%, transparent) !important;
-            border    : 1px solid var(--border) !important;
-            color     : var(--text-main) !important;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .container-custom {
-            padding: 0 16px;
-        }
-
-        .pitch-summaryBar {
-            padding: 14px 14px;
-        }
-
-        .pitch-pageSearchInput {
-            max-width: 100%;
-        }
-
-        .pitch-card {
-            border-radius: 16px;
-
-            :global(.ant-card-cover img) {
-                height: 118px !important;
-            }
-
-            :global(.ant-card-body) {
-                padding: 9px 8px 8px;
-            }
-        }
-
-        .pitch-card-title {
-            margin-bottom: 3px !important;
-            font-size    : 0.8rem !important;
-            line-height  : 1.25 !important;
-            min-height   : 30px;
-        }
-
-        .pitch-card-tags {
-            gap       : 3px;
-            min-height: 24px;
-
-            :global(.ant-tag) {
-                padding      : 0 4px;
-                font-size    : 0.61rem;
-                line-height  : 18px;
-                margin-bottom: 0;
-            }
-        }
-
-        .pitch-card-price,
-        .pitch-card-time,
-        .pitch-card-address {
-            font-size: 0.66rem;
-        }
-
-        .pitch-card-address {
-            flex-direction: column;
-            align-items   : flex-start !important;
-            gap           : 2px;
-
-            >span {
-                width      : 100%;
-                white-space: normal;
-            }
-
-            :global(.ant-btn-link) {
-                font-size: 0.64rem;
-            }
-        }
-
-        .pitch-card-actions {
-            gap                  : 4px !important;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-
-            :global(.btn) {
-                min-height  : 27px;
-                padding     : 0.2rem 0.15rem;
-                font-size   : 0.6rem;
-                line-height : 1.05;
-                border-width: 1px;
-            }
-
-            .pitch-card-actionButton {
-                gap: 3px;
-            }
-
-            .pitch-card-actionText {
-                letter-spacing: -0.01em;
-            }
-        }
-
-        .pitch-paginationWrap {
-            margin-top: 22px;
-        }
-    }
-
-    @media (max-width: 420px) {
-        .pitch-summaryBar {
-            padding: 16px;
-        }
-
-        .pitch-summaryMeta {
-            font-size: 0.8rem;
-        }
-
-        .pitch-card {
-            :global(.ant-card-cover img) {
-                height: 104px !important;
-            }
-
-            :global(.ant-card-body) {
-                padding: 8px 7px 7px;
-            }
-        }
-
-        .pitch-card-title {
-            font-size : 0.74rem !important;
-            min-height: 30px;
-        }
-
-        .pitch-card-price,
-        .pitch-card-time,
-        .pitch-card-address {
-            font-size: 0.62rem;
-        }
-
-        .pitch-card-actions {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-
-            :global(.btn) {
-                min-height: 26px;
-                padding   : 0.18rem 0.1rem;
-                font-size : 0.58rem;
-            }
-
-            .pitch-card-actionButton {
-                gap: 3px;
-            }
+        &:hover {
+            filter: brightness(1.06);
+            color: #1a1200 !important;
         }
     }
 }
 
-.ant-card {
-    background             : var(--card-bg);
-    border                 : 1px solid var(--border);
-    backdrop-filter        : blur(16px) saturate(1.12);
-    -webkit-backdrop-filter: blur(16px) saturate(1.12);
-    box-shadow             : var(--glass-shadow);
-    transition             : border-color 0.28s ease, box-shadow 0.28s ease, transform 0.28s ease;
+.pp-card__maps {
+    flex-shrink: 0;
+    align-self: center;
+    margin: 0 !important;
+    padding: 0 4px !important;
+    height: auto !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    line-height: 1.2;
+    white-space: nowrap;
+
+    .anticon {
+        font-size: 12px;
+    }
 
     &:hover {
-        border-color: rgba(250, 173, 20, 0.26);
-        box-shadow  : 0 20px 54px rgba(0, 0, 0, 0.18);
+        text-decoration: underline !important;
     }
 }
 
-.ant-card-head,
-.ant-card-body {
-    background: transparent;
-}
-
-.ant-typography,
-.ant-tag,
-.ant-btn-link,
-.ant-btn-link span {
-    color: var(--text-main);
-}
-
-// --- Carousel ---
-.carousel-wrapper {
-    width        : 100%;
-    border-radius: 16px;
-    overflow     : hidden;
-    box-shadow   : 0 20px 40px rgba(0, 0, 0, 0.1);
-
-    .img-frame img {
-        width     : 100%;
-        height    : 400px;
-        object-fit: cover;
-
-        @media (max-width: 768px) {
-            height: 250px;
-        }
-    }
-}
-
-// --- Feature Cards ---
-.features-section {
-    padding: 60px 0;
-
-    .feature-card-vip {
-        background             : var(--card-bg);
-        border                 : 1px solid var(--border);
-        padding                : 40px 24px;
-        border-radius          : 16px;
-        height                 : 100%;
-        text-align             : center;
-        transition             : all 0.3s ease;
-        backdrop-filter        : blur(16px) saturate(1.12);
-        -webkit-backdrop-filter: blur(16px) saturate(1.12);
-
-        .icon-wrapper {
-            font-size    : 32px;
-            color        : var(--gold-main);
-            margin-bottom: 20px;
-            background   : rgba(250, 173, 20, 0.1);
-            display      : inline-flex;
-            padding      : 15px;
-            border-radius: 12px;
-        }
-
-        h4 {
-            color        : var(--gold-main) !important;
-            margin-bottom: 12px;
-        }
-
-        p {
-            color      : var(--text-main);
-            margin     : 0;
-            line-height: 1.6;
-        }
-    }
-}
-
-// --- CTA Banner ---
-.cta-banner-pro {
-    margin                 : 60px 0 100px;
-    padding                : 60px 20px;
-    background             : var(--card-bg);
-    border                 : 1px solid var(--border);
-    border-radius          : 24px;
-    text-align             : center;
-    backdrop-filter        : blur(16px) saturate(1.12);
-    -webkit-backdrop-filter: blur(16px) saturate(1.12);
-
-    h2 {
-        color        : var(--gold-main) !important;
-        font-size    : 2rem;
-        margin-bottom: 24px;
+@media (max-width: $bp-md) {
+    .pp-card__body {
+        padding: 12px 12px 10px;
     }
 
-    @media (max-width: 768px) {
-        padding: 40px 16px;
+    .pp-card__title {
+        font-size: 0.92rem;
+        min-height: 2.5em;
     }
-}
 
-// --- Utilities ---
-.btn-vip-pro {
-    background   : var(--gold-main);
-    color        : #fff;
-    border       : none;
-    height       : 50px;
-    padding      : 0 32px;
-    font-weight  : 700;
-    border-radius: 6px;
-    transition   : all 0.3s ease;
-
-    &:hover {
-        filter    : brightness(1.1);
-        transform : translateY(-2px);
-        box-shadow: 0 5px 15px rgba(250, 173, 20, 0.4);
+    .pp-card__btn {
+        height: 36px !important;
+        font-size: 0.76rem !important;
     }
-}
 
-.hidden-mobile {
-    @media (max-width: 768px) {
+    .pp__hero-stats {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .pp__stat-divider {
         display: none;
+    }
+
+    .pp__stat {
+        min-width: 0;
+        flex: 1;
+        padding: 4px 8px;
+        text-align: center;
     }
 }

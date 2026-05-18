@@ -1,24 +1,42 @@
 import React, { useEffect, useMemo } from "react";
-import { Layout, Typography, Row, Col, Card, Image, Tag, Button, Empty, Pagination, Select, Rate } from "antd";
+import {
+    Layout,
+    Typography,
+    Row,
+    Col,
+    Image,
+    Button,
+    Empty,
+    Pagination,
+    Select,
+    Rate,
+    Skeleton,
+} from "antd";
 import { motion, type Variants } from "framer-motion";
 import {
     EnvironmentOutlined,
     ClockCircleOutlined,
     ArrowRightOutlined,
     EyeOutlined,
-    AppstoreOutlined,
     CheckCircleOutlined,
     StarFilled,
+    CompassOutlined,
+    FilterOutlined,
 } from "@ant-design/icons";
 import "./PitchPage.scss";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks";
 import { useNavigate, useSearchParams } from "react-router";
-import { fetchPitches, selectPitchError, selectPitchLoading, selectPitchMeta, selectPitches } from "../../../redux/features/pitchSlice";
+import {
+    fetchPitches,
+    selectPitchError,
+    selectPitchLoading,
+    selectPitchMeta,
+    selectPitches,
+} from "../../../redux/features/pitchSlice";
 import type { IPitch } from "../../../types/pitch";
 import { getPitchTypeLabel, PITCH_STATUS_META } from "../../../utils/constants/pitch.constants";
 import { formatVND } from "../../../utils/format/price";
 import { getPitchPricingDisplayLines } from "../../../utils/pitch/pitchPricing";
-import RBButton from 'react-bootstrap/Button';
 import {
     buildSpringListQuery,
     parseSpringSortParam,
@@ -26,27 +44,41 @@ import {
     type SpringSortItem,
 } from "../../../utils/pagination/buildSpringPageQuery";
 import { orFieldsInsensitiveLike } from "../../../utils/pagination/springFilterText";
+
 const { Content } = Layout;
-const { Title, Paragraph, Text } = Typography;
+const { Title, Paragraph } = Typography;
 
 interface PitchPageProps {
     theme: "light" | "dark";
 }
 
 const fadeInUp: Variants = {
-    hidden: { opacity: 0, y: 30 },
+    hidden: { opacity: 0, y: 28 },
     visible: {
         opacity: 1,
         y: 0,
-        transition: { duration: 0.6, ease: "easeOut" }
-    }
+        transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+    },
 };
 
-const MotionCard = motion.create(Card);
+const gridStagger: Variants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: { staggerChildren: 0.06, delayChildren: 0.08 },
+    },
+};
+
+const cardReveal: Variants = {
+    hidden: { opacity: 0, y: 22 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
+    },
+};
 
 const DEFAULT_PAGE_SIZE = 12;
-
-/** Sắp xếp mặc định (server). */
 const DEFAULT_PITCH_SORT: SpringSortItem[] = [{ property: "id", direction: "desc" }];
 
 const PITCH_SORT_OPTIONS = [
@@ -74,6 +106,135 @@ const combinePitchFilter = (keyword: string): string | undefined => {
     return orFieldsInsensitiveLike(["name", "address", "pitchType.name"], normalized);
 };
 
+interface PitchCardProps {
+    pitch: IPitch;
+    onView: () => void;
+    onBook: () => void;
+}
+
+const PitchCard: React.FC<PitchCardProps> = ({ pitch, onView, onBook }) => {
+    const pricingLines = getPitchPricingDisplayLines(pitch);
+    const statusMeta = PITCH_STATUS_META[pitch.status];
+    const hasRating = (pitch.reviewCount ?? 0) > 0;
+    const areaLabel =
+        pitch.length != null && pitch.width != null
+            ? `${pitch.length}×${pitch.width}m · ${(pitch.length * pitch.width).toLocaleString("vi-VN")} m²`
+            : null;
+
+    return (
+        <motion.article className="pp-card" variants={cardReveal} layout>
+            <div className="pp-card__media" onClick={onView} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onView()}>
+                <Image
+                    className="pp-card__image"
+                    src={pitch.pitchUrl ?? "/placeholder-pitch.jpg"}
+                    alt={pitch.name ?? "Sân bóng"}
+                    preview={false}
+                    fallback="/placeholder-pitch.jpg"
+                />
+                <motion.div className="pp-card__mediaShade" aria-hidden />
+                <motion.div className="pp-card__mediaTop">
+                    <span className={`pp-card__chip pp-card__chip--status pp-card__chip--${pitch.status.toLowerCase()}`}>
+                        <CheckCircleOutlined />
+                        {statusMeta.label}
+                    </span>
+                    <span className="pp-card__chip pp-card__chip--type">{getPitchTypeLabel(pitch.pitchTypeName)}</span>
+                </motion.div>
+                <motion.div className="pp-card__mediaBottom">
+                    {hasRating ? (
+                        <span className="pp-card__rating">
+                            <Rate disabled allowHalf value={pitch.averageRating ?? 0} className="pp-card__ratingStars" />
+                            <span className="pp-card__ratingText">
+                                {(pitch.averageRating ?? 0).toFixed(1)} · {pitch.reviewCount} đánh giá
+                            </span>
+                        </span>
+                    ) : (
+                        <span className="pp-card__rating pp-card__rating--muted">
+                            <StarFilled />
+                            Chưa có đánh giá
+                        </span>
+                    )}
+                </motion.div>
+            </div>
+
+            <div className="pp-card__body">
+                <h3 className="pp-card__title" title={pitch.name ?? undefined}>
+                    {pitch.name}
+                </h3>
+
+                <div className="pp-card__pricing">
+                    {pricingLines.length > 0 ? (
+                        pricingLines.slice(0, 2).map((line) => (
+                            <span key={line} className="pp-card__priceTag">
+                                {line}
+                            </span>
+                        ))
+                    ) : (
+                        <span className="pp-card__priceTag pp-card__priceTag--primary">
+                            {formatVND(pitch.pricePerHour)} <small>/ giờ</small>
+                        </span>
+                    )}
+                </div>
+
+                <ul className="pp-card__meta">
+                    <li>
+                        <ClockCircleOutlined />
+                        <span>
+                            {pitch.open24h ? "Mở cửa 24/7" : `${pitch.openTime?.slice(0, 5) ?? "--"} – ${pitch.closeTime?.slice(0, 5) ?? "--"}`}
+                        </span>
+                    </li>
+                    {areaLabel ? (
+                        <li>
+                            <CompassOutlined />
+                            <span>{areaLabel}</span>
+                        </li>
+                    ) : null}
+                    <li className="pp-card__metaAddress">
+                        <EnvironmentOutlined className="pp-card__metaAddressIcon" />
+                        <span className="pp-card__addressText">{pitch.address}</span>
+                        {pitch.latitude != null && pitch.longitude != null ? (
+                            <Button
+                                type="link"
+                                className="pp-card__maps"
+                                icon={<EnvironmentOutlined />}
+                                href={`https://www.google.com/maps/dir/?api=1&destination=${pitch.latitude},${pitch.longitude}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                Chỉ đường
+                            </Button>
+                        ) : null}
+                    </li>
+                </ul>
+
+                <div className="pp-card__footer">
+                    <Button
+                        className="pp-card__btn pp-card__btn--ghost"
+                        icon={<EyeOutlined />}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onView();
+                        }}
+                    >
+                        Chi tiết
+                    </Button>
+                    <Button
+                        type="primary"
+                        className="pp-card__btn pp-card__btn--primary"
+                        icon={<ArrowRightOutlined />}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onBook();
+                        }}
+                    >
+                        Đặt sân
+                    </Button>
+                </div>
+            </div>
+        </motion.article>
+    );
+};
+
 const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
     const isDark = theme === "dark";
     const dispatch = useAppDispatch();
@@ -90,8 +251,7 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
     const currentPageSize = parsePositiveNumber(searchParams.get("pageSize"), DEFAULT_PAGE_SIZE);
     const sortFromUrl = parseSpringSortParam(searchParams.get("sort"));
     const currentSort = sortFromUrl.length ? sortFromUrl : DEFAULT_PITCH_SORT;
-    const sortSelectValue =
-        serializeSpringSortParam(currentSort) ?? "id,desc";
+    const sortSelectValue = serializeSpringSortParam(currentSort) ?? "id,desc";
 
     const listQuery = useMemo(
         () =>
@@ -101,7 +261,7 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
                 filter: combinePitchFilter(currentKeyword),
                 sort: currentSort,
             }),
-        [currentPage, currentPageSize, currentKeyword, currentSort]
+        [currentPage, currentPageSize, currentKeyword, currentSort],
     );
 
     useEffect(() => {
@@ -124,245 +284,152 @@ const PitchPage: React.FC<PitchPageProps> = ({ theme }) => {
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    return (
-        <Layout className={`pitch-page ${isDark ? "dark" : "light"}`}>
-            <Content className="pitch-content">
+    const summaryText = currentKeyword
+        ? `${meta.total} sân khớp từ khóa`
+        : meta.total > 0
+          ? `${meta.total} sân sẵn sàng đặt`
+          : "Chưa có sân phù hợp";
 
-                {/* HERO — full-width with orb background */}
-                <section className="hero-section">
-                    <div className="pitch-hero-bg" aria-hidden>
-                        <div className="pitch-hero-orb pitch-hero-orb--1" />
-                        <div className="pitch-hero-orb pitch-hero-orb--2" />
-                        <div className="pitch-hero-orb pitch-hero-orb--3" />
+    const showSkeleton = loading && pitches.length === 0;
+
+    return (
+        <Layout className={`pitch-page pp ${isDark ? "pp--dark" : "pp--light"}`}>
+            <Content className="pp__content">
+                <section className="pp__hero">
+                    <div className="pp__hero-bg" aria-hidden>
+                        <motion.div className="pp__hero-orb pp__hero-orb--1" />
+                        <motion.div className="pp__hero-orb pp__hero-orb--2" />
+                        <motion.div className="pp__hero-orb pp__hero-orb--3" />
                     </div>
-                    <div className="container-custom hero-inner">
-                        <motion.div
-                            className="hero-badge"
-                            initial="hidden" animate="visible"
-                            variants={fadeInUp}
-                        >
-                            <StarFilled style={{ color: '#faad14', fontSize: 11 }} />
-                            <span>{currentKeyword ? `Kết quả cho “${currentKeyword}”` : 'Sân trong trường · TBU Sport'}</span>
+                    <div className="pp__container pp__hero-inner">
+                        <motion.div className="pp__hero-badge" initial="hidden" animate="visible" variants={fadeInUp}>
+                            <StarFilled />
+                            <span>{currentKeyword ? `Tìm kiếm · “${currentKeyword}”` : "TBU Sport · Đặt sân chuyên nghiệp"}</span>
                         </motion.div>
-                        <motion.div
-                            initial="hidden"
-                            animate="visible"
-                            variants={fadeInUp}
-                        >
-                            <Title className="hero-title">
-                                <span className="gold-text">Danh sách sân</span>
+                        <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
+                            <Title className="pp__hero-title">
+                                Khám phá <em className="pp__gold-text">sân bóng</em>
+                                <br className="pp__hero-break" />
+                                phù hợp với bạn
                             </Title>
-                            <Paragraph className="hero-paragraph">
-                                {currentKeyword ? `Đang lọc theo: ${currentKeyword}` : 'Chọn sân rồi đặt giờ phù hợp với bạn.'}
+                            <Paragraph className="pp__hero-desc">
+                                {currentKeyword
+                                    ? `Đang hiển thị kết quả lọc theo “${currentKeyword}”. Chọn sân và đặt khung giờ trong vài bước.`
+                                    : "Danh sách sân trong hệ thống — xem giá, lịch mở cửa và đặt sân ngay khi bạn sẵn sàng."}
                             </Paragraph>
+                        </motion.div>
+                        <motion.div className="pp__hero-stats" initial="hidden" animate="visible" variants={fadeInUp}>
+                            <div className="pp__stat">
+                                <strong>{meta.total || "—"}</strong>
+                                <span>Sân hiện có</span>
+                            </div>
+                            <motion.div className="pp__stat-divider" aria-hidden />
+                            <div className="pp__stat">
+                                <strong>24/7</strong>
+                                <span>Hỗ trợ đặt online</span>
+                            </div>
+                            <motion.div className="pp__stat-divider" aria-hidden />
+                            <div className="pp__stat">
+                                <strong>Xác nhận</strong>
+                                <span>Qua hệ thống & email</span>
+                            </div>
                         </motion.div>
                     </div>
                 </section>
 
-                {/* LIST PITCHES */}
-                <div className="container-custom">
-                    <section className="pitch-list-section">
-                        <div className="pitch-summaryBar">
-                            <div>
-                                <p className="pitch-summaryLabel">Danh sách sân</p>
-                                <h2 className="pitch-summaryTitle">
-                                    {currentKeyword ? `Kết quả cho “${currentKeyword}”` : 'Tìm sân phù hợp'}
+                <div className="pp__container">
+                    <section className="pp__list">
+                        <div className="pp__toolbar">
+                            <div className="pp__toolbar-main">
+                                <p className="pp__section-label">
+                                    <FilterOutlined /> Danh sách sân
+                                </p>
+                                <h2 className="pp__section-title">
+                                    {currentKeyword ? `Kết quả cho “${currentKeyword}”` : "Chọn sân để đặt lịch"}
                                 </h2>
+                                <p className="pp__toolbar-meta">{summaryText}</p>
                             </div>
-                            <div
-                                style={{
-                                    display: "flex",
-                                    flexWrap: "wrap",
-                                    gap: 12,
-                                    alignItems: "center",
-                                    justifyContent: "flex-end",
-                                }}
-                            >
-                                <div className="pitch-summaryMeta">
-                                    {currentKeyword
-                                        ? `${meta.total} sân trùng từ khóa (tên hoặc địa chỉ)`
-                                        : meta.total > 0
-                                            ? `${meta.total} sân đang mở đặt`
-                                            : "Chưa có sân nào khớp"}
-                                </div>
+                            <div className="pp__toolbar-actions">
                                 <Select
-                                    size="middle"
-                                    className="pitch-sortSelect"
+                                    size="large"
+                                    className="pp__sort"
                                     value={sortSelectValue}
                                     options={[...PITCH_SORT_OPTIONS]}
                                     onChange={handleSortChange}
                                     aria-label="Sắp xếp danh sách sân"
-                                    style={{ minWidth: 200 }}
                                 />
                             </div>
                         </div>
 
                         {error ? (
-                            <div className="pitch-emptyState">
+                            <div className="pp__empty">
                                 <Empty description={error} />
                             </div>
+                        ) : showSkeleton ? (
+                            <Row className="pp__grid" gutter={[20, 20]}>
+                                {Array.from({ length: 8 }).map((_, index) => (
+                                    <Col xs={24} sm={12} lg={8} xl={6} key={`sk-${index}`}>
+                                        <div className="pp-card pp-card--skeleton">
+                                            <Skeleton.Image active className="pp-card__skMedia" />
+                                            <div className="pp-card__body">
+                                                <Skeleton active paragraph={{ rows: 4 }} />
+                                            </div>
+                                        </div>
+                                    </Col>
+                                ))}
+                            </Row>
                         ) : !loading && pitches.length === 0 && meta.total === 0 ? (
-                            <div className="pitch-emptyState">
-                                <Empty description={currentKeyword ? 'Không có sân nào khớp từ khóa này' : 'Hiện chưa có sân để hiển thị'} />
+                            <div className="pp__empty">
+                                <Empty
+                                    description={
+                                        currentKeyword
+                                            ? "Không có sân nào khớp từ khóa này"
+                                            : "Hiện chưa có sân để hiển thị"
+                                    }
+                                />
                             </div>
                         ) : (
                             <>
-                                <Row className="pitch-cardGrid" gutter={[{ xs: 12, sm: 16, md: 24 }, { xs: 12, sm: 16, md: 24 }]}>
-                                    {pitches.map((pitch: IPitch) => (
-                                        <Col xs={24} sm={12} md={8} lg={6} key={pitch.id}>
-                                            <MotionCard
-                                                className="pitch-card"
-                                                hoverable
-                                                loading={loading}
-                                                whileHover={{ y: -8 }}
-                                                transition={{ type: "spring", stiffness: 200 }}
-                                                cover={
-                                                    <Image
-                                                        className="pitch-card-image"
-                                                        src={pitch.pitchUrl ?? "/placeholder-pitch.jpg"}
-                                                        alt={pitch.name ?? "Pitch"}
-                                                        height={180}
-                                                        width="100%"
-                                                        preview={true}
-                                                        style={{ objectFit: "cover" }}
-                                                    />
-                                                }
-                                            >
-                                                <Title level={5} ellipsis className="pitch-card-title">
-                                                    {pitch.name}
-                                                </Title>
-
-                                                <div className="pitch-card-tags" style={{ marginBottom: 8 }}>
-                                                    <Tag color="blue">
-                                                        <AppstoreOutlined className="pitch-inlineIcon" /> {getPitchTypeLabel(pitch.pitchTypeName)}
-                                                    </Tag>
-                                                    <Tag color={PITCH_STATUS_META[pitch.status].color}>
-                                                        <CheckCircleOutlined className="pitch-inlineIcon" /> {PITCH_STATUS_META[pitch.status].label}
-                                                    </Tag>
-                                                    {(pitch.reviewCount ?? 0) > 0 ? (
-                                                        <Tag className="pitch-rating-tag">
-                                                            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                                                                <Rate
-                                                                    disabled
-                                                                    allowHalf
-                                                                    value={pitch.averageRating ?? 0}
-                                                                    className="pitch-rating-stars"
-                                                                    style={{ fontSize: 12 }}
-                                                                />
-                                                                <span>{`${(pitch.averageRating ?? 0).toFixed(1)} (${pitch.reviewCount ?? 0})`}</span>
-                                                            </span>
-                                                        </Tag>
-                                                    ) : (
-                                                        <Tag className="pitch-rating-tag">
-                                                            <StarFilled className="pitch-inlineIcon pitch-inlineIcon--gold" />
-                                                            Chưa có đánh giá
-                                                        </Tag>
-                                                    )}
-                                                </div>
-
-                                                <Text strong type="warning" className="pitch-card-price" style={{ display: "block" }}>
-                                                    {(() => {
-                                                        const pricingLines = getPitchPricingDisplayLines(pitch);
-                                                        if (pricingLines.length > 0) {
-                                                            return (
-                                                                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                                                                    {pricingLines.slice(0, 2).map((line) => (
-                                                                        <Tag key={line} color={"success"} style={{ width: "fit-content", marginInlineEnd: 0 }}>
-                                                                            {line}
-                                                                        </Tag>
-                                                                    ))}
-                                                                </div>
-                                                            );
-                                                        }
-                                                        return <Tag color={"success"}>{`${formatVND(pitch.pricePerHour)} / giờ`}</Tag>;
-                                                    })()}
-                                                </Text>
-
-                                                <Text type="warning" className="pitch-card-time" style={{ display: "block", marginTop: 4 }}>
-                                                    <ClockCircleOutlined />{" "}
-                                                    {pitch.open24h
-                                                        ? "Mở cửa 24/7"
-                                                        : `${pitch.openTime} - ${pitch.closeTime}`}
-                                                </Text>
-
-                                                {(pitch.length != null || pitch.width != null) && (
-                                                    <Text type="warning" style={{ display: "block", marginTop: 4 }}>
-                                                        Kích thước: {pitch.length ?? '--'}m x {pitch.width ?? '--'}m
-                                                        {pitch.length != null && pitch.width != null
-                                                            ? ` (${(pitch.length * pitch.width).toLocaleString('vi-VN')} m2)`
-                                                            : ''}
-                                                    </Text>
-                                                )}
-
-                                                <Text type="warning" className="pitch-card-address" style={{ marginTop: 4 }}>
-                                                    <span>
-                                                        <EnvironmentOutlined /> {pitch.address}
-                                                    </span>
-                                                    <Button
-                                                        type="link"
-                                                        onClick={() => {
-                                                            if (pitch?.latitude == null || pitch?.longitude == null) return;
-
-                                                            const url = `https://www.google.com/maps/dir/?api=1&destination=${pitch.latitude},${pitch.longitude}`;
-                                                            window.open(url, "_blank");
-                                                        }}
-                                                        disabled={pitch?.latitude == null || pitch?.longitude == null}
-                                                    >
-                                                        <EnvironmentOutlined />
-                                                        <span>Google Maps</span>
-                                                    </Button>
-                                                </Text>
-                                                <div className="pitch-card-actions">
-                                                    <RBButton
-                                                        variant="outline-secondary"
-                                                        className="pitch-card-actionButton"
-                                                        title="Xem chi tiết sân"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            navigate(`/pitch/${pitch.id}`);
-                                                        }}
-                                                    >
-                                                        <EyeOutlined className="pitch-card-actionIcon" />
-                                                        <span className="pitch-card-actionText">Xem</span>
-                                                    </RBButton>
-
-                                                    <RBButton
-                                                        variant="outline-warning"
-                                                        className="pitch-card-actionButton"
-                                                        title="Đặt sân ngay"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            navigate(`/booking/${pitch.id}`, {
-                                                                state: { mode: "CREATE" },
-                                                            });
-                                                        }}
-                                                    >
-                                                        <ArrowRightOutlined className="pitch-card-actionIcon" />
-                                                        <span className="pitch-card-actionText">Đặt</span>
-                                                    </RBButton>
-                                                </div>
-                                            </MotionCard>
-                                        </Col>
-                                    ))}
-                                </Row>
+                                <motion.div
+                                    className={loading ? "pp__grid pp__grid--loading" : "pp__grid"}
+                                    variants={gridStagger}
+                                    initial="hidden"
+                                    animate="visible"
+                                >
+                                    <Row gutter={[20, 20]}>
+                                        {pitches.map((pitch) => (
+                                            <Col xs={24} sm={12} lg={8} xl={6} key={pitch.id}>
+                                                <PitchCard
+                                                    pitch={pitch}
+                                                    onView={() => navigate(`/pitch/${pitch.id}`)}
+                                                    onBook={() =>
+                                                        navigate(`/booking/${pitch.id}`, {
+                                                            state: { mode: "CREATE" },
+                                                        })
+                                                    }
+                                                />
+                                            </Col>
+                                        ))}
+                                    </Row>
+                                </motion.div>
 
                                 {meta.total > 0 ? (
-                                    <div className="pitch-paginationWrap">
+                                    <div className="pp__pagination">
                                         <Pagination
                                             current={meta.page}
                                             pageSize={meta.pageSize}
                                             total={meta.total}
                                             showSizeChanger
                                             pageSizeOptions={[8, 12, 16, 24]}
-                                            showTotal={(total, range) => `${range[0]}-${range[1]} / ${total} sân`}
+                                            showTotal={(total, range) => `${range[0]}–${range[1]} / ${total} sân`}
                                             onChange={handlePaginationChange}
+                                            disabled={loading}
                                         />
                                     </div>
                                 ) : null}
                             </>
                         )}
                     </section>
-
                 </div>
             </Content>
         </Layout>
